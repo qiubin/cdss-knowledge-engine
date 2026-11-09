@@ -1,0 +1,963 @@
+[
+  {
+    "code": "ALBUMIN:ABSENT",
+    "name": "白蛋白不存在",
+    "aliases": [
+      "白蛋白ABSENT"
+    ]
+  },
+  {
+    "code": "ALBUMIN:DECREASED",
+    "name": "白蛋白降低",
+    "aliases": [
+      "白蛋白DECREASED"
+    ]
+  },
+  {
+    "code": "ALBUMIN:ELEVATED",
+    "name": "白蛋白升高",
+    "aliases": [
+      "白蛋白ELEVATED"
+    ]
+  },
+  {
+    "code": "ALBUMIN:NEGATIVE",
+    "name": "白蛋白阴性",
+    "aliases": [
+      "白蛋白NEGATIVE"
+    ]
+  },
+  {
+    "code": "ALBUMIN:POSITIVE",
+    "name": "白蛋白阳性",
+    "aliases": [
+      "白蛋白POSITIVE"
+    ]
+  },
+  {
+    "code": "BETA2_MICROGLOBULIN:ABNORMAL",
+    "name": "β2微球蛋白异常",
+    "aliases": [
+      "β2微球蛋白ABNORMAL"
+    ]
+  },
+  {
+    "code": "BETA2_MICROGLOBULIN:PRESENT",
+    "name": "β2微球蛋白存在",
+    "aliases": [
+      "β2微球蛋白PRESENT"
+    ]
+  },
+  {
+    "code": "CBC:ABSENT",
+    "name": "血常规不存在",
+    "aliases": [
+      "血常规ABSENT"
+    ]
+  },
+  {
+    "code": "CBC:DECREASED",
+    "name": "血常规降低",
+    "aliases": [
+      "血常规DECREASED"
+    ]
+  },
+  {
+    "code": "CBC:DURATION_GT",
+    "name": "血常规持续时间大于",
+    "aliases": [
+      "血常规DURATION_GT"
+    ]
+  },
+  {
+    "code": "CBC:DYNAMIC_RISE",
+    "name": "血常规动态上升",
+    "aliases": [
+      "血常规DYNAMIC_RISE"
+    ]
+  },
+  {
+    "code": "CBC:ELEVATED",
+    "name": "血常规升高",
+    "aliases": [
+      "血常规ELEVATED"
+    ]
+  },
+  {
+    "code": "CBC:NEGATIVE",
+    "name": "血常规阴性",
+    "aliases": [
+      "血常规NEGATIVE"
+    ]
+  },
+  {
+    "code": "CBC:POSITIVE",
+    "name": "血常规阳性",
+    "aliases": [
+      "血常规POSITIVE"
+    ]
+  },
+  {
+    "code": "CK_MB:ABNORMAL",
+    "name": "肌酸激酶同工酶异常",
+    "aliases": [
+      "肌酸激酶同工酶ABNORMAL"
+    ]
+  },
+  {
+    "code": "CK_MB:ABOVE_ULN_1",
+    "name": "肌酸激酶同工酶超正常上限",
+    "aliases": [
+      "肌酸激酶同工酶ABOVE_ULN_1"
+    ]
+  },
+  {
+    "code": "CK_MB:DYNAMIC_RISE",
+    "name": "肌酸激酶同工酶动态上升",
+    "aliases": [
+      "肌酸激酶同工酶DYNAMIC_RISE"
+    ]
+  },
+  {
+    "code": "CK_MB:PEAK_SHIFT",
+    "name": "肌酸激酶同工酶峰值前移",
+    "aliases": [
+      "肌酸激酶同工酶PEAK_SHIFT"
+    ]
+  },
+  {
+    "code": "COAGULATION:ABSENT",
+    "name": "凝血功能不存在",
+    "aliases": [
+      "凝血功能ABSENT"
+    ]
+  },
+  {
+    "code": "COAGULATION:DECREASED",
+    "name": "凝血功能降低",
+    "aliases": [
+      "凝血功能DECREASED"
+    ]
+  },
+  {
+    "code": "COAGULATION:DURATION_GT",
+    "name": "凝血功能持续时间大于",
+    "aliases": [
+      "凝血功能DURATION_GT"
+    ]
+  },
+  {
+    "code": "COAGULATION:DYNAMIC_RISE",
+    "name": "凝血功能动态上升",
+    "aliases": [
+      "凝血功能DYNAMIC_RISE"
+    ]
+  },
+  {
+    "code": "COAGULATION:ELEVATED",
+    "name": "凝血功能升高",
+    "aliases": [
+      "凝血功能ELEVATED"
+    ]
+  },
+  {
+    "code": "COAGULATION:NEGATIVE",
+    "name": "凝血功能阴性",
+    "aliases": [
+      "凝血功能NEGATIVE"
+    ]
+  },
+  {
+    "code": "COAGULATION:POSITIVE",
+    "name": "凝血功能阳性",
+    "aliases": [
+      "凝血功能POSITIVE"
+    ]
+  },
+  {
+    "code": "CREAT:ABNORMAL",
+    "name": "肌酐异常",
+    "aliases": [
+      "肌酐ABNORMAL"
+    ]
+  },
+  {
+    "code": "CREAT:DECREASED",
+    "name": "肌酐降低",
+    "aliases": [
+      "肌酐DECREASED"
+    ]
+  },
+  {
+    "code": "CREAT:ELEVATED",
+    "name": "肌酐升高",
+    "aliases": [
+      "肌酐ELEVATED"
+    ]
+  },
+  {
+    "code": "CREAT:NEGATIVE",
+    "name": "肌酐阴性",
+    "aliases": [
+      "肌酐NEGATIVE"
+    ]
+  },
+  {
+    "code": "CREAT:POSITIVE",
+    "name": "肌酐阳性",
+    "aliases": [
+      "肌酐POSITIVE"
+    ]
+  },
+  {
+    "code": "CRP:ABSENT",
+    "name": "C反应蛋白不存在",
+    "aliases": [
+      "C反应蛋白ABSENT"
+    ]
+  },
+  {
+    "code": "CRP:DECREASED",
+    "name": "C反应蛋白降低",
+    "aliases": [
+      "C反应蛋白DECREASED"
+    ]
+  },
+  {
+    "code": "CRP:DURATION_GT",
+    "name": "C反应蛋白持续时间大于",
+    "aliases": [
+      "C反应蛋白DURATION_GT"
+    ]
+  },
+  {
+    "code": "CRP:DYNAMIC_RISE",
+    "name": "C反应蛋白动态上升",
+    "aliases": [
+      "C反应蛋白DYNAMIC_RISE"
+    ]
+  },
+  {
+    "code": "CRP:ELEVATED",
+    "name": "C反应蛋白升高",
+    "aliases": [
+      "C反应蛋白ELEVATED"
+    ]
+  },
+  {
+    "code": "CRP:NEGATIVE",
+    "name": "C反应蛋白阴性",
+    "aliases": [
+      "C反应蛋白NEGATIVE"
+    ]
+  },
+  {
+    "code": "CRP:POSITIVE",
+    "name": "C反应蛋白阳性",
+    "aliases": [
+      "C反应蛋白POSITIVE"
+    ]
+  },
+  {
+    "code": "CTN:ABNORMAL",
+    "name": "肌钙蛋白异常",
+    "aliases": [
+      "肌钙蛋白ABNORMAL"
+    ]
+  },
+  {
+    "code": "CTN:ABOVE_ULN_1",
+    "name": "肌钙蛋白超正常上限",
+    "aliases": [
+      "肌钙蛋白ABOVE_ULN_1"
+    ]
+  },
+  {
+    "code": "CTN:DECREASED",
+    "name": "肌钙蛋白降低",
+    "aliases": [
+      "肌钙蛋白DECREASED"
+    ]
+  },
+  {
+    "code": "CTN:DYNAMIC_RISE",
+    "name": "肌钙蛋白动态上升",
+    "aliases": [
+      "肌钙蛋白DYNAMIC_RISE"
+    ]
+  },
+  {
+    "code": "CTN:ELEVATED",
+    "name": "肌钙蛋白升高",
+    "aliases": [
+      "肌钙蛋白ELEVATED"
+    ]
+  },
+  {
+    "code": "CTN:NEGATIVE",
+    "name": "肌钙蛋白阴性",
+    "aliases": [
+      "肌钙蛋白NEGATIVE"
+    ]
+  },
+  {
+    "code": "CTN:POSITIVE",
+    "name": "肌钙蛋白阳性",
+    "aliases": [
+      "肌钙蛋白POSITIVE"
+    ]
+  },
+  {
+    "code": "EBV_DNA:ABNORMAL",
+    "name": "EB病毒DNA异常",
+    "aliases": [
+      "EB病毒DNAABNORMAL"
+    ]
+  },
+  {
+    "code": "ELECTROLYTE:ABSENT",
+    "name": "电解质不存在",
+    "aliases": [
+      "电解质ABSENT"
+    ]
+  },
+  {
+    "code": "ELECTROLYTE:DECREASED",
+    "name": "电解质降低",
+    "aliases": [
+      "电解质DECREASED"
+    ]
+  },
+  {
+    "code": "ELECTROLYTE:DURATION_GT",
+    "name": "电解质持续时间大于",
+    "aliases": [
+      "电解质DURATION_GT"
+    ]
+  },
+  {
+    "code": "ELECTROLYTE:DYNAMIC_RISE",
+    "name": "电解质动态上升",
+    "aliases": [
+      "电解质DYNAMIC_RISE"
+    ]
+  },
+  {
+    "code": "ELECTROLYTE:ELEVATED",
+    "name": "电解质升高",
+    "aliases": [
+      "电解质ELEVATED"
+    ]
+  },
+  {
+    "code": "ELECTROLYTE:NEGATIVE",
+    "name": "电解质阴性",
+    "aliases": [
+      "电解质NEGATIVE"
+    ]
+  },
+  {
+    "code": "ELECTROLYTE:POSITIVE",
+    "name": "电解质阳性",
+    "aliases": [
+      "电解质POSITIVE"
+    ]
+  },
+  {
+    "code": "ESR:ABNORMAL",
+    "name": "血沉异常",
+    "aliases": [
+      "血沉ABNORMAL"
+    ]
+  },
+  {
+    "code": "ESR:PRESENT",
+    "name": "血沉存在",
+    "aliases": [
+      "血沉PRESENT"
+    ]
+  },
+  {
+    "code": "FERRITIN:ABSENT",
+    "name": "铁蛋白不存在",
+    "aliases": [
+      "铁蛋白ABSENT"
+    ]
+  },
+  {
+    "code": "FERRITIN:DECREASED",
+    "name": "铁蛋白降低",
+    "aliases": [
+      "铁蛋白DECREASED"
+    ]
+  },
+  {
+    "code": "FERRITIN:DURATION_GT",
+    "name": "铁蛋白持续时间大于",
+    "aliases": [
+      "铁蛋白DURATION_GT"
+    ]
+  },
+  {
+    "code": "FERRITIN:DYNAMIC_RISE",
+    "name": "铁蛋白动态上升",
+    "aliases": [
+      "铁蛋白DYNAMIC_RISE"
+    ]
+  },
+  {
+    "code": "FERRITIN:ELEVATED",
+    "name": "铁蛋白升高",
+    "aliases": [
+      "铁蛋白ELEVATED"
+    ]
+  },
+  {
+    "code": "FERRITIN:NEGATIVE",
+    "name": "铁蛋白阴性",
+    "aliases": [
+      "铁蛋白NEGATIVE"
+    ]
+  },
+  {
+    "code": "FERRITIN:POSITIVE",
+    "name": "铁蛋白阳性",
+    "aliases": [
+      "铁蛋白POSITIVE"
+    ]
+  },
+  {
+    "code": "HBV_SEROLOGY:ABNORMAL",
+    "name": "乙肝血清学异常",
+    "aliases": [
+      "乙肝血清学ABNORMAL"
+    ]
+  },
+  {
+    "code": "HBV_SEROLOGY:ABSENT",
+    "name": "乙肝血清学不存在",
+    "aliases": [
+      "乙肝血清学ABSENT"
+    ]
+  },
+  {
+    "code": "HBV_SEROLOGY:DECREASED",
+    "name": "乙肝血清学降低",
+    "aliases": [
+      "乙肝血清学DECREASED"
+    ]
+  },
+  {
+    "code": "HBV_SEROLOGY:DURATION_GT",
+    "name": "乙肝血清学持续时间大于",
+    "aliases": [
+      "乙肝血清学DURATION_GT"
+    ]
+  },
+  {
+    "code": "HBV_SEROLOGY:DYNAMIC_RISE",
+    "name": "乙肝血清学动态上升",
+    "aliases": [
+      "乙肝血清学DYNAMIC_RISE"
+    ]
+  },
+  {
+    "code": "HBV_SEROLOGY:ELEVATED",
+    "name": "乙肝血清学升高",
+    "aliases": [
+      "乙肝血清学ELEVATED"
+    ]
+  },
+  {
+    "code": "HBV_SEROLOGY:NEGATIVE",
+    "name": "乙肝血清学阴性",
+    "aliases": [
+      "乙肝血清学NEGATIVE"
+    ]
+  },
+  {
+    "code": "HBV_SEROLOGY:POSITIVE",
+    "name": "乙肝血清学阳性",
+    "aliases": [
+      "乙肝血清学POSITIVE"
+    ]
+  },
+  {
+    "code": "HIV_SEROLOGY:ABSENT",
+    "name": "HIV检测不存在",
+    "aliases": [
+      "HIV检测ABSENT"
+    ]
+  },
+  {
+    "code": "HIV_SEROLOGY:DECREASED",
+    "name": "HIV检测降低",
+    "aliases": [
+      "HIV检测DECREASED"
+    ]
+  },
+  {
+    "code": "HIV_SEROLOGY:DURATION_GT",
+    "name": "HIV检测持续时间大于",
+    "aliases": [
+      "HIV检测DURATION_GT"
+    ]
+  },
+  {
+    "code": "HIV_SEROLOGY:DYNAMIC_RISE",
+    "name": "HIV检测动态上升",
+    "aliases": [
+      "HIV检测DYNAMIC_RISE"
+    ]
+  },
+  {
+    "code": "HIV_SEROLOGY:ELEVATED",
+    "name": "HIV检测升高",
+    "aliases": [
+      "HIV检测ELEVATED"
+    ]
+  },
+  {
+    "code": "HIV_SEROLOGY:NEGATIVE",
+    "name": "HIV检测阴性",
+    "aliases": [
+      "HIV检测NEGATIVE"
+    ]
+  },
+  {
+    "code": "HIV_SEROLOGY:POSITIVE",
+    "name": "HIV检测阳性",
+    "aliases": [
+      "HIV检测POSITIVE"
+    ]
+  },
+  {
+    "code": "LDH:ABNORMAL",
+    "name": "乳酸脱氢酶异常",
+    "aliases": [
+      "乳酸脱氢酶ABNORMAL"
+    ]
+  },
+  {
+    "code": "LDH:PRESENT",
+    "name": "乳酸脱氢酶存在",
+    "aliases": [
+      "乳酸脱氢酶PRESENT"
+    ]
+  },
+  {
+    "code": "LIVER_FUNCTION:ABSENT",
+    "name": "肝功能不存在",
+    "aliases": [
+      "肝功能ABSENT"
+    ]
+  },
+  {
+    "code": "LIVER_FUNCTION:DECREASED",
+    "name": "肝功能降低",
+    "aliases": [
+      "肝功能DECREASED"
+    ]
+  },
+  {
+    "code": "LIVER_FUNCTION:DURATION_GT",
+    "name": "肝功能持续时间大于",
+    "aliases": [
+      "肝功能DURATION_GT"
+    ]
+  },
+  {
+    "code": "LIVER_FUNCTION:DYNAMIC_RISE",
+    "name": "肝功能动态上升",
+    "aliases": [
+      "肝功能DYNAMIC_RISE"
+    ]
+  },
+  {
+    "code": "LIVER_FUNCTION:ELEVATED",
+    "name": "肝功能升高",
+    "aliases": [
+      "肝功能ELEVATED"
+    ]
+  },
+  {
+    "code": "LIVER_FUNCTION:NEGATIVE",
+    "name": "肝功能阴性",
+    "aliases": [
+      "肝功能NEGATIVE"
+    ]
+  },
+  {
+    "code": "LIVER_FUNCTION:POSITIVE",
+    "name": "肝功能阳性",
+    "aliases": [
+      "肝功能POSITIVE"
+    ]
+  },
+  {
+    "code": "MYO:ABNORMAL",
+    "name": "肌红蛋白异常",
+    "aliases": [
+      "肌红蛋白ABNORMAL"
+    ]
+  },
+  {
+    "code": "MYO:ELEVATED",
+    "name": "肌红蛋白升高",
+    "aliases": [
+      "肌红蛋白ELEVATED"
+    ]
+  },
+  {
+    "code": "RENAL_FUNCTION:ABSENT",
+    "name": "肾功能不存在",
+    "aliases": [
+      "肾功能ABSENT"
+    ]
+  },
+  {
+    "code": "RENAL_FUNCTION:DECREASED",
+    "name": "肾功能降低",
+    "aliases": [
+      "肾功能DECREASED"
+    ]
+  },
+  {
+    "code": "RENAL_FUNCTION:DURATION_GT",
+    "name": "肾功能持续时间大于",
+    "aliases": [
+      "肾功能DURATION_GT"
+    ]
+  },
+  {
+    "code": "RENAL_FUNCTION:DYNAMIC_RISE",
+    "name": "肾功能动态上升",
+    "aliases": [
+      "肾功能DYNAMIC_RISE"
+    ]
+  },
+  {
+    "code": "RENAL_FUNCTION:ELEVATED",
+    "name": "肾功能升高",
+    "aliases": [
+      "肾功能ELEVATED"
+    ]
+  },
+  {
+    "code": "RENAL_FUNCTION:NEGATIVE",
+    "name": "肾功能阴性",
+    "aliases": [
+      "肾功能NEGATIVE"
+    ]
+  },
+  {
+    "code": "RENAL_FUNCTION:POSITIVE",
+    "name": "肾功能阳性",
+    "aliases": [
+      "肾功能POSITIVE"
+    ]
+  },
+  {
+    "code": "TROPONIN:ABSENT",
+    "name": "肌钙蛋白不存在",
+    "aliases": [
+      "肌钙蛋白ABSENT"
+    ]
+  },
+  {
+    "code": "TROPONIN:DECREASED",
+    "name": "肌钙蛋白降低",
+    "aliases": [
+      "肌钙蛋白DECREASED"
+    ]
+  },
+  {
+    "code": "TROPONIN:DURATION_GT",
+    "name": "肌钙蛋白持续时间大于",
+    "aliases": [
+      "肌钙蛋白DURATION_GT"
+    ]
+  },
+  {
+    "code": "TROPONIN:DYNAMIC_RISE",
+    "name": "肌钙蛋白动态上升",
+    "aliases": [
+      "肌钙蛋白DYNAMIC_RISE"
+    ]
+  },
+  {
+    "code": "TROPONIN:ELEVATED",
+    "name": "肌钙蛋白升高",
+    "aliases": [
+      "肌钙蛋白ELEVATED"
+    ]
+  },
+  {
+    "code": "TROPONIN:NEGATIVE",
+    "name": "肌钙蛋白阴性",
+    "aliases": [
+      "肌钙蛋白NEGATIVE"
+    ]
+  },
+  {
+    "code": "TROPONIN:POSITIVE",
+    "name": "肌钙蛋白阳性",
+    "aliases": [
+      "肌钙蛋白POSITIVE"
+    ]
+  },
+  {
+    "code": "URINALYSIS:ABSENT",
+    "name": "尿常规不存在",
+    "aliases": [
+      "尿常规ABSENT"
+    ]
+  },
+  {
+    "code": "URINALYSIS:DECREASED",
+    "name": "尿常规降低",
+    "aliases": [
+      "尿常规DECREASED"
+    ]
+  },
+  {
+    "code": "URINALYSIS:DURATION_GT",
+    "name": "尿常规持续时间大于",
+    "aliases": [
+      "尿常规DURATION_GT"
+    ]
+  },
+  {
+    "code": "URINALYSIS:DYNAMIC_RISE",
+    "name": "尿常规动态上升",
+    "aliases": [
+      "尿常规DYNAMIC_RISE"
+    ]
+  },
+  {
+    "code": "URINALYSIS:ELEVATED",
+    "name": "尿常规升高",
+    "aliases": [
+      "尿常规ELEVATED"
+    ]
+  },
+  {
+    "code": "URINALYSIS:NEGATIVE",
+    "name": "尿常规阴性",
+    "aliases": [
+      "尿常规NEGATIVE"
+    ]
+  },
+  {
+    "code": "URINALYSIS:POSITIVE",
+    "name": "尿常规阳性",
+    "aliases": [
+      "尿常规POSITIVE"
+    ]
+  },
+  {
+    "code": "BONE_MARROW_INVOLVEMENT",
+    "name": "骨髓受累",
+    "aliases": [
+      "骨髓受累",
+      "骨髓侵犯"
+    ]
+  },
+  {
+    "code": "DISTANT_METASTASIS",
+    "name": "远处转移",
+    "aliases": [
+      "远处转移",
+      "转移灶"
+    ]
+  },
+  {
+    "code": "EROSION",
+    "name": "糜烂",
+    "aliases": [
+      "糜烂"
+    ]
+  },
+  {
+    "code": "EXTRANODAL_INVOLVEMENT",
+    "name": "结外受累",
+    "aliases": [
+      "结外受累",
+      "结外侵犯"
+    ]
+  },
+  {
+    "code": "HEMORRHAGE",
+    "name": "出血灶",
+    "aliases": [
+      "出血灶",
+      "出血"
+    ]
+  },
+  {
+    "code": "HYPERACUTE_T_WAVE",
+    "name": "超急期T波",
+    "aliases": [
+      "T波.*高.*对称",
+      "超急期.*T波"
+    ]
+  },
+  {
+    "code": "INFARCTION",
+    "name": "梗死灶",
+    "aliases": [
+      "梗死灶",
+      "梗死"
+    ]
+  },
+  {
+    "code": "LUNG_RALES",
+    "name": "肺部啰音",
+    "aliases": [
+      "肺部[哕啰]音"
+    ]
+  },
+  {
+    "code": "LYMPH_NODE_INVOLVEMENT",
+    "name": "淋巴结受累",
+    "aliases": [
+      "淋巴结受累",
+      "淋巴结侵犯"
+    ]
+  },
+  {
+    "code": "MASS",
+    "name": "肿块",
+    "aliases": [
+      "肿块",
+      "占位"
+    ]
+  },
+  {
+    "code": "METABOLIC_AVIDITY",
+    "name": "病灶代谢活性增高",
+    "aliases": [
+      "病灶代谢活性增高",
+      "代谢活性增高",
+      "摄取增高"
+    ]
+  },
+  {
+    "code": "NODULE",
+    "name": "结节",
+    "aliases": [
+      "结节"
+    ]
+  },
+  {
+    "code": "PATHOLOGICAL_Q_WAVE",
+    "name": "病理性Q波",
+    "aliases": [
+      "病理性Q波",
+      "Q波"
+    ]
+  },
+  {
+    "code": "PATHOLOGY_CONFIRMED",
+    "name": "病理确诊",
+    "aliases": [
+      "病理确诊",
+      "病理证实",
+      "确诊.*病理"
+    ]
+  },
+  {
+    "code": "R_WAVE_REDUCTION",
+    "name": "R波减低",
+    "aliases": [
+      "R波减低"
+    ]
+  },
+  {
+    "code": "ST_CONVEX_ELEVATION",
+    "name": "ST段弓背向上抬高",
+    "aliases": [
+      "ST段弓背向上抬高",
+      "ST段抬高"
+    ]
+  },
+  {
+    "code": "THROMBOSIS",
+    "name": "血栓形成",
+    "aliases": [
+      "血栓形成",
+      "血栓"
+    ]
+  },
+  {
+    "code": "ULCER",
+    "name": "溃疡",
+    "aliases": [
+      "溃疡"
+    ]
+  },
+  {
+    "code": "VASCULAR_STENOSIS",
+    "name": "血管狭窄",
+    "aliases": [
+      "血管狭窄",
+      "狭窄"
+    ]
+  },
+  {
+    "code": "LV_HYPERTROPHY",
+    "name": "左室肥厚",
+    "aliases": [
+      "左室肥厚",
+      "左心室肥厚",
+      "左室壁增厚",
+      "室间隔增厚",
+      "心肌肥厚"
+    ]
+  },
+  {
+    "code": "LVOT_OBSTRUCTION",
+    "name": "左室流出道梗阻",
+    "aliases": [
+      "左室流出道梗阻",
+      "左心室流出道梗阻",
+      "LVOT梗阻",
+      "流出道压差升高"
+    ]
+  },
+  {
+    "code": "SAM",
+    "name": "二尖瓣前叶收缩期前移",
+    "aliases": [
+      "二尖瓣前叶收缩期前移",
+      "SAM征",
+      "SAM现象"
+    ]
+  },
+  {
+    "code": "LVH_VOLTAGE",
+    "name": "左室高电压",
+    "aliases": [
+      "左室高电压",
+      "左心室高电压",
+      "左室电压增高"
+    ]
+  },
+  {
+    "code": "T_WAVE_INVERSION",
+    "name": "T波倒置",
+    "aliases": [
+      "T波倒置",
+      "T波深倒置"
+    ]
+  },
+  {
+    "code": "ST_T_CHANGE",
+    "name": "ST-T改变",
+    "aliases": [
+      "ST-T改变",
+      "ST段改变",
+      "ST-T异常"
+    ]
+  }
+]

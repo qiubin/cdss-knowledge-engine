@@ -1,0 +1,78 @@
+[
+  {
+    "hospital_id": "FZ_HOSPITAL",
+    "lab_code": "MYO",
+    "lab_name": "肌红蛋白",
+    "concept_code": "ELEVATED",
+    "operator": ">",
+    "threshold_value": 85.0,
+    "threshold_unit": "ng/mL",
+    "ref_source": "STATIC",
+    "effective_from": "2024-06-01",
+    "version": 1,
+    "status": "active",
+    "source_note": "福州某院使用罗氏cobas8000，参考范围不同"
+  },
+  {
+    "hospital_id": "FZ_HOSPITAL",
+    "lab_code": "MYO",
+    "lab_name": "肌红蛋白",
+    "concept_code": "DECREASED",
+    "operator": "<",
+    "threshold_value": 3.0,
+    "threshold_unit": "ng/mL",
+    "ref_source": "STATIC",
+    "effective_from": "2024-06-01",
+    "version": 1,
+    "status": "active"
+  },
+  {
+    "hospital_id": "FZ_HOSPITAL",
+    "lab_code": "CTN",
+    "lab_name": "肌钙蛋白",
+    "concept_code": "ABOVE_ULN_1",
+    "operator": ">",
+    "threshold_value": 0.05,
+    "threshold_unit": "ng/mL",
+    "uln_multiplier": 1.0,
+    "ref_source": "STATIC",
+    "effective_from": "2024-06-01",
+    "version": 1,
+    "status": "active",
+    "source_note": "cTnI ULN=0.05 ng/mL"
+  },
+  {
+    "hospital_id": "FZ_HOSPITAL",
+    "lab_code": "CTN",
+    "lab_name": "肌钙蛋白",
+    "concept_code": "DYNAMIC_RISE",
+    "ref_source": "STATIC",
+    "effective_from": "2024-06-01",
+    "version": 1,
+    "status": "active"
+  },
+  {
+    "hospital_id": "FZ_HOSPITAL",
+    "lab_code": "CK_MB",
+    "lab_name": "肌酸激酶同工酶",
+    "concept_code": "ABOVE_ULN_1",
+    "operator": ">",
+    "threshold_value": 6.0,
+    "threshold_unit": "ng/mL",
+    "uln_multiplier": 1.0,
+    "ref_source": "STATIC",
+    "effective_from": "2024-06-01",
+    "version": 1,
+    "status": "active"
+  },
+  {
+    "hospital_id": "FZ_HOSPITAL",
+    "lab_code": "CK_MB",
+    "lab_name": "肌酸激酶同工酶",
+    "concept_code": "PEAK_SHIFT",
+    "ref_source": "STATIC",
+    "effective_from": "2024-06-01",
+    "version": 1,
+    "status": "active"
+  }
+]

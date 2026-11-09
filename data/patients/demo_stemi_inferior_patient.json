@@ -1,0 +1,160 @@
+{
+  "patient_id": "DEMO-STEMI-INFERIOR",
+  "hospital_id": "XM_FIRST",
+  "age": 66,
+  "gender": "F",
+  "encounter_time": "2026-11-04T06:40:00+08:00",
+  "display_name": "STEMI · 急性下壁心肌梗死伴低血压",
+  "category": "STEMI",
+  "chief_complaint": "胸痛伴恶心呕吐 1.5 小时，头晕。",
+  "history_present": "患者凌晨突发胸骨后压榨性疼痛，放射至后背，伴恶心、呕吐、大汗，起身时头晕黑朦。",
+  "history_past": "高血压 10 年，高脂血症 5 年。",
+  "labs": [
+    {
+      "lab_code": "MYO",
+      "lab_name": "肌红蛋白",
+      "value": 210.0,
+      "unit": "ng/mL",
+      "reference_low": 3.5,
+      "reference_high": 77.0,
+      "collected_at": "2026-11-04T06:45:00+08:00",
+      "reported_at": "2026-11-04T06:55:00+08:00"
+    },
+    {
+      "lab_code": "CTN",
+      "lab_name": "肌钙蛋白",
+      "value": 2.8,
+      "unit": "ng/mL",
+      "reference_low": 0.0,
+      "reference_high": 0.04,
+      "collected_at": "2026-11-04T06:45:00+08:00",
+      "reported_at": "2026-11-04T07:00:00+08:00"
+    },
+    {
+      "lab_code": "CTN",
+      "lab_name": "肌钙蛋白",
+      "value": 6.5,
+      "unit": "ng/mL",
+      "reference_low": 0.0,
+      "reference_high": 0.04,
+      "collected_at": "2026-11-04T09:00:00+08:00",
+      "reported_at": "2026-11-04T09:15:00+08:00"
+    },
+    {
+      "lab_code": "CK_MB",
+      "lab_name": "肌酸激酶同工酶",
+      "value": 45.0,
+      "unit": "ng/mL",
+      "reference_low": 0.0,
+      "reference_high": 5.0,
+      "collected_at": "2026-11-04T06:45:00+08:00",
+      "reported_at": "2026-11-04T07:00:00+08:00"
+    },
+    {
+      "lab_code": "BNP",
+      "lab_name": "脑钠肽",
+      "value": 350.0,
+      "unit": "pg/mL",
+      "reference_low": 0.0,
+      "reference_high": 100.0,
+      "collected_at": "2026-11-04T06:45:00+08:00",
+      "reported_at": "2026-11-04T07:10:00+08:00"
+    }
+  ],
+  "exam_findings": [
+    {
+      "exam_code": "ECG_12LEAD",
+      "exam_name": "12导联心电图",
+      "finding_code": "ST_CONVEX_ELEVATION",
+      "finding_name": "ST段弓背向上抬高",
+      "present": true,
+      "detail": {
+        "summary": "II、III、aVF 导联抬高 0.25mV，I、aVL 导联镜像压低"
+      }
+    },
+    {
+      "exam_code": "ECG_12LEAD",
+      "exam_name": "12导联心电图",
+      "finding_code": "PATHOLOGICAL_Q_WAVE",
+      "finding_name": "病理性Q波",
+      "present": false,
+      "detail": null
+    },
+    {
+      "exam_code": "ECHO",
+      "exam_name": "超声心动图",
+      "finding_code": "LEFT_VENTRICULAR_DYSFUNCTION",
+      "finding_name": "左室下壁运动减弱",
+      "present": true,
+      "detail": {
+        "summary": "下壁及后壁节段性运动减弱，EF 45%"
+      }
+    }
+  ],
+  "symptoms": [
+    {
+      "symptom_code": "CHEST_PAIN_CRUSHING",
+      "symptom_name": "压榨性胸痛",
+      "present": true,
+      "duration_minutes": 90,
+      "severity": "severe"
+    },
+    {
+      "symptom_code": "NAUSEA_VOMITING",
+      "symptom_name": "恶心呕吐",
+      "present": true,
+      "duration_minutes": 60,
+      "severity": "moderate"
+    },
+    {
+      "symptom_code": "DIAPHORESIS",
+      "symptom_name": "大汗",
+      "present": true,
+      "duration_minutes": null,
+      "severity": null
+    },
+    {
+      "symptom_code": "DIZZINESS",
+      "symptom_name": "头晕",
+      "present": true,
+      "duration_minutes": null,
+      "severity": null
+    }
+  ],
+  "vitals": [
+    {
+      "vital_code": "sbp",
+      "value": 88.0,
+      "unit": "mmHg"
+    },
+    {
+      "vital_code": "dbp",
+      "value": 55.0,
+      "unit": "mmHg"
+    },
+    {
+      "vital_code": "hr",
+      "value": 52.0,
+      "unit": "bpm"
+    },
+    {
+      "vital_code": "rr",
+      "value": 18.0,
+      "unit": "bpm"
+    },
+    {
+      "vital_code": "spo2",
+      "value": 96.0,
+      "unit": "%"
+    }
+  ],
+  "past_history": [
+    "I10",
+    "E78.5"
+  ],
+  "current_medications": [
+    "ASPIRIN",
+    "ATORVASTATIN"
+  ],
+  "allergies": []
+}

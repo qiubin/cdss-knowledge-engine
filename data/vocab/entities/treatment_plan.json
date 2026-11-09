@@ -1,0 +1,67 @@
+[
+  {
+    "code": "TP-STEMI-REPERFUSION",
+    "name": "STEMI再灌注治疗",
+    "aliases": [
+      "再灌注治疗",
+      "再灌注策略"
+    ]
+  },
+  {
+    "code": "TP-STEMI-PRIMARY-PCI",
+    "name": "直接PCI策略",
+    "aliases": [
+      "直接PCI",
+      "急诊PCI",
+      "直接经皮冠状动脉介入"
+    ]
+  },
+  {
+    "code": "TP-STEMI-THROMBOLYSIS",
+    "name": "静脉溶栓治疗",
+    "aliases": [
+      "静脉溶栓",
+      "溶栓治疗"
+    ]
+  },
+  {
+    "code": "TP-STEMI-MEDICAL",
+    "name": "药物保守治疗",
+    "aliases": [
+      "药物保守",
+      "保守治疗"
+    ]
+  },
+  {
+    "code": "TP-LYMPHOMA-CHEMOIMMUNO",
+    "name": "化疗免疫治疗",
+    "aliases": [
+      "免疫化疗",
+      "化学免疫治疗"
+    ]
+  },
+  {
+    "code": "TP-LYMPHOMA-RCHOP",
+    "name": "R-CHOP方案",
+    "aliases": [
+      "R-CHOP",
+      "利妥昔单抗联合CHOP"
+    ]
+  },
+  {
+    "code": "TP-LYMPHOMA-RADIOTHERAPY",
+    "name": "放射治疗",
+    "aliases": [
+      "放疗",
+      "局部放疗"
+    ]
+  },
+  {
+    "code": "TP-LYMPHOMA-TRANSPLANT",
+    "name": "造血干细胞移植",
+    "aliases": [
+      "造血干细胞移植",
+      "移植治疗"
+    ]
+  }
+]

@@ -1,0 +1,88 @@
+[
+  {
+    "code": "TCM_PULSE_THREADY_WEAK",
+    "name": "脉细弱",
+    "aliases": [
+      "脉细弱",
+      "脉弱"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_PULSE_WIRY_SLIPPERY",
+    "name": "脉弦滑",
+    "aliases": [
+      "脉弦滑",
+      "脉滑弦"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_PULSE_CHOPPY",
+    "name": "脉涩",
+    "aliases": [
+      "脉涩",
+      "脉涩滞"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_PULSE_INTERMITTENT",
+    "name": "脉结代",
+    "aliases": [
+      "脉结代",
+      "结代脉",
+      "脉结"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_PULSE_THREADY_FAST",
+    "name": "脉细数",
+    "aliases": [
+      "脉细数"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_PULSE_DEEP_THREADY",
+    "name": "脉沉细",
+    "aliases": [
+      "脉沉细",
+      "脉沉"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_PULSE_WIRY",
+    "name": "脉弦",
+    "aliases": [
+      "脉弦"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_PULSE_SLIPPERY",
+    "name": "脉滑",
+    "aliases": [
+      "脉滑"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  }
+]

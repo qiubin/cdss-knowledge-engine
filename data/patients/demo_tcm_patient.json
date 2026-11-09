@@ -1,0 +1,23 @@
+{
+  "patient_id": "TCM-DEMO-001",
+  "hospital_id": "TCM_DEMO",
+  "age": 62,
+  "gender": "M",
+  "encounter_time": "2026-11-08T09:00:00",
+  "observations": [
+    {"observation_type": "symptom", "code": "SYM_CHEST_TIGHTNESS", "name": "胸闷", "present": true},
+    {"observation_type": "symptom", "code": "SYM_SHORTNESS_BREATH", "name": "气短", "present": true},
+    {"observation_type": "symptom", "code": "SYM_FATIGUE", "name": "乏力", "present": true},
+    {"observation_type": "symptom", "code": "SYM_SPONTANEOUS_SWEAT", "name": "自汗", "present": true},
+    {"observation_type": "tongue", "code": "TCM_TONGUE_PALE_RED", "name": "舌淡红", "present": true},
+    {"observation_type": "tongue", "code": "TCM_COATING_THIN_WHITE", "name": "苔薄白", "present": true},
+    {"observation_type": "pulse", "code": "TCM_PULSE_THREADY_WEAK", "name": "脉细弱", "present": true}
+  ],
+  "labs": [],
+  "exam_findings": [],
+  "symptoms": [],
+  "vitals": [],
+  "past_history": [],
+  "current_medications": [],
+  "allergies": []
+}

@@ -1,0 +1,94 @@
+[
+  {
+    "code": "TCM_TONGUE_PALE_RED",
+    "name": "舌淡红",
+    "aliases": [
+      "舌淡红",
+      "舌质淡红"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_TONGUE_RED",
+    "name": "舌红",
+    "aliases": [
+      "舌红",
+      "舌质红"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_TONGUE_PALE_FLABBY",
+    "name": "舌淡胖",
+    "aliases": [
+      "舌淡胖",
+      "舌体胖大",
+      "舌胖"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_TONGUE_PURPLE_DARK",
+    "name": "舌紫暗",
+    "aliases": [
+      "舌紫暗",
+      "舌质紫暗",
+      "舌暗"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_TONGUE_ECCHYMOSIS",
+    "name": "舌有瘀斑",
+    "aliases": [
+      "舌有瘀斑",
+      "舌见瘀点",
+      "瘀斑舌"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_COATING_THIN_WHITE",
+    "name": "苔薄白",
+    "aliases": [
+      "苔薄白",
+      "舌苔薄白"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_COATING_WHITE_GREASY",
+    "name": "苔白腻",
+    "aliases": [
+      "苔白腻",
+      "舌苔白腻"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_COATING_SCANT",
+    "name": "苔少",
+    "aliases": [
+      "苔少",
+      "少苔",
+      "苔剥"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  }
+]

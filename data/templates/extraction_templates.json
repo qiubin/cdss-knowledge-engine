@@ -1,0 +1,2120 @@
+[
+  {
+    "template_id": "GENERIC_GUIDELINE_V1",
+    "name": "通用诊疗指南知识图谱模板",
+    "description": "跨病种通用解析模板：疾病名称动态发现，症状、检验、检查、发现与状态概念作为通用临床证据结构；通过疾病词汇库、实体条目、关系和属性可继续扩展，不绑定单一疾病。",
+    "version": 1,
+    "is_default": true,
+    "status": "active",
+    "domain": "western",
+    "graph_filename": "",
+    "entity_types": [
+      {
+        "entity_type": "disease",
+        "label": "疾病",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": false,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "symptom",
+        "label": "症状",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": false,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "lab",
+        "label": "检验",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": false,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "exam",
+        "label": "检查",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": false,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "diagnostic_evidence",
+        "label": "诊断证据",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": false,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "treatment_plan",
+        "label": "治疗方案",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": true,
+        "vocabulary": false
+      },
+      {
+        "entity_type": "intervention",
+        "label": "治疗措施",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": true,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "medication",
+        "label": "药物",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": true,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "contraindication",
+        "label": "禁忌",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": true,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "monitoring_requirement",
+        "label": "监测要求",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": true,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "concept",
+        "label": "抽象概念",
+        "vocabulary": true,
+        "entries": [],
+        "discovery": false
+      }
+    ],
+    "relations": [
+      {
+        "relation_code": "DISEASE_HAS_LAB",
+        "name": "疾病关联检验",
+        "source_entity_type": "disease",
+        "target_entity_type": "lab",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取疾病诊断或监测流程中明确要求的检验项目；疾病与检验在同一片段共同出现时建立关系，并保留原文出处。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "DISEASE_HAS_EXAM",
+        "name": "疾病关联检查",
+        "source_entity_type": "disease",
+        "target_entity_type": "exam",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取疾病诊断流程中明确要求的检查项目；疾病与检查在同一片段共同出现时建立关系，并保留原文出处。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "DISEASE_HAS_SYMPTOM",
+        "name": "疾病有症状",
+        "source_entity_type": "disease",
+        "target_entity_type": "symptom",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取疾病典型症状或伴随症状；仅在原文明确描述疾病与症状关联时建立关系。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+        "name": "疾病有诊断证据",
+        "source_entity_type": "disease",
+        "target_entity_type": "diagnostic_evidence",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取支持疾病诊断的检验状态、检查形态特征或症状证据；同一片段中疾病与证据共同出现时建立关系。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+        "name": "检验形成诊断证据",
+        "source_entity_type": "lab",
+        "target_entity_type": "diagnostic_evidence",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "检验项目必须与升高、降低、阳性、超过上限等状态判定出现在同一片段时形成证据；保留数值、单位、页码、行号和原文摘录。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "EXAM_HAS_DIAGNOSTIC_EVIDENCE",
+        "name": "检查形成诊断证据",
+        "source_entity_type": "exam",
+        "target_entity_type": "diagnostic_evidence",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "仅当检查项目和形态特征在同一片段中明确共同出现时建立关系；不要默认绑定某一种检查，阴性表述需人工复核。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "DISEASE_HAS_TREATMENT_PLAN",
+        "name": "疾病有治疗方案",
+        "source_entity_type": "disease",
+        "target_entity_type": "treatment_plan",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取疾病指南中明确推荐的治疗方案；仅当疾病与治疗方案在同一片段共同出现时建立关系，保留原文出处。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_INCLUDES_INTERVENTION",
+        "name": "治疗方案包含治疗措施",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "intervention",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取治疗方案所包含的具体操作或技术措施（如 PCI、溶栓）；需同一片段共同出现。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_INCLUDES_MEDICATION",
+        "name": "治疗方案包含药物",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "medication",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取治疗方案中明确推荐的药物；需同一片段共同出现并保留剂量等属性。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_HAS_CONTRAINDICATION",
+        "name": "治疗方案有禁忌",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "contraindication",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取治疗方案或其中措施的禁忌证；同一片段明确描述时建立关系。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_HAS_MONITORING",
+        "name": "治疗方案有监测要求",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "monitoring_requirement",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取治疗方案执行过程中要求的监测项目；同一片段共同出现时建立关系。",
+        "concept_code": "",
+        "generate_evidence": true
+      }
+    ],
+    "attributes": [
+      {
+        "attribute_code": "DISEASE_ICD_CODE",
+        "name": "疾病ICD编码",
+        "owner_entity_type": "disease",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "优先使用词汇库正式编码；动态发现的疾病先使用候选编码，待人工核对。"
+      },
+      {
+        "attribute_code": "DIAGNOSTIC_BASIS",
+        "name": "诊断依据",
+        "owner_entity_type": "disease",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "保留原文中的诊断条件或依据摘要。"
+      },
+      {
+        "attribute_code": "EVIDENCE_LEVEL",
+        "name": "证据等级",
+        "owner_entity_type": "disease",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "保留指南原文给出的推荐或证据等级。"
+      },
+      {
+        "attribute_code": "REFERENCE_UNIT",
+        "name": "参考范围单位",
+        "owner_entity_type": "lab",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "保留检验指标的单位或参考范围单位。"
+      },
+      {
+        "attribute_code": "ULN_JUDGEMENT",
+        "name": "上限判断",
+        "owner_entity_type": "lab",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "保留高于正常上限倍数、阈值或区间描述。"
+      },
+      {
+        "attribute_code": "EXAM_MODALITY",
+        "name": "检查方式",
+        "owner_entity_type": "exam",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "保留检查技术、部位或方式。"
+      },
+      {
+        "attribute_code": "FINDING_OWNER_EXAM",
+        "name": "发现所属检查",
+        "owner_entity_type": "diagnostic_evidence",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "保留诊断证据来源检查的编码；检验类证据可留空。"
+      },
+      {
+        "attribute_code": "MORPHOLOGY",
+        "name": "形态学描述",
+        "owner_entity_type": "diagnostic_evidence",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "保留检查证据中的形态特征描述。"
+      },
+      {
+        "attribute_code": "CONCEPT_EVALUATOR",
+        "name": "概念判断方式",
+        "owner_entity_type": "diagnostic_evidence",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "保留诊断证据的判定方式或状态评估描述。"
+      },
+      {
+        "attribute_code": "CONCEPT_CATEGORY",
+        "name": "概念类别",
+        "owner_entity_type": "diagnostic_evidence",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "保留诊断证据的判定类别，例如检验状态或检查形态。"
+      },
+      {
+        "attribute_code": "TREATMENT_DOSE",
+        "name": "剂量",
+        "owner_entity_type": "medication",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "药物剂量，如 300mg、0.4mg/kg"
+      },
+      {
+        "attribute_code": "TREATMENT_ROUTE",
+        "name": "给药途径",
+        "owner_entity_type": "medication",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "如口服、静脉、皮下、冠脉内"
+      },
+      {
+        "attribute_code": "TREATMENT_FREQUENCY",
+        "name": "频次",
+        "owner_entity_type": "medication",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "如 每日一次、每12小时"
+      },
+      {
+        "attribute_code": "TREATMENT_DURATION",
+        "name": "疗程",
+        "owner_entity_type": "medication",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "如 7天、长期、直至复查"
+      },
+      {
+        "attribute_code": "TREATMENT_PRIORITY",
+        "name": "优先级",
+        "owner_entity_type": "treatment_plan",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [
+          "首选",
+          "次选",
+          "替代",
+          "补救"
+        ],
+        "concept_code": "",
+        "description": "治疗方案优先级"
+      },
+      {
+        "attribute_code": "TREATMENT_EVIDENCE_LEVEL",
+        "name": "证据级别",
+        "owner_entity_type": "treatment_plan",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "如 I类A、IIa类B 或指南原文标注"
+      },
+      {
+        "attribute_code": "TREATMENT_PATIENT_SCOPE",
+        "name": "适用人群",
+        "owner_entity_type": "treatment_plan",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "如 发病<12小时、年龄<75岁、无禁忌"
+      },
+      {
+        "attribute_code": "TREATMENT_TIME_WINDOW",
+        "name": "时间窗",
+        "owner_entity_type": "treatment_plan",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "如 发病12小时内、24小时内"
+      }
+    ],
+    "concept_codes": [
+      "ELEVATED",
+      "DECREASED",
+      "ABNORMAL",
+      "CRITICAL_HIGH",
+      "ABOVE_ULN_1",
+      "ABOVE_ULN_5",
+      "POSITIVE",
+      "NEGATIVE",
+      "DYNAMIC_RISE",
+      "PEAK_SHIFT",
+      "PRESENT",
+      "ABSENT",
+      "DURATION_GT"
+    ],
+    "relation_hints": [
+      "疾病与检验、检查、症状在同一片段共同出现时建立对应关联。",
+      "检验异常状态和检查形态特征统一抽取为诊断证据，并保留原文出处。",
+      "检验或检查必须与诊断证据同片段配对后再连接疾病；阴性表述需人工复核。"
+    ],
+    "rule_hints": [
+      "自动生成的候选规则默认为草稿状态，必须医学审核后再启用。",
+      "症状、检验异常和检查发现可以组成初步诊断线索，但不应替代原文明确条件。",
+      "动态发现疾病生成的规则默认为草稿，必须医学审核后再启用。",
+      "同时生成候选治疗规则（rule_type=treatment），导入后需医学专员审核，默认不得自动启用"
+    ],
+    "prompt_instructions": [
+      "只输出一个 JSON 对象，不要 Markdown 或额外说明。",
+      "不要修改或虚构 chunk_id；实体和关系必须复用输入片段中的 chunk_id。",
+      "quote 尽量使用原文，不要改写为总结。",
+      "line_start 和 line_end 必须落在所选 chunk 范围内。",
+      "concept_code 只能使用模板 concept_codes 中的值。",
+      "未收录疾病名称可动态发现，但应标出原文位置；自动编码需人工核对。",
+      "对于启用动态发现的实体类型，可抽取词表外新名称；code 可使用候选编码，结果默认为待人工审核。",
+      "entity_type 只能使用模板定义的疾病、症状、检验、检查或诊断证据类型。",
+      "诊断证据编码可表示检验状态（检验编码:概念编码）或检查形态（发现编码），不要单独输出抽象概念节点。",
+      "entity_type 只能使用模板定义的疾病、症状、检验、检查、诊断证据以及治疗方案、治疗措施、药物、禁忌、监测要求类型。"
+    ],
+    "output_contract": {
+      "entities": [
+        {
+          "entity_type": "string",
+          "name": "string",
+          "code": "string",
+          "concept_code": "string",
+          "chunk_id": "string",
+          "page": "integer",
+          "line_start": "integer",
+          "line_end": "integer",
+          "quote": "string",
+          "confidence": "number",
+          "discovery": "boolean"
+        }
+      ],
+      "suggested_rules": [
+        {
+          "rule_id": "string",
+          "name": "string",
+          "disease_code": "string",
+          "disease_name": "string",
+          "status": "draft",
+          "conditions": {
+            "type": "group|evidence|lab_concept|exam_finding|symptom"
+          },
+          "conclusion": {
+            "diagnosis": "string",
+            "confidence": "high|medium|low",
+            "message": "string",
+            "action": "string"
+          },
+          "source": {
+            "chunk_id": "string",
+            "section": "string",
+            "page_start": "integer",
+            "page_end": "integer",
+            "line_start": "integer",
+            "line_end": "integer",
+            "quote": "string"
+          },
+          "priority": "integer",
+          "tags": [
+            "auto-generated"
+          ]
+        }
+      ]
+    },
+    "capabilities": [
+      "diagnosis",
+      "treatment"
+    ],
+    "specialty": "",
+    "rule_generation": [],
+    "standard_system": ""
+  },
+  {
+    "template_id": "CARDIO_DIAGNOSIS_V1",
+    "name": "心血管诊断指南模板",
+    "description": "适用于心血管诊断指南的疾病、检验、检查发现、症状和抽象证据概念抽取。",
+    "version": 1,
+    "is_default": false,
+    "status": "retired",
+    "domain": "western",
+    "graph_filename": "stemi_graph.json",
+    "entity_types": [
+      {
+        "entity_type": "disease",
+        "label": "疾病",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": true,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "symptom",
+        "label": "症状",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": false,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "lab",
+        "label": "检验",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": false,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "exam",
+        "label": "检查",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": false,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "diagnostic_evidence",
+        "label": "诊断证据",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": false,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "treatment_plan",
+        "label": "治疗方案",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": true,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "intervention",
+        "label": "治疗措施",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": true,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "medication",
+        "label": "药物",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": true,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "contraindication",
+        "label": "禁忌",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": true,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "monitoring_requirement",
+        "label": "监测要求",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": true,
+        "vocabulary": true
+      }
+    ],
+    "relations": [
+      {
+        "relation_code": "DISEASE_HAS_LAB",
+        "name": "疾病关联检验",
+        "source_entity_type": "disease",
+        "target_entity_type": "lab",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取疾病诊断或监测流程中明确要求的检验项目；疾病与检验在同一片段共同出现时建立关系，并保留原文出处。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "DISEASE_HAS_EXAM",
+        "name": "疾病关联检查",
+        "source_entity_type": "disease",
+        "target_entity_type": "exam",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取疾病诊断流程中明确要求的检查项目；疾病与检查在同一片段共同出现时建立关系，并保留原文出处。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "DISEASE_HAS_SYMPTOM",
+        "name": "疾病有症状",
+        "source_entity_type": "disease",
+        "target_entity_type": "symptom",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取疾病典型症状或伴随症状；仅在原文明确描述疾病与症状关联时建立关系。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+        "name": "疾病有诊断证据",
+        "source_entity_type": "disease",
+        "target_entity_type": "diagnostic_evidence",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取支持疾病诊断的检验状态、检查形态特征或症状证据；同一片段中疾病与证据共同出现时建立关系。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+        "name": "检验形成诊断证据",
+        "source_entity_type": "lab",
+        "target_entity_type": "diagnostic_evidence",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "检验项目必须与升高、降低、阳性、超过上限等状态判定出现在同一片段时形成证据；保留数值、单位、页码、行号和原文摘录。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "EXAM_HAS_DIAGNOSTIC_EVIDENCE",
+        "name": "检查形成诊断证据",
+        "source_entity_type": "exam",
+        "target_entity_type": "diagnostic_evidence",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "仅当检查项目和形态特征在同一片段中明确共同出现时建立关系；不要默认绑定某一种检查，阴性表述需人工复核。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "DISEASE_HAS_TREATMENT_PLAN",
+        "name": "疾病有治疗方案",
+        "source_entity_type": "disease",
+        "target_entity_type": "treatment_plan",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取疾病指南中明确推荐的治疗方案；仅当疾病与治疗方案在同一片段共同出现时建立关系，保留原文出处。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_INCLUDES_INTERVENTION",
+        "name": "治疗方案包含治疗措施",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "intervention",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取治疗方案所包含的具体操作或技术措施（如 PCI、溶栓）；需同一片段共同出现。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_INCLUDES_MEDICATION",
+        "name": "治疗方案包含药物",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "medication",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取治疗方案中明确推荐的药物；需同一片段共同出现并保留剂量等属性。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_HAS_CONTRAINDICATION",
+        "name": "治疗方案有禁忌",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "contraindication",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取治疗方案或其中措施的禁忌证；同一片段明确描述时建立关系。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_HAS_MONITORING",
+        "name": "治疗方案有监测要求",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "monitoring_requirement",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取治疗方案执行过程中要求的监测项目；同一片段共同出现时建立关系。",
+        "concept_code": "",
+        "generate_evidence": true
+      }
+    ],
+    "attributes": [
+      {
+        "attribute_code": "DISEASE_ICD_CODE",
+        "name": "ICD 诊断编码",
+        "owner_entity_type": "disease",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "用于与疾病编码一致的标准诊断分类"
+      },
+      {
+        "attribute_code": "DIAGNOSTIC_BASIS",
+        "name": "诊断依据",
+        "owner_entity_type": "disease",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "指南原文中的诊断依据概述，需保留引文溯源"
+      },
+      {
+        "attribute_code": "EVIDENCE_LEVEL",
+        "name": "证据等级",
+        "owner_entity_type": "disease",
+        "data_type": "enum",
+        "required": false,
+        "allowed_values": [
+          "I",
+          "IIa",
+          "IIb",
+          "III",
+          "待评估"
+        ],
+        "concept_code": "",
+        "description": "指南推荐或诊断支持的证据等级"
+      },
+      {
+        "attribute_code": "REFERENCE_UNIT",
+        "name": "参考单位",
+        "owner_entity_type": "lab",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "指南中出现的计量单位；医院阈值和参考范围由标准管理"
+      },
+      {
+        "attribute_code": "ULN_JUDGEMENT",
+        "name": "正常上限判定",
+        "owner_entity_type": "lab",
+        "data_type": "concept",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "ABOVE_ULN_1",
+        "description": "标记该检验可按医院正常上限倍数解释，不保存具体数值"
+      },
+      {
+        "attribute_code": "EXAM_MODALITY",
+        "name": "检查方式",
+        "owner_entity_type": "exam",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "检查方式或设备描述"
+      },
+      {
+        "attribute_code": "FINDING_OWNER_EXAM",
+        "name": "所属检查",
+        "owner_entity_type": "diagnostic_evidence",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "保留诊断证据来源检查的编码；检验类证据可留空。"
+      },
+      {
+        "attribute_code": "MORPHOLOGY",
+        "name": "形态描述",
+        "owner_entity_type": "diagnostic_evidence",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "保留检查证据中的形态特征描述。"
+      },
+      {
+        "attribute_code": "CONCEPT_EVALUATOR",
+        "name": "概念执行器",
+        "owner_entity_type": "diagnostic_evidence",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "保留诊断证据的判定方式或状态评估描述。"
+      },
+      {
+        "attribute_code": "CONCEPT_CATEGORY",
+        "name": "概念类别",
+        "owner_entity_type": "diagnostic_evidence",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "保留诊断证据的判定类别，例如检验状态或检查形态。"
+      },
+      {
+        "attribute_code": "TREATMENT_DOSE",
+        "name": "剂量",
+        "owner_entity_type": "medication",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "药物剂量，如 300mg、0.4mg/kg"
+      },
+      {
+        "attribute_code": "TREATMENT_ROUTE",
+        "name": "给药途径",
+        "owner_entity_type": "medication",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "如口服、静脉、皮下、冠脉内"
+      },
+      {
+        "attribute_code": "TREATMENT_FREQUENCY",
+        "name": "频次",
+        "owner_entity_type": "medication",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "如 每日一次、每12小时"
+      },
+      {
+        "attribute_code": "TREATMENT_DURATION",
+        "name": "疗程",
+        "owner_entity_type": "medication",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "如 7天、长期、直至复查"
+      },
+      {
+        "attribute_code": "TREATMENT_PRIORITY",
+        "name": "优先级",
+        "owner_entity_type": "treatment_plan",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [
+          "首选",
+          "次选",
+          "替代",
+          "补救"
+        ],
+        "concept_code": "",
+        "description": "治疗方案优先级"
+      },
+      {
+        "attribute_code": "TREATMENT_EVIDENCE_LEVEL",
+        "name": "证据级别",
+        "owner_entity_type": "treatment_plan",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "如 I类A、IIa类B 或指南原文标注"
+      },
+      {
+        "attribute_code": "TREATMENT_PATIENT_SCOPE",
+        "name": "适用人群",
+        "owner_entity_type": "treatment_plan",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "如 发病<12小时、年龄<75岁、无禁忌"
+      },
+      {
+        "attribute_code": "TREATMENT_TIME_WINDOW",
+        "name": "时间窗",
+        "owner_entity_type": "treatment_plan",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "如 发病12小时内、24小时内"
+      }
+    ],
+    "concept_codes": [
+      "ELEVATED",
+      "DECREASED",
+      "ABOVE_ULN_1",
+      "ABOVE_ULN_5",
+      "DYNAMIC_RISE",
+      "PEAK_SHIFT",
+      "POSITIVE",
+      "NEGATIVE",
+      "PRESENT",
+      "ABSENT",
+      "DURATION_GT"
+    ],
+    "relation_hints": [
+      "疾病与检验、检查、症状在同一片段共同出现时建立对应关联。",
+      "检验异常状态和检查形态特征统一抽取为诊断证据，并保留原文出处。",
+      "检验或检查必须与诊断证据同片段配对后再连接疾病；阴性表述需人工复核。"
+    ],
+    "rule_hints": [
+      "心电图特征加典型症状可生成高优先级诊断规则。",
+      "心肌损伤标志物可生成中等优先级支持规则。",
+      "所有 LLM 生成规则默认为 draft，等待人工审核。",
+      "同时生成候选治疗规则（rule_type=treatment），导入后需医学专员审核，默认不得自动启用"
+    ],
+    "prompt_instructions": [
+      "只输出一个 JSON 对象，不要 Markdown、解释或代码块。",
+      "不得修改、虚构 chunk_id；实体必须引用输入中的 chunk_id。",
+      "quote 必须尽量复制输入原文，不得改写为总结。",
+      "line_start 和 line_end 必须在所选 chunk 的范围内。",
+      "concept_code 只能使用模板 concept_codes 中的值。",
+      "entity_type 只能使用模板定义的疾病、症状、检验、检查或诊断证据类型。",
+      "诊断证据编码可表示检验状态（检验编码:概念编码）或检查形态（发现编码），不要单独输出抽象概念节点。",
+      "entity_type 只能使用模板定义的疾病、症状、检验、检查、诊断证据以及治疗方案、治疗措施、药物、禁忌、监测要求类型。"
+    ],
+    "output_contract": {
+      "entities": [
+        {
+          "entity_type": "string",
+          "name": "string",
+          "code": "string",
+          "concept_code": "string",
+          "chunk_id": "string",
+          "page": "integer",
+          "line_start": "integer",
+          "line_end": "integer",
+          "quote": "string",
+          "confidence": "number"
+        }
+      ],
+      "suggested_rules": [
+        {
+          "rule_id": "string",
+          "name": "string",
+          "disease_code": "string",
+          "disease_name": "string",
+          "status": "draft",
+          "conditions": {
+            "type": "group|evidence|lab_concept|exam_finding|symptom"
+          },
+          "conclusion": {
+            "diagnosis": "string",
+            "confidence": "high|medium|low",
+            "message": "string",
+            "action": "string"
+          },
+          "source": {
+            "chunk_id": "string",
+            "section": "string",
+            "page_start": "integer",
+            "page_end": "integer",
+            "line_start": "integer",
+            "line_end": "integer",
+            "quote": "string"
+          },
+          "priority": "integer",
+          "tags": [
+            "auto-generated"
+          ]
+        }
+      ]
+    },
+    "capabilities": [
+      "diagnosis",
+      "treatment"
+    ],
+    "specialty": "心血管内科",
+    "rule_generation": [],
+    "standard_system": ""
+  },
+  {
+    "template_id": "LYMPHOMA_GUIDELINE_V1",
+    "name": "淋巴瘤诊疗指南模板",
+    "description": "CSCO淋巴瘤诊疗指南的血液肿瘤专用解析模板，候选结果仍需人工审核。",
+    "version": 1,
+    "is_default": false,
+    "status": "retired",
+    "domain": "western",
+    "graph_filename": "lymphoma_graph.json",
+    "entity_types": [
+      {
+        "entity_type": "disease",
+        "label": "疾病",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": true,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "symptom",
+        "label": "症状",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": false,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "lab",
+        "label": "检验",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": false,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "exam",
+        "label": "检查",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": false,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "diagnostic_evidence",
+        "label": "诊断证据",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": false,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "treatment_plan",
+        "label": "治疗方案",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": true,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "intervention",
+        "label": "治疗措施",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": true,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "medication",
+        "label": "药物",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": true,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "contraindication",
+        "label": "禁忌",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": true,
+        "vocabulary": true
+      },
+      {
+        "entity_type": "monitoring_requirement",
+        "label": "监测要求",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
+        "discovery": true,
+        "vocabulary": true
+      }
+    ],
+    "relations": [
+      {
+        "relation_code": "DISEASE_HAS_LAB",
+        "name": "疾病关联检验",
+        "source_entity_type": "disease",
+        "target_entity_type": "lab",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取疾病诊断或监测流程中明确要求的检验项目；疾病与检验在同一片段共同出现时建立关系，并保留原文出处。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "DISEASE_HAS_EXAM",
+        "name": "疾病关联检查",
+        "source_entity_type": "disease",
+        "target_entity_type": "exam",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取疾病诊断流程中明确要求的检查项目；疾病与检查在同一片段共同出现时建立关系，并保留原文出处。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "DISEASE_HAS_SYMPTOM",
+        "name": "疾病有症状",
+        "source_entity_type": "disease",
+        "target_entity_type": "symptom",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取疾病典型症状或伴随症状；仅在原文明确描述疾病与症状关联时建立关系。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+        "name": "疾病有诊断证据",
+        "source_entity_type": "disease",
+        "target_entity_type": "diagnostic_evidence",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取支持疾病诊断的检验状态、检查形态特征或症状证据；同一片段中疾病与证据共同出现时建立关系。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+        "name": "检验形成诊断证据",
+        "source_entity_type": "lab",
+        "target_entity_type": "diagnostic_evidence",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "检验项目必须与升高、降低、阳性、超过上限等状态判定出现在同一片段时形成证据；保留数值、单位、页码、行号和原文摘录。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "EXAM_HAS_DIAGNOSTIC_EVIDENCE",
+        "name": "检查形成诊断证据",
+        "source_entity_type": "exam",
+        "target_entity_type": "diagnostic_evidence",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "仅当检查项目和形态特征在同一片段中明确共同出现时建立关系；不要默认绑定某一种检查，阴性表述需人工复核。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "DISEASE_HAS_TREATMENT_PLAN",
+        "name": "疾病有治疗方案",
+        "source_entity_type": "disease",
+        "target_entity_type": "treatment_plan",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取疾病指南中明确推荐的治疗方案；仅当疾病与治疗方案在同一片段共同出现时建立关系，保留原文出处。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_INCLUDES_INTERVENTION",
+        "name": "治疗方案包含治疗措施",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "intervention",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取治疗方案所包含的具体操作或技术措施（如 PCI、溶栓）；需同一片段共同出现。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_INCLUDES_MEDICATION",
+        "name": "治疗方案包含药物",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "medication",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取治疗方案中明确推荐的药物；需同一片段共同出现并保留剂量等属性。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_HAS_CONTRAINDICATION",
+        "name": "治疗方案有禁忌",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "contraindication",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取治疗方案或其中措施的禁忌证；同一片段明确描述时建立关系。",
+        "concept_code": "",
+        "generate_evidence": true
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_HAS_MONITORING",
+        "name": "治疗方案有监测要求",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "monitoring_requirement",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "抽取治疗方案执行过程中要求的监测项目；同一片段共同出现时建立关系。",
+        "concept_code": "",
+        "generate_evidence": true
+      }
+    ],
+    "attributes": [
+      {
+        "attribute_code": "TREATMENT_DOSE",
+        "name": "剂量",
+        "owner_entity_type": "medication",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "药物剂量，如 300mg、0.4mg/kg"
+      },
+      {
+        "attribute_code": "TREATMENT_ROUTE",
+        "name": "给药途径",
+        "owner_entity_type": "medication",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "如口服、静脉、皮下、冠脉内"
+      },
+      {
+        "attribute_code": "TREATMENT_FREQUENCY",
+        "name": "频次",
+        "owner_entity_type": "medication",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "如 每日一次、每12小时"
+      },
+      {
+        "attribute_code": "TREATMENT_DURATION",
+        "name": "疗程",
+        "owner_entity_type": "medication",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "如 7天、长期、直至复查"
+      },
+      {
+        "attribute_code": "TREATMENT_PRIORITY",
+        "name": "优先级",
+        "owner_entity_type": "treatment_plan",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [
+          "首选",
+          "次选",
+          "替代",
+          "补救"
+        ],
+        "concept_code": "",
+        "description": "治疗方案优先级"
+      },
+      {
+        "attribute_code": "TREATMENT_EVIDENCE_LEVEL",
+        "name": "证据级别",
+        "owner_entity_type": "treatment_plan",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "如 I类A、IIa类B 或指南原文标注"
+      },
+      {
+        "attribute_code": "TREATMENT_PATIENT_SCOPE",
+        "name": "适用人群",
+        "owner_entity_type": "treatment_plan",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "如 发病<12小时、年龄<75岁、无禁忌"
+      },
+      {
+        "attribute_code": "TREATMENT_TIME_WINDOW",
+        "name": "时间窗",
+        "owner_entity_type": "treatment_plan",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": "如 发病12小时内、24小时内"
+      }
+    ],
+    "concept_codes": [
+      "ELEVATED",
+      "DECREASED",
+      "POSITIVE",
+      "NEGATIVE",
+      "PRESENT",
+      "ABSENT",
+      "ABOVE_ULN_1",
+      "ABNORMAL"
+    ],
+    "relation_hints": [
+      "疾病与检验、检查、症状在同一片段共同出现时建立对应关联。",
+      "检验异常状态和检查形态特征统一抽取为诊断证据，并保留原文出处。",
+      "检验或检查必须与诊断证据同片段配对后再连接疾病；阴性表述需人工复核。"
+    ],
+    "rule_hints": [
+      "仅生成候选诊断规则，导入后需医学专员审核",
+      "同时生成候选治疗规则（rule_type=treatment），导入后需医学专员审核，默认不得自动启用"
+    ],
+    "prompt_instructions": [
+      "优先识别指南正文中的淋巴瘤亚型、分期检查、预后指标和B症状",
+      "不要把示例、参考文献或其他疾病内容抽取为诊断证据",
+      "entity_type 只能使用模板定义的疾病、症状、检验、检查或诊断证据类型。",
+      "诊断证据编码可表示检验状态（检验编码:概念编码）或检查形态（发现编码），不要单独输出抽象概念节点。",
+      "entity_type 只能使用模板定义的疾病、症状、检验、检查、诊断证据以及治疗方案、治疗措施、药物、禁忌、监测要求类型。"
+    ],
+    "output_contract": {},
+    "capabilities": [
+      "diagnosis",
+      "treatment"
+    ],
+    "specialty": "血液肿瘤",
+    "rule_generation": [],
+    "standard_system": ""
+  },
+  {
+    "template_id": "TCM_GUIDELINE_V1",
+    "name": "中医指南抽取模板",
+    "description": "中医指南/诊疗方案：病-证-症-舌脉-病机-治法-方药抽取与候选规则生成",
+    "version": 1,
+    "is_default": false,
+    "status": "active",
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "graph_filename": "tcm_graph.json",
+    "standard_system": "ICD-11 TM1 / 中医药学名词（本地稳定码 + 标准映射）",
+    "entity_types": [
+      {
+        "entity_type": "disease",
+        "label": "中医疾病",
+        "discovery": true,
+        "discovery_suffixes": [
+          "病"
+        ],
+        "vocabulary": true,
+        "entries": [
+          {
+            "code": "TCM_DIS_XIONG_BI_XIN_TONG",
+            "name": "胸痹心痛病",
+            "aliases": [
+              "胸痹心痛病",
+              "胸痹",
+              "心痛病"
+            ],
+            "standard_code": "ICD11-TM1:SF01",
+            "source": "自建种子",
+            "attributes": {},
+            "domain": "tcm",
+            "standard_system": "ICD-11 TM1"
+          },
+          {
+            "code": "TCM_DIS_XIAO_KE",
+            "name": "消渴病",
+            "aliases": [
+              "消渴病",
+              "消渴"
+            ],
+            "standard_code": "ICD11-TM1:SD30",
+            "source": "自建种子",
+            "attributes": {},
+            "domain": "tcm",
+            "standard_system": "ICD-11 TM1"
+          }
+        ]
+      },
+      {
+        "entity_type": "syndrome",
+        "label": "证候",
+        "discovery": true,
+        "discovery_suffixes": [
+          "证候",
+          "证",
+          "型"
+        ],
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "symptom",
+        "label": "症状",
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "tongue",
+        "label": "舌象",
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "pulse",
+        "label": "脉象",
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "sign",
+        "label": "体征",
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "pathogenesis",
+        "label": "病机",
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "treatment_method",
+        "label": "治法",
+        "discovery": true,
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "formula",
+        "label": "方剂",
+        "discovery": true,
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "herb",
+        "label": "中药",
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "contraindication",
+        "label": "禁忌",
+        "discovery": true,
+        "vocabulary": true,
+        "entries": []
+      }
+    ],
+    "relations": [
+      {
+        "relation_code": "DISEASE_HAS_SYNDROME",
+        "name": "疾病辨证分型",
+        "source_entity_type": "disease",
+        "target_entity_type": "syndrome",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_HAS_SYMPTOM",
+        "name": "证候主症次症",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "symptom",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_HAS_TONGUE",
+        "name": "证候舌象",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "tongue",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_HAS_PULSE",
+        "name": "证候脉象",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "pulse",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_HAS_SIGN",
+        "name": "证候体征",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "sign",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_HAS_PATHOGENESIS",
+        "name": "证候病机",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "pathogenesis",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_TREATED_BY_METHOD",
+        "name": "证候治法",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "treatment_method",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "METHOD_HAS_FORMULA",
+        "name": "治法代表方",
+        "source_entity_type": "treatment_method",
+        "target_entity_type": "formula",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "FORMULA_CONTAINS_HERB",
+        "name": "方剂组成",
+        "source_entity_type": "formula",
+        "target_entity_type": "herb",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_HAS_CONTRAINDICATION",
+        "name": "证候禁忌",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "contraindication",
+        "generate_evidence": false
+      }
+    ],
+    "attributes": [
+      {
+        "attribute_code": "SYMPTOM_ROLE",
+        "name": "症状角色",
+        "owner_entity_type": "symptom",
+        "data_type": "enum",
+        "required": false,
+        "allowed_values": [
+          "主症",
+          "次症"
+        ],
+        "description": "主症用于证候成立的必要条件，次症用于加权"
+      },
+      {
+        "attribute_code": "HERB_ROLE",
+        "name": "君臣佐使",
+        "owner_entity_type": "herb",
+        "data_type": "enum",
+        "required": false,
+        "allowed_values": [
+          "君",
+          "臣",
+          "佐",
+          "使"
+        ]
+      },
+      {
+        "attribute_code": "HERB_DOSE",
+        "name": "剂量",
+        "owner_entity_type": "herb",
+        "data_type": "string",
+        "required": false
+      },
+      {
+        "attribute_code": "SYNDROME_LOCATION",
+        "name": "病位",
+        "owner_entity_type": "syndrome",
+        "data_type": "string",
+        "required": false
+      },
+      {
+        "attribute_code": "SYNDROME_NATURE",
+        "name": "病性",
+        "owner_entity_type": "syndrome",
+        "data_type": "string",
+        "required": false
+      },
+      {
+        "attribute_code": "FORMULA_SOURCE",
+        "name": "方剂出处",
+        "owner_entity_type": "formula",
+        "data_type": "string",
+        "required": false
+      },
+      {
+        "attribute_code": "CONTRAINDICATION_LEVEL",
+        "name": "禁忌级别",
+        "owner_entity_type": "contraindication",
+        "data_type": "enum",
+        "required": false,
+        "allowed_values": [
+          "禁用",
+          "慎用"
+        ]
+      }
+    ],
+    "concept_codes": [
+      "PRESENT",
+      "ABSENT",
+      "TCM_PATTERN_FORMED",
+      "TCM_PATTERN_NOT_FORMED"
+    ],
+    "relation_hints": [
+      "同一证候章节中的症状、舌象、脉象、治法、方剂应建立关系",
+      "方剂与中药组成关系需保留君臣佐使与剂量",
+      "异病同证、同病异证均通过证候节点连接，不复制证候"
+    ],
+    "rule_hints": [
+      "每个证候至少生成一条辨证规则，条件来自同一章节",
+      "治法规则依赖证候事实，方药规则依赖治法与方剂关系",
+      "所有候选规则保持 draft，需中医师审核后启用"
+    ],
+    "prompt_instructions": [
+      "你是中医临床指南知识抽取引擎。",
+      "严格区分中医疾病（以“病”结尾）与证候（以“证/证候/型”结尾），证候是辨证规则的锚点。",
+      "症状需区分主症与次症；舌象、脉象作为独立实体，不要并入症状。",
+      "治法、方剂、中药分别抽取；方剂组成需记录君臣佐使和剂量。",
+      "不要将西医检验指标、影像检查混入中医证候条件。",
+      "不添加模板外编码，不遗漏页码、行号和原文引文。"
+    ],
+    "output_contract": {
+      "entities": "模板允许的中医实体",
+      "suggested_relations": "证候-症状/舌/脉/治法/方剂、方剂-中药关系",
+      "suggested_rules": "tcm_pattern / tcm_treatment / tcm_prescription 候选规则"
+    },
+    "capabilities": [
+      "tcm_pattern",
+      "tcm_treatment",
+      "tcm_prescription",
+      "tcm_contraindication"
+    ],
+    "rule_generation": [
+      {
+        "rule_type": "tcm_pattern",
+        "anchor": "syndrome",
+        "condition_types": [
+          "symptom",
+          "tongue",
+          "pulse",
+          "sign"
+        ],
+        "min_conditions": 2,
+        "score_threshold": 0.4
+      },
+      {
+        "rule_type": "tcm_treatment",
+        "anchor": "syndrome",
+        "via": "SYNDROME_TREATED_BY_METHOD"
+      },
+      {
+        "rule_type": "tcm_prescription",
+        "anchor": "syndrome",
+        "via": [
+          "METHOD_HAS_FORMULA",
+          "FORMULA_CONTAINS_HERB"
+        ]
+      },
+      {
+        "rule_type": "tcm_contraindication",
+        "anchor": "syndrome",
+        "via": "SYNDROME_HAS_CONTRAINDICATION"
+      }
+    ]
+  },
+  {
+    "template_id": "UNIVERSAL_GUIDELINE_V1",
+    "name": "通用指南自动抽取模板",
+    "description": "LLM 驱动的开放本体：疾病/症状/检查/检验/病理/分子/药物/方案/禁忌，一次导入生成图谱与规则",
+    "version": 1,
+    "is_default": false,
+    "status": "active",
+    "domain": "western",
+    "specialty": "通用",
+    "graph_filename": "",
+    "standard_system": "ICD-10 / LOINC / ATC / LOCAL",
+    "entity_types": [
+      {
+        "entity_type": "disease",
+        "label": "疾病",
+        "discovery": true,
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "symptom",
+        "label": "症状",
+        "discovery": true,
+        "vocabulary": false,
+        "entries": []
+      },
+      {
+        "entity_type": "sign",
+        "label": "体征",
+        "discovery": true,
+        "vocabulary": false,
+        "entries": []
+      },
+      {
+        "entity_type": "lab",
+        "label": "检验",
+        "discovery": true,
+        "vocabulary": false,
+        "entries": []
+      },
+      {
+        "entity_type": "exam",
+        "label": "检查",
+        "discovery": true,
+        "vocabulary": false,
+        "entries": []
+      },
+      {
+        "entity_type": "diagnostic_evidence",
+        "label": "诊断证据",
+        "discovery": true,
+        "vocabulary": false,
+        "entries": []
+      },
+      {
+        "entity_type": "pathology",
+        "label": "病理",
+        "discovery": true,
+        "vocabulary": false,
+        "entries": []
+      },
+      {
+        "entity_type": "biomarker",
+        "label": "生物标志物",
+        "discovery": true,
+        "vocabulary": false,
+        "entries": []
+      },
+      {
+        "entity_type": "molecular_test",
+        "label": "分子检测",
+        "discovery": true,
+        "vocabulary": false,
+        "entries": []
+      },
+      {
+        "entity_type": "stage",
+        "label": "分期",
+        "discovery": true,
+        "vocabulary": false,
+        "entries": []
+      },
+      {
+        "entity_type": "histology",
+        "label": "组织学",
+        "discovery": true,
+        "vocabulary": false,
+        "entries": []
+      },
+      {
+        "entity_type": "risk_factor",
+        "label": "危险因素",
+        "discovery": true,
+        "vocabulary": false,
+        "entries": []
+      },
+      {
+        "entity_type": "medication",
+        "label": "药物",
+        "discovery": true,
+        "vocabulary": false,
+        "entries": []
+      },
+      {
+        "entity_type": "intervention",
+        "label": "治疗措施",
+        "discovery": true,
+        "vocabulary": false,
+        "entries": []
+      },
+      {
+        "entity_type": "treatment_plan",
+        "label": "治疗方案",
+        "discovery": true,
+        "vocabulary": false,
+        "entries": []
+      },
+      {
+        "entity_type": "contraindication",
+        "label": "禁忌",
+        "discovery": true,
+        "vocabulary": false,
+        "entries": []
+      },
+      {
+        "entity_type": "monitoring_requirement",
+        "label": "监测要求",
+        "discovery": true,
+        "vocabulary": false,
+        "entries": []
+      }
+    ],
+    "relations": [
+      {
+        "relation_code": "DISEASE_HAS_LAB",
+        "name": "疾病关联检验",
+        "source_entity_type": "disease",
+        "target_entity_type": "lab",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "DISEASE_HAS_EXAM",
+        "name": "疾病关联检查",
+        "source_entity_type": "disease",
+        "target_entity_type": "exam",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "DISEASE_HAS_SYMPTOM",
+        "name": "疾病关联症状",
+        "source_entity_type": "disease",
+        "target_entity_type": "symptom",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "DISEASE_HAS_SIGN",
+        "name": "疾病关联体征",
+        "source_entity_type": "disease",
+        "target_entity_type": "sign",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "DISEASE_HAS_PATHOLOGY",
+        "name": "疾病关联病理",
+        "source_entity_type": "disease",
+        "target_entity_type": "pathology",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "DISEASE_HAS_BIOMARKER",
+        "name": "疾病关联生物标志物",
+        "source_entity_type": "disease",
+        "target_entity_type": "biomarker",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "DISEASE_HAS_MOLECULAR_TEST",
+        "name": "疾病关联分子检测",
+        "source_entity_type": "disease",
+        "target_entity_type": "molecular_test",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+        "name": "疾病有诊断证据",
+        "source_entity_type": "disease",
+        "target_entity_type": "diagnostic_evidence",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "DISEASE_HAS_TREATMENT_PLAN",
+        "name": "疾病有治疗方案",
+        "source_entity_type": "disease",
+        "target_entity_type": "treatment_plan",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "DISEASE_HAS_CONTRAINDICATION",
+        "name": "疾病有禁忌",
+        "source_entity_type": "disease",
+        "target_entity_type": "contraindication",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "DISEASE_HAS_MONITORING",
+        "name": "疾病有监测要求",
+        "source_entity_type": "disease",
+        "target_entity_type": "monitoring_requirement",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "DISEASE_HAS_RISK_FACTOR",
+        "name": "疾病有危险因素",
+        "source_entity_type": "disease",
+        "target_entity_type": "risk_factor",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "DISEASE_HAS_HISTOLOGY",
+        "name": "疾病组织学类型",
+        "source_entity_type": "disease",
+        "target_entity_type": "histology",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "DISEASE_HAS_STAGE",
+        "name": "疾病分期",
+        "source_entity_type": "disease",
+        "target_entity_type": "stage",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+        "name": "lab形成诊断证据",
+        "source_entity_type": "lab",
+        "target_entity_type": "diagnostic_evidence",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "EXAM_HAS_DIAGNOSTIC_EVIDENCE",
+        "name": "exam形成诊断证据",
+        "source_entity_type": "exam",
+        "target_entity_type": "diagnostic_evidence",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "PATHOLOGY_HAS_DIAGNOSTIC_EVIDENCE",
+        "name": "pathology形成诊断证据",
+        "source_entity_type": "pathology",
+        "target_entity_type": "diagnostic_evidence",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "BIOMARKER_HAS_DIAGNOSTIC_EVIDENCE",
+        "name": "biomarker形成诊断证据",
+        "source_entity_type": "biomarker",
+        "target_entity_type": "diagnostic_evidence",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "MOLECULAR_TEST_HAS_DIAGNOSTIC_EVIDENCE",
+        "name": "molecular_test形成诊断证据",
+        "source_entity_type": "molecular_test",
+        "target_entity_type": "diagnostic_evidence",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_INCLUDES_MEDICATION",
+        "name": "治疗方案包含药物",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "medication",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_INCLUDES_INTERVENTION",
+        "name": "治疗方案包含措施",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "intervention",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_HAS_CONTRAINDICATION",
+        "name": "治疗方案有禁忌",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "contraindication",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_HAS_MONITORING",
+        "name": "治疗方案有监测",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "monitoring_requirement",
+        "generate_evidence": false
+      }
+    ],
+    "attributes": [
+      {
+        "attribute_code": "DISEASE_ICD_CODE",
+        "name": "ICD-10 编码",
+        "owner_entity_type": "disease",
+        "data_type": "string"
+      },
+      {
+        "attribute_code": "HISTOLOGY",
+        "name": "组织学类型",
+        "owner_entity_type": "histology",
+        "data_type": "string"
+      },
+      {
+        "attribute_code": "STAGE",
+        "name": "分期",
+        "owner_entity_type": "stage",
+        "data_type": "string"
+      },
+      {
+        "attribute_code": "GRADE",
+        "name": "分级",
+        "owner_entity_type": "histology",
+        "data_type": "string"
+      },
+      {
+        "attribute_code": "MOLECULAR_MARKER",
+        "name": "分子标志物",
+        "owner_entity_type": "biomarker",
+        "data_type": "string"
+      },
+      {
+        "attribute_code": "BIOMARKER_RESULT",
+        "name": "标志物结果",
+        "owner_entity_type": "biomarker",
+        "data_type": "string"
+      },
+      {
+        "attribute_code": "TREATMENT_DOSE",
+        "name": "剂量",
+        "owner_entity_type": "medication",
+        "data_type": "string"
+      },
+      {
+        "attribute_code": "TREATMENT_ROUTE",
+        "name": "给药途径",
+        "owner_entity_type": "medication",
+        "data_type": "string"
+      },
+      {
+        "attribute_code": "TREATMENT_LINE",
+        "name": "治疗线数",
+        "owner_entity_type": "treatment_plan",
+        "data_type": "string"
+      },
+      {
+        "attribute_code": "CONTRAINDICATION_LEVEL",
+        "name": "禁忌级别",
+        "owner_entity_type": "contraindication",
+        "data_type": "enum",
+        "allowed_values": [
+          "禁用",
+          "慎用"
+        ]
+      }
+    ],
+    "concept_codes": [
+      "PRESENT",
+      "ABSENT",
+      "ELEVATED",
+      "ABOVE_ULN_1"
+    ],
+    "relation_hints": [
+      "同章节实体建立关系",
+      "疾病关联治疗方案，方案包含药物/措施",
+      "病理/分子检测形成诊断证据"
+    ],
+    "rule_hints": [
+      "诊断规则优先使用检验/检查/病理/分子证据",
+      "治疗规则关联治疗方案与药物",
+      "每类疾病生成诊断、治疗、禁忌、监测规则"
+    ],
+    "prompt_instructions": [
+      "使用开放临床本体抽取，不受预置词典限制",
+      "编码优先使用标准码，无法确定时返回 null 并生成 LOCAL 码",
+      "每个实体和规则必须附带原文页码行号和引文"
+    ],
+    "output_contract": {
+      "entities": [],
+      "suggested_relations": [],
+      "suggested_rules": [],
+      "treatment_plans": []
+    },
+    "capabilities": [
+      "auto",
+      "diagnosis",
+      "treatment"
+    ],
+    "rule_generation": []
+  }
+]

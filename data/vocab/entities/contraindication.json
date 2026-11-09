@@ -1,0 +1,25 @@
+[
+  {
+    "code": "TCM_CONTRA_PREGNANCY",
+    "name": "孕妇慎用",
+    "aliases": [
+      "孕妇慎用",
+      "妊娠慎用",
+      "孕妇忌用"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_CONTRA_BLEEDING",
+    "name": "出血倾向者禁用",
+    "aliases": [
+      "出血倾向者禁用",
+      "有出血倾向者慎用"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  }
+]

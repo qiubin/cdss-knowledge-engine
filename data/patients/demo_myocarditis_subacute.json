@@ -1,0 +1,134 @@
+{
+  "patient_id": "DEMO-MYO-SUBACUTE",
+  "hospital_id": "XM_FIRST",
+  "age": 45,
+  "gender": "M",
+  "encounter_time": "2026-11-06T10:00:00+08:00",
+  "display_name": "急性心肌炎 · 亚急性轻型",
+  "category": "急性心肌炎",
+  "chief_complaint": "上呼吸道感染后胸闷、心悸 5 天。",
+  "history_present": "患者 5 天前上呼吸道感染后出现活动后胸闷、心悸，休息可缓解，无晕厥，无胸痛放射。",
+  "history_past": "既往体健。",
+  "labs": [
+    {
+      "lab_code": "CTN",
+      "lab_name": "肌钙蛋白",
+      "value": 0.8,
+      "unit": "ng/mL",
+      "reference_low": 0.0,
+      "reference_high": 0.04,
+      "collected_at": "2026-11-06T10:05:00+08:00",
+      "reported_at": "2026-11-06T10:20:00+08:00"
+    },
+    {
+      "lab_code": "CK_MB",
+      "lab_name": "肌酸激酶同工酶",
+      "value": 18.0,
+      "unit": "ng/mL",
+      "reference_low": 0.0,
+      "reference_high": 5.0,
+      "collected_at": "2026-11-06T10:05:00+08:00",
+      "reported_at": "2026-11-06T10:20:00+08:00"
+    },
+    {
+      "lab_code": "CRP",
+      "lab_name": "C反应蛋白",
+      "value": 30.0,
+      "unit": "mg/L",
+      "reference_low": 0.0,
+      "reference_high": 10.0,
+      "collected_at": "2026-11-06T10:05:00+08:00",
+      "reported_at": "2026-11-06T10:20:00+08:00"
+    },
+    {
+      "lab_code": "BNP",
+      "lab_name": "脑钠肽",
+      "value": 260.0,
+      "unit": "pg/mL",
+      "reference_low": 0.0,
+      "reference_high": 100.0,
+      "collected_at": "2026-11-06T10:05:00+08:00",
+      "reported_at": "2026-11-06T10:20:00+08:00"
+    }
+  ],
+  "exam_findings": [
+    {
+      "exam_code": "ECG_12LEAD",
+      "exam_name": "12导联心电图",
+      "finding_code": "ST_CONVEX_ELEVATION",
+      "finding_name": "ST段轻度抬高",
+      "present": true,
+      "detail": {
+        "summary": "V4-V6 导联 ST 段轻度抬高 0.1mV"
+      }
+    },
+    {
+      "exam_code": "ECHO",
+      "exam_name": "超声心动图",
+      "finding_code": "LEFT_VENTRICULAR_DYSFUNCTION",
+      "finding_name": "左室收缩功能轻度减低",
+      "present": true,
+      "detail": {
+        "summary": "EF 48%，节段性运动稍减弱"
+      }
+    }
+  ],
+  "symptoms": [
+    {
+      "symptom_code": "SYM_CHEST_TIGHTNESS",
+      "symptom_name": "胸闷",
+      "present": true,
+      "duration_minutes": 720,
+      "severity": "moderate"
+    },
+    {
+      "symptom_code": "SYM_PALPITATION",
+      "symptom_name": "心悸",
+      "present": true,
+      "duration_minutes": 720,
+      "severity": "mild"
+    },
+    {
+      "symptom_code": "SYM_FATIGUE",
+      "symptom_name": "乏力",
+      "present": true,
+      "duration_minutes": 2880,
+      "severity": "mild"
+    }
+  ],
+  "vitals": [
+    {
+      "vital_code": "sbp",
+      "value": 118.0,
+      "unit": "mmHg"
+    },
+    {
+      "vital_code": "dbp",
+      "value": 72.0,
+      "unit": "mmHg"
+    },
+    {
+      "vital_code": "hr",
+      "value": 92.0,
+      "unit": "bpm"
+    },
+    {
+      "vital_code": "rr",
+      "value": 18.0,
+      "unit": "bpm"
+    },
+    {
+      "vital_code": "spo2",
+      "value": 98.0,
+      "unit": "%"
+    },
+    {
+      "vital_code": "temp",
+      "value": 37.2,
+      "unit": "℃"
+    }
+  ],
+  "past_history": [],
+  "current_medications": [],
+  "allergies": []
+}

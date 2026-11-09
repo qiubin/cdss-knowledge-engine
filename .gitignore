@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Secrets and local config (never commit API keys)
+data/extraction/config.json
+.env
+.env.*
+
+# Generated / archived / copyrighted input data
+data/_reset_archive_*/
+data/uploads/
+evidence_inventory.txt
+
+# Backups
+*.bak
+*.bak-*
+
+# Runtime logs
+logs/
+server.out.log
+server.err.log
+*.log
+
+# Local dev artifacts
+artifacts-*.png
+.graph_*.png
+.overview_check.png
+.pw_*.cjs
+_patch_service*.py
+.workbuddy/
+
+# OS
+.DS_Store

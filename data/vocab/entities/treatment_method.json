@@ -1,0 +1,49 @@
+[
+  {
+    "code": "TCM_METHOD_YIQI_YANGYIN",
+    "name": "益气养阴",
+    "aliases": [
+      "益气养阴",
+      "益气滋阴",
+      "养阴益气"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_METHOD_TONGYANG_XIEZHUO_HUATAN",
+    "name": "通阳泄浊豁痰",
+    "aliases": [
+      "通阳泄浊豁痰",
+      "通阳泄浊",
+      "豁痰宣痹"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_METHOD_HUOXUE_HUAYU_TONGLUO",
+    "name": "活血化瘀通络",
+    "aliases": [
+      "活血化瘀通络",
+      "活血化瘀",
+      "化瘀通络"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_METHOD_WENBU_XINYANG",
+    "name": "温补心阳",
+    "aliases": [
+      "温补心阳",
+      "温阳益气"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  }
+]

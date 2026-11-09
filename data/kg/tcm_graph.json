@@ -1,0 +1,15 @@
+{
+  "domain": "tcm",
+  "schema_version": 2,
+  "anchor_types": [
+    "syndrome",
+    "disease"
+  ],
+  "diseases": [],
+  "evidences": [],
+  "disease_evidence": [],
+  "sources": [],
+  "nodes": [],
+  "relations": [],
+  "syndromes": []
+}

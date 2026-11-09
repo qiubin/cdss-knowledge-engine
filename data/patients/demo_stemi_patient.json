@@ -1,0 +1,121 @@
+{
+  "patient_id": "DEMO-001",
+  "hospital_id": "XM_FIRST",
+  "age": 58,
+  "gender": "M",
+  "encounter_time": "2026-11-03T08:30:00+08:00",
+  "labs": [
+    {
+      "lab_code": "MYO",
+      "lab_name": "肌红蛋白",
+      "value": 120.0,
+      "unit": "ng/mL",
+      "reference_low": 3.5,
+      "reference_high": 77.0,
+      "collected_at": "2026-11-03T08:35:00+08:00",
+      "reported_at": "2026-11-03T08:45:00+08:00"
+    },
+    {
+      "lab_code": "CTN",
+      "lab_name": "肌钙蛋白",
+      "value": 0.15,
+      "unit": "ng/mL",
+      "reference_low": 0.0,
+      "reference_high": 0.04,
+      "collected_at": "2026-11-03T08:35:00+08:00",
+      "reported_at": "2026-11-03T08:50:00+08:00"
+    },
+    {
+      "lab_code": "CTN",
+      "lab_name": "肌钙蛋白",
+      "value": 0.32,
+      "unit": "ng/mL",
+      "reference_low": 0.0,
+      "reference_high": 0.04,
+      "collected_at": "2026-11-03T10:35:00+08:00",
+      "reported_at": "2026-11-03T10:50:00+08:00"
+    },
+    {
+      "lab_code": "CK_MB",
+      "lab_name": "肌酸激酶同工酶",
+      "value": 12.5,
+      "unit": "ng/mL",
+      "reference_low": 0.0,
+      "reference_high": 5.0,
+      "collected_at": "2026-11-03T08:35:00+08:00",
+      "reported_at": "2026-11-03T08:50:00+08:00"
+    }
+  ],
+  "exam_findings": [
+    {
+      "exam_code": "ECG_12LEAD",
+      "exam_name": "12导联心电图",
+      "finding_code": "ST_CONVEX_ELEVATION",
+      "finding_name": "ST段弓背向上抬高",
+      "present": true,
+      "detail": {
+        "leads": [
+          "II",
+          "III",
+          "aVF"
+        ],
+        "magnitude_mv": 0.3
+      },
+      "performed_at": "2026-11-03T08:38:00+08:00"
+    },
+    {
+      "exam_code": "ECG_12LEAD",
+      "exam_name": "12导联心电图",
+      "finding_code": "PATHOLOGICAL_Q_WAVE",
+      "finding_name": "病理性Q波",
+      "present": false,
+      "performed_at": "2026-11-03T08:38:00+08:00"
+    }
+  ],
+  "symptoms": [
+    {
+      "symptom_code": "CHEST_PAIN_CRUSHING",
+      "symptom_name": "压榨性胸痛",
+      "present": true,
+      "onset_at": "2026-11-03T07:50:00+08:00",
+      "duration_minutes": 40,
+      "severity": "severe"
+    },
+    {
+      "symptom_code": "DIAPHORESIS",
+      "symptom_name": "大汗",
+      "present": true
+    }
+  ],
+  "vitals": [
+    {
+      "vital_code": "sbp",
+      "value": 145.0,
+      "unit": "mmHg",
+      "measured_at": "2026-11-03T08:32:00+08:00"
+    },
+    {
+      "vital_code": "dbp",
+      "value": 90.0,
+      "unit": "mmHg",
+      "measured_at": "2026-11-03T08:32:00+08:00"
+    },
+    {
+      "vital_code": "hr",
+      "value": 96.0,
+      "unit": "bpm",
+      "measured_at": "2026-11-03T08:32:00+08:00"
+    }
+  ],
+  "past_history": [
+    "I10",
+    "E11"
+  ],
+  "current_medications": [],
+  "allergies": [],
+  "display_name": "STEMI · 急性前壁心肌梗死",
+  "category": "STEMI",
+  "chief_complaint": "持续压榨性胸痛 40 分钟，伴大汗。",
+  "history_present": "患者晨起活动后出现胸骨后压榨性疼痛，休息后未缓解，伴大汗、恶心，急诊送入医院。",
+  "history_past": "高血压 5 年，2 型糖尿病 3 年。"
+}

@@ -1,0 +1,81 @@
+[
+  {
+    "hospital_id": "XM_FIRST",
+    "lab_code": "MYO",
+    "lab_name": "肌红蛋白",
+    "concept_code": "ELEVATED",
+    "operator": ">",
+    "threshold_value": 77.0,
+    "threshold_unit": "ng/mL",
+    "ref_source": "STATIC",
+    "effective_from": "2024-01-01",
+    "version": 1,
+    "status": "active",
+    "source_note": "厦门大学附属第一医院检验科2024版参考范围"
+  },
+  {
+    "hospital_id": "XM_FIRST",
+    "lab_code": "MYO",
+    "lab_name": "肌红蛋白",
+    "concept_code": "DECREASED",
+    "operator": "<",
+    "threshold_value": 3.5,
+    "threshold_unit": "ng/mL",
+    "ref_source": "STATIC",
+    "effective_from": "2024-01-01",
+    "version": 1,
+    "status": "active"
+  },
+  {
+    "hospital_id": "XM_FIRST",
+    "lab_code": "CTN",
+    "lab_name": "肌钙蛋白",
+    "concept_code": "ABOVE_ULN_1",
+    "operator": ">",
+    "threshold_value": 0.04,
+    "threshold_unit": "ng/mL",
+    "uln_multiplier": 1.0,
+    "ref_source": "STATIC",
+    "effective_from": "2024-01-01",
+    "version": 1,
+    "status": "active",
+    "source_note": "cTnI ULN=0.04 ng/mL"
+  },
+  {
+    "hospital_id": "XM_FIRST",
+    "lab_code": "CTN",
+    "lab_name": "肌钙蛋白",
+    "concept_code": "DYNAMIC_RISE",
+    "ref_source": "STATIC",
+    "effective_from": "2024-01-01",
+    "version": 1,
+    "status": "active"
+  },
+  {
+    "hospital_id": "XM_FIRST",
+    "lab_code": "CK_MB",
+    "lab_name": "肌酸激酶同工酶",
+    "concept_code": "ABOVE_ULN_1",
+    "operator": ">",
+    "threshold_value": 5.0,
+    "threshold_unit": "ng/mL",
+    "uln_multiplier": 1.0,
+    "ref_source": "STATIC",
+    "effective_from": "2024-01-01",
+    "version": 1,
+    "status": "active",
+    "source_note": "CK-MB ULN=5.0 ng/mL"
+  },
+  {
+    "hospital_id": "XM_FIRST",
+    "lab_code": "CK_MB",
+    "lab_name": "肌酸激酶同工酶",
+    "concept_code": "PEAK_SHIFT",
+    "ref_source": "STATIC",
+    "effective_from": "2024-01-01",
+    "version": 1,
+    "status": "active",
+    "source_note": "溶栓后CK-MB峰值<14h提示血管开通"
+  }
+]
+

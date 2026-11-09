@@ -1,0 +1,2221 @@
+{
+  "standard": "ICD-10",
+  "version": "WHO ICD-10 2019 常用疾病子集",
+  "imported_at": "2026-11-08",
+  "source": "常用 ICD-10 疾病参考子集（只读参考库）",
+  "scope": "用于搜索选用，不直接参与指南解析识别",
+  "entries": [
+    {
+      "code": "A09",
+      "name": "感染性和未特指原因的胃肠炎和结肠炎",
+      "aliases": [
+        "急性胃肠炎",
+        "感染性腹泻"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "A09",
+      "source": "ICD-10"
+    },
+    {
+      "code": "A15",
+      "name": "呼吸道结核病，经细菌学或组织学证实",
+      "aliases": [
+        "肺结核",
+        "结核病"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "A15",
+      "source": "ICD-10"
+    },
+    {
+      "code": "A18",
+      "name": "其他器官结核病",
+      "aliases": [
+        "结核病",
+        "肺外结核"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "A18",
+      "source": "ICD-10"
+    },
+    {
+      "code": "A35",
+      "name": "破伤风",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "A35",
+      "source": "ICD-10"
+    },
+    {
+      "code": "A36",
+      "name": "白喉",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "A36",
+      "source": "ICD-10"
+    },
+    {
+      "code": "A37",
+      "name": "百日咳",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "A37",
+      "source": "ICD-10"
+    },
+    {
+      "code": "A38",
+      "name": "猩红热",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "A38",
+      "source": "ICD-10"
+    },
+    {
+      "code": "A39",
+      "name": "脑膜炎球菌感染",
+      "aliases": [
+        "流行性脑脊髓膜炎",
+        "流脑"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "A39",
+      "source": "ICD-10"
+    },
+    {
+      "code": "A41",
+      "name": "其他败血症",
+      "aliases": [
+        "脓毒症",
+        "败血症"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "A41",
+      "source": "ICD-10"
+    },
+    {
+      "code": "A46",
+      "name": "丹毒",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "A46",
+      "source": "ICD-10"
+    },
+    {
+      "code": "A53",
+      "name": "其他和未特指的梅毒",
+      "aliases": [
+        "梅毒"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "A53",
+      "source": "ICD-10"
+    },
+    {
+      "code": "A54",
+      "name": "淋球菌感染",
+      "aliases": [
+        "淋病"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "A54",
+      "source": "ICD-10"
+    },
+    {
+      "code": "A82",
+      "name": "狂犬病",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "A82",
+      "source": "ICD-10"
+    },
+    {
+      "code": "B00",
+      "name": "疱疹病毒感染",
+      "aliases": [
+        "单纯疱疹",
+        "疱疹"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "B00",
+      "source": "ICD-10"
+    },
+    {
+      "code": "B01",
+      "name": "水痘",
+      "aliases": [
+        "水痘-带状疱疹感染"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "B01",
+      "source": "ICD-10"
+    },
+    {
+      "code": "B02",
+      "name": "带状疱疹",
+      "aliases": [
+        "蛇串疮"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "B02",
+      "source": "ICD-10"
+    },
+    {
+      "code": "B05",
+      "name": "麻疹",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "B05",
+      "source": "ICD-10"
+    },
+    {
+      "code": "B18",
+      "name": "慢性病毒性肝炎",
+      "aliases": [
+        "慢性乙肝",
+        "慢性丙肝"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "B18",
+      "source": "ICD-10"
+    },
+    {
+      "code": "B24",
+      "name": "人类免疫缺陷病毒病，未特指",
+      "aliases": [
+        "艾滋病",
+        "HIV感染"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "B24",
+      "source": "ICD-10"
+    },
+    {
+      "code": "B37",
+      "name": "念珠菌病",
+      "aliases": [
+        "真菌感染"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "B37",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J00",
+      "name": "急性鼻咽炎",
+      "aliases": [
+        "普通感冒"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J00",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J02.9",
+      "name": "急性咽炎，未特指",
+      "aliases": [
+        "咽炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J02.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J03.9",
+      "name": "急性扁桃体炎，未特指",
+      "aliases": [
+        "扁桃体炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J03.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J06",
+      "name": "急性上呼吸道多发或未特指部位感染",
+      "aliases": [
+        "上呼吸道感染",
+        "上感"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J06",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J11",
+      "name": "病毒未鉴定的流行性感冒伴呼吸道表现",
+      "aliases": [
+        "流行性感冒",
+        "流感"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J11",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J12.9",
+      "name": "病毒性肺炎，未特指",
+      "aliases": [
+        "病毒性肺炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J12.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J13",
+      "name": "肺炎链球菌引起的肺炎",
+      "aliases": [
+        "肺炎球菌肺炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J13",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J15.7",
+      "name": "肺炎支原体引起的肺炎",
+      "aliases": [
+        "支原体肺炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J15.7",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J18.9",
+      "name": "肺炎，病原体未特指",
+      "aliases": [
+        "社区获得性肺炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J18.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J20.9",
+      "name": "急性支气管炎，未特指",
+      "aliases": [
+        "急性支气管炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J20.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J30.4",
+      "name": "过敏性鼻炎",
+      "aliases": [
+        "变应性鼻炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J30.4",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J32",
+      "name": "慢性鼻窦炎",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J32",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J42",
+      "name": "慢性支气管炎，未特指",
+      "aliases": [
+        "老慢支"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J42",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J44",
+      "name": "其他慢性阻塞性肺病",
+      "aliases": [
+        "慢性阻塞性肺疾病",
+        "慢阻肺",
+        "COPD"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J44",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J45",
+      "name": "哮喘",
+      "aliases": [
+        "支气管哮喘"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J45",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J47",
+      "name": "支气管扩张症",
+      "aliases": [
+        "支气管扩张"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J47",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J84.9",
+      "name": "间质性肺疾病，未特指",
+      "aliases": [
+        "间质性肺病"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J84.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J90",
+      "name": "胸腔积液，不可归类在他处者",
+      "aliases": [
+        "胸水"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J90",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J93.9",
+      "name": "气胸，未特指",
+      "aliases": [
+        "自发性气胸"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J93.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "J96.0",
+      "name": "急性呼吸衰竭",
+      "aliases": [
+        "呼吸衰竭"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "J96.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K21",
+      "name": "胃食管反流病",
+      "aliases": [
+        "胃食管反流",
+        "反流性食管炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K21",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K25",
+      "name": "胃溃疡",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K25",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K26",
+      "name": "十二指肠溃疡",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K26",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K29",
+      "name": "胃炎和十二指肠炎",
+      "aliases": [
+        "胃炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K29",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K30",
+      "name": "消化不良",
+      "aliases": [
+        "功能性消化不良"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K30",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K35",
+      "name": "急性阑尾炎",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K35",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K40",
+      "name": "腹股沟疝",
+      "aliases": [
+        "疝气"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K40",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K50",
+      "name": "克罗恩病",
+      "aliases": [
+        "Crohn病"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K50",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K51",
+      "name": "溃疡性结肠炎",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K51",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K52",
+      "name": "其他非感染性胃肠炎和结肠炎",
+      "aliases": [
+        "非感染性肠炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K52",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K56",
+      "name": "麻痹性肠梗阻和无疝性肠梗阻",
+      "aliases": [
+        "肠梗阻"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K56",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K58",
+      "name": "肠易激综合征",
+      "aliases": [
+        "IBS"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K58",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K59.0",
+      "name": "便秘",
+      "aliases": [
+        "功能性便秘"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K59.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K70",
+      "name": "酒精性肝病",
+      "aliases": [
+        "酒精性肝硬化",
+        "酒精肝"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K70",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K72.9",
+      "name": "肝衰竭，未特指",
+      "aliases": [
+        "肝功能衰竭"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K72.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K74",
+      "name": "肝纤维化和肝硬化",
+      "aliases": [
+        "肝硬化"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K74",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K75.0",
+      "name": "肝脓肿",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K75.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K80",
+      "name": "胆石病",
+      "aliases": [
+        "胆结石",
+        "胆囊结石"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K80",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K81",
+      "name": "胆囊炎",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K81",
+      "source": "ICD-10"
+    },
+    {
+      "code": "K85",
+      "name": "急性胰腺炎",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "K85",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I10",
+      "name": "原发性高血压",
+      "aliases": [
+        "高血压",
+        "高血压病"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I10",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I20",
+      "name": "心绞痛",
+      "aliases": [
+        "稳定型心绞痛",
+        "不稳定型心绞痛"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I20",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I21",
+      "name": "急性心肌梗死",
+      "aliases": [
+        "心梗",
+        "AMI"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I21",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I21.0",
+      "name": "急性透壁性前壁心肌梗死",
+      "aliases": [
+        "急性前壁心肌梗死"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I21.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I21.2",
+      "name": "急性透壁性下壁心肌梗死",
+      "aliases": [
+        "急性下壁心肌梗死"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I21.2",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I21.4",
+      "name": "急性心内膜下心肌梗死",
+      "aliases": [
+        "非ST段抬高型心肌梗死",
+        "NSTEMI"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I21.4",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I25",
+      "name": "慢性缺血性心脏病",
+      "aliases": [
+        "冠心病",
+        "冠状动脉粥样硬化性心脏病"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I25",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I25.2",
+      "name": "陈旧性心肌梗死",
+      "aliases": [
+        "陈旧性心梗"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I25.2",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I26.9",
+      "name": "肺栓塞，未提及急性肺心病",
+      "aliases": [
+        "肺血栓栓塞"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I26.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I30.9",
+      "name": "急性心包炎，未特指",
+      "aliases": [
+        "心包炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I30.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I34",
+      "name": "二尖瓣关闭不全",
+      "aliases": [
+        "二尖瓣反流"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I34",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I35.0",
+      "name": "主动脉瓣狭窄",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I35.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I35.1",
+      "name": "主动脉瓣关闭不全",
+      "aliases": [
+        "主动脉瓣反流"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I35.1",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I42.0",
+      "name": "扩张型心肌病",
+      "aliases": [
+        "扩张性心肌病"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I42.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I44.2",
+      "name": "房室传导阻滞，完全性",
+      "aliases": [
+        "三度房室传导阻滞",
+        "III度AVB"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I44.2",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I46",
+      "name": "心脏骤停",
+      "aliases": [
+        "心脏停搏"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I46",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I47.1",
+      "name": "阵发性心动过速",
+      "aliases": [
+        "室上性心动过速",
+        "室上速"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I47.1",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I48",
+      "name": "心房颤动和心房扑动",
+      "aliases": [
+        "房颤",
+        "心房扑动"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I48",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I50.9",
+      "name": "心力衰竭，未特指",
+      "aliases": [
+        "心衰",
+        "心功能不全"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I50.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I71.0",
+      "name": "主动脉夹层",
+      "aliases": [
+        "主动脉夹层动脉瘤"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I71.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "E03.9",
+      "name": "甲状腺功能减退，未特指",
+      "aliases": [
+        "甲减"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "E03.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "E04.1",
+      "name": "非毒性单个甲状腺结节",
+      "aliases": [
+        "甲状腺结节"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "E04.1",
+      "source": "ICD-10"
+    },
+    {
+      "code": "E05.0",
+      "name": "弥漫性毒性甲状腺肿",
+      "aliases": [
+        "Graves病",
+        "甲状腺功能亢进",
+        "甲亢"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "E05.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "E06.3",
+      "name": "自身免疫性甲状腺炎",
+      "aliases": [
+        "桥本甲状腺炎",
+        "桥本病"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "E06.3",
+      "source": "ICD-10"
+    },
+    {
+      "code": "E10",
+      "name": "胰岛素依赖型糖尿病",
+      "aliases": [
+        "1型糖尿病",
+        "T1DM"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "E10",
+      "source": "ICD-10"
+    },
+    {
+      "code": "E11",
+      "name": "非胰岛素依赖型糖尿病",
+      "aliases": [
+        "2型糖尿病",
+        "T2DM"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "E11",
+      "source": "ICD-10"
+    },
+    {
+      "code": "E14",
+      "name": "未特指的糖尿病",
+      "aliases": [
+        "糖尿病"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "E14",
+      "source": "ICD-10"
+    },
+    {
+      "code": "E16.2",
+      "name": "低血糖，未特指",
+      "aliases": [
+        "低血糖症"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "E16.2",
+      "source": "ICD-10"
+    },
+    {
+      "code": "E23.0",
+      "name": "垂体功能减退",
+      "aliases": [
+        "垂体前叶功能减退"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "E23.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "E26.0",
+      "name": "原发性醛固酮增多症",
+      "aliases": [
+        "原醛症"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "E26.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "E27.1",
+      "name": "原发性肾上腺皮质功能不全",
+      "aliases": [
+        "Addison病",
+        "肾上腺皮质功能减退"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "E27.1",
+      "source": "ICD-10"
+    },
+    {
+      "code": "E28.2",
+      "name": "多囊卵巢综合征",
+      "aliases": [
+        "PCOS"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "E28.2",
+      "source": "ICD-10"
+    },
+    {
+      "code": "E55",
+      "name": "维生素D缺乏",
+      "aliases": [
+        "佝偻病",
+        "骨软化症"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "E55",
+      "source": "ICD-10"
+    },
+    {
+      "code": "E66.9",
+      "name": "肥胖，未特指",
+      "aliases": [
+        "肥胖症"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "E66.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "E78.5",
+      "name": "高脂血症，未特指",
+      "aliases": [
+        "血脂异常",
+        "高血脂"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "E78.5",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C16.9",
+      "name": "胃恶性肿瘤，未特指",
+      "aliases": [
+        "胃癌"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C16.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C18.9",
+      "name": "结肠恶性肿瘤，未特指",
+      "aliases": [
+        "结肠癌"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C18.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C20",
+      "name": "直肠恶性肿瘤",
+      "aliases": [
+        "直肠癌"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C20",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C22.0",
+      "name": "肝细胞癌",
+      "aliases": [
+        "原发性肝癌",
+        "肝癌"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C22.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C25.9",
+      "name": "胰腺恶性肿瘤，未特指",
+      "aliases": [
+        "胰腺癌"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C25.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C34.9",
+      "name": "支气管或肺恶性肿瘤，未特指",
+      "aliases": [
+        "肺癌"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C34.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C50.9",
+      "name": "乳房恶性肿瘤，未特指",
+      "aliases": [
+        "乳腺癌"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C50.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C53.9",
+      "name": "宫颈恶性肿瘤，未特指",
+      "aliases": [
+        "宫颈癌"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C53.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C54.1",
+      "name": "子宫内膜恶性肿瘤",
+      "aliases": [
+        "子宫内膜癌"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C54.1",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C56",
+      "name": "卵巢恶性肿瘤",
+      "aliases": [
+        "卵巢癌"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C56",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C61",
+      "name": "前列腺恶性肿瘤",
+      "aliases": [
+        "前列腺癌"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C61",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C64",
+      "name": "肾恶性肿瘤（肾盂除外）",
+      "aliases": [
+        "肾癌"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C64",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C67.9",
+      "name": "膀胱恶性肿瘤，未特指",
+      "aliases": [
+        "膀胱癌"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C67.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C71.9",
+      "name": "脑恶性肿瘤，未特指",
+      "aliases": [
+        "脑瘤",
+        "脑癌"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C71.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C73.9",
+      "name": "甲状腺恶性肿瘤，未特指",
+      "aliases": [
+        "甲状腺癌"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C73.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C81",
+      "name": "霍奇金病",
+      "aliases": [
+        "霍奇金淋巴瘤"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C81",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C82",
+      "name": "滤泡性淋巴瘤",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C82",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C83.1",
+      "name": "套细胞淋巴瘤",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C83.1",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C83.3",
+      "name": "弥漫性大B细胞淋巴瘤",
+      "aliases": [
+        "弥漫大B细胞淋巴瘤",
+        "DLBCL"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C83.3",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C83.7",
+      "name": "伯基特淋巴瘤",
+      "aliases": [
+        "Burkitt淋巴瘤"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C83.7",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C88.4",
+      "name": "结外边缘区B细胞淋巴瘤［MALT淋巴瘤］",
+      "aliases": [
+        "MALT淋巴瘤"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C88.4",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C91.1",
+      "name": "慢性淋巴细胞白血病",
+      "aliases": [
+        "CLL"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C91.1",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C92.0",
+      "name": "急性髓系白血病",
+      "aliases": [
+        "急性髓细胞白血病",
+        "AML"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C92.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "C92.1",
+      "name": "慢性髓系白血病",
+      "aliases": [
+        "慢性粒细胞白血病",
+        "CML"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "C92.1",
+      "source": "ICD-10"
+    },
+    {
+      "code": "D50.9",
+      "name": "缺铁性贫血，未特指",
+      "aliases": [
+        "缺铁性贫血"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "D50.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "G20",
+      "name": "帕金森病",
+      "aliases": [
+        "震颤麻痹"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "G20",
+      "source": "ICD-10"
+    },
+    {
+      "code": "G30.9",
+      "name": "阿尔茨海默病，未特指",
+      "aliases": [
+        "老年痴呆",
+        "阿尔茨海默"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "G30.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "G35",
+      "name": "多发性硬化",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "G35",
+      "source": "ICD-10"
+    },
+    {
+      "code": "G40.9",
+      "name": "癫痫，未特指",
+      "aliases": [
+        "癫痫"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "G40.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "G43",
+      "name": "偏头痛",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "G43",
+      "source": "ICD-10"
+    },
+    {
+      "code": "G44.2",
+      "name": "紧张型头痛",
+      "aliases": [
+        "紧张性头痛"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "G44.2",
+      "source": "ICD-10"
+    },
+    {
+      "code": "G45",
+      "name": "短暂性脑缺血发作",
+      "aliases": [
+        "TIA",
+        "小中风"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "G45",
+      "source": "ICD-10"
+    },
+    {
+      "code": "G47.0",
+      "name": "失眠",
+      "aliases": [
+        "失眠症"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "G47.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "G47.3",
+      "name": "睡眠呼吸暂停",
+      "aliases": [
+        "睡眠呼吸暂停综合征",
+        "OSA"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "G47.3",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I60.9",
+      "name": "蛛网膜下腔出血，未特指",
+      "aliases": [
+        "蛛网膜下腔出血"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I60.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I61.9",
+      "name": "脑出血，未特指",
+      "aliases": [
+        "脑出血"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I61.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I63.9",
+      "name": "脑梗死，未特指",
+      "aliases": [
+        "脑梗",
+        "缺血性脑卒中"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I63.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "I65.9",
+      "name": "入脑前动脉闭塞或狭窄，未特指",
+      "aliases": [
+        "颈动脉狭窄"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "I65.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "F20.9",
+      "name": "精神分裂症，未特指",
+      "aliases": [
+        "精神分裂"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "F20.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "F31",
+      "name": "双相情感障碍",
+      "aliases": [
+        "双相障碍",
+        "躁郁症"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "F31",
+      "source": "ICD-10"
+    },
+    {
+      "code": "F32.9",
+      "name": "抑郁发作，未特指",
+      "aliases": [
+        "抑郁症"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "F32.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "F41.1",
+      "name": "广泛性焦虑障碍",
+      "aliases": [
+        "广泛性焦虑症",
+        "焦虑症"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "F41.1",
+      "source": "ICD-10"
+    },
+    {
+      "code": "F43.1",
+      "name": "创伤后应激障碍",
+      "aliases": [
+        "PTSD"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "F43.1",
+      "source": "ICD-10"
+    },
+    {
+      "code": "F50.0",
+      "name": "神经性厌食",
+      "aliases": [
+        "厌食症"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "F50.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "F90.0",
+      "name": "活动与注意失调",
+      "aliases": [
+        "注意缺陷多动障碍",
+        "ADHD"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "F90.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "N03.9",
+      "name": "慢性肾炎综合征，未特指",
+      "aliases": [
+        "慢性肾炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "N03.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "N04",
+      "name": "肾病综合征",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "N04",
+      "source": "ICD-10"
+    },
+    {
+      "code": "N17.9",
+      "name": "急性肾衰竭，未特指",
+      "aliases": [
+        "急性肾损伤"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "N17.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "N18",
+      "name": "慢性肾衰竭",
+      "aliases": [
+        "慢性肾脏病",
+        "CKD",
+        "尿毒症"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "N18",
+      "source": "ICD-10"
+    },
+    {
+      "code": "N20",
+      "name": "肾结石和输尿管结石",
+      "aliases": [
+        "泌尿系结石"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "N20",
+      "source": "ICD-10"
+    },
+    {
+      "code": "N39.0",
+      "name": "未特指部位的尿路感染",
+      "aliases": [
+        "尿路感染",
+        "泌尿道感染"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "N39.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "N40",
+      "name": "前列腺增生",
+      "aliases": [
+        "良性前列腺增生",
+        "BPH"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "N40",
+      "source": "ICD-10"
+    },
+    {
+      "code": "N70.9",
+      "name": "输卵管炎和卵巢炎，未特指",
+      "aliases": [
+        "附件炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "N70.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "N73.9",
+      "name": "女性盆腔炎性疾病，未特指",
+      "aliases": [
+        "盆腔炎",
+        "PID"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "N73.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "N76.0",
+      "name": "急性阴道炎",
+      "aliases": [
+        "阴道炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "N76.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "N80.9",
+      "name": "子宫内膜异位症，未特指",
+      "aliases": [
+        "内异症"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "N80.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "N83.2",
+      "name": "卵巢囊肿",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "N83.2",
+      "source": "ICD-10"
+    },
+    {
+      "code": "O00.9",
+      "name": "异位妊娠，未特指",
+      "aliases": [
+        "宫外孕"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "O00.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "O14.9",
+      "name": "子痫前期，未特指",
+      "aliases": [
+        "妊娠高血压疾病"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "O14.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "O24",
+      "name": "妊娠期糖尿病",
+      "aliases": [
+        "妊娠合并糖尿病"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "O24",
+      "source": "ICD-10"
+    },
+    {
+      "code": "O42.9",
+      "name": "胎膜早破，未特指",
+      "aliases": [
+        "胎膜早破"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "O42.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "O44.9",
+      "name": "前置胎盘，未特指",
+      "aliases": [
+        "前置胎盘"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "O44.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "O48",
+      "name": "过期妊娠",
+      "aliases": [
+        "延期妊娠"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "O48",
+      "source": "ICD-10"
+    },
+    {
+      "code": "O60.9",
+      "name": "早产，无其他并发症",
+      "aliases": [
+        "早产"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "O60.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "Q21.0",
+      "name": "室间隔缺损",
+      "aliases": [
+        "室缺",
+        "VSD"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "Q21.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "M06.9",
+      "name": "类风湿关节炎，未特指",
+      "aliases": [
+        "类风湿",
+        "RA"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "M06.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "M10.9",
+      "name": "痛风，未特指",
+      "aliases": [
+        "痛风性关节炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "M10.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "M17.9",
+      "name": "膝骨关节炎，未特指",
+      "aliases": [
+        "膝关节骨关节炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "M17.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "M19.9",
+      "name": "骨关节炎，未特指",
+      "aliases": [
+        "退行性关节炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "M19.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "M32.9",
+      "name": "系统性红斑狼疮，未特指",
+      "aliases": [
+        "红斑狼疮",
+        "SLE"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "M32.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "M35.0",
+      "name": "干燥综合征",
+      "aliases": [
+        "Sjögren综合征"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "M35.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "M45",
+      "name": "强直性脊柱炎",
+      "aliases": [
+        "AS"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "M45",
+      "source": "ICD-10"
+    },
+    {
+      "code": "M51.2",
+      "name": "其他特指的椎间盘移位",
+      "aliases": [
+        "椎间盘突出",
+        "腰椎间盘突出"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "M51.2",
+      "source": "ICD-10"
+    },
+    {
+      "code": "M81",
+      "name": "无病理性骨折的骨质疏松",
+      "aliases": [
+        "骨质疏松症"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "M81",
+      "source": "ICD-10"
+    },
+    {
+      "code": "L03.9",
+      "name": "蜂窝织炎，未特指",
+      "aliases": [
+        "皮肤软组织感染"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "L03.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "L20.9",
+      "name": "特应性皮炎，未特指",
+      "aliases": [
+        "湿疹样皮炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "L20.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "L27.0",
+      "name": "药物和药剂引起的全身性皮疹",
+      "aliases": [
+        "药疹",
+        "药物性皮炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "L27.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "L30.9",
+      "name": "皮炎，未特指",
+      "aliases": [
+        "湿疹"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "L30.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "L40",
+      "name": "银屑病",
+      "aliases": [
+        "牛皮癣"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "L40",
+      "source": "ICD-10"
+    },
+    {
+      "code": "L50.9",
+      "name": "荨麻疹，未特指",
+      "aliases": [
+        "风团"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "L50.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "H10.9",
+      "name": "结膜炎，未特指",
+      "aliases": [
+        "红眼病"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "H10.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "H25.9",
+      "name": "老年性白内障，未特指",
+      "aliases": [
+        "白内障"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "H25.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "H40.9",
+      "name": "青光眼，未特指",
+      "aliases": [
+        "青光眼"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "H40.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "H66.0",
+      "name": "急性化脓性中耳炎",
+      "aliases": [
+        "中耳炎"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "H66.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "H91.9",
+      "name": "听力损失，未特指",
+      "aliases": [
+        "耳聋",
+        "听力下降"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "H91.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "P22.0",
+      "name": "新生儿呼吸窘迫综合征",
+      "aliases": [
+        "NRDS"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "P22.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "P59.9",
+      "name": "新生儿黄疸，未特指",
+      "aliases": [
+        "新生儿高胆红素血症"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "P59.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "Q21.1",
+      "name": "房间隔缺损",
+      "aliases": [
+        "房缺",
+        "ASD"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "Q21.1",
+      "source": "ICD-10"
+    },
+    {
+      "code": "Q25.0",
+      "name": "动脉导管未闭",
+      "aliases": [
+        "PDA"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "Q25.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "Q90.9",
+      "name": "唐氏综合征，未特指",
+      "aliases": [
+        "21三体综合征"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "Q90.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "S06.9",
+      "name": "颅内损伤，未特指",
+      "aliases": [
+        "颅脑损伤",
+        "脑外伤"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "S06.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "S52.5",
+      "name": "桡骨下端骨折",
+      "aliases": [
+        "桡骨远端骨折"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "S52.5",
+      "source": "ICD-10"
+    },
+    {
+      "code": "S72.0",
+      "name": "股骨颈骨折",
+      "aliases": [],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "S72.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "S93.4",
+      "name": "踝关节扭伤或劳损",
+      "aliases": [
+        "踝扭伤"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "S93.4",
+      "source": "ICD-10"
+    },
+    {
+      "code": "T17.5",
+      "name": "支气管和肺内异物",
+      "aliases": [
+        "气道异物"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "T17.5",
+      "source": "ICD-10"
+    },
+    {
+      "code": "T30.9",
+      "name": "烧伤和腐蚀伤，未特指部位",
+      "aliases": [
+        "烧烫伤"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "T30.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "T60.0",
+      "name": "有机磷和氨基甲酸酯类杀虫剂中毒",
+      "aliases": [
+        "有机磷中毒"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "T60.0",
+      "source": "ICD-10"
+    },
+    {
+      "code": "T78.2",
+      "name": "未特指的过敏性休克",
+      "aliases": [
+        "过敏性休克"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "T78.2",
+      "source": "ICD-10"
+    },
+    {
+      "code": "R57.2",
+      "name": "脓毒性休克",
+      "aliases": [
+        "感染性休克"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "R57.2",
+      "source": "ICD-10"
+    },
+    {
+      "code": "D56",
+      "name": "地中海贫血",
+      "aliases": [
+        "珠蛋白生成障碍性贫血"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "D56",
+      "source": "ICD-10"
+    },
+    {
+      "code": "D61.9",
+      "name": "再生障碍性贫血，未特指",
+      "aliases": [
+        "再障"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "D61.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "D64.9",
+      "name": "贫血，未特指",
+      "aliases": [
+        "贫血"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "D64.9",
+      "source": "ICD-10"
+    },
+    {
+      "code": "D65",
+      "name": "弥散性血管内凝血",
+      "aliases": [
+        "DIC"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "D65",
+      "source": "ICD-10"
+    },
+    {
+      "code": "D69.3",
+      "name": "特发性血小板减少性紫癜",
+      "aliases": [
+        "免疫性血小板减少症",
+        "ITP"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "D69.3",
+      "source": "ICD-10"
+    },
+    {
+      "code": "D69.6",
+      "name": "血小板减少，未特指",
+      "aliases": [
+        "血小板减少症"
+      ],
+      "domain": "western",
+      "standard_system": "ICD-10",
+      "standard_code": "D69.6",
+      "source": "ICD-10"
+    }
+  ]
+}

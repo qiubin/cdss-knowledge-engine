@@ -1,0 +1,75 @@
+[
+  {
+    "code": "ECG_CONTINUOUS",
+    "name": "持续心电监护",
+    "aliases": [
+      "持续心电监护",
+      "连续心电监测",
+      "心电监护"
+    ]
+  },
+  {
+    "code": "VITAL_SIGNS_Q15MIN",
+    "name": "每15分钟生命体征监测",
+    "aliases": [
+      "生命体征监测",
+      "每15分钟监测"
+    ]
+  },
+  {
+    "code": "TROPONIN_SERIES",
+    "name": "肌钙蛋白动态监测",
+    "aliases": [
+      "肌钙蛋白系列",
+      "肌钙蛋白复查"
+    ]
+  },
+  {
+    "code": "ECG_SERIAL_18LEAD",
+    "name": "18导联心电图动态复查",
+    "aliases": [
+      "18导联心电图",
+      "系列心电图"
+    ]
+  },
+  {
+    "code": "ACTIVATED_CLOTTING_TIME",
+    "name": "活化凝血时间监测",
+    "aliases": [
+      "ACT监测",
+      "凝血时间监测"
+    ]
+  },
+  {
+    "code": "RENAL_FUNCTION_MONITOR",
+    "name": "肾功能监测",
+    "aliases": [
+      "肾功能复查",
+      "肌酐监测"
+    ]
+  },
+  {
+    "code": "HEMOGLOBIN_MONITOR",
+    "name": "血红蛋白监测",
+    "aliases": [
+      "血红蛋白复查",
+      "血色素监测"
+    ]
+  },
+  {
+    "code": "ECOG_PERFORMANCE",
+    "name": "体能状态评估",
+    "aliases": [
+      "ECOG评分",
+      "体能状态"
+    ]
+  },
+  {
+    "code": "TUMOR_BURDEN_IMAGING",
+    "name": "影像学病灶评估",
+    "aliases": [
+      "病灶评估",
+      "影像复查"
+    ]
+  }
+]

@@ -1,0 +1,207 @@
+[
+  {
+    "code": "PATHOLOGY_CONFIRMED",
+    "name": "病理确诊",
+    "aliases": [
+      "病理确诊",
+      "病理证实",
+      "确诊.*病理"
+    ]
+  },
+  {
+    "code": "BONE_MARROW_INVOLVEMENT",
+    "name": "骨髓受累",
+    "aliases": [
+      "骨髓受累",
+      "骨髓侵犯"
+    ]
+  },
+  {
+    "code": "LYMPH_NODE_INVOLVEMENT",
+    "name": "淋巴结受累",
+    "aliases": [
+      "淋巴结受累",
+      "淋巴结侵犯"
+    ]
+  },
+  {
+    "code": "EXTRANODAL_INVOLVEMENT",
+    "name": "结外受累",
+    "aliases": [
+      "结外受累",
+      "结外侵犯"
+    ]
+  },
+  {
+    "code": "DISTANT_METASTASIS",
+    "name": "远处转移",
+    "aliases": [
+      "远处转移",
+      "转移灶"
+    ]
+  },
+  {
+    "code": "METABOLIC_AVIDITY",
+    "name": "病灶代谢活性增高",
+    "aliases": [
+      "病灶代谢活性增高",
+      "代谢活性增高",
+      "摄取增高"
+    ]
+  },
+  {
+    "code": "VASCULAR_STENOSIS",
+    "name": "血管狭窄",
+    "aliases": [
+      "血管狭窄",
+      "狭窄"
+    ]
+  },
+  {
+    "code": "THROMBOSIS",
+    "name": "血栓形成",
+    "aliases": [
+      "血栓形成",
+      "血栓"
+    ]
+  },
+  {
+    "code": "HEMORRHAGE",
+    "name": "出血灶",
+    "aliases": [
+      "出血灶",
+      "出血"
+    ]
+  },
+  {
+    "code": "INFARCTION",
+    "name": "梗死灶",
+    "aliases": [
+      "梗死灶",
+      "梗死"
+    ]
+  },
+  {
+    "code": "NODULE",
+    "name": "结节",
+    "aliases": [
+      "结节"
+    ]
+  },
+  {
+    "code": "MASS",
+    "name": "肿块",
+    "aliases": [
+      "肿块",
+      "占位"
+    ]
+  },
+  {
+    "code": "ULCER",
+    "name": "溃疡",
+    "aliases": [
+      "溃疡"
+    ]
+  },
+  {
+    "code": "EROSION",
+    "name": "糜烂",
+    "aliases": [
+      "糜烂"
+    ]
+  },
+  {
+    "code": "ST_CONVEX_ELEVATION",
+    "name": "ST段弓背向上抬高",
+    "aliases": [
+      "ST段弓背向上抬高",
+      "ST段抬高"
+    ]
+  },
+  {
+    "code": "PATHOLOGICAL_Q_WAVE",
+    "name": "病理性Q波",
+    "aliases": [
+      "病理性Q波",
+      "Q波"
+    ]
+  },
+  {
+    "code": "R_WAVE_REDUCTION",
+    "name": "R波减低",
+    "aliases": [
+      "R波减低"
+    ]
+  },
+  {
+    "code": "HYPERACUTE_T_WAVE",
+    "name": "超急期T波",
+    "aliases": [
+      "T波.*高.*对称",
+      "超急期.*T波"
+    ]
+  },
+  {
+    "code": "LUNG_RALES",
+    "name": "肺部啰音",
+    "aliases": [
+      "肺部[哕啰]音"
+    ]
+  },
+  {
+    "code": "LV_HYPERTROPHY",
+    "name": "左室肥厚",
+    "aliases": [
+      "左室肥厚",
+      "左心室肥厚",
+      "左室壁增厚",
+      "室间隔增厚",
+      "心肌肥厚"
+    ]
+  },
+  {
+    "code": "LVOT_OBSTRUCTION",
+    "name": "左室流出道梗阻",
+    "aliases": [
+      "左室流出道梗阻",
+      "左心室流出道梗阻",
+      "LVOT梗阻",
+      "流出道压差升高"
+    ]
+  },
+  {
+    "code": "SAM",
+    "name": "二尖瓣前叶收缩期前移",
+    "aliases": [
+      "二尖瓣前叶收缩期前移",
+      "SAM征",
+      "SAM现象"
+    ]
+  },
+  {
+    "code": "LVH_VOLTAGE",
+    "name": "左室高电压",
+    "aliases": [
+      "左室高电压",
+      "左心室高电压",
+      "左室电压增高"
+    ]
+  },
+  {
+    "code": "T_WAVE_INVERSION",
+    "name": "T波倒置",
+    "aliases": [
+      "T波倒置",
+      "T波深倒置"
+    ]
+  },
+  {
+    "code": "ST_T_CHANGE",
+    "name": "ST-T改变",
+    "aliases": [
+      "ST-T改变",
+      "ST段改变",
+      "ST-T异常"
+    ]
+  }
+]

@@ -1,0 +1,473 @@
+[
+  {
+    "code": "TCM_HERB_RENSHEN",
+    "name": "人参",
+    "aliases": [
+      "人参",
+      "红参"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "君",
+      "HERB_DOSE": "10g"
+    }
+  },
+  {
+    "code": "TCM_HERB_MAIDONG",
+    "name": "麦冬",
+    "aliases": [
+      "麦冬",
+      "麦门冬"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "臣",
+      "HERB_DOSE": "15g"
+    }
+  },
+  {
+    "code": "TCM_HERB_WUWEIZI",
+    "name": "五味子",
+    "aliases": [
+      "五味子"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "佐",
+      "HERB_DOSE": "6g"
+    }
+  },
+  {
+    "code": "TCM_HERB_GUALOU",
+    "name": "瓜蒌",
+    "aliases": [
+      "瓜蒌",
+      "栝楼"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "君",
+      "HERB_DOSE": "15g"
+    }
+  },
+  {
+    "code": "TCM_HERB_XIEBAI",
+    "name": "薤白",
+    "aliases": [
+      "薤白"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "臣",
+      "HERB_DOSE": "12g"
+    }
+  },
+  {
+    "code": "TCM_HERB_BANXIA",
+    "name": "半夏",
+    "aliases": [
+      "半夏",
+      "法半夏",
+      "姜半夏"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "佐",
+      "HERB_DOSE": "9g"
+    }
+  },
+  {
+    "code": "TCM_HERB_TAOREN",
+    "name": "桃仁",
+    "aliases": [
+      "桃仁"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "君",
+      "HERB_DOSE": "12g"
+    }
+  },
+  {
+    "code": "TCM_HERB_HONGHUA",
+    "name": "红花",
+    "aliases": [
+      "红花"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "君",
+      "HERB_DOSE": "9g"
+    }
+  },
+  {
+    "code": "TCM_HERB_DANGGUI",
+    "name": "当归",
+    "aliases": [
+      "当归"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "臣",
+      "HERB_DOSE": "9g"
+    }
+  },
+  {
+    "code": "TCM_HERB_CHUANXIONG",
+    "name": "川芎",
+    "aliases": [
+      "川芎"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "臣",
+      "HERB_DOSE": "6g"
+    }
+  },
+  {
+    "code": "TCM_HERB_CHISHAO",
+    "name": "赤芍",
+    "aliases": [
+      "赤芍"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "臣",
+      "HERB_DOSE": "6g"
+    }
+  },
+  {
+    "code": "TCM_HERB_CHAIHU",
+    "name": "柴胡",
+    "aliases": [
+      "柴胡"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "佐",
+      "HERB_DOSE": "3g"
+    }
+  },
+  {
+    "code": "TCM_HERB_ZHIGU",
+    "name": "枳壳",
+    "aliases": [
+      "枳壳"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "佐",
+      "HERB_DOSE": "6g"
+    }
+  },
+  {
+    "code": "TCM_HERB_JIEGENG",
+    "name": "桔梗",
+    "aliases": [
+      "桔梗"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "佐",
+      "HERB_DOSE": "6g"
+    }
+  },
+  {
+    "code": "TCM_HERB_NIUXI",
+    "name": "牛膝",
+    "aliases": [
+      "牛膝",
+      "川牛膝"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "佐",
+      "HERB_DOSE": "9g"
+    }
+  },
+  {
+    "code": "TCM_HERB_GANCAO",
+    "name": "甘草",
+    "aliases": [
+      "甘草",
+      "炙甘草"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "使",
+      "HERB_DOSE": "6g"
+    }
+  },
+  {
+    "code": "TCM_HERB_FUZI",
+    "name": "附子",
+    "aliases": [
+      "附子",
+      "制附子"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "君",
+      "HERB_DOSE": "9g"
+    }
+  },
+  {
+    "code": "TCM_HERB_HUANGQI",
+    "name": "黄芪",
+    "aliases": [
+      "黄芪",
+      "炙黄芪"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "",
+      "HERB_DOSE": ""
+    }
+  },
+  {
+    "code": "TCM_HERB_BAIZHU",
+    "name": "白术",
+    "aliases": [
+      "白术",
+      "炒白术"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "",
+      "HERB_DOSE": ""
+    }
+  },
+  {
+    "code": "TCM_HERB_FULING",
+    "name": "茯苓",
+    "aliases": [
+      "茯苓"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "",
+      "HERB_DOSE": ""
+    }
+  },
+  {
+    "code": "TCM_HERB_CHENPI",
+    "name": "陈皮",
+    "aliases": [
+      "陈皮"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "",
+      "HERB_DOSE": ""
+    }
+  },
+  {
+    "code": "TCM_HERB_SHENGJIANG",
+    "name": "生姜",
+    "aliases": [
+      "生姜"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "",
+      "HERB_DOSE": ""
+    }
+  },
+  {
+    "code": "TCM_HERB_GANSUI",
+    "name": "甘遂",
+    "aliases": [
+      "甘遂"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "",
+      "HERB_DOSE": ""
+    }
+  },
+  {
+    "code": "TCM_HERB_DAJI",
+    "name": "大戟",
+    "aliases": [
+      "大戟",
+      "京大戟"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "",
+      "HERB_DOSE": ""
+    }
+  },
+  {
+    "code": "TCM_HERB_HAIZAO",
+    "name": "海藻",
+    "aliases": [
+      "海藻"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "",
+      "HERB_DOSE": ""
+    }
+  },
+  {
+    "code": "TCM_HERB_YUANHUA",
+    "name": "芫花",
+    "aliases": [
+      "芫花"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "",
+      "HERB_DOSE": ""
+    }
+  },
+  {
+    "code": "TCM_HERB_WUTOU",
+    "name": "乌头",
+    "aliases": [
+      "乌头",
+      "川乌",
+      "草乌"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "",
+      "HERB_DOSE": ""
+    }
+  },
+  {
+    "code": "TCM_HERB_BEIMU",
+    "name": "贝母",
+    "aliases": [
+      "贝母",
+      "川贝母",
+      "浙贝母"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "",
+      "HERB_DOSE": ""
+    }
+  },
+  {
+    "code": "TCM_HERB_BAILIAN",
+    "name": "白蔹",
+    "aliases": [
+      "白蔹"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "",
+      "HERB_DOSE": ""
+    }
+  },
+  {
+    "code": "TCM_HERB_BAIJI",
+    "name": "白及",
+    "aliases": [
+      "白及"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "",
+      "HERB_DOSE": ""
+    }
+  },
+  {
+    "code": "TCM_HERB_LILU",
+    "name": "藜芦",
+    "aliases": [
+      "藜芦"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "",
+      "HERB_DOSE": ""
+    }
+  },
+  {
+    "code": "TCM_HERB_DANSHEN",
+    "name": "丹参",
+    "aliases": [
+      "丹参"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "",
+      "HERB_DOSE": ""
+    }
+  },
+  {
+    "code": "TCM_HERB_XUANSHEN",
+    "name": "玄参",
+    "aliases": [
+      "玄参"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "",
+      "HERB_DOSE": ""
+    }
+  },
+  {
+    "code": "TCM_HERB_XIXIN",
+    "name": "细辛",
+    "aliases": [
+      "细辛"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "",
+      "HERB_DOSE": ""
+    }
+  },
+  {
+    "code": "TCM_HERB_SHAOYAO",
+    "name": "芍药",
+    "aliases": [
+      "芍药",
+      "白芍"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {
+      "HERB_ROLE": "",
+      "HERB_DOSE": ""
+    }
+  }
+]

@@ -1,0 +1,216 @@
+{
+  "patient_id": "DEMO-FULMINANT-MYO-ADULT",
+  "hospital_id": "XM_FIRST",
+  "age": 32,
+  "gender": "M",
+  "encounter_time": "2026-11-05T21:10:00+08:00",
+  "display_name": "暴发性心肌炎 · 成人病毒性",
+  "category": "暴发性心肌炎",
+  "chief_complaint": "发热 3 天，胸闷、气促 1 天，不能平卧。",
+  "history_present": "患者 3 天前出现发热、咽痛、全身酸痛，1 天前出现胸闷、气短，夜间不能平卧，尿量减少，急诊测血压偏低。",
+  "history_past": "既往体健，无冠心病、高血压、糖尿病史。",
+  "labs": [
+    {
+      "lab_code": "CTN",
+      "lab_name": "肌钙蛋白",
+      "value": 3.2,
+      "unit": "ng/mL",
+      "reference_low": 0.0,
+      "reference_high": 0.04,
+      "collected_at": "2026-11-05T21:15:00+08:00",
+      "reported_at": "2026-11-05T21:30:00+08:00"
+    },
+    {
+      "lab_code": "CTN",
+      "lab_name": "肌钙蛋白",
+      "value": 7.8,
+      "unit": "ng/mL",
+      "reference_low": 0.0,
+      "reference_high": 0.04,
+      "collected_at": "2026-11-06T01:00:00+08:00",
+      "reported_at": "2026-11-06T01:20:00+08:00"
+    },
+    {
+      "lab_code": "CK_MB",
+      "lab_name": "肌酸激酶同工酶",
+      "value": 60.0,
+      "unit": "ng/mL",
+      "reference_low": 0.0,
+      "reference_high": 5.0,
+      "collected_at": "2026-11-05T21:15:00+08:00",
+      "reported_at": "2026-11-05T21:30:00+08:00"
+    },
+    {
+      "lab_code": "MYO",
+      "lab_name": "肌红蛋白",
+      "value": 180.0,
+      "unit": "ng/mL",
+      "reference_low": 3.5,
+      "reference_high": 77.0,
+      "collected_at": "2026-11-05T21:15:00+08:00",
+      "reported_at": "2026-11-05T21:30:00+08:00"
+    },
+    {
+      "lab_code": "BNP",
+      "lab_name": "脑钠肽",
+      "value": 1800.0,
+      "unit": "pg/mL",
+      "reference_low": 0.0,
+      "reference_high": 100.0,
+      "collected_at": "2026-11-05T21:15:00+08:00",
+      "reported_at": "2026-11-05T21:30:00+08:00"
+    },
+    {
+      "lab_code": "CRP",
+      "lab_name": "C反应蛋白",
+      "value": 85.0,
+      "unit": "mg/L",
+      "reference_low": 0.0,
+      "reference_high": 10.0,
+      "collected_at": "2026-11-05T21:15:00+08:00",
+      "reported_at": "2026-11-05T21:30:00+08:00"
+    },
+    {
+      "lab_code": "LDH",
+      "lab_name": "乳酸脱氢酶",
+      "value": 620.0,
+      "unit": "U/L",
+      "reference_low": 120.0,
+      "reference_high": 250.0,
+      "collected_at": "2026-11-05T21:15:00+08:00",
+      "reported_at": "2026-11-05T21:30:00+08:00"
+    },
+    {
+      "lab_code": "CREAT",
+      "lab_name": "肌酐",
+      "value": 150.0,
+      "unit": "umol/L",
+      "reference_low": 57.0,
+      "reference_high": 111.0,
+      "collected_at": "2026-11-05T21:15:00+08:00",
+      "reported_at": "2026-11-05T21:30:00+08:00"
+    },
+    {
+      "lab_code": "LACTATE",
+      "lab_name": "乳酸",
+      "value": 4.2,
+      "unit": "mmol/L",
+      "reference_low": 0.5,
+      "reference_high": 2.2,
+      "collected_at": "2026-11-05T21:15:00+08:00",
+      "reported_at": "2026-11-05T21:30:00+08:00"
+    }
+  ],
+  "exam_findings": [
+    {
+      "exam_code": "ECG_12LEAD",
+      "exam_name": "12导联心电图",
+      "finding_code": "ST_CONVEX_ELEVATION",
+      "finding_name": "广泛ST段抬高",
+      "present": true,
+      "detail": {
+        "summary": "I、II、aVL、V2-V6 导联广泛 ST 段抬高，伴 T 波高尖"
+      }
+    },
+    {
+      "exam_code": "ECG_12LEAD",
+      "exam_name": "12导联心电图",
+      "finding_code": "PATHOLOGICAL_Q_WAVE",
+      "finding_name": "病理性Q波",
+      "present": false,
+      "detail": null
+    },
+    {
+      "exam_code": "ECHO",
+      "exam_name": "超声心动图",
+      "finding_code": "LEFT_VENTRICULAR_DYSFUNCTION",
+      "finding_name": "左室弥漫性收缩功能减低",
+      "present": true,
+      "detail": {
+        "summary": "左室弥漫性运动减弱，EF 30%，少量心包积液"
+      }
+    },
+    {
+      "exam_code": "CXR",
+      "exam_name": "胸部X线",
+      "finding_code": "LUNG_RALES",
+      "finding_name": "肺淤血",
+      "present": true,
+      "detail": {
+        "summary": "双肺纹理增粗，肺门影增大"
+      }
+    }
+  ],
+  "symptoms": [
+    {
+      "symptom_code": "FEVER",
+      "symptom_name": "发热",
+      "present": true,
+      "duration_minutes": 4320,
+      "severity": "severe"
+    },
+    {
+      "symptom_code": "SYM_CHEST_TIGHTNESS",
+      "symptom_name": "胸闷",
+      "present": true,
+      "duration_minutes": 1440,
+      "severity": "severe"
+    },
+    {
+      "symptom_code": "SYM_SHORTNESS_BREATH",
+      "symptom_name": "气短",
+      "present": true,
+      "duration_minutes": 1440,
+      "severity": "severe"
+    },
+    {
+      "symptom_code": "SYM_PALPITATION",
+      "symptom_name": "心悸",
+      "present": true,
+      "duration_minutes": 720,
+      "severity": "moderate"
+    },
+    {
+      "symptom_code": "SYM_FATIGUE",
+      "symptom_name": "乏力",
+      "present": true,
+      "duration_minutes": 4320,
+      "severity": "severe"
+    }
+  ],
+  "vitals": [
+    {
+      "vital_code": "sbp",
+      "value": 82.0,
+      "unit": "mmHg"
+    },
+    {
+      "vital_code": "dbp",
+      "value": 50.0,
+      "unit": "mmHg"
+    },
+    {
+      "vital_code": "hr",
+      "value": 124.0,
+      "unit": "bpm"
+    },
+    {
+      "vital_code": "rr",
+      "value": 28.0,
+      "unit": "bpm"
+    },
+    {
+      "vital_code": "spo2",
+      "value": 90.0,
+      "unit": "%"
+    },
+    {
+      "vital_code": "temp",
+      "value": 38.2,
+      "unit": "℃"
+    }
+  ],
+  "past_history": [],
+  "current_medications": [],
+  "allergies": []
+}

@@ -1,0 +1,201 @@
+[
+  {
+    "code": "PRURITUS",
+    "name": "瘙痒",
+    "aliases": [
+      "瘙痒",
+      "瘙痒不适"
+    ],
+    "standard_code": "自建:SHARED-001",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "SYM_CHEST_TIGHTNESS",
+    "name": "胸闷",
+    "aliases": [
+      "胸闷",
+      "胸中窒闷",
+      "胸闷不舒"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "SYM_CHEST_PAIN",
+    "name": "胸痛",
+    "aliases": [
+      "胸痛",
+      "心痛",
+      "胸膺疼痛"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "SYM_PALPITATION",
+    "name": "心悸",
+    "aliases": [
+      "心悸",
+      "心慌",
+      "惊悸"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "SYM_SHORTNESS_BREATH",
+    "name": "气短",
+    "aliases": [
+      "气短",
+      "短气",
+      "气促"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "SYM_FATIGUE",
+    "name": "乏力",
+    "aliases": [
+      "乏力",
+      "疲乏",
+      "倦怠",
+      "神疲"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "SYM_SPONTANEOUS_SWEAT",
+    "name": "自汗",
+    "aliases": [
+      "自汗"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "SYM_NIGHT_SWEAT",
+    "name": "盗汗",
+    "aliases": [
+      "盗汗",
+      "夜寐汗出"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "SYM_DRY_MOUTH",
+    "name": "口干",
+    "aliases": [
+      "口干",
+      "口渴",
+      "咽干"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "SYM_DIZZINESS",
+    "name": "头晕",
+    "aliases": [
+      "头晕",
+      "眩晕"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "SYM_POOR_APPETITE",
+    "name": "纳呆",
+    "aliases": [
+      "纳呆",
+      "食少",
+      "食欲不振"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "SYM_EXCESS_PHLEGM",
+    "name": "痰多",
+    "aliases": [
+      "痰多",
+      "咳痰",
+      "痰涎"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "SYM_INSOMNIA",
+    "name": "失眠",
+    "aliases": [
+      "失眠",
+      "不寐",
+      "眠差"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "SYM_PALE_COMPLEXION",
+    "name": "面色少华",
+    "aliases": [
+      "面色少华",
+      "面色苍白",
+      "面色无华"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "SYM_AVERSION_TO_COLD",
+    "name": "畏寒",
+    "aliases": [
+      "畏寒",
+      "怕冷",
+      "形寒"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "SYM_BODY_HEAVINESS",
+    "name": "肢体沉重",
+    "aliases": [
+      "肢体沉重",
+      "身重"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "SYM_CYANOTIC_LIPS",
+    "name": "唇甲紫暗",
+    "aliases": [
+      "唇甲紫暗",
+      "口唇紫暗",
+      "爪甲青紫"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  }
+]

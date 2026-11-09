@@ -1,0 +1,67 @@
+{
+  "disease": {
+    "label": "疾病（ICD-10）",
+    "domain": "western",
+    "color": "#c05621"
+  },
+  "syndrome": {
+    "label": "证候",
+    "domain": "tcm",
+    "color": "#d69e2e"
+  },
+  "symptom": {
+    "label": "症状",
+    "domain": "shared",
+    "color": "#f687b3"
+  },
+  "tongue": {
+    "label": "舌象",
+    "domain": "tcm",
+    "color": "#ed8936"
+  },
+  "pulse": {
+    "label": "脉象",
+    "domain": "tcm",
+    "color": "#9f7aea"
+  },
+  "sign": {
+    "label": "体征",
+    "domain": "shared",
+    "color": "#b794f4"
+  },
+  "pathogenesis": {
+    "label": "病机",
+    "domain": "tcm",
+    "color": "#a0aec0"
+  },
+  "treatment_method": {
+    "label": "治法",
+    "domain": "tcm",
+    "color": "#38a169"
+  },
+  "formula": {
+    "label": "方剂",
+    "domain": "tcm",
+    "color": "#2f855a"
+  },
+  "herb": {
+    "label": "中药",
+    "domain": "tcm",
+    "color": "#68d391"
+  },
+  "contraindication": {
+    "label": "禁忌",
+    "domain": "shared",
+    "color": "#fc8181"
+  },
+  "concept": {
+    "label": "概念",
+    "domain": "shared",
+    "color": "#4fd1c5"
+  },
+  "diagnostic_evidence": {
+    "label": "诊断证据",
+    "domain": "western",
+    "color": "#4fd1c5"
+  }
+}

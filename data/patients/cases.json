@@ -1,0 +1,49 @@
+{
+  "cases": [
+    {
+      "case_id": "stemi-anterior",
+      "file": "demo_stemi_patient.json",
+      "name": "STEMI · 急性前壁心肌梗死",
+      "domain": "western",
+      "description": "58 岁男性，持续压榨性胸痛 40 分钟，V2-V5 导联 ST 段抬高，肌钙蛋白动态升高。",
+      "default": true,
+      "category": "STEMI"
+    },
+    {
+      "case_id": "stemi-inferior",
+      "file": "demo_stemi_inferior_patient.json",
+      "name": "STEMI · 急性下壁心肌梗死伴低血压",
+      "domain": "western",
+      "description": "66 岁女性，胸痛伴恶心呕吐，II/III/aVF 导联 ST 段抬高，血压偏低、心率偏慢。",
+      "default": false,
+      "category": "STEMI"
+    },
+    {
+      "case_id": "fulminant-myocarditis-adult",
+      "file": "demo_fulminant_myocarditis_adult.json",
+      "name": "暴发性心肌炎 · 成人病毒性",
+      "domain": "western",
+      "description": "32 岁男性，发热后胸闷气促 3 天，肌钙蛋白显著升高，EF 30%，心源性休克。",
+      "default": false,
+      "category": "暴发性心肌炎"
+    },
+    {
+      "case_id": "fulminant-myocarditis-youth",
+      "file": "demo_fulminant_myocarditis_youth.json",
+      "name": "暴发性心肌炎 · 青少年",
+      "domain": "western",
+      "description": "16 岁女性，腹痛呕吐后晕厥，广泛 ST-T 改变、频发室早，血压 78/45 mmHg。",
+      "default": false,
+      "category": "暴发性心肌炎"
+    },
+    {
+      "case_id": "myocarditis-subacute",
+      "file": "demo_myocarditis_subacute.json",
+      "name": "急性心肌炎 · 亚急性轻型",
+      "domain": "western",
+      "description": "45 岁男性，上呼吸道感染后 5 天胸闷心悸，肌钙蛋白轻度升高，EF 48%。",
+      "default": false,
+      "category": "急性心肌炎"
+    }
+  ]
+}

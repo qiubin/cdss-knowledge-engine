@@ -1,0 +1,221 @@
+[
+  {
+    "code": "CBC",
+    "name": "血常规",
+    "aliases": [
+      "血常规"
+    ]
+  },
+  {
+    "code": "CRP",
+    "name": "C反应蛋白",
+    "aliases": [
+      "C反应蛋白",
+      "CRP"
+    ]
+  },
+  {
+    "code": "ESR",
+    "name": "血沉",
+    "aliases": [
+      "血沉",
+      "红细胞沉降率"
+    ]
+  },
+  {
+    "code": "LIVER_FUNCTION",
+    "name": "肝功能",
+    "aliases": [
+      "肝功能"
+    ]
+  },
+  {
+    "code": "RENAL_FUNCTION",
+    "name": "肾功能",
+    "aliases": [
+      "肾功能"
+    ]
+  },
+  {
+    "code": "ELECTROLYTE",
+    "name": "电解质",
+    "aliases": [
+      "电解质"
+    ]
+  },
+  {
+    "code": "LDH",
+    "name": "乳酸脱氢酶",
+    "aliases": [
+      "乳酸脱氢酶",
+      "LDH"
+    ]
+  },
+  {
+    "code": "BETA2_MICROGLOBULIN",
+    "name": "β2微球蛋白",
+    "aliases": [
+      "β2微球蛋白",
+      "beta2微球蛋白",
+      "β2-MG",
+      "β2微球旦白"
+    ]
+  },
+  {
+    "code": "FERRITIN",
+    "name": "铁蛋白",
+    "aliases": [
+      "铁蛋白"
+    ]
+  },
+  {
+    "code": "COAGULATION",
+    "name": "凝血功能",
+    "aliases": [
+      "凝血功能",
+      "凝血"
+    ]
+  },
+  {
+    "code": "D_DIMER",
+    "name": "D-二聚体",
+    "aliases": [
+      "D-二聚体",
+      "D二聚体",
+      "D-dimer"
+    ]
+  },
+  {
+    "code": "BNP",
+    "name": "B型钠尿肽",
+    "aliases": [
+      "B型钠尿肽",
+      "BNP",
+      "B型脑钠肽"
+    ]
+  },
+  {
+    "code": "TROPONIN",
+    "name": "肌钙蛋白",
+    "aliases": [
+      "肌钙蛋白",
+      "cTn",
+      "troponin"
+    ]
+  },
+  {
+    "code": "LIPID_PANEL",
+    "name": "血脂",
+    "aliases": [
+      "血脂"
+    ]
+  },
+  {
+    "code": "GLUCOSE",
+    "name": "血糖",
+    "aliases": [
+      "血糖"
+    ]
+  },
+  {
+    "code": "HBA1C",
+    "name": "糖化血红蛋白",
+    "aliases": [
+      "糖化血红蛋白",
+      "HbA1c"
+    ]
+  },
+  {
+    "code": "THYROID_FUNCTION",
+    "name": "甲状腺功能",
+    "aliases": [
+      "甲状腺功能",
+      "甲功"
+    ]
+  },
+  {
+    "code": "HBV_SEROLOGY",
+    "name": "乙肝血清学",
+    "aliases": [
+      "乙肝血清学",
+      "乙肝两对半",
+      "乙肝五项",
+      "HBV"
+    ]
+  },
+  {
+    "code": "HIV_SEROLOGY",
+    "name": "HIV检测",
+    "aliases": [
+      "HIV检测",
+      "人类免疫缺陷病毒检测",
+      "HIV"
+    ]
+  },
+  {
+    "code": "EBV_DNA",
+    "name": "EB病毒DNA",
+    "aliases": [
+      "EB病毒DNA",
+      "EBV-DNA",
+      "EBV DNA",
+      "EBV"
+    ]
+  },
+  {
+    "code": "URINALYSIS",
+    "name": "尿常规",
+    "aliases": [
+      "尿常规"
+    ]
+  },
+  {
+    "code": "BLOOD_GAS",
+    "name": "血气分析",
+    "aliases": [
+      "血气分析",
+      "动脉血气"
+    ]
+  },
+  {
+    "code": "CTN",
+    "name": "肌钙蛋白",
+    "aliases": [
+      "cTn",
+      "肌钙蛋白",
+      "cardiac troponin"
+    ]
+  },
+  {
+    "code": "CK_MB",
+    "name": "肌酸激酶同工酶",
+    "aliases": [
+      "CK[-—]?MB",
+      "肌酸激酶同工酶"
+    ]
+  },
+  {
+    "code": "MYO",
+    "name": "肌红蛋白",
+    "aliases": [
+      "肌红蛋白",
+      "myoglobin",
+      "MYO"
+    ]
+  },
+  {
+    "code": "CREAT",
+    "name": "肌酐",
+    "aliases": [
+      "肌酐",
+      "creatinine"
+    ]
+  },
+  {
+    "code": "ALBUMIN",
+    "name": "白蛋白",
+    "aliases": [
+      "白蛋白"
+    ]
+  }
+]

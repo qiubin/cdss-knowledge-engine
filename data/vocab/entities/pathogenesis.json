@@ -1,0 +1,66 @@
+[
+  {
+    "code": "TCM_PATH_QI_XU",
+    "name": "气虚",
+    "aliases": [
+      "气虚"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_PATH_YIN_XU",
+    "name": "阴虚",
+    "aliases": [
+      "阴虚"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_PATH_TAN_ZHUO",
+    "name": "痰浊",
+    "aliases": [
+      "痰浊",
+      "痰湿"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_PATH_XUE_YU",
+    "name": "血瘀",
+    "aliases": [
+      "血瘀",
+      "瘀血"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_PATH_XINMAI_BIZU",
+    "name": "心脉痹阻",
+    "aliases": [
+      "心脉痹阻",
+      "心脉瘀阻"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_PATH_YANG_QI_XU_SHUAI",
+    "name": "阳气虚衰",
+    "aliases": [
+      "阳气虚衰",
+      "心阳不振"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  }
+]

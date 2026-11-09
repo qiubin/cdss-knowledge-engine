@@ -1,0 +1,297 @@
+[
+  {
+    "code": "C81",
+    "name": "霍奇金病",
+    "aliases": [
+      "霍奇金淋巴瘤",
+      "霍奇金"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "C81",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "C82",
+    "name": "滤泡性淋巴瘤",
+    "aliases": [],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "C82",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "C83.1",
+    "name": "套细胞淋巴瘤",
+    "aliases": [],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "C83.1",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "C83.3",
+    "name": "弥漫性大B细胞淋巴瘤",
+    "aliases": [
+      "弥漫大B细胞淋巴瘤",
+      "弥漫大B",
+      "DLBCL"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "C83.3",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "C83.7",
+    "name": "伯基特淋巴瘤",
+    "aliases": [
+      "Burkitt淋巴瘤",
+      "Burkitt",
+      "伯基特"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "C83.7",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "C88.4",
+    "name": "结外边缘区B细胞淋巴瘤［MALT淋巴瘤］",
+    "aliases": [
+      "MALT淋巴瘤",
+      "MALT"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "C88.4",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "C91.1",
+    "name": "慢性淋巴细胞白血病",
+    "aliases": [
+      "小淋巴细胞淋巴瘤",
+      "慢性淋巴细胞白血病/小淋巴细胞淋巴瘤",
+      "CLL/SLL"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "C91.1",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "I21.0",
+    "name": "急性前壁透壁性心肌梗死",
+    "aliases": [
+      "STEMI",
+      "急性ST段抬高型心肌梗死"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I21.0",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "I21.2",
+    "name": "急性其他部位透壁性心肌梗死",
+    "aliases": [
+      "右心室心肌梗死",
+      "右心室梗死"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I21.2",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "I21.4",
+    "name": "急性心内膜下心肌梗死",
+    "aliases": [
+      "NSTEMI",
+      "急性非ST段抬高型心肌梗死"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I21.4",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "I26.9",
+    "name": "肺栓塞",
+    "aliases": [
+      "急性肺动脉栓塞",
+      "肺动脉栓塞"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I26.9",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "I30.9",
+    "name": "急性心包炎",
+    "aliases": [],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I30.9",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "I50.9",
+    "name": "心力衰竭",
+    "aliases": [
+      "心衰"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I50.9",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "I71.0",
+    "name": "主动脉夹层",
+    "aliases": [],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I71.0",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "I40.0",
+    "name": "感染性心肌炎",
+    "aliases": [
+      "感染性心肌炎",
+      "病毒性心肌炎",
+      "病毒性心肌心包炎"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I40.0",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "I40.1",
+    "name": "孤立性心肌炎",
+    "aliases": [
+      "孤立性心肌炎",
+      "特发性心肌炎"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I40.1",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "I40.8",
+    "name": "其他急性心肌炎",
+    "aliases": [
+      "其他急性心肌炎"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I40.8",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "I40.9",
+    "name": "急性心肌炎",
+    "aliases": [
+      "急性心肌炎",
+      "暴发性心肌炎",
+      "重症心肌炎"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I40.9",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "I41",
+    "name": "分类于他处的疾病引起的心肌炎",
+    "aliases": [
+      "继发性心肌炎",
+      "分类于他处的疾病引起的心肌炎"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I41",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "I51.4",
+    "name": "心肌炎",
+    "aliases": [
+      "心肌炎",
+      "慢性心肌炎"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I51.4",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "I42.1",
+    "name": "梗阻性肥厚型心肌病",
+    "aliases": [
+      "梗阻性肥厚型心肌病",
+      "梗阻性肥厚性心肌病",
+      "肥厚型梗阻性心肌病",
+      "HOCM"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I42.1",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "I42.2",
+    "name": "其他肥厚型心肌病",
+    "aliases": [
+      "肥厚型心肌病",
+      "肥厚性心肌病",
+      "非梗阻性肥厚型心肌病",
+      "非梗阻性肥厚性心肌病",
+      "HCM"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I42.2",
+    "source": "ICD-10",
+    "attributes": {}
+  },
+  {
+    "code": "I42.9",
+    "name": "心肌病，未特指",
+    "aliases": [
+      "心肌病",
+      "原发性心肌病"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I42.9",
+    "source": "ICD-10",
+    "attributes": {}
+  }
+]

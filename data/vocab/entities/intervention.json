@@ -1,0 +1,82 @@
+[
+  {
+    "code": "PCI",
+    "name": "经皮冠状动脉介入治疗",
+    "aliases": [
+      "PCI",
+      "冠脉介入",
+      "经皮冠脉介入"
+    ]
+  },
+  {
+    "code": "CORONARY_STENT",
+    "name": "冠脉支架植入",
+    "aliases": [
+      "支架植入",
+      "冠脉支架"
+    ]
+  },
+  {
+    "code": "THROMBOLYSIS",
+    "name": "溶栓治疗",
+    "aliases": [
+      "溶栓",
+      "静脉溶栓"
+    ]
+  },
+  {
+    "code": "THROMBUS_ASPIRATION",
+    "name": "血栓抽吸",
+    "aliases": [
+      "血栓抽吸术"
+    ]
+  },
+  {
+    "code": "IABP",
+    "name": "主动脉内球囊反搏",
+    "aliases": [
+      "IABP",
+      "球囊反搏"
+    ]
+  },
+  {
+    "code": "MECHANICAL_VENTILATION",
+    "name": "机械通气",
+    "aliases": [
+      "机械通气",
+      "呼吸机支持"
+    ]
+  },
+  {
+    "code": "CHEMOTHERAPY",
+    "name": "化学治疗",
+    "aliases": [
+      "化疗",
+      "化学治疗"
+    ]
+  },
+  {
+    "code": "IMMUNOTHERAPY",
+    "name": "免疫治疗",
+    "aliases": [
+      "免疫治疗",
+      "生物治疗"
+    ]
+  },
+  {
+    "code": "RITUXIMAB_INFUSION",
+    "name": "利妥昔单抗输注",
+    "aliases": [
+      "利妥昔单抗",
+      "美罗华"
+    ]
+  },
+  {
+    "code": "CSC-TX",
+    "name": "造血干细胞采集与移植",
+    "aliases": [
+      "造血干细胞移植",
+      "干细胞移植"
+    ]
+  }
+]

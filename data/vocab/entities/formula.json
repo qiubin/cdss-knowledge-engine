@@ -1,0 +1,44 @@
+[
+  {
+    "code": "TCM_FORMULA_SHENGMAI_SAN",
+    "name": "生脉散",
+    "aliases": [
+      "生脉散",
+      "生脉饮"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_FORMULA_GUALOU_XIEBAI_BANXIA_TANG",
+    "name": "瓜蒌薤白半夏汤",
+    "aliases": [
+      "瓜蒌薤白半夏汤",
+      "栝楼薤白半夏汤"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_FORMULA_XUEFU_ZHUYU_TANG",
+    "name": "血府逐瘀汤",
+    "aliases": [
+      "血府逐瘀汤"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_FORMULA_SHENFU_TANG",
+    "name": "参附汤",
+    "aliases": [
+      "参附汤"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  }
+]

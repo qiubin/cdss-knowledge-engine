@@ -1,0 +1,139 @@
+[
+  {
+    "code": "ELEVATED",
+    "name_cn": "升高",
+    "name_en": "Elevated",
+    "category": "lab_concept",
+    "description": "超过参考范围上限",
+    "evaluator_type": "static_threshold",
+    "domain": "western"
+  },
+  {
+    "code": "DECREASED",
+    "name_cn": "降低",
+    "name_en": "Decreased",
+    "category": "lab_concept",
+    "description": "低于参考范围下限",
+    "evaluator_type": "static_threshold",
+    "domain": "western"
+  },
+  {
+    "code": "ABNORMAL",
+    "name_cn": "异常",
+    "name_en": "Abnormal",
+    "category": "lab_concept",
+    "description": "升高或降低",
+    "evaluator_type": "static_threshold",
+    "domain": "western"
+  },
+  {
+    "code": "CRITICAL_HIGH",
+    "name_cn": "危急值高",
+    "name_en": "Critical High",
+    "category": "lab_concept",
+    "description": "超过危急值上限",
+    "evaluator_type": "static_threshold",
+    "domain": "western"
+  },
+  {
+    "code": "ABOVE_ULN_1",
+    "name_cn": "超正常上限",
+    "name_en": "Above ULN",
+    "category": "lab_concept",
+    "description": "超过参考上限",
+    "evaluator_type": "uln_multiplier",
+    "domain": "western"
+  },
+  {
+    "code": "ABOVE_ULN_5",
+    "name_cn": "超正常上限5倍",
+    "name_en": "Above ULN x5",
+    "category": "lab_concept",
+    "description": "超过参考上限5倍",
+    "evaluator_type": "uln_multiplier",
+    "domain": "western"
+  },
+  {
+    "code": "POSITIVE",
+    "name_cn": "阳性",
+    "name_en": "Positive",
+    "category": "lab_concept",
+    "description": "定性结果阳性",
+    "evaluator_type": "qualitative",
+    "domain": "western"
+  },
+  {
+    "code": "NEGATIVE",
+    "name_cn": "阴性",
+    "name_en": "Negative",
+    "category": "lab_concept",
+    "description": "定性结果阴性",
+    "evaluator_type": "qualitative",
+    "domain": "western"
+  },
+  {
+    "code": "DYNAMIC_RISE",
+    "name_cn": "动态上升",
+    "name_en": "Dynamic Rise",
+    "category": "lab_concept",
+    "description": "连续测量值呈上升趋势",
+    "evaluator_type": "dynamic_trend",
+    "domain": "western"
+  },
+  {
+    "code": "PEAK_SHIFT",
+    "name_cn": "峰值前移",
+    "name_en": "Peak Shift",
+    "category": "lab_concept",
+    "description": "酶峰时间提前",
+    "evaluator_type": "dynamic_trend",
+    "domain": "western"
+  },
+  {
+    "code": "PRESENT",
+    "name_cn": "存在",
+    "name_en": "Present",
+    "category": "exam_concept",
+    "description": "检查发现存在某表现",
+    "evaluator_type": "finding_exists",
+    "domain": "western"
+  },
+  {
+    "code": "ABSENT",
+    "name_cn": "不存在",
+    "name_en": "Absent",
+    "category": "exam_concept",
+    "description": "检查发现不存在某表现",
+    "evaluator_type": "finding_exists",
+    "domain": "western"
+  },
+  {
+    "code": "DURATION_GT",
+    "name_cn": "持续时间大于",
+    "name_en": "Duration Greater Than",
+    "category": "symptom_concept",
+    "description": "症状持续超过指定时长",
+    "evaluator_type": "duration_check",
+    "domain": "western"
+  },
+  {
+    "code": "TCM_PATTERN_FORMED",
+    "name_cn": "证候成立",
+    "name_en": "pattern_formed",
+    "category": "tcm_pattern_concept",
+    "description": "证候满足主症/次症/舌脉条件后成立",
+    "evaluator_type": "observation_present",
+    "domain": "tcm",
+    "is_active": true
+  },
+  {
+    "code": "TCM_PATTERN_NOT_FORMED",
+    "name_cn": "证候未成立",
+    "name_en": "pattern_not_formed",
+    "category": "tcm_pattern_concept",
+    "description": "证候条件未满足",
+    "evaluator_type": "observation_present",
+    "domain": "tcm",
+    "is_active": true
+  }
+]

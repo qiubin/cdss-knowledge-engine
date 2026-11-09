@@ -1,0 +1,111 @@
+[
+  {
+    "code": "ELEVATED",
+    "name": "升高",
+    "aliases": [
+      "升高",
+      "增高",
+      "上升"
+    ]
+  },
+  {
+    "code": "DECREASED",
+    "name": "降低",
+    "aliases": [
+      "降低",
+      "减低",
+      "下降"
+    ]
+  },
+  {
+    "code": "ABNORMAL",
+    "name": "异常",
+    "aliases": [
+      "异常"
+    ]
+  },
+  {
+    "code": "CRITICAL_HIGH",
+    "name": "危急值升高",
+    "aliases": [
+      "危急值升高",
+      "危急值",
+      "显著升高"
+    ]
+  },
+  {
+    "code": "ABOVE_ULN_1",
+    "name": "超过正常上限",
+    "aliases": [
+      "超过正常上限",
+      "高于正常上限",
+      "超ULN",
+      "超过ULN"
+    ]
+  },
+  {
+    "code": "ABOVE_ULN_5",
+    "name": "超过正常上限5倍",
+    "aliases": [
+      "超过正常上限5倍",
+      "高于正常上限5倍",
+      "5×ULN",
+      "5xULN"
+    ]
+  },
+  {
+    "code": "POSITIVE",
+    "name": "阳性",
+    "aliases": [
+      "阳性"
+    ]
+  },
+  {
+    "code": "NEGATIVE",
+    "name": "阴性",
+    "aliases": [
+      "阴性"
+    ]
+  },
+  {
+    "code": "DYNAMIC_RISE",
+    "name": "动态上升",
+    "aliases": [
+      "动态上升",
+      "动态变化",
+      "进行性上升",
+      "倍增"
+    ]
+  },
+  {
+    "code": "PEAK_SHIFT",
+    "name": "峰值前移",
+    "aliases": [
+      "峰值前移"
+    ]
+  },
+  {
+    "code": "PRESENT",
+    "name": "存在",
+    "aliases": [
+      "存在",
+      "可见"
+    ]
+  },
+  {
+    "code": "ABSENT",
+    "name": "缺失",
+    "aliases": [
+      "缺失",
+      "未见"
+    ]
+  },
+  {
+    "code": "DURATION_GT",
+    "name": "持续超过",
+    "aliases": [
+      "持续超过",
+      "大于"
+    ]
+  }
+]

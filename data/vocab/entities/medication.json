@@ -1,0 +1,153 @@
+[
+  {
+    "code": "ASPIRIN",
+    "name": "阿司匹林",
+    "aliases": [
+      "阿司匹林",
+      "ASA"
+    ]
+  },
+  {
+    "code": "CLOPIDOGREL",
+    "name": "氯吡格雷",
+    "aliases": [
+      "氯吡格雷",
+      "波立维"
+    ]
+  },
+  {
+    "code": "TICAGRELOR",
+    "name": "替格瑞洛",
+    "aliases": [
+      "替格瑞洛"
+    ]
+  },
+  {
+    "code": "HEPARIN",
+    "name": "普通肝素",
+    "aliases": [
+      "肝素",
+      "UFH"
+    ]
+  },
+  {
+    "code": "ENOXAPARIN",
+    "name": "依诺肝素",
+    "aliases": [
+      "依诺肝素",
+      "低分子肝素",
+      "LMWH"
+    ]
+  },
+  {
+    "code": "TENECTEPLASE",
+    "name": "替奈普酶",
+    "aliases": [
+      "替奈普酶",
+      "TNK"
+    ]
+  },
+  {
+    "code": "ALTEPLASE",
+    "name": "阿替普酶",
+    "aliases": [
+      "阿替普酶",
+      "rt-PA",
+      "重组组织型纤溶酶原激活剂"
+    ]
+  },
+  {
+    "code": "STREPTOKINASE",
+    "name": "链激酶",
+    "aliases": [
+      "链激酶",
+      "SK"
+    ]
+  },
+  {
+    "code": "BETA_BLOCKER",
+    "name": "β受体阻滞剂",
+    "aliases": [
+      "β受体阻滞剂",
+      "beta受体阻滞剂",
+      "美托洛尔"
+    ]
+  },
+  {
+    "code": "ACEI",
+    "name": "血管紧张素转换酶抑制剂",
+    "aliases": [
+      "ACEI",
+      "ACE抑制剂",
+      "卡托普利",
+      "依那普利"
+    ]
+  },
+  {
+    "code": "STATIN",
+    "name": "他汀类药物",
+    "aliases": [
+      "他汀",
+      "阿托伐他汀",
+      "瑞舒伐他汀"
+    ]
+  },
+  {
+    "code": "NITRATES",
+    "name": "硝酸酯类药物",
+    "aliases": [
+      "硝酸酯",
+      "硝酸甘油"
+    ]
+  },
+  {
+    "code": "MORPHINE",
+    "name": "吗啡",
+    "aliases": [
+      "吗啡"
+    ]
+  },
+  {
+    "code": "RITUXIMAB",
+    "name": "利妥昔单抗",
+    "aliases": [
+      "利妥昔单抗",
+      "美罗华",
+      "Rituximab"
+    ]
+  },
+  {
+    "code": "CYCLOPHOSPHAMIDE",
+    "name": "环磷酰胺",
+    "aliases": [
+      "环磷酰胺",
+      "CTX",
+      "CYC"
+    ]
+  },
+  {
+    "code": "DOXORUBICIN",
+    "name": "多柔比星",
+    "aliases": [
+      "多柔比星",
+      "阿霉素",
+      "ADM"
+    ]
+  },
+  {
+    "code": "VINCRISTINE",
+    "name": "长春新碱",
+    "aliases": [
+      "长春新碱",
+      "VCR"
+    ]
+  },
+  {
+    "code": "PREDNISONE",
+    "name": "泼尼松",
+    "aliases": [
+      "泼尼松",
+      "强的松"
+    ]
+  }
+]

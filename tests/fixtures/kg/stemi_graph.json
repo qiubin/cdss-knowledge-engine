@@ -1,0 +1,3471 @@
+{
+  "diseases": [
+    {
+      "code": "I21.0",
+      "name_cn": "急性ST段抬高型心肌梗死",
+      "name_en": "STEMI"
+    },
+    {
+      "code": "I21.4",
+      "name_cn": "急性非ST段抬高型心肌梗死",
+      "name_en": "NSTEMI"
+    },
+    {
+      "code": "I71.0",
+      "name_cn": "主动脉夹层",
+      "name_en": ""
+    },
+    {
+      "code": "I30.9",
+      "name_cn": "急性心包炎",
+      "name_en": ""
+    },
+    {
+      "code": "I26.9",
+      "name_cn": "急性肺动脉栓塞",
+      "name_en": ""
+    },
+    {
+      "code": "I50.9",
+      "name_cn": "心力衰竭",
+      "name_en": ""
+    },
+    {
+      "code": "I21.2",
+      "name_cn": "右心室心肌梗死",
+      "name_en": ""
+    }
+  ],
+  "evidences": [
+    {
+      "id": "EV-STEMI-ECG-ST-ELEVATION",
+      "description": "12导联心电图ST段弓背向上抬高",
+      "data_type": "exam_finding",
+      "lab_code": null,
+      "concept_code": null,
+      "exam_code": "ECG_12LEAD",
+      "finding_code": "ST_CONVEX_ELEVATION",
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "STEMI-2015_p2_l15-40"
+      ]
+    },
+    {
+      "id": "EV-STEMI-ECG-Q-WAVE",
+      "description": "心电图病理性Q波",
+      "data_type": "exam_finding",
+      "lab_code": null,
+      "concept_code": null,
+      "exam_code": "ECG_12LEAD",
+      "finding_code": "PATHOLOGICAL_Q_WAVE",
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "STEMI-2015_p2_l15-40"
+      ]
+    },
+    {
+      "id": "EV-STEMI-CHEST-PAIN",
+      "description": "压榨性胸痛持续>10min",
+      "data_type": "symptom",
+      "lab_code": null,
+      "concept_code": "DURATION_GT",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": "CHEST_PAIN_CRUSHING",
+      "parameter": {
+        "min_minutes": 10
+      },
+      "source_refs": [
+        "STEMI-2015_p1_l72-90"
+      ]
+    },
+    {
+      "id": "EV-STEMI-DIAPHORESIS",
+      "description": "大汗",
+      "data_type": "symptom",
+      "lab_code": null,
+      "concept_code": null,
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": "DIAPHORESIS",
+      "parameter": {},
+      "source_refs": [
+        "STEMI-2015_p1_l72-90"
+      ]
+    },
+    {
+      "id": "EV-CTN-ABOVE-ULN",
+      "description": "肌钙蛋白超正常上限",
+      "data_type": "lab",
+      "lab_code": "CTN",
+      "concept_code": "ABOVE_ULN_1",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "STEMI-2015_p2_l41-55"
+      ]
+    },
+    {
+      "id": "EV-CTN-DYNAMIC-RISE",
+      "description": "肌钙蛋白动态上升",
+      "data_type": "lab",
+      "lab_code": "CTN",
+      "concept_code": "DYNAMIC_RISE",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "STEMI-2015_p2_l41-55"
+      ]
+    },
+    {
+      "id": "EV-CKMB-ABOVE-ULN",
+      "description": "CK-MB超正常上限",
+      "data_type": "lab",
+      "lab_code": "CK_MB",
+      "concept_code": "ABOVE_ULN_1",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "STEMI-2015_p2_l50-60"
+      ]
+    },
+    {
+      "id": "EV-CKMB-PEAK-SHIFT",
+      "description": "CK-MB峰值前移(<14h)",
+      "data_type": "lab",
+      "lab_code": "CK_MB",
+      "concept_code": "PEAK_SHIFT",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {
+        "threshold_hours": 14
+      },
+      "source_refs": [
+        "STEMI-2015_p2_l50-60"
+      ]
+    },
+    {
+      "id": "EV-MYO-ELEVATED",
+      "description": "肌红蛋白升高",
+      "data_type": "lab",
+      "lab_code": "MYO",
+      "concept_code": "ELEVATED",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "STEMI-2015_p2_l50-60"
+      ]
+    },
+    {
+      "id": "EV-DOC-bdc7a85c-MYO-ABNORMAL",
+      "description": "肌红蛋白",
+      "data_type": "lab",
+      "lab_code": "MYO",
+      "concept_code": "ABNORMAL",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-bdc7a85c-ST_CONVEX_ELEVATION-PRESENT",
+      "description": "ST段弓背向上抬高",
+      "data_type": "exam_finding",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": "ECG_12LEAD",
+      "finding_code": "ST_CONVEX_ELEVATION",
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-bdc7a85c-CTN-ABNORMAL",
+      "description": "肌钙蛋白",
+      "data_type": "lab",
+      "lab_code": "CTN",
+      "concept_code": "ABNORMAL",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l29-71"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-bdc7a85c-PATHOLOGICAL_Q_WAVE-PRESENT",
+      "description": "病理性Q波",
+      "data_type": "exam_finding",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": "ECG_12LEAD",
+      "finding_code": "PATHOLOGICAL_Q_WAVE",
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l29-71"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-bdc7a85c-CK_MB-ABNORMAL",
+      "description": "肌酸激酶同工酶",
+      "data_type": "lab",
+      "lab_code": "CK_MB",
+      "concept_code": "ABNORMAL",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-bdc7a85c-R_WAVE_REDUCTION-PRESENT",
+      "description": "R波减低",
+      "data_type": "exam_finding",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": "ECG_12LEAD",
+      "finding_code": "R_WAVE_REDUCTION",
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-bdc7a85c-LUNG_RALES-PRESENT",
+      "description": "肺部啰音",
+      "data_type": "exam_finding",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": "ECG_12LEAD",
+      "finding_code": "LUNG_RALES",
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-bdc7a85c-CHEST_PAIN_CRUSHING-PRESENT",
+      "description": "压榨性胸痛",
+      "data_type": "symptom",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": "CHEST_PAIN_CRUSHING",
+      "parameter": {},
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-bdc7a85c-CHEST_PAIN-PRESENT",
+      "description": "胸痛",
+      "data_type": "symptom",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": "CHEST_PAIN",
+      "parameter": {},
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-bdc7a85c-DIAPHORESIS-PRESENT",
+      "description": "大汗",
+      "data_type": "symptom",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": "DIAPHORESIS",
+      "parameter": {},
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-bdc7a85c-DYSPNEA-PRESENT",
+      "description": "呼吸困难",
+      "data_type": "symptom",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": "DYSPNEA",
+      "parameter": {},
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-bdc7a85c-NAUSEA_VOMITING-PRESENT",
+      "description": "恶心呕吐",
+      "data_type": "symptom",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": "NAUSEA_VOMITING",
+      "parameter": {},
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-bdc7a85c-SYNCOPE-PRESENT",
+      "description": "晕厥",
+      "data_type": "symptom",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": "SYNCOPE",
+      "parameter": {},
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-bdc7a85c-CREAT-ABNORMAL",
+      "description": "肌酐",
+      "data_type": "lab",
+      "lab_code": "CREAT",
+      "concept_code": "ABNORMAL",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-bdc7a85c_p5_l55-63"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-49641c21-MYO-ABNORMAL",
+      "description": "肌红蛋白",
+      "data_type": "lab",
+      "lab_code": "MYO",
+      "concept_code": "ABNORMAL",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-49641c21-ST_CONVEX_ELEVATION-PRESENT",
+      "description": "ST段弓背向上抬高",
+      "data_type": "exam_finding",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": "ECG_12LEAD",
+      "finding_code": "ST_CONVEX_ELEVATION",
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-49641c21-CTN-ELEVATED",
+      "description": "肌钙蛋白",
+      "data_type": "lab",
+      "lab_code": "CTN",
+      "concept_code": "ELEVATED",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-49641c21_p1_l29-71"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-49641c21-CTN-DECREASED",
+      "description": "肌钙蛋白",
+      "data_type": "lab",
+      "lab_code": "CTN",
+      "concept_code": "DECREASED",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-49641c21_p1_l29-71"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-49641c21-CTN-ABOVE_ULN_1",
+      "description": "肌钙蛋白",
+      "data_type": "lab",
+      "lab_code": "CTN",
+      "concept_code": "ABOVE_ULN_1",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-49641c21_p1_l29-71"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-49641c21-PATHOLOGICAL_Q_WAVE-PRESENT",
+      "description": "病理性Q波",
+      "data_type": "exam_finding",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": "ECG_12LEAD",
+      "finding_code": "PATHOLOGICAL_Q_WAVE",
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-49641c21_p1_l29-71"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-49641c21-CK_MB-DYNAMIC_RISE",
+      "description": "肌酸激酶同工酶",
+      "data_type": "lab",
+      "lab_code": "CK_MB",
+      "concept_code": "DYNAMIC_RISE",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-49641c21-CK_MB-PEAK_SHIFT",
+      "description": "肌酸激酶同工酶",
+      "data_type": "lab",
+      "lab_code": "CK_MB",
+      "concept_code": "PEAK_SHIFT",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-49641c21-R_WAVE_REDUCTION-PRESENT",
+      "description": "R波减低",
+      "data_type": "exam_finding",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": "ECG_12LEAD",
+      "finding_code": "R_WAVE_REDUCTION",
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-49641c21-LUNG_RALES-PRESENT",
+      "description": "肺部啰音",
+      "data_type": "exam_finding",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": "ECG_12LEAD",
+      "finding_code": "LUNG_RALES",
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-49641c21-CHEST_PAIN_CRUSHING-PRESENT",
+      "description": "压榨性胸痛",
+      "data_type": "symptom",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": "CHEST_PAIN_CRUSHING",
+      "parameter": {},
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-49641c21-CHEST_PAIN-PRESENT",
+      "description": "胸痛",
+      "data_type": "symptom",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": "CHEST_PAIN",
+      "parameter": {},
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-49641c21-DIAPHORESIS-PRESENT",
+      "description": "大汗",
+      "data_type": "symptom",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": "DIAPHORESIS",
+      "parameter": {},
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-49641c21-DYSPNEA-PRESENT",
+      "description": "呼吸困难",
+      "data_type": "symptom",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": "DYSPNEA",
+      "parameter": {},
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-49641c21-NAUSEA_VOMITING-PRESENT",
+      "description": "恶心呕吐",
+      "data_type": "symptom",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": "NAUSEA_VOMITING",
+      "parameter": {},
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-49641c21-SYNCOPE-PRESENT",
+      "description": "晕厥",
+      "data_type": "symptom",
+      "lab_code": null,
+      "concept_code": "PRESENT",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": "SYNCOPE",
+      "parameter": {},
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-49641c21-CREAT-ABNORMAL",
+      "description": "肌酐",
+      "data_type": "lab",
+      "lab_code": "CREAT",
+      "concept_code": "ABNORMAL",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-49641c21_p5_l55-63"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-96f8b5b3-CTN-ELEVATED",
+      "description": "肌钙蛋白",
+      "data_type": "lab",
+      "lab_code": "CTN",
+      "concept_code": "ELEVATED",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-96f8b5b3-CTN-DECREASED",
+      "description": "肌钙蛋白",
+      "data_type": "lab",
+      "lab_code": "CTN",
+      "concept_code": "DECREASED",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-96f8b5b3-CTN-POSITIVE",
+      "description": "肌钙蛋白",
+      "data_type": "lab",
+      "lab_code": "CTN",
+      "concept_code": "POSITIVE",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-96f8b5b3-CTN-NEGATIVE",
+      "description": "肌钙蛋白",
+      "data_type": "lab",
+      "lab_code": "CTN",
+      "concept_code": "NEGATIVE",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-96f8b5b3-CREAT-ELEVATED",
+      "description": "肌酐",
+      "data_type": "lab",
+      "lab_code": "CREAT",
+      "concept_code": "ELEVATED",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-96f8b5b3-CREAT-DECREASED",
+      "description": "肌酐",
+      "data_type": "lab",
+      "lab_code": "CREAT",
+      "concept_code": "DECREASED",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-96f8b5b3-CREAT-POSITIVE",
+      "description": "肌酐",
+      "data_type": "lab",
+      "lab_code": "CREAT",
+      "concept_code": "POSITIVE",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "EV-DOC-96f8b5b3-CREAT-NEGATIVE",
+      "description": "肌酐",
+      "data_type": "lab",
+      "lab_code": "CREAT",
+      "concept_code": "NEGATIVE",
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "parameter": {},
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    }
+  ],
+  "disease_evidence": [
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-STEMI-ECG-ST-ELEVATION",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-STEMI-ECG-Q-WAVE",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-STEMI-CHEST-PAIN",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-STEMI-DIAPHORESIS",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-CTN-ABOVE-ULN",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-CTN-DYNAMIC-RISE",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-CKMB-ABOVE-ULN",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-CKMB-PEAK-SHIFT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-MYO-ELEVATED",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-bdc7a85c-MYO-ABNORMAL",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-bdc7a85c-ST_CONVEX_ELEVATION-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-bdc7a85c-CTN-ABNORMAL",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-bdc7a85c-PATHOLOGICAL_Q_WAVE-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-bdc7a85c-CK_MB-ABNORMAL",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-bdc7a85c-R_WAVE_REDUCTION-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-bdc7a85c-LUNG_RALES-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-bdc7a85c-CHEST_PAIN_CRUSHING-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-bdc7a85c-CHEST_PAIN-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-bdc7a85c-DIAPHORESIS-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-bdc7a85c-DYSPNEA-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-bdc7a85c-NAUSEA_VOMITING-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-bdc7a85c-SYNCOPE-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-bdc7a85c-CREAT-ABNORMAL",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-49641c21-MYO-ABNORMAL",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-49641c21-ST_CONVEX_ELEVATION-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-49641c21-CTN-ELEVATED",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-49641c21-CTN-DECREASED",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-49641c21-CTN-ABOVE_ULN_1",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-49641c21-PATHOLOGICAL_Q_WAVE-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-49641c21-CK_MB-DYNAMIC_RISE",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-49641c21-CK_MB-PEAK_SHIFT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-49641c21-R_WAVE_REDUCTION-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-49641c21-LUNG_RALES-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-49641c21-CHEST_PAIN_CRUSHING-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-49641c21-CHEST_PAIN-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-49641c21-DIAPHORESIS-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-49641c21-DYSPNEA-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-49641c21-NAUSEA_VOMITING-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-49641c21-SYNCOPE-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.0",
+      "evidence_id": "EV-DOC-49641c21-CREAT-ABNORMAL",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.4",
+      "evidence_id": "EV-STEMI-CHEST-PAIN",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.4",
+      "evidence_id": "EV-STEMI-DIAPHORESIS",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.4",
+      "evidence_id": "EV-CTN-ABOVE-ULN",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.4",
+      "evidence_id": "EV-CTN-DYNAMIC-RISE",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.4",
+      "evidence_id": "EV-CKMB-ABOVE-ULN",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.4",
+      "evidence_id": "EV-CKMB-PEAK-SHIFT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.4",
+      "evidence_id": "EV-DOC-bdc7a85c-CHEST_PAIN-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I71.0",
+      "evidence_id": "EV-STEMI-CHEST-PAIN",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I71.0",
+      "evidence_id": "EV-STEMI-DIAPHORESIS",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I71.0",
+      "evidence_id": "EV-DOC-bdc7a85c-CHEST_PAIN-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I30.9",
+      "evidence_id": "EV-STEMI-ECG-ST-ELEVATION",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I30.9",
+      "evidence_id": "EV-STEMI-CHEST-PAIN",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I30.9",
+      "evidence_id": "EV-DOC-bdc7a85c-CHEST_PAIN-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I26.9",
+      "evidence_id": "EV-STEMI-CHEST-PAIN",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I26.9",
+      "evidence_id": "EV-STEMI-DIAPHORESIS",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I26.9",
+      "evidence_id": "EV-DOC-bdc7a85c-CHEST_PAIN-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I50.9",
+      "evidence_id": "EV-STEMI-CHEST-PAIN",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I50.9",
+      "evidence_id": "EV-DOC-bdc7a85c-DYSPNEA-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I50.9",
+      "evidence_id": "EV-DOC-bdc7a85c-LUNG_RALES-PRESENT",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.2",
+      "evidence_id": "EV-STEMI-ECG-ST-ELEVATION",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.2",
+      "evidence_id": "EV-STEMI-CHEST-PAIN",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I21.2",
+      "evidence_id": "EV-STEMI-DIAPHORESIS",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I50.9",
+      "evidence_id": "EV-DOC-96f8b5b3-CTN-ELEVATED",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I50.9",
+      "evidence_id": "EV-DOC-96f8b5b3-CTN-DECREASED",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I50.9",
+      "evidence_id": "EV-DOC-96f8b5b3-CTN-POSITIVE",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I50.9",
+      "evidence_id": "EV-DOC-96f8b5b3-CTN-NEGATIVE",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I50.9",
+      "evidence_id": "EV-DOC-96f8b5b3-CREAT-ELEVATED",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I50.9",
+      "evidence_id": "EV-DOC-96f8b5b3-CREAT-DECREASED",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I50.9",
+      "evidence_id": "EV-DOC-96f8b5b3-CREAT-POSITIVE",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    },
+    {
+      "disease_code": "I50.9",
+      "evidence_id": "EV-DOC-96f8b5b3-CREAT-NEGATIVE",
+      "weight": 0.5,
+      "evidence_level": "待评估",
+      "required": false
+    }
+  ],
+  "sources": [
+    {
+      "chunk_id": "STEMI-2015_p1_l72-90",
+      "doc_id": "STEMI-2015",
+      "doc_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "section": "二、STEMI的诊断和危险分层",
+      "page_start": 1,
+      "page_end": 1,
+      "line_start": 72,
+      "line_end": 90,
+      "quote": "STEMI的典型症状为胸骨后或心前区剧烈的压榨性疼痛，通常超过10～20 min；常伴有恶心、呕吐、大汗和呼吸困难等。"
+    },
+    {
+      "chunk_id": "STEMI-2015_p2_l15-40",
+      "doc_id": "STEMI-2015",
+      "doc_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "section": "心电图表现",
+      "page_start": 2,
+      "page_end": 2,
+      "line_start": 15,
+      "line_end": 40,
+      "quote": "ST段弓背向上抬高及病理性Q波是STEMI心电图诊断的重要表现。"
+    },
+    {
+      "chunk_id": "STEMI-2015_p2_l41-55",
+      "doc_id": "STEMI-2015",
+      "doc_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "section": "二(二)2 血清心肌损伤标志物",
+      "page_start": 2,
+      "page_end": 2,
+      "line_start": 41,
+      "line_end": 55,
+      "quote": "cTn是诊断心肌坏死最特异和敏感的首选心肌损伤标志物。"
+    },
+    {
+      "chunk_id": "STEMI-2015_p2_l50-60",
+      "doc_id": "STEMI-2015",
+      "doc_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "section": "二(二)2 血清心肌损伤标志物",
+      "page_start": 2,
+      "page_end": 2,
+      "line_start": 50,
+      "line_end": 60,
+      "quote": "肌红蛋白测定有助于STEMI早期诊断，但特异性较差。"
+    },
+    {
+      "chunk_id": "DOC-bdc7a85c_p1_l1-28",
+      "doc_id": "DOC-bdc7a85c",
+      "doc_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "section": "前言",
+      "page_start": 1,
+      "page_end": 1,
+      "line_start": 1,
+      "line_end": 28,
+      "quote": "生堡!堂堂篁痘苤壹!!!!生!旦笙塑鲞筮!塑￡!i!』￡!型i!!：丛!!!Q!!：y!!：塑塑!：i\n．指南与共识．\n急性ST段抬高型心肌梗死诊断和治疗指南\n中华医学会心血管病学分会\n中华心血管病杂志编辑委员会\n近年来，急性sT段抬高型心肌梗死\n(ST—segment elevation myocardial infarction，STEMI)\n的诊断和治疗取得了重要进展，第三版“心肌梗死\n全球定义”已公布‘1。2 J，欧洲心脏病学学"
+    },
+    {
+      "chunk_id": "DOC-bdc7a85c_p1_l29-71",
+      "doc_id": "DOC-bdc7a85c",
+      "doc_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "section": "一、心肌梗死分型",
+      "page_start": 1,
+      "page_end": 1,
+      "line_start": 29,
+      "line_end": 71,
+      "quote": "一、心肌梗死分型\n我国推荐使用第三版“心肌梗死全球定\n义”’1。。，将心肌梗死分为5型。\n1型：自发性心肌梗死。由于动脉粥样斑块破\n裂、溃疡、裂纹、糜烂或夹层，引起一支或多支冠状动\n脉血栓形成，导致心肌血流减少或远端血小板栓塞\n伴心肌坏死。患者大多有严重的冠状动脉病变，少\n数患者冠状动脉仅有轻度狭窄甚至正常。\n2型：继发于心肌氧供需失衡的心肌梗死。除\n冠状动脉病变外的其他情形引起心肌需氧与供氧失\nDOI：10．3760／cma．j．is"
+    },
+    {
+      "chunk_id": "DOC-bdc7a85c_p1_l72-81",
+      "doc_id": "DOC-bdc7a85c",
+      "doc_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "section": "二、STEMI的诊断和危险分层",
+      "page_start": 1,
+      "page_end": 2,
+      "line_start": 72,
+      "line_end": 81,
+      "quote": "二、STEMI的诊断和危险分层\n(一)临床评估\n1．病史采集：重点询问胸痛和相关症状。\nSTEMI的典型症状为胸骨后或心前区剧烈的压榨性\n疼痛(通常超过10～20 min)，可向左上臂、下颌、颈\n部、背或肩部放射；常伴有恶心、呕吐、大汗和呼吸困\n难等；含硝酸甘油不能完全缓解。应注意不典型疼\n万方数据\n主堡!坠查笪瘟苤壶!!!i生j旦箜箜鲞箜!塑垦!也』鱼!型i!!：丛型!Q!i：y!!：箜盟!：i\n痛部位和表现及无痛性心肌梗死(特别是女"
+    },
+    {
+      "chunk_id": "DOC-bdc7a85c_p5_l55-63",
+      "doc_id": "DOC-bdc7a85c",
+      "doc_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "section": "六、抗栓治疗",
+      "page_start": 5,
+      "page_end": 6,
+      "line_start": 55,
+      "line_end": 63,
+      "quote": "六、抗栓治疗\nSTEMI的主要原因是冠状动脉内斑块破裂诱发\n血栓性阻塞。因此，抗栓治疗(包括抗血小板和抗\n凝)十分必要(I，A)。\n(一)抗血小板治疗\n1．阿司匹林：通过抑制血小板环氧化酶使血栓\n素A2合成减少，达到抗血小板聚集的作用。所有\n无禁忌证的STEMI患者均应立即口服水溶性阿司\n匹林或嚼服肠溶阿司匹林300 mg(I，B)，继以\n75～100 mg／d长期维持(I，A)。\n2．P2Y。：受体抑制剂：干扰二磷酸腺苷介导的\n血小板"
+    },
+    {
+      "chunk_id": "DOC-bdc7a85c_p7_l67-24",
+      "doc_id": "DOC-bdc7a85c",
+      "doc_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "section": "九、并发症及处理",
+      "page_start": 7,
+      "page_end": 9,
+      "line_start": 67,
+      "line_end": 24,
+      "quote": "九、并发症及处理\n(一)心力衰竭\n急性STEMI并发心力衰竭患者临床上常表现\n呼吸困难(严重时可端坐呼吸，咯粉红色泡沫痰)、\n窦性心动过速、肺底部或全肺野哕音及末梢灌注不\n良。应给予吸氧、连续监测氧饱和度及定时血气测\n定、心电监护。x线胸片可估价肺淤血情况。超声\n心动图除有助于诊断外，还可了解心肌损害的范围\n和可能存在的机械并发症(如二尖瓣反流或室间隔\n穿孑L)(I，C)。\n轻度心力衰竭(Killip lI级)时，利尿剂治疗常有\n迅速反"
+    },
+    {
+      "chunk_id": "DOC-49641c21_p1_l1-28",
+      "doc_id": "DOC-49641c21",
+      "doc_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "section": "前言",
+      "page_start": 1,
+      "page_end": 1,
+      "line_start": 1,
+      "line_end": 28,
+      "quote": "生堡!堂堂篁痘苤壹!!!!生!旦笙塑鲞筮!塑￡!i!』￡!型i!!：丛!!!Q!!：y!!：塑塑!：i\n．指南与共识．\n急性ST段抬高型心肌梗死诊断和治疗指南\n中华医学会心血管病学分会\n中华心血管病杂志编辑委员会\n近年来，急性sT段抬高型心肌梗死\n(ST—segment elevation myocardial infarction，STEMI)\n的诊断和治疗取得了重要进展，第三版“心肌梗死\n全球定义”已公布‘1。2 J，欧洲心脏病学学"
+    },
+    {
+      "chunk_id": "DOC-49641c21_p1_l29-71",
+      "doc_id": "DOC-49641c21",
+      "doc_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "section": "一、心肌梗死分型",
+      "page_start": 1,
+      "page_end": 1,
+      "line_start": 29,
+      "line_end": 71,
+      "quote": "一、心肌梗死分型\n我国推荐使用第三版“心肌梗死全球定\n义”’1。。，将心肌梗死分为5型。\n1型：自发性心肌梗死。由于动脉粥样斑块破\n裂、溃疡、裂纹、糜烂或夹层，引起一支或多支冠状动\n脉血栓形成，导致心肌血流减少或远端血小板栓塞\n伴心肌坏死。患者大多有严重的冠状动脉病变，少\n数患者冠状动脉仅有轻度狭窄甚至正常。\n2型：继发于心肌氧供需失衡的心肌梗死。除\n冠状动脉病变外的其他情形引起心肌需氧与供氧失\nDOI：10．3760／cma．j．is"
+    },
+    {
+      "chunk_id": "DOC-49641c21_p1_l72-81",
+      "doc_id": "DOC-49641c21",
+      "doc_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "section": "二、STEMI的诊断和危险分层",
+      "page_start": 1,
+      "page_end": 2,
+      "line_start": 72,
+      "line_end": 81,
+      "quote": "二、STEMI的诊断和危险分层\n(一)临床评估\n1．病史采集：重点询问胸痛和相关症状。\nSTEMI的典型症状为胸骨后或心前区剧烈的压榨性\n疼痛(通常超过10～20 min)，可向左上臂、下颌、颈\n部、背或肩部放射；常伴有恶心、呕吐、大汗和呼吸困\n难等；含硝酸甘油不能完全缓解。应注意不典型疼\n万方数据\n主堡!坠查笪瘟苤壶!!!i生j旦箜箜鲞箜!塑垦!也』鱼!型i!!：丛型!Q!i：y!!：箜盟!：i\n痛部位和表现及无痛性心肌梗死(特别是女"
+    },
+    {
+      "chunk_id": "DOC-49641c21_p5_l55-63",
+      "doc_id": "DOC-49641c21",
+      "doc_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "section": "六、抗栓治疗",
+      "page_start": 5,
+      "page_end": 6,
+      "line_start": 55,
+      "line_end": 63,
+      "quote": "六、抗栓治疗\nSTEMI的主要原因是冠状动脉内斑块破裂诱发\n血栓性阻塞。因此，抗栓治疗(包括抗血小板和抗\n凝)十分必要(I，A)。\n(一)抗血小板治疗\n1．阿司匹林：通过抑制血小板环氧化酶使血栓\n素A2合成减少，达到抗血小板聚集的作用。所有\n无禁忌证的STEMI患者均应立即口服水溶性阿司\n匹林或嚼服肠溶阿司匹林300 mg(I，B)，继以\n75～100 mg／d长期维持(I，A)。\n2．P2Y。：受体抑制剂：干扰二磷酸腺苷介导的\n血小板"
+    },
+    {
+      "chunk_id": "DOC-49641c21_p7_l67-24",
+      "doc_id": "DOC-49641c21",
+      "doc_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "section": "九、并发症及处理",
+      "page_start": 7,
+      "page_end": 9,
+      "line_start": 67,
+      "line_end": 24,
+      "quote": "九、并发症及处理\n(一)心力衰竭\n急性STEMI并发心力衰竭患者临床上常表现\n呼吸困难(严重时可端坐呼吸，咯粉红色泡沫痰)、\n窦性心动过速、肺底部或全肺野哕音及末梢灌注不\n良。应给予吸氧、连续监测氧饱和度及定时血气测\n定、心电监护。x线胸片可估价肺淤血情况。超声\n心动图除有助于诊断外，还可了解心肌损害的范围\n和可能存在的机械并发症(如二尖瓣反流或室间隔\n穿孑L)(I，C)。\n轻度心力衰竭(Killip lI级)时，利尿剂治疗常有\n迅速反"
+    },
+    {
+      "chunk_id": "DOC-96f8b5b3_p1_l1-86",
+      "doc_id": "DOC-96f8b5b3",
+      "doc_title": "中国 扩张型心肌病诊断和治疗指南2018",
+      "section": "前言",
+      "page_start": 1,
+      "page_end": 14,
+      "line_start": 1,
+      "line_end": 86,
+      "quote": "室壁运动呈弥漫或节段性运动障 碍暍二尖瓣血流频谱斄峰椌斉峰等椈栠心肌损伤标 志物检查椇血清肌钙蛋白斏棬或斣棭升高棳血清肌酸激 酶同工酶棬斆斔灢斖斅棭含量升高椈栢病理解剖改变椇尸 检心脏或移植手术置换下的心脏主要病变为心肌 变性暍坏死及其后的修复和重构暎 治疗原则椇本病"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "ENTITY:disease:I21.0",
+      "node_type": "disease",
+      "code": "I21.0",
+      "concept_code": "",
+      "name": "急性ST段抬高型心肌梗死",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:disease:I21.4",
+      "node_type": "disease",
+      "code": "I21.4",
+      "concept_code": "",
+      "name": "急性非ST段抬高型心肌梗死",
+      "source_refs": [],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:disease:I71.0",
+      "node_type": "disease",
+      "code": "I71.0",
+      "concept_code": "",
+      "name": "主动脉夹层",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:disease:I30.9",
+      "node_type": "disease",
+      "code": "I30.9",
+      "concept_code": "",
+      "name": "急性心包炎",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:disease:I26.9",
+      "node_type": "disease",
+      "code": "I26.9",
+      "concept_code": "",
+      "name": "急性肺动脉栓塞",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:disease:I50.9",
+      "node_type": "disease",
+      "code": "I50.9",
+      "concept_code": "",
+      "name": "心力衰竭",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81",
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:disease:I21.2",
+      "node_type": "disease",
+      "code": "I21.2",
+      "concept_code": "",
+      "name": "右心室心肌梗死",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:exam:ECG_12LEAD",
+      "node_type": "exam",
+      "code": "ECG_12LEAD",
+      "concept_code": "",
+      "name": "12导联心电图",
+      "source_refs": [
+        "STEMI-2015_p2_l15-40",
+        "DOC-bdc7a85c_p1_l1-28",
+        "DOC-bdc7a85c_p1_l29-71",
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l1-28",
+        "DOC-49641c21_p1_l29-71",
+        "DOC-49641c21_p1_l72-81",
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:symptom:CHEST_PAIN_CRUSHING",
+      "node_type": "symptom",
+      "code": "CHEST_PAIN_CRUSHING",
+      "concept_code": "",
+      "name": "压榨性胸痛",
+      "source_refs": [
+        "STEMI-2015_p1_l72-90",
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81",
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:symptom:DIAPHORESIS",
+      "node_type": "symptom",
+      "code": "DIAPHORESIS",
+      "concept_code": "",
+      "name": "大汗",
+      "source_refs": [
+        "STEMI-2015_p1_l72-90",
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:lab:CTN",
+      "node_type": "lab",
+      "code": "CTN",
+      "concept_code": "",
+      "name": "肌钙蛋白",
+      "source_refs": [
+        "STEMI-2015_p2_l41-55",
+        "DOC-bdc7a85c_p1_l29-71",
+        "DOC-49641c21_p1_l29-71",
+        "DOC-49641c21_p1_l1-28",
+        "DOC-49641c21_p1_l72-81",
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:lab:CK_MB",
+      "node_type": "lab",
+      "code": "CK_MB",
+      "concept_code": "",
+      "name": "肌酸激酶同工酶",
+      "source_refs": [
+        "STEMI-2015_p2_l50-60",
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81",
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:lab:MYO",
+      "node_type": "lab",
+      "code": "MYO",
+      "concept_code": "",
+      "name": "肌红蛋白",
+      "source_refs": [
+        "STEMI-2015_p2_l50-60",
+        "DOC-bdc7a85c_p1_l1-28",
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:symptom:CHEST_PAIN",
+      "node_type": "symptom",
+      "code": "CHEST_PAIN",
+      "concept_code": "",
+      "name": "胸痛",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81",
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:symptom:DYSPNEA",
+      "node_type": "symptom",
+      "code": "DYSPNEA",
+      "concept_code": "",
+      "name": "呼吸困难",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:symptom:NAUSEA_VOMITING",
+      "node_type": "symptom",
+      "code": "NAUSEA_VOMITING",
+      "concept_code": "",
+      "name": "恶心呕吐",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:symptom:SYNCOPE",
+      "node_type": "symptom",
+      "code": "SYNCOPE",
+      "concept_code": "",
+      "name": "晕厥",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:lab:CREAT",
+      "node_type": "lab",
+      "code": "CREAT",
+      "concept_code": "",
+      "name": "肌酐",
+      "source_refs": [
+        "DOC-bdc7a85c_p5_l55-63",
+        "DOC-49641c21_p5_l55-63",
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:ST_CONVEX_ELEVATION",
+      "node_type": "diagnostic_evidence",
+      "code": "ST_CONVEX_ELEVATION",
+      "concept_code": "",
+      "name": "ST段弓背向上抬高",
+      "source_refs": [
+        "STEMI-2015_p2_l15-40",
+        "DOC-49641c21_p1_l1-28",
+        "DOC-49641c21_p1_l72-81",
+        "DOC-bdc7a85c_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:CTN:ABOVE_ULN_1",
+      "node_type": "diagnostic_evidence",
+      "code": "CTN:ABOVE_ULN_1",
+      "concept_code": "ABOVE_ULN_1",
+      "name": "肌钙蛋白超正常上限",
+      "source_refs": [
+        "STEMI-2015_p2_l41-55",
+        "DOC-49641c21_p1_l29-71"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:CK_MB:ABOVE_ULN_1",
+      "node_type": "diagnostic_evidence",
+      "code": "CK_MB:ABOVE_ULN_1",
+      "concept_code": "ABOVE_ULN_1",
+      "name": "肌酸激酶同工酶超正常上限",
+      "source_refs": [
+        "STEMI-2015_p2_l50-60"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:CTN:DYNAMIC_RISE",
+      "node_type": "diagnostic_evidence",
+      "code": "CTN:DYNAMIC_RISE",
+      "concept_code": "DYNAMIC_RISE",
+      "name": "肌钙蛋白动态上升",
+      "source_refs": [
+        "STEMI-2015_p2_l41-55"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:CK_MB:PEAK_SHIFT",
+      "node_type": "diagnostic_evidence",
+      "code": "CK_MB:PEAK_SHIFT",
+      "concept_code": "PEAK_SHIFT",
+      "name": "肌酸激酶同工酶峰值前移",
+      "source_refs": [
+        "STEMI-2015_p2_l50-60",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:MYO:ELEVATED",
+      "node_type": "diagnostic_evidence",
+      "code": "MYO:ELEVATED",
+      "concept_code": "ELEVATED",
+      "name": "肌红蛋白升高",
+      "source_refs": [
+        "STEMI-2015_p2_l50-60"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:PATHOLOGICAL_Q_WAVE",
+      "node_type": "diagnostic_evidence",
+      "code": "PATHOLOGICAL_Q_WAVE",
+      "concept_code": "",
+      "name": "病理性Q波",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28",
+        "DOC-49641c21_p1_l72-81",
+        "STEMI-2015_p2_l15-40",
+        "DOC-bdc7a85c_p1_l29-71",
+        "DOC-49641c21_p1_l29-71"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:CTN:ELEVATED",
+      "node_type": "diagnostic_evidence",
+      "code": "CTN:ELEVATED",
+      "concept_code": "ELEVATED",
+      "name": "肌钙蛋白升高",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28",
+        "DOC-49641c21_p1_l72-81",
+        "DOC-96f8b5b3_p1_l1-86",
+        "DOC-49641c21_p1_l29-71"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:CK_MB:DYNAMIC_RISE",
+      "node_type": "diagnostic_evidence",
+      "code": "CK_MB:DYNAMIC_RISE",
+      "concept_code": "DYNAMIC_RISE",
+      "name": "肌酸激酶同工酶动态上升",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:CREAT:ELEVATED",
+      "node_type": "diagnostic_evidence",
+      "code": "CREAT:ELEVATED",
+      "concept_code": "ELEVATED",
+      "name": "肌酐升高",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:MYO:ABNORMAL",
+      "node_type": "diagnostic_evidence",
+      "code": "MYO:ABNORMAL",
+      "concept_code": "ABNORMAL",
+      "name": "肌红蛋白异常",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l1-28",
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:CTN:ABNORMAL",
+      "node_type": "diagnostic_evidence",
+      "code": "CTN:ABNORMAL",
+      "concept_code": "ABNORMAL",
+      "name": "肌钙蛋白异常",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l29-71"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:CK_MB:ABNORMAL",
+      "node_type": "diagnostic_evidence",
+      "code": "CK_MB:ABNORMAL",
+      "concept_code": "ABNORMAL",
+      "name": "肌酸激酶同工酶异常",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:R_WAVE_REDUCTION",
+      "node_type": "diagnostic_evidence",
+      "code": "R_WAVE_REDUCTION",
+      "concept_code": "",
+      "name": "R波减低",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:LUNG_RALES",
+      "node_type": "diagnostic_evidence",
+      "code": "LUNG_RALES",
+      "concept_code": "",
+      "name": "肺部啰音",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:CREAT:ABNORMAL",
+      "node_type": "diagnostic_evidence",
+      "code": "CREAT:ABNORMAL",
+      "concept_code": "ABNORMAL",
+      "name": "肌酐异常",
+      "source_refs": [
+        "DOC-bdc7a85c_p5_l55-63",
+        "DOC-49641c21_p5_l55-63"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:CTN:DECREASED",
+      "node_type": "diagnostic_evidence",
+      "code": "CTN:DECREASED",
+      "concept_code": "DECREASED",
+      "name": "肌钙蛋白降低",
+      "source_refs": [
+        "DOC-49641c21_p1_l29-71",
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:CTN:POSITIVE",
+      "node_type": "diagnostic_evidence",
+      "code": "CTN:POSITIVE",
+      "concept_code": "POSITIVE",
+      "name": "肌钙蛋白阳性",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:CTN:NEGATIVE",
+      "node_type": "diagnostic_evidence",
+      "code": "CTN:NEGATIVE",
+      "concept_code": "NEGATIVE",
+      "name": "肌钙蛋白阴性",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:CREAT:DECREASED",
+      "node_type": "diagnostic_evidence",
+      "code": "CREAT:DECREASED",
+      "concept_code": "DECREASED",
+      "name": "肌酐降低",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:CREAT:POSITIVE",
+      "node_type": "diagnostic_evidence",
+      "code": "CREAT:POSITIVE",
+      "concept_code": "POSITIVE",
+      "name": "肌酐阳性",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:CREAT:NEGATIVE",
+      "node_type": "diagnostic_evidence",
+      "code": "CREAT:NEGATIVE",
+      "concept_code": "NEGATIVE",
+      "name": "肌酐阴性",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "id": "ENTITY:treatment_plan:TP-STEMI-PRIMARY-PCI",
+      "node_type": "treatment_plan",
+      "code": "TP-STEMI-PRIMARY-PCI",
+      "name": "直接PCI再灌注策略",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft",
+      "properties": {
+        "priority": "首选",
+        "time_window": "发病12小时内",
+        "evidence_level": "I类A"
+      }
+    },
+    {
+      "id": "ENTITY:treatment_plan:TP-STEMI-THROMBOLYSIS",
+      "node_type": "treatment_plan",
+      "code": "TP-STEMI-THROMBOLYSIS",
+      "name": "静脉溶栓再灌注策略",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft",
+      "properties": {
+        "priority": "次选",
+        "time_window": "发病12小时内、无法及时PCI时",
+        "evidence_level": "I类B"
+      }
+    },
+    {
+      "id": "ENTITY:intervention:INT-PRIMARY-PCI",
+      "node_type": "intervention",
+      "code": "INT-PRIMARY-PCI",
+      "name": "直接经皮冠状动脉介入治疗",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft",
+      "properties": {}
+    },
+    {
+      "id": "ENTITY:intervention:INT-THROMBOLYSIS",
+      "node_type": "intervention",
+      "code": "INT-THROMBOLYSIS",
+      "name": "静脉溶栓治疗",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft",
+      "properties": {}
+    },
+    {
+      "id": "ENTITY:medication:ASPIRIN",
+      "node_type": "medication",
+      "code": "ASPIRIN",
+      "name": "阿司匹林",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft",
+      "properties": {
+        "dose": "首剂300mg嚼服，维持75-100mg qd",
+        "route": "口服"
+      }
+    },
+    {
+      "id": "ENTITY:medication:CLOPIDOGREL",
+      "node_type": "medication",
+      "code": "CLOPIDOGREL",
+      "name": "氯吡格雷",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft",
+      "properties": {
+        "dose": "负荷600mg，维持75mg qd",
+        "route": "口服"
+      }
+    },
+    {
+      "id": "ENTITY:medication:TENECTEPLASE",
+      "node_type": "medication",
+      "code": "TENECTEPLASE",
+      "name": "替奈普酶",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft",
+      "properties": {
+        "dose": "单次静脉推注（按体重调整）",
+        "route": "静脉"
+      }
+    },
+    {
+      "id": "ENTITY:contraindication:ACTIVE_BLEEDING",
+      "node_type": "contraindication",
+      "code": "ACTIVE_BLEEDING",
+      "name": "活动性出血",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft",
+      "properties": {}
+    },
+    {
+      "id": "ENTITY:contraindication:HISTORY_HEMORRHAGIC_STROKE",
+      "node_type": "contraindication",
+      "code": "HISTORY_HEMORRHAGIC_STROKE",
+      "name": "出血性卒中病史",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft",
+      "properties": {}
+    },
+    {
+      "id": "ENTITY:contraindication:RECENT_SURGERY",
+      "node_type": "contraindication",
+      "code": "RECENT_SURGERY",
+      "name": "近期外科手术",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft",
+      "properties": {}
+    },
+    {
+      "id": "ENTITY:monitoring_requirement:ECG_CONTINUOUS",
+      "node_type": "monitoring_requirement",
+      "code": "ECG_CONTINUOUS",
+      "name": "持续心电监护",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft",
+      "properties": {}
+    },
+    {
+      "id": "ENTITY:monitoring_requirement:TROPONIN_SERIES",
+      "node_type": "monitoring_requirement",
+      "code": "TROPONIN_SERIES",
+      "name": "肌钙蛋白系列复查",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft",
+      "properties": {}
+    },
+    {
+      "id": "ENTITY:monitoring_requirement:ACTIVATED_CLOTTING_TIME",
+      "node_type": "monitoring_requirement",
+      "code": "ACTIVATED_CLOTTING_TIME",
+      "name": "激活凝血时间监测",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft",
+      "properties": {}
+    }
+  ],
+  "relations": [
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:CHEST_PAIN_CRUSHING",
+      "source_refs": [
+        "STEMI-2015_p1_l72-90",
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81",
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:DIAPHORESIS",
+      "source_refs": [
+        "STEMI-2015_p1_l72-90",
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_LAB",
+      "relation_name": "疾病关联检验",
+      "target_node_id": "ENTITY:lab:CTN",
+      "source_refs": [
+        "STEMI-2015_p2_l41-55",
+        "DOC-bdc7a85c_p1_l29-71",
+        "DOC-49641c21_p1_l29-71",
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_LAB",
+      "relation_name": "疾病关联检验",
+      "target_node_id": "ENTITY:lab:CK_MB",
+      "source_refs": [
+        "STEMI-2015_p2_l50-60",
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81",
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_LAB",
+      "relation_name": "疾病关联检验",
+      "target_node_id": "ENTITY:lab:MYO",
+      "source_refs": [
+        "STEMI-2015_p2_l50-60",
+        "DOC-bdc7a85c_p1_l1-28",
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:CHEST_PAIN",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81",
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:DYSPNEA",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:NAUSEA_VOMITING",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:SYNCOPE",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_LAB",
+      "relation_name": "疾病关联检验",
+      "target_node_id": "ENTITY:lab:CREAT",
+      "source_refs": [
+        "DOC-bdc7a85c_p5_l55-63",
+        "DOC-49641c21_p5_l55-63"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.4",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:CHEST_PAIN_CRUSHING",
+      "source_refs": [
+        "STEMI-2015_p1_l72-90"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.4",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:DIAPHORESIS",
+      "source_refs": [
+        "STEMI-2015_p1_l72-90"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.4",
+      "relation_code": "DISEASE_HAS_LAB",
+      "relation_name": "疾病关联检验",
+      "target_node_id": "ENTITY:lab:CTN",
+      "source_refs": [
+        "STEMI-2015_p2_l41-55"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.4",
+      "relation_code": "DISEASE_HAS_LAB",
+      "relation_name": "疾病关联检验",
+      "target_node_id": "ENTITY:lab:CK_MB",
+      "source_refs": [
+        "STEMI-2015_p2_l50-60"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.4",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:CHEST_PAIN",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I71.0",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:CHEST_PAIN_CRUSHING",
+      "source_refs": [
+        "STEMI-2015_p1_l72-90",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I71.0",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:DIAPHORESIS",
+      "source_refs": [
+        "STEMI-2015_p1_l72-90"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I71.0",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:CHEST_PAIN",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I30.9",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:CHEST_PAIN_CRUSHING",
+      "source_refs": [
+        "STEMI-2015_p1_l72-90",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I30.9",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:CHEST_PAIN",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I26.9",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:CHEST_PAIN_CRUSHING",
+      "source_refs": [
+        "STEMI-2015_p1_l72-90",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I26.9",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:DIAPHORESIS",
+      "source_refs": [
+        "STEMI-2015_p1_l72-90"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I26.9",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:CHEST_PAIN",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I50.9",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:CHEST_PAIN_CRUSHING",
+      "source_refs": [
+        "STEMI-2015_p1_l72-90",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I50.9",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:DYSPNEA",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.2",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:CHEST_PAIN_CRUSHING",
+      "source_refs": [
+        "STEMI-2015_p1_l72-90",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.2",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:DIAPHORESIS",
+      "source_refs": [
+        "STEMI-2015_p1_l72-90"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I71.0",
+      "relation_code": "DISEASE_HAS_LAB",
+      "relation_name": "疾病关联检验",
+      "target_node_id": "ENTITY:lab:CTN",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I71.0",
+      "relation_code": "DISEASE_HAS_LAB",
+      "relation_name": "疾病关联检验",
+      "target_node_id": "ENTITY:lab:CK_MB",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I30.9",
+      "relation_code": "DISEASE_HAS_LAB",
+      "relation_name": "疾病关联检验",
+      "target_node_id": "ENTITY:lab:CTN",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I30.9",
+      "relation_code": "DISEASE_HAS_LAB",
+      "relation_name": "疾病关联检验",
+      "target_node_id": "ENTITY:lab:CK_MB",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I26.9",
+      "relation_code": "DISEASE_HAS_LAB",
+      "relation_name": "疾病关联检验",
+      "target_node_id": "ENTITY:lab:CTN",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I26.9",
+      "relation_code": "DISEASE_HAS_LAB",
+      "relation_name": "疾病关联检验",
+      "target_node_id": "ENTITY:lab:CK_MB",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I50.9",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:CHEST_PAIN",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I50.9",
+      "relation_code": "DISEASE_HAS_LAB",
+      "relation_name": "疾病关联检验",
+      "target_node_id": "ENTITY:lab:CTN",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81",
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I50.9",
+      "relation_code": "DISEASE_HAS_LAB",
+      "relation_name": "疾病关联检验",
+      "target_node_id": "ENTITY:lab:CK_MB",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.2",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病有症状",
+      "target_node_id": "ENTITY:symptom:CHEST_PAIN",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.2",
+      "relation_code": "DISEASE_HAS_LAB",
+      "relation_name": "疾病关联检验",
+      "target_node_id": "ENTITY:lab:CTN",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.2",
+      "relation_code": "DISEASE_HAS_LAB",
+      "relation_name": "疾病关联检验",
+      "target_node_id": "ENTITY:lab:CK_MB",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I50.9",
+      "relation_code": "DISEASE_HAS_LAB",
+      "relation_name": "疾病关联检验",
+      "target_node_id": "ENTITY:lab:CREAT",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_EXAM",
+      "relation_name": "疾病关联检查",
+      "target_node_id": "ENTITY:exam:ECG_12LEAD",
+      "source_refs": [
+        "STEMI-2015_p2_l15-40",
+        "DOC-bdc7a85c_p1_l1-28",
+        "DOC-bdc7a85c_p1_l29-71",
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l1-28",
+        "DOC-49641c21_p1_l29-71",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I30.9",
+      "relation_code": "DISEASE_HAS_EXAM",
+      "relation_name": "疾病关联检查",
+      "target_node_id": "ENTITY:exam:ECG_12LEAD",
+      "source_refs": [
+        "STEMI-2015_p2_l15-40",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I50.9",
+      "relation_code": "DISEASE_HAS_EXAM",
+      "relation_name": "疾病关联检查",
+      "target_node_id": "ENTITY:exam:ECG_12LEAD",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.2",
+      "relation_code": "DISEASE_HAS_EXAM",
+      "relation_name": "疾病关联检查",
+      "target_node_id": "ENTITY:exam:ECG_12LEAD",
+      "source_refs": [
+        "STEMI-2015_p2_l15-40",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I71.0",
+      "relation_code": "DISEASE_HAS_EXAM",
+      "relation_name": "疾病关联检查",
+      "target_node_id": "ENTITY:exam:ECG_12LEAD",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I26.9",
+      "relation_code": "DISEASE_HAS_EXAM",
+      "relation_name": "疾病关联检查",
+      "target_node_id": "ENTITY:exam:ECG_12LEAD",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:exam:ECG_12LEAD",
+      "relation_code": "EXAM_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检查形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:ST_CONVEX_ELEVATION",
+      "source_refs": [
+        "STEMI-2015_p2_l15-40",
+        "DOC-49641c21_p1_l1-28",
+        "DOC-49641c21_p1_l72-81",
+        "DOC-bdc7a85c_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:lab:CTN",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:ABOVE_ULN_1",
+      "source_refs": [
+        "STEMI-2015_p2_l41-55",
+        "DOC-49641c21_p1_l29-71"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:lab:CK_MB",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CK_MB:ABOVE_ULN_1",
+      "source_refs": [
+        "STEMI-2015_p2_l50-60"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:lab:CTN",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:DYNAMIC_RISE",
+      "source_refs": [
+        "STEMI-2015_p2_l41-55"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:lab:CK_MB",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CK_MB:PEAK_SHIFT",
+      "source_refs": [
+        "STEMI-2015_p2_l50-60",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:lab:MYO",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:MYO:ELEVATED",
+      "source_refs": [
+        "STEMI-2015_p2_l50-60"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:ST_CONVEX_ELEVATION",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28",
+        "STEMI-2015_p2_l15-40",
+        "DOC-bdc7a85c_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:PATHOLOGICAL_Q_WAVE",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28",
+        "STEMI-2015_p2_l15-40",
+        "DOC-bdc7a85c_p1_l29-71",
+        "DOC-49641c21_p1_l29-71"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:exam:ECG_12LEAD",
+      "relation_code": "EXAM_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检查形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:PATHOLOGICAL_Q_WAVE",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28",
+        "DOC-49641c21_p1_l72-81",
+        "STEMI-2015_p2_l15-40",
+        "DOC-bdc7a85c_p1_l29-71",
+        "DOC-49641c21_p1_l29-71"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:lab:CTN",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:ELEVATED",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28",
+        "DOC-49641c21_p1_l72-81",
+        "DOC-96f8b5b3_p1_l1-86",
+        "DOC-49641c21_p1_l29-71"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:ELEVATED",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28",
+        "DOC-49641c21_p1_l29-71"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:lab:CK_MB",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CK_MB:DYNAMIC_RISE",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CK_MB:DYNAMIC_RISE",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I71.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:ST_CONVEX_ELEVATION",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I71.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:PATHOLOGICAL_Q_WAVE",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I71.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:ELEVATED",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I71.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CK_MB:DYNAMIC_RISE",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I30.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:ST_CONVEX_ELEVATION",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81",
+        "STEMI-2015_p2_l15-40"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I30.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:PATHOLOGICAL_Q_WAVE",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I30.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:ELEVATED",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I30.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CK_MB:DYNAMIC_RISE",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I26.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:ST_CONVEX_ELEVATION",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I26.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:PATHOLOGICAL_Q_WAVE",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I26.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:ELEVATED",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I26.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CK_MB:DYNAMIC_RISE",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I50.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:ST_CONVEX_ELEVATION",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I50.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:PATHOLOGICAL_Q_WAVE",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I50.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:ELEVATED",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81",
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I50.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CK_MB:DYNAMIC_RISE",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.2",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:ST_CONVEX_ELEVATION",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81",
+        "STEMI-2015_p2_l15-40"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.2",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:PATHOLOGICAL_Q_WAVE",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.2",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:ELEVATED",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.2",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CK_MB:DYNAMIC_RISE",
+      "source_refs": [
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:lab:CREAT",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CREAT:ELEVATED",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I50.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CREAT:ELEVATED",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:lab:MYO",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:MYO:ABNORMAL",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l1-28",
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:lab:CTN",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:ABNORMAL",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l29-71"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:lab:CK_MB",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CK_MB:ABNORMAL",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:exam:ECG_12LEAD",
+      "relation_code": "EXAM_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检查形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:R_WAVE_REDUCTION",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:exam:ECG_12LEAD",
+      "relation_code": "EXAM_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检查形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:LUNG_RALES",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:lab:CREAT",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CREAT:ABNORMAL",
+      "source_refs": [
+        "DOC-bdc7a85c_p5_l55-63",
+        "DOC-49641c21_p5_l55-63"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:lab:CTN",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:DECREASED",
+      "source_refs": [
+        "DOC-49641c21_p1_l29-71",
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:lab:CTN",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:POSITIVE",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:lab:CTN",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:NEGATIVE",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:lab:CREAT",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CREAT:DECREASED",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:lab:CREAT",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CREAT:POSITIVE",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:lab:CREAT",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CREAT:NEGATIVE",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:ABOVE_ULN_1",
+      "source_refs": [
+        "STEMI-2015_p2_l41-55",
+        "DOC-49641c21_p1_l29-71"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:DYNAMIC_RISE",
+      "source_refs": [
+        "STEMI-2015_p2_l41-55"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CK_MB:ABOVE_ULN_1",
+      "source_refs": [
+        "STEMI-2015_p2_l50-60"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CK_MB:PEAK_SHIFT",
+      "source_refs": [
+        "STEMI-2015_p2_l50-60",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:MYO:ELEVATED",
+      "source_refs": [
+        "STEMI-2015_p2_l50-60"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:MYO:ABNORMAL",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l1-28",
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:ABNORMAL",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l29-71"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CK_MB:ABNORMAL",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:R_WAVE_REDUCTION",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:LUNG_RALES",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81",
+        "DOC-49641c21_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CREAT:ABNORMAL",
+      "source_refs": [
+        "DOC-bdc7a85c_p5_l55-63",
+        "DOC-49641c21_p5_l55-63"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:DECREASED",
+      "source_refs": [
+        "DOC-49641c21_p1_l29-71"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.4",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:ABOVE_ULN_1",
+      "source_refs": [
+        "STEMI-2015_p2_l41-55"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.4",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:DYNAMIC_RISE",
+      "source_refs": [
+        "STEMI-2015_p2_l41-55"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.4",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CK_MB:ABOVE_ULN_1",
+      "source_refs": [
+        "STEMI-2015_p2_l50-60"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.4",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CK_MB:PEAK_SHIFT",
+      "source_refs": [
+        "STEMI-2015_p2_l50-60"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I50.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:LUNG_RALES",
+      "source_refs": [
+        "DOC-bdc7a85c_p1_l72-81"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I50.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:DECREASED",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I50.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:POSITIVE",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I50.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CTN:NEGATIVE",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I50.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CREAT:DECREASED",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I50.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CREAT:POSITIVE",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I50.9",
+      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "疾病有诊断证据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CREAT:NEGATIVE",
+      "source_refs": [
+        "DOC-96f8b5b3_p1_l1-86"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_TREATMENT_PLAN",
+      "relation_name": "疾病有治疗方案",
+      "target_node_id": "ENTITY:treatment_plan:TP-STEMI-PRIMARY-PCI",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I21.0",
+      "relation_code": "DISEASE_HAS_TREATMENT_PLAN",
+      "relation_name": "疾病有治疗方案",
+      "target_node_id": "ENTITY:treatment_plan:TP-STEMI-THROMBOLYSIS",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:treatment_plan:TP-STEMI-PRIMARY-PCI",
+      "relation_code": "TREATMENT_PLAN_INCLUDES_INTERVENTION",
+      "relation_name": "治疗方案包含措施",
+      "target_node_id": "ENTITY:intervention:INT-PRIMARY-PCI",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:treatment_plan:TP-STEMI-THROMBOLYSIS",
+      "relation_code": "TREATMENT_PLAN_INCLUDES_INTERVENTION",
+      "relation_name": "治疗方案包含措施",
+      "target_node_id": "ENTITY:intervention:INT-THROMBOLYSIS",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:treatment_plan:TP-STEMI-PRIMARY-PCI",
+      "relation_code": "TREATMENT_PLAN_INCLUDES_MEDICATION",
+      "relation_name": "治疗方案包含药物",
+      "target_node_id": "ENTITY:medication:ASPIRIN",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:treatment_plan:TP-STEMI-PRIMARY-PCI",
+      "relation_code": "TREATMENT_PLAN_INCLUDES_MEDICATION",
+      "relation_name": "治疗方案包含药物",
+      "target_node_id": "ENTITY:medication:CLOPIDOGREL",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:treatment_plan:TP-STEMI-THROMBOLYSIS",
+      "relation_code": "TREATMENT_PLAN_INCLUDES_MEDICATION",
+      "relation_name": "治疗方案包含药物",
+      "target_node_id": "ENTITY:medication:ASPIRIN",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:treatment_plan:TP-STEMI-THROMBOLYSIS",
+      "relation_code": "TREATMENT_PLAN_INCLUDES_MEDICATION",
+      "relation_name": "治疗方案包含药物",
+      "target_node_id": "ENTITY:medication:TENECTEPLASE",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:treatment_plan:TP-STEMI-PRIMARY-PCI",
+      "relation_code": "TREATMENT_PLAN_HAS_CONTRAINDICATION",
+      "relation_name": "治疗方案有禁忌",
+      "target_node_id": "ENTITY:contraindication:ACTIVE_BLEEDING",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:treatment_plan:TP-STEMI-THROMBOLYSIS",
+      "relation_code": "TREATMENT_PLAN_HAS_CONTRAINDICATION",
+      "relation_name": "治疗方案有禁忌",
+      "target_node_id": "ENTITY:contraindication:ACTIVE_BLEEDING",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:treatment_plan:TP-STEMI-THROMBOLYSIS",
+      "relation_code": "TREATMENT_PLAN_HAS_CONTRAINDICATION",
+      "relation_name": "治疗方案有禁忌",
+      "target_node_id": "ENTITY:contraindication:HISTORY_HEMORRHAGIC_STROKE",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:treatment_plan:TP-STEMI-THROMBOLYSIS",
+      "relation_code": "TREATMENT_PLAN_HAS_CONTRAINDICATION",
+      "relation_name": "治疗方案有禁忌",
+      "target_node_id": "ENTITY:contraindication:RECENT_SURGERY",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:treatment_plan:TP-STEMI-PRIMARY-PCI",
+      "relation_code": "TREATMENT_PLAN_HAS_MONITORING",
+      "relation_name": "治疗方案有监测",
+      "target_node_id": "ENTITY:monitoring_requirement:ECG_CONTINUOUS",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:treatment_plan:TP-STEMI-PRIMARY-PCI",
+      "relation_code": "TREATMENT_PLAN_HAS_MONITORING",
+      "relation_name": "治疗方案有监测",
+      "target_node_id": "ENTITY:monitoring_requirement:TROPONIN_SERIES",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:treatment_plan:TP-STEMI-PRIMARY-PCI",
+      "relation_code": "TREATMENT_PLAN_HAS_MONITORING",
+      "relation_name": "治疗方案有监测",
+      "target_node_id": "ENTITY:monitoring_requirement:ACTIVATED_CLOTTING_TIME",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:treatment_plan:TP-STEMI-THROMBOLYSIS",
+      "relation_code": "TREATMENT_PLAN_HAS_MONITORING",
+      "relation_name": "治疗方案有监测",
+      "target_node_id": "ENTITY:monitoring_requirement:ECG_CONTINUOUS",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    },
+    {
+      "source_node_id": "ENTITY:treatment_plan:TP-STEMI-THROMBOLYSIS",
+      "relation_code": "TREATMENT_PLAN_HAS_MONITORING",
+      "relation_name": "治疗方案有监测",
+      "target_node_id": "ENTITY:monitoring_requirement:TROPONIN_SERIES",
+      "source_refs": [
+        "DOC-49641c21_p1_l1-28"
+      ],
+      "review_status": "draft"
+    }
+  ],
+  "domain": "western",
+  "schema_version": 1,
+  "anchor_types": [
+    "disease"
+  ]
+}

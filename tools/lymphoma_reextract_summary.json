@@ -1,0 +1,26 @@
+{
+  "template_saved": true,
+  "template_id": "LYMPHOMA_GUIDELINE_V1",
+  "entity_types": {
+    "disease": 7,
+    "lab": 8,
+    "exam_finding": 5,
+    "exam": 11,
+    "symptom": 7,
+    "concept": 8
+  },
+  "doc_id": "DOC-ead50a9c",
+  "total_lines": 4395,
+  "entities": 43,
+  "relations": 45,
+  "rules": 7,
+  "rule_names": [
+    "自动生成: 霍奇金淋巴瘤诊断规则",
+    "自动生成: 弥漫大B细胞淋巴瘤诊断规则",
+    "自动生成: 滤泡性淋巴瘤诊断规则",
+    "自动生成: 套细胞淋巴瘤诊断规则",
+    "自动生成: 边缘区淋巴瘤诊断规则",
+    "自动生成: Burkitt淋巴瘤诊断规则",
+    "自动生成: 慢性淋巴细胞白血病/小淋巴细胞淋巴瘤诊断规则"
+  ]
+}

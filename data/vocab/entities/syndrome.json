@@ -1,0 +1,63 @@
+[
+  {
+    "code": "TCM_SYN_QI_YIN_XU",
+    "name": "气阴两虚证",
+    "aliases": [
+      "气阴两虚证",
+      "气阴两虚",
+      "气阴亏虚证"
+    ],
+    "standard_code": "自建:TCM-SYN-001",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_SYN_TAN_ZHUO_BI_ZU",
+    "name": "痰浊闭阻证",
+    "aliases": [
+      "痰浊闭阻证",
+      "痰浊闭阻",
+      "痰浊壅塞证",
+      "痰湿阻遏证"
+    ],
+    "standard_code": "自建:TCM-SYN-002",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_SYN_XIN_XUE_YU_ZU",
+    "name": "心血瘀阻证",
+    "aliases": [
+      "心血瘀阻证",
+      "心血瘀阻",
+      "心脉瘀阻证",
+      "血瘀证"
+    ],
+    "standard_code": "自建:TCM-SYN-003",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_SYN_XIN_SHEN_YIN_XU",
+    "name": "心肾阴虚证",
+    "aliases": [
+      "心肾阴虚证",
+      "心肾阴虚"
+    ],
+    "standard_code": "自建:TCM-SYN-004",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_SYN_YANG_QI_XU_SHUAI",
+    "name": "阳气虚衰证",
+    "aliases": [
+      "阳气虚衰证",
+      "阳气虚衰",
+      "心阳不振证"
+    ],
+    "standard_code": "自建:TCM-SYN-005",
+    "source": "自建种子",
+    "attributes": {}
+  }
+]

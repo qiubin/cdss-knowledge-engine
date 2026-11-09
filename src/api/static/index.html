@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CDSS 知识引擎</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/style.css?v=20261108progress">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">CK</div>
+        <div>
+          <h1>CDSS 知识引擎</h1>
+          <p>指南 · 图谱 · 规则 · 标准</p>
+        </div>
+      </div>
+      <nav id="nav">
+        <button class="nav-item active" data-route="dashboard">概览</button>
+        <button class="nav-item" data-route="import">指南导入</button>
+        <button class="nav-item" data-route="packages">知识包</button>
+        <button class="nav-item" data-route="templates">解析模板</button>
+        <button class="nav-item" data-route="entityVocab">实体词典</button>
+        <button class="nav-item" data-route="vocab">概念词汇</button>
+        <button class="nav-item" data-route="graph">知识图谱</button>
+        <button class="nav-item" data-route="tcmGraph">中医图谱</button>
+        <button class="nav-item" data-route="rules">规则管理</button>
+        <button class="nav-item" data-route="standards">标准管理</button>
+        <button class="nav-item" data-route="inference">病历测试</button>
+        <button class="nav-item" data-route="tcmInference">中医辨证</button>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="status-dot"></span>
+        <span id="apiStatus">检查连接...</span>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h2 id="pageTitle">概览</h2>
+          <p id="pageDesc">知识资产、流程状态与快速验证入口</p>
+        </div>
+        <div class="topbar-actions">
+          <button id="smokeTestBtn" class="btn secondary">页面自检</button>
+          <button id="refreshBtn" class="btn ghost">刷新</button>
+        </div>
+      </header>
+      <section id="content" class="content" aria-live="polite"></section>
+    </main>
+  </div>
+
+  <dialog id="editorDialog" class="dialog">
+    <form id="editorForm" method="dialog">
+      <div id="editorBody"></div>
+      <div class="dialog-actions">
+        <button type="button" id="editorCancel" class="btn ghost">取消</button>
+        <button type="button" id="editorSave" class="btn primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast"></div>
+  <script src="/static/vendor/vis-network.min.js?v=20261107neo"></script>
+  <script src="/static/graph-view.js?v=20261107neo"></script>
+  <script src="/static/app.js?v=20261108progress2"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+[
+  {
+    "code": "TCM_SIGN_EDEMA",
+    "name": "下肢水肿",
+    "aliases": [
+      "下肢水肿",
+      "双下肢浮肿",
+      "水肿"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_SIGN_JVD",
+    "name": "颈静脉怒张",
+    "aliases": [
+      "颈静脉怒张",
+      "颈静脉充盈"
+    ],
+    "standard_code": "",
+    "source": "自建种子",
+    "attributes": {}
+  }
+]
