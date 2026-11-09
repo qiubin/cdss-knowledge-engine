@@ -342,13 +342,14 @@
   }
 
   async function renderDashboard() {
-    const [{ stats, rules, hospitals }, docs, graphs, graph, standardOverview, ruleSync] = await Promise.all([
+    const [{ stats, rules, hospitals }, docs, graphs, graph, standardOverview, ruleSync, reviewQueue] = await Promise.all([
       loadBase(),
       api("/api/pdf/documents"),
       api("/api/kg/graphs").then((items) => items.filter((item) => normalizeDomainClient(item.domain) === "western")),
       api(`/api/kg/graph?graph_filename=${encodeURIComponent(state.graphFilename)}`),
       api("/api/standards/all"),
       api("/api/rules/sync-check"),
+      api("/api/review/queue?limit=1").catch(() => ({ summary: {} })),
     ]);
     state.graphs = graphs;
     state.graph = graph;
@@ -363,7 +364,18 @@
     const allStandards = standardOverview.hospitals.flatMap((hospital) =>
       hospital.standards.map((standard) => ({ ...standard, hospital_id: hospital.hospital_id }))
     );
+    const reviewSummary = reviewQueue.summary || {};
+    const sumStatuses = (counter, statuses) => statuses.reduce((sum, s) => sum + (counter?.[s] || 0), 0);
+    const pendingReview =
+      sumStatuses(reviewSummary.graph_nodes, ["draft", "stale"])
+      + sumStatuses(reviewSummary.graph_relations, ["draft", "stale"])
+      + sumStatuses(reviewSummary.rules, ["draft", "testing", "blocked"]);
     const semanticNodes = Array.isArray(graph.nodes) ? graph.nodes : Object.values(graph.nodes || {});
+    const semanticRelations = Array.isArray(graph.relations) ? graph.relations : Object.values(graph.relations || {});
+    const planNodes = semanticNodes.filter((node) => node.node_type === "treatment_plan");
+    const planDiseaseLinks = semanticRelations.filter((relation) => relation.relation_code === "DISEASE_HAS_TREATMENT_PLAN");
+    const medNodes = semanticNodes.filter((node) => node.node_type === "medication");
+    const interventionNodes = semanticNodes.filter((node) => node.node_type === "intervention");
     const diseaseNode = (code) => semanticNodes.find((node) => node.node_type === "disease" && node.code === code);
     const evidenceSource = (evidence) => graph.sources.find((source) => source.chunk_id === (evidence.source_refs || [])[0]);
     const steps = [
@@ -383,6 +395,8 @@
       <div class="grid c4">
         <div class="kpi"><span>疾病节点</span><strong>${graph.diseases.length}</strong><small>当前图谱 ICD 实体</small></div>
         <div class="kpi"><span>诊断证据</span><strong>${graph.evidences.length}</strong><small>${graph.disease_evidence.length} 条疾病关联</small></div>
+        <div class="kpi"><span>治疗方案</span><strong>${planNodes.length}</strong><small>${planDiseaseLinks.length} 条疾病关联</small></div>
+        <div class="kpi"><span>药物与措施</span><strong>${medNodes.length + interventionNodes.length}</strong><small>${medNodes.length} 药物 / ${interventionNodes.length} 措施</small></div>
         <div class="kpi"><span>推理规则</span><strong>${selectedRules.length}</strong><small>${activeRules.length} 条活跃</small></div>
         <div class="kpi"><span>医院标准</span><strong>${standardOverview.total_count}</strong><small>${standardOverview.active_count} 条活跃 / ${standardOverview.hospital_count} 家机构</small></div>
       </div>
@@ -390,11 +404,13 @@
       ${panel("快速操作", `
         <div class="actions">
           <button class="btn primary" data-quick="import">上传 PDF 指南</button>
+          <button class="btn ${pendingReview ? "primary" : ""}" data-quick="review">进入审核台${pendingReview ? `（${pendingReview} 条待办）` : ""}</button>
           <button class="btn" data-quick="packages">管理知识包</button>
+          <button class="btn" data-quick="graph">查看知识图谱</button>
           <button class="btn" data-quick="standards">维护医院标准</button>
-          <button class="btn" data-quick="inference">运行推理验证</button>
-          <button class="btn" data-quick="run-demo">载入示例患者</button>
-        </div>`, "", "从导入、配置到执行验证的完整闭环")}
+          <button class="btn" data-quick="inference">病历测试</button>
+          <button class="btn" data-quick="tcmInference">中医辨证</button>
+        </div>`, "", "按 引入 → 审核 → 验证 的主线组织；示例患者已内置在病历测试页")}
       ${panel("已上传文档", table(["文档", "ID", "页数", "实体", "上传时间"], docs.map((d) => `<tr><td>${esc(d.doc_title)}</td><td class="mono">${esc(d.doc_id)}</td><td>${d.total_pages}</td><td>${d.entity_count}</td><td class="nowrap">${esc(formatTime(d.uploaded_at))}</td></tr>`)))}
       ${panel(`疾病节点明细（${graph.diseases.length}）`, table(["疾病 / ICD", "英文名", "关联证据", "节点溯源", "审核状态"], graph.diseases.map((d) => {
         const node = diseaseNode(d.code);
@@ -406,6 +422,18 @@
         const source = evidenceSource(evidence);
         return `<tr><td><strong>${esc(evidence.description)}</strong><div class="mono muted">${esc(evidence.id)}</div></td><td>${esc(evidence.data_type)}</td><td>${evidenceConceptChip(evidence)}</td><td class="mono">${esc(evidence.lab_code || evidence.finding_code || evidence.symptom_code || "-")}</td><td>${source ? `<div class="mono">p${source.page_start}:l${source.line_start}-${source.line_end}</div><div class="quote">${esc(source.quote)}</div>` : "-"}</td></tr>`;
       })), "", "字段与知识图谱页一致；图谱只保存抽象证据，不保存医院阈值")}
+      ${panel(`治疗方案明细（${planNodes.length}）`, table(["治疗方案 / 编码", "关联疾病", "包含药物", "治疗措施", "监测 / 禁忌", "指南出处", "审核状态"], planNodes.map((plan) => {
+        const planTargets = (code) => semanticRelations
+          .filter((relation) => relation.relation_code === code && relation.source_node_id === plan.id)
+          .map((relation) => semanticNodes.find((node) => node.id === relation.target_node_id))
+          .filter(Boolean);
+        const names = (nodes) => nodes.map((node) => node.name).join("、") || "-";
+        const planLink = planDiseaseLinks.find((relation) => relation.target_node_id === plan.id);
+        const disease = planLink && semanticNodes.find((node) => node.id === planLink.source_node_id);
+        const source = evidenceSource({ source_refs: plan.source_refs });
+        const contras = planTargets("TREATMENT_PLAN_HAS_CONTRAINDICATION");
+        return `<tr><td><strong>${esc(plan.name)}</strong><div class="mono muted">${esc(plan.code || "-")}</div></td><td>${disease ? `<strong>${esc(disease.name)}</strong>` : "-"}</td><td>${esc(names(planTargets("TREATMENT_PLAN_INCLUDES_MEDICATION")))}</td><td>${esc(names(planTargets("TREATMENT_PLAN_INCLUDES_INTERVENTION")))}</td><td>${esc(names(planTargets("TREATMENT_PLAN_HAS_MONITORING")))}${contras.length ? `<div class="muted">禁忌：${esc(names(contras))}</div>` : ""}</td><td>${source ? `<div class="mono">p${source.page_start}:l${source.line_start}-${source.line_end}</div><div class="quote">${esc(source.quote)}</div>` : "-"}</td><td>${badge(plan.review_status || "draft")}</td></tr>`;
+      })), "", "治疗方案与药物、措施、监测、禁忌均为图谱语义节点；审核状态与审核台一致")}
       ${panel(`推理规则明细（${selectedRules.length}）`, table(["规则 / 结论", "目标诊断", "条件逻辑", "关联概念", "图谱语义", "所属图谱", "优先级", "状态"], selectedRules.map((rule) => {
         const disease = graph.diseases.find((item) => item.code === rule.disease_code);
         return `<tr><td><strong>${esc(rule.name)}</strong><div class="mono muted">${esc(rule.rule_id)} v${rule.version}</div></td><td>${esc(disease ? disease.name_cn : rule.disease_name || rule.disease_code)}</td><td><div class="quote">${esc(conditionText(rule.conditions))}</div></td><td>${ruleConceptChips(rule)}</td><td>${ruleSyncBadge(rule.rule_id)}</td><td class="mono muted">${esc(rule.graph_filename || "stemi_graph.json")}</td><td>${rule.priority}</td><td>${badge(rule.status)}</td></tr>`;
@@ -1884,6 +1912,39 @@
     const evidenceTypeOptions = [...new Set((graph.evidences || []).map((evidence) => evidence.data_type).filter(Boolean))]
       .map((type) => ({ value: type, label: type }));
 
+    const treatmentPlans = semanticNodes.filter((node) => node.node_type === "treatment_plan");
+    const planDiseaseIndex = Object.fromEntries(
+      semanticRelations
+        .filter((relation) => relation.relation_code === "DISEASE_HAS_TREATMENT_PLAN")
+        .map((relation) => [relation.target_node_id, relation.source_node_id])
+    );
+    const planTargets = (planId, code) => semanticRelations
+      .filter((relation) => relation.relation_code === code && relation.source_node_id === planId)
+      .map((relation) => semanticNodeIndex[relation.target_node_id])
+      .filter(Boolean);
+    const planNames = (nodes) => nodes.map((node) => node.name).join("、") || "-";
+    const treatmentItems = treatmentPlans.map((plan) => {
+      const status = plan.review_status || "draft";
+      const disease = semanticNodeIndex[planDiseaseIndex[plan.id]];
+      const meds = planTargets(plan.id, "TREATMENT_PLAN_INCLUDES_MEDICATION");
+      const interventions = planTargets(plan.id, "TREATMENT_PLAN_INCLUDES_INTERVENTION");
+      const monitoring = planTargets(plan.id, "TREATMENT_PLAN_HAS_MONITORING");
+      const contras = planTargets(plan.id, "TREATMENT_PLAN_HAS_CONTRAINDICATION");
+      return {
+        text: `${plan.name} ${plan.code || ""} ${disease ? disease.name : ""} ${planNames(meds)} ${planNames(interventions)} ${status}`,
+        values: { review_status: status },
+        html: `<tr>
+          <td><strong>${esc(plan.name)}</strong><div class="mono muted">${esc(plan.code || "-")}</div></td>
+          <td>${disease ? `<strong>${esc(disease.name)}</strong><div class="mono muted">${esc(disease.code || disease.concept_code || "")}</div>` : "-"}</td>
+          <td>${esc(planNames(meds))}</td>
+          <td>${esc(planNames(interventions))}</td>
+          <td>${esc(planNames(monitoring))}${contras.length ? `<div class="muted">禁忌：${esc(planNames(contras))}</div>` : ""}</td>
+          <td>${semanticRef(plan.source_refs)}</td>
+          <td>${reviewBadge(status)}</td>
+        </tr>`,
+      };
+    });
+
     const linkItems = diseaseLinks.map((link) => {
       const disease = (graph.diseases || []).find((item) => item.code === link.disease_code);
       const evidence = (graph.evidences || []).find((item) => item.id === link.evidence_id);
@@ -1924,6 +1985,7 @@
       <div class="grid c4">
         <div class="kpi"><span>疾病</span><strong>${graph.diseases.length}</strong></div>
         <div class="kpi"><span>证据</span><strong>${graph.evidences.length}</strong></div>
+        <div class="kpi"><span>治疗方案</span><strong>${treatmentPlans.length}</strong></div>
         <div class="kpi"><span>语义节点</span><strong>${semanticNodes.length}</strong></div>
         <div class="kpi"><span>语义关系</span><strong>${semanticRelations.length}</strong></div>
         <div class="kpi"><span>关联</span><strong>${diseaseLinks.length}</strong></div>
@@ -1985,6 +2047,21 @@
         placeholder: "搜索描述、编码、数据类型…",
       })}
       ${pagedPanel({
+        key: "treatmentPlans",
+        title: "治疗方案",
+        description: "疾病关联的治疗方案，及其包含的药物、措施、监测要求与禁忌",
+        headers: ["治疗方案 / 编码", "关联疾病", "包含药物", "治疗措施", "监测 / 禁忌", "溯源", "审核状态"],
+        items: treatmentItems,
+        filters: [{ key: "review_status", label: "审核状态", options: [
+          { value: "draft", label: "待审核" },
+          { value: "active", label: "已通过" },
+          { value: "rejected", label: "已拒绝" },
+          { value: "retired", label: "已失效" },
+          { value: "stale", label: "待复核" },
+        ] }],
+        placeholder: "搜索方案、疾病、药物、措施…",
+      })}
+      ${pagedPanel({
         key: "links",
         title: "疾病关联",
         description: "疾病采信的证据及其权重、等级、是否必需",
@@ -2013,7 +2090,7 @@
         domain: graph.profile?.domain || "western",
       });
     }
-    ["relations", "paths", "nodes", "evidences", "links", "sources"].forEach(bindPagedTable);
+    ["relations", "paths", "nodes", "evidences", "treatmentPlans", "links", "sources"].forEach(bindPagedTable);
     $("#graphSelector").onchange = (e) => { state.graphFilename = e.target.value; renderGraph(); };
     $("#reviewerName").onchange = (event) => {
       localStorage.setItem("cdssReviewer", event.target.value.trim());
@@ -3190,8 +3267,7 @@
       return;
     }
     const quick = event.target.closest("[data-quick]"); if (!quick) return;
-    if (quick.dataset.quick === "run-demo") navigate("inference");
-    else navigate(quick.dataset.quick);
+    navigate(quick.dataset.quick);
   });
   content.addEventListener("click", handleCaseClick);
   (async function init() {
