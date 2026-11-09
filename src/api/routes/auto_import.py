@@ -23,7 +23,7 @@ config_repo = ExtractionConfigRepository()
 async def auto_import(
     file: UploadFile = File(...),
     graph_filename: Optional[str] = Form(None),
-    auto_activate: Optional[str] = Form("true"),
+    auto_activate: Optional[str] = Form("false"),
     domain: Optional[str] = Form("western"),
 ):
     if not file.filename or not file.filename.lower().endswith(".pdf"):
@@ -41,7 +41,7 @@ async def auto_import(
             doc_title,
             config,
             graph_filename=str(graph_filename or ""),
-            auto_activate=str(auto_activate or "true").lower() not in {"false", "0", "no"},
+            auto_activate=str(auto_activate or "false").lower() not in {"false", "0", "no"},
         )
     except Exception as error:
         file_path.unlink(missing_ok=True)

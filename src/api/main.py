@@ -5,10 +5,12 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from .routes import pdf, kg, rules, standards, inference, templates, vocab, guide_packages, neo4j_graph, profiles, auto_import
+from src.review.errors import ReviewError
+
+from .routes import pdf, kg, rules, standards, inference, templates, vocab, guide_packages, neo4j_graph, profiles, auto_import, kg_review
 
 app = FastAPI(title="CDSS Knowledge Engine", version="1.0.0")
 
@@ -31,6 +33,13 @@ app.include_router(guide_packages.router)
 app.include_router(neo4j_graph.router)
 app.include_router(profiles.router)
 app.include_router(auto_import.router)
+app.include_router(kg_review.router)
+app.include_router(kg_review.audit_router)
+
+
+@app.exception_handler(ReviewError)
+async def review_error_handler(request, exc: ReviewError):
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 STATIC_DIR = Path(__file__).parent / "static"
 

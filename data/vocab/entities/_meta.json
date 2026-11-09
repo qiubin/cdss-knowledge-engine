@@ -63,5 +63,30 @@
     "label": "诊断证据",
     "domain": "western",
     "color": "#4fd1c5"
+  },
+  "treatment_plan": {
+    "label": "治疗方案",
+    "domain": "shared",
+    "color": "#63b3ed"
+  },
+  "order_set": {
+    "label": "医嘱套餐",
+    "domain": "western",
+    "color": "#fbd38d"
+  },
+  "order_item": {
+    "label": "医嘱条目",
+    "domain": "western",
+    "color": "#fefcbf"
+  },
+  "care_pathway": {
+    "label": "诊疗路径",
+    "domain": "western",
+    "color": "#e9d8fd"
+  },
+  "pathway_phase": {
+    "label": "路径阶段",
+    "domain": "western",
+    "color": "#d6bcfa"
   }
 }

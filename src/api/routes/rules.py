@@ -15,6 +15,9 @@ from src.domains.tcm.checks import TcmGraphSemanticChecker
 from src.extraction.concept_mapping import GENERIC_FINDING_BLOCKLIST
 from src.extraction.graph_binding import resolve_template_graph_filename
 from src.extraction.repository import ExtractionTemplateRepository
+from src.review.audit import AUDIT_PATH as REVIEW_AUDIT_PATH, append_audit
+from src.review.condition_completion import complete_rule_conditions
+from src.review.status import StatusTransitionError, next_rule_status
 from src.terminology.labels import default_labels
 from src.vocab.repository import ConceptVocabularyRepository, collect_concept_codes
 from .kg import _load_graph, normalize_graph_filename
@@ -37,13 +40,14 @@ def validate_rule_concepts(rule: Dict[str, Any]) -> None:
         raise HTTPException(422, f"条件引用的概念词汇未定义: {', '.join(sorted(set(unknown)))}")
 
 
-def _load_all_rules() -> List[Dict]:
+def _load_all_rules(path: Optional[Path] = None) -> List[Dict]:
     # After any management operation, managed_rules.json is the canonical file.
-    if MANAGED_RULES_PATH.exists():
-        rules = json.loads(MANAGED_RULES_PATH.read_text(encoding="utf-8"))
+    target = Path(path) if path is not None else MANAGED_RULES_PATH
+    if target.exists():
+        rules = json.loads(target.read_text(encoding="utf-8"))
     else:
         rules = []
-        for f in RULES_DIR.glob("*.json"):
+        for f in target.parent.glob("*.json"):
             items = json.loads(f.read_text(encoding="utf-8"))
             if isinstance(items, list):
                 rules.extend(items)
@@ -66,9 +70,10 @@ def _load_all_rules() -> List[Dict]:
     return rules
 
 
-def _save_all_rules(rules: List[Dict]):
-    RULES_DIR.mkdir(parents=True, exist_ok=True)
-    MANAGED_RULES_PATH.write_text(
+def _save_all_rules(rules: List[Dict], path: Optional[Path] = None):
+    target = Path(path) if path is not None else MANAGED_RULES_PATH
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
         json.dumps(rules, ensure_ascii=False, indent=2), encoding="utf-8"
     )
 
@@ -78,15 +83,18 @@ class GraphSemanticChecker:
 
     def __init__(self, graph: Dict[str, Any]):
         self.graph = graph
-        self.node_ids = {
-            item.get("id") for item in self._as_list(graph.get("nodes"))
+        self.nodes = {
+            str(item.get("id")): item for item in self._as_list(graph.get("nodes"))
             if isinstance(item, dict) and item.get("id")
         }
-        self.relation_keys = {
-            (item.get("source_node_id"), item.get("relation_code"), item.get("target_node_id"))
+        self.relations = {
+            (item.get("source_node_id"), item.get("relation_code"), item.get("target_node_id")): item
             for item in self._as_list(graph.get("relations"))
             if isinstance(item, dict)
         }
+        self.node_ids = set(self.nodes)
+        self.relation_keys = set(self.relations)
+        self._references: List[Dict[str, Any]] = []
         self.diseases = {
             str(item.get("code")): item for item in self._as_list(graph.get("diseases"))
             if isinstance(item, dict) and item.get("code")
@@ -110,8 +118,27 @@ class GraphSemanticChecker:
     def _node_id(self, node_type: str, code: Any) -> str:
         return f"ENTITY:{node_type}:{code}"
 
+    def _record_node(self, node_id: str) -> None:
+        node = self.nodes.get(node_id)
+        self._references.append({
+            "kind": "node",
+            "node_id": node_id,
+            "status": str((node or {}).get("review_status") or "draft") if node else "missing",
+        })
+
+    def _record_relation(self, source: Any, relation_code: str, target: Any) -> None:
+        relation = self.relations.get((source, relation_code, target))
+        self._references.append({
+            "kind": "relation",
+            "source_node_id": source,
+            "relation_code": relation_code,
+            "target_node_id": target,
+            "status": str((relation or {}).get("review_status") or "draft") if relation else "missing",
+        })
+
     def _add_node_issue(self, issues: List[str], node_type: str, code: Any) -> bool:
         node_id = self._node_id(node_type, code)
+        self._record_node(node_id)
         if node_id not in self.node_ids:
             issues.append(f"图谱缺少{node_type}节点 {code}")
             return False
@@ -130,8 +157,31 @@ class GraphSemanticChecker:
     def _add_relation_issue(
         self, issues: List[str], source: Any, relation_code: str, target: Any
     ) -> None:
+        self._record_relation(source, relation_code, target)
         if (source, relation_code, target) not in self.relation_keys:
             issues.append(f"图谱缺少关系 {relation_code}: {source} -> {target}")
+
+    def _unique_references(self) -> List[Dict[str, Any]]:
+        seen: Dict[tuple, Dict[str, Any]] = {}
+        for ref in self._references:
+            key = (
+                ref.get("kind"),
+                ref.get("node_id"),
+                ref.get("source_node_id"),
+                ref.get("relation_code"),
+                ref.get("target_node_id"),
+            )
+            seen[key] = ref
+        return list(seen.values())
+
+    @staticmethod
+    def _reference_issue(ref: Dict[str, Any]) -> str:
+        if ref.get("kind") == "node":
+            return f"节点 {ref['node_id']} 当前状态为 {ref['status']}，需要 active"
+        return (
+            f"关系 {ref['source_node_id']} -{ref['relation_code']}-> "
+            f"{ref['target_node_id']} 当前状态为 {ref['status']}，需要 active"
+        )
 
     def _check_diagnostic_evidence(
         self,
@@ -179,12 +229,11 @@ class GraphSemanticChecker:
     def check_rule(self, rule: Dict[str, Any]) -> Dict[str, Any]:
         issues: List[str] = []
         concepts: List[str] = []
+        self._references = []
         disease_code = str(rule.get("disease_code") or "")
 
         if not disease_code:
             issues.append("目标疾病编码为空")
-        elif disease_code not in self.diseases:
-            issues.append(f"图谱缺少疾病 {disease_code}")
         else:
             self._add_node_issue(issues, "disease", disease_code)
 
@@ -198,6 +247,11 @@ class GraphSemanticChecker:
         if not empty_treatment_gate:
             self._walk(conditions, disease_code, issues, concepts)
         concepts = list(dict.fromkeys(concepts))
+        references = self._unique_references()
+        review_issues = [
+            self._reference_issue(ref) for ref in references
+            if ref.get("status") != "active"
+        ]
         return {
             "rule_id": rule.get("rule_id", ""),
             "name": rule.get("name", ""),
@@ -206,6 +260,9 @@ class GraphSemanticChecker:
             "concept_codes": concepts,
             "semantic_status": "inconsistent" if issues else "consistent",
             "issues": issues,
+            "references": references,
+            "dependency_status": "passed" if references and not review_issues else "blocked",
+            "review_issues": review_issues,
         }
 
     def _walk(
@@ -377,8 +434,9 @@ class GraphSemanticChecker:
         issues.append(f"证据 {evidence_id} 数据类型不支持图谱语义校验: {evidence_type or '未知'}")
 
 
-def check_rule_sync(rules: List[Dict[str, Any]]) -> Dict[str, Any]:
+def check_rule_sync(rules: List[Dict[str, Any]], graph_loader=None) -> Dict[str, Any]:
     """Check each rule against the graph selected by its graph_filename."""
+    loader = graph_loader or _load_graph
     groups: Dict[str, List[Dict[str, Any]]] = {}
     invalid_files: Dict[str, List[Dict[str, Any]]] = {}
     for rule in rules:
@@ -391,7 +449,7 @@ def check_rule_sync(rules: List[Dict[str, Any]]) -> Dict[str, Any]:
 
     results: List[Dict[str, Any]] = []
     for filename, grouped_rules in groups.items():
-        graph = _load_graph(filename)
+        graph = loader(filename)
         western_checker = GraphSemanticChecker(graph)
         tcm_checker = TcmGraphSemanticChecker(graph)
         graph_domain = normalize_domain(graph.get("domain"))
@@ -416,10 +474,13 @@ def check_rule_sync(rules: List[Dict[str, Any]]) -> Dict[str, Any]:
             })
 
     consistent = sum(item["semantic_status"] == "consistent" for item in results)
+    dependency_passed = sum(item.get("dependency_status") == "passed" for item in results)
     return {
         "total": len(results),
         "consistent_count": consistent,
         "inconsistent_count": len(results) - consistent,
+        "dependency_passed_count": dependency_passed,
+        "dependency_blocked_count": len(results) - dependency_passed,
         "rules": results,
     }
 
@@ -435,6 +496,22 @@ async def list_rules(status: Optional[str] = None, domain: Optional[str] = None)
             r for r in rules
             if normalize_domain(r.get("domain") or "western") == target
         ]
+    sync = check_rule_sync(rules)
+    by_id = {item["rule_id"]: item for item in sync["rules"]}
+    for rule in rules:
+        result = by_id.get(rule.get("rule_id"), {})
+        refs = result.get("references") or []
+        statuses = [ref.get("status") for ref in refs]
+        rule["dependency_summary"] = {
+            "total": len(refs),
+            "active": sum(status == "active" for status in statuses),
+            "draft": sum(status == "draft" for status in statuses),
+            "stale": sum(status == "stale" for status in statuses),
+            "rejected": sum(status == "rejected" for status in statuses),
+            "retired": sum(status == "retired" for status in statuses),
+            "missing": sum(status == "missing" for status in statuses),
+            "blocked": result.get("dependency_status") != "passed",
+        }
     return rules
 
 
@@ -447,6 +524,308 @@ class ActivateConsistentRequest(BaseModel):
     domain: Optional[str] = None
     rule_ids: Optional[List[str]] = None
     quality_only: bool = False
+
+
+class RuleReviewRequest(BaseModel):
+    action: str
+    reviewer: str = "未署名"
+    note: str = ""
+
+
+def _activation_blockers(result: Dict[str, Any]) -> List[Dict[str, Any]]:
+    return [
+        ref for ref in result.get("references") or []
+        if ref.get("status") != "active"
+    ]
+
+
+def _dependency_result(rule: Dict[str, Any], graph_loader=None) -> Dict[str, Any]:
+    return check_rule_sync([rule], graph_loader=graph_loader)["rules"][0]
+
+
+def _ensure_active_rule_dependencies(rule: Dict[str, Any]) -> None:
+    """Reject saving an active rule whose graph dependencies are not approved."""
+    if str(rule.get("status") or "draft") != "active":
+        return
+    result = _dependency_result(rule)
+    if result.get("semantic_status") != "consistent":
+        raise HTTPException(
+            422,
+            "规则与知识图谱语义不一致: " + "; ".join(result.get("issues") or []),
+        )
+    blockers = _activation_blockers(result)
+    if blockers:
+        raise HTTPException(422, {
+            "error": "规则依赖未通过审核",
+            "dependencies": blockers,
+        })
+
+
+def apply_rule_review(
+    rule_id: str,
+    action: str,
+    reviewer: str,
+    note: str = "",
+) -> Dict[str, Any]:
+    """Apply one review action to a rule and write an audit record."""
+    rules = _load_all_rules()
+    for rule in rules:
+        if rule.get("rule_id") != rule_id:
+            continue
+        current = str(rule.get("status") or "draft")
+        try:
+            target = next_rule_status(current, action)
+        except StatusTransitionError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        if action == "approve":
+            result = _dependency_result(rule)
+            if result.get("semantic_status") != "consistent":
+                issues = result.get("issues") or ["图谱语义不一致"]
+                raise HTTPException(422, "规则与知识图谱语义不一致: " + "; ".join(issues))
+            blockers = _activation_blockers(result)
+            if blockers:
+                raise HTTPException(422, {
+                    "error": "规则依赖未通过审核",
+                    "dependencies": blockers,
+                })
+        now = datetime.now(timezone.utc).isoformat()
+        rule["status"] = target
+        rule["reviewed_by"] = reviewer or "未署名"
+        rule["reviewed_at"] = now
+        rule["review_note"] = note
+        rule["updated_at"] = now
+        _save_all_rules(rules)
+        append_audit({
+            "action": action,
+            "entity_type": "rule",
+            "entity_id": rule_id,
+            "graph_filename": rule.get("graph_filename", ""),
+            "before_status": current,
+            "after_status": target,
+            "reviewer": reviewer or "未署名",
+            "note": note,
+            "affected_rules": [],
+        }, REVIEW_AUDIT_PATH)
+        return rule
+    raise HTTPException(404, "规则未找到")
+
+
+class RuleCompleteConditionsRequest(BaseModel):
+    reviewer: str = "未署名"
+    note: str = ""
+
+
+class RuleBulkCompleteConditionsRequest(BaseModel):
+    rule_ids: List[str] = []
+    reviewer: str = "未署名"
+    note: str = ""
+
+
+def _apply_condition_completion(rule_id: str, reviewer: str, note: str = "") -> Dict[str, Any]:
+    """Fill in concept conditions for a "no concept condition" rule from the graph."""
+    rules = _load_all_rules()
+    rule = next((r for r in rules if r.get("rule_id") == rule_id), None)
+    if rule is None:
+        raise HTTPException(404, "规则未找到")
+    filename = normalize_graph_filename(rule.get("graph_filename") or "stemi_graph.json")
+    graph = _load_graph(filename)
+    baseline = _dependency_result(rule)
+    if baseline.get("semantic_status") == "consistent":
+        raise HTTPException(422, "规则已与图谱语义一致，无需补全（治疗类规则空条件为设计行为）")
+    result = complete_rule_conditions(rule, graph)
+    if not result.get("changed"):
+        skipped = "; ".join(
+            f"{item.get('evidence_id')}: {item.get('reason')}"
+            for item in (result.get("skipped") or [])[:5]
+        )
+        reason = result.get("reason") or "规则条件无需补全"
+        raise HTTPException(422, reason + (f"（{skipped}）" if skipped else ""))
+
+    labels = default_labels()
+    rule["conditions"] = result["conditions"]
+    labels.annotate(rule["conditions"])
+    rule["condition_text"] = labels.summarize(rule["conditions"])
+    rule["condition_source"] = "graph_completion"
+    now = datetime.now(timezone.utc).isoformat()
+    rule["updated_at"] = now
+    _save_all_rules(rules)
+    append_audit({
+        "action": "complete_conditions",
+        "entity_type": "rule",
+        "entity_id": rule_id,
+        "graph_filename": filename,
+        "before_status": rule.get("status"),
+        "after_status": rule.get("status"),
+        "reviewer": reviewer or "未署名",
+        "note": note or "按图谱补全概念条件",
+        "affected_rules": [],
+    }, REVIEW_AUDIT_PATH)
+    sync = _dependency_result(rule)
+    return {
+        "rule_id": rule_id,
+        "used": result.get("used") or [],
+        "skipped": result.get("skipped") or [],
+        "semantic_status": sync.get("semantic_status"),
+        "dependency_status": sync.get("dependency_status"),
+        "condition_text": rule.get("condition_text", ""),
+    }
+
+
+@router.post("/{rule_id}/complete-conditions")
+async def complete_rule_conditions_endpoint(
+    rule_id: str, request: RuleCompleteConditionsRequest
+):
+    return _apply_condition_completion(rule_id, request.reviewer, request.note)
+
+
+@router.post("/complete-conditions")
+async def bulk_complete_conditions(request: RuleBulkCompleteConditionsRequest):
+    results = []
+    for rule_id in request.rule_ids:
+        try:
+            result = _apply_condition_completion(rule_id, request.reviewer, request.note)
+            results.append({"rule_id": rule_id, "ok": True, **result})
+        except HTTPException as exc:
+            results.append({
+                "rule_id": rule_id,
+                "ok": False,
+                "error": exc.detail,
+                "status_code": exc.status_code,
+            })
+    return {
+        "total": len(request.rule_ids),
+        "succeeded": sum(1 for item in results if item["ok"]),
+        "failed": sum(1 for item in results if not item["ok"]),
+        "results": results,
+    }
+
+
+class RuleApproveDependenciesRequest(BaseModel):
+    reviewer: str = "未署名"
+    note: str = ""
+
+
+@router.post("/{rule_id}/approve-dependencies")
+async def approve_rule_dependencies(rule_id: str, request: RuleApproveDependenciesRequest):
+    """Approve all reviewable graph dependencies of one rule, then unblock it.
+
+    Nodes are approved first, then relations (an approval requires both
+    endpoints active).  ``missing`` references cannot be approved here and are
+    reported back; ``rejected``/``retired`` entries are left for manual
+    handling.  A ``blocked`` rule is re-approved automatically once its gate
+    passes; ``draft``/``testing`` rules keep their status.
+    """
+    from src.review.errors import ReviewError
+    from src.review.service import ReviewService
+
+    rules = _load_all_rules()
+    rule = next((r for r in rules if r.get("rule_id") == rule_id), None)
+    if rule is None:
+        raise HTTPException(404, "规则未找到")
+    filename = normalize_graph_filename(rule.get("graph_filename") or "stemi_graph.json")
+    refs = _dependency_result(rule).get("references") or []
+
+    service = ReviewService()
+    approved_nodes = 0
+    approved_relations = 0
+    skipped: List[Dict[str, Any]] = []
+    missing: List[str] = []
+    seen: set = set()
+
+    def _try_approve(kind: str, status: str, entity_id: str, approve) -> bool:
+        nonlocal approved_nodes, approved_relations
+        if status == "active":
+            return False
+        if status == "missing":
+            missing.append(entity_id)
+            return False
+        if status in {"rejected", "retired"}:
+            skipped.append({
+                "entity_id": entity_id,
+                "status": status,
+                "reason": "曾被拒绝/失效，需要人工处理",
+            })
+            return False
+        try:
+            approve()
+            if kind == "node":
+                approved_nodes += 1
+            else:
+                approved_relations += 1
+            return True
+        except (ReviewError, HTTPException) as exc:
+            detail = getattr(exc, "detail", str(exc))
+            skipped.append({"entity_id": entity_id, "status": status, "reason": str(detail)})
+            return False
+
+    for ref in refs:
+        if ref.get("kind") != "node" or ref.get("status") == "active":
+            continue
+        node_id = str(ref.get("node_id") or "")
+        if node_id in seen:
+            continue
+        seen.add(node_id)
+        _try_approve(
+            "node", ref.get("status"), node_id,
+            lambda node_id=node_id: service.review_node(
+                filename, node_id, "approve",
+                request.reviewer or "未署名", request.note or "补审规则依赖",
+            ),
+        )
+
+    seen_relations = set()
+    for ref in refs:
+        if ref.get("kind") != "relation" or ref.get("status") == "active":
+            continue
+        key = (
+            str(ref.get("source_node_id") or ""),
+            str(ref.get("relation_code") or ""),
+            str(ref.get("target_node_id") or ""),
+        )
+        entity_id = "|".join(key)
+        if entity_id in seen_relations:
+            continue
+        seen_relations.add(entity_id)
+        _try_approve(
+            "relation", ref.get("status"), entity_id,
+            lambda key=key: service.review_relation(
+                filename, key[0], key[1], key[2], "approve",
+                request.reviewer or "未署名", request.note or "补审规则依赖",
+            ),
+        )
+
+    after = _dependency_result(rule)
+    rule_status_before = str(rule.get("status") or "draft")
+    gate_error = ""
+    rule_status = rule_status_before
+    if rule_status_before == "blocked":
+        try:
+            rule_after = apply_rule_review(
+                rule_id, "approve", request.reviewer, request.note or "依赖已通过，恢复启用"
+            )
+            rule_status = rule_after.get("status")
+        except HTTPException as exc:
+            gate_error = (
+                exc.detail if isinstance(exc.detail, str) else json.dumps(exc.detail, ensure_ascii=False)
+            )
+    else:
+        refreshed = next(
+            (r for r in _load_all_rules() if r.get("rule_id") == rule_id), None
+        )
+        rule_status = str(refreshed.get("status") or rule_status_before) if refreshed else rule_status_before
+
+    return {
+        "rule_id": rule_id,
+        "approved_nodes": approved_nodes,
+        "approved_relations": approved_relations,
+        "skipped": skipped,
+        "missing": missing,
+        "dependency_status": after.get("dependency_status"),
+        "review_issues": after.get("review_issues") or [],
+        "gate_error": gate_error,
+        "rule_status": rule_status,
+        "rule_status_before": rule_status_before,
+    }
 
 
 def _rule_quality_ok(rule: Dict[str, Any]) -> bool:
@@ -469,7 +848,7 @@ async def activate_consistent(request: ActivateConsistentRequest):
     candidates = []
     skipped = []
     for rule in rules:
-        if rule.get("status") not in {"draft", "testing"}:
+        if rule.get("status") not in {"draft", "testing", "blocked"}:
             continue
         if target_domain and normalize_domain(rule.get("domain") or "western") != target_domain:
             continue
@@ -484,6 +863,7 @@ async def activate_consistent(request: ActivateConsistentRequest):
         sync = check_rule_sync(candidates)
         by_id = {item["rule_id"]: item for item in sync["rules"]}
         activated = 0
+        audit_records = []
         for rule in candidates:
             result = by_id.get(rule.get("rule_id"), {})
             if result.get("semantic_status") != "consistent":
@@ -492,9 +872,33 @@ async def activate_consistent(request: ActivateConsistentRequest):
                     "reason": "; ".join(result.get("issues") or ["图谱语义不一致"]),
                 })
                 continue
+            if result.get("dependency_status") != "passed":
+                blockers = _activation_blockers(result)
+                skipped.append({
+                    "rule_id": rule.get("rule_id"),
+                    "reason": "依赖未通过审核: " + "; ".join(
+                        f"{item.get('node_id') or item.get('relation_code')}={item.get('status')}"
+                        for item in blockers
+                    ),
+                })
+                continue
+            before = rule.get("status")
             rule["status"] = "active"
             activated += 1
+            audit_records.append({
+                "action": "approve",
+                "entity_type": "rule",
+                "entity_id": rule.get("rule_id"),
+                "graph_filename": rule.get("graph_filename", ""),
+                "before_status": before,
+                "after_status": "active",
+                "reviewer": "批量审核",
+                "note": "批量启用一致规则",
+                "affected_rules": [],
+            })
         _save_all_rules(rules)
+        for record in audit_records:
+            append_audit(record, REVIEW_AUDIT_PATH)
     else:
         activated = 0
     return {
@@ -520,6 +924,7 @@ async def update_rule(rule_id: str, rule: Dict[str, Any]):
             if rule.get("graph_filename"):
                 normalize_graph_filename(str(rule["graph_filename"]))
             validate_rule_concepts(rule)
+            _ensure_active_rule_dependencies(rule)
             rules[i] = rule
             _save_all_rules(rules)
             return rule
@@ -534,6 +939,7 @@ async def create_rule(rule: Dict[str, Any]):
     if rule.get("graph_filename"):
         normalize_graph_filename(str(rule["graph_filename"]))
     validate_rule_concepts(rule)
+    _ensure_active_rule_dependencies(rule)
     rules.append(rule)
     _save_all_rules(rules)
     return rule
@@ -622,14 +1028,34 @@ async def activate_rule(rule_id: str):
     rules = _load_all_rules()
     for r in rules:
         if r.get("rule_id") == rule_id:
-            result = check_rule_sync([r])
-            if result["inconsistent_count"]:
-                issues = result["rules"][0]["issues"]
+            result = _dependency_result(r)
+            if result.get("semantic_status") != "consistent":
+                issues = result.get("issues") or ["图谱语义不一致"]
                 raise HTTPException(422, "规则与知识图谱语义不一致: " + "; ".join(issues))
+            blockers = _activation_blockers(result)
+            if blockers:
+                raise HTTPException(422, {
+                    "error": "规则依赖未通过审核",
+                    "dependencies": blockers,
+                })
             r["status"] = "active"
+            r["updated_at"] = datetime.now(timezone.utc).isoformat()
             _save_all_rules(rules)
             return r
     raise HTTPException(404, "规则未找到")
+
+
+@router.get("/{rule_id}/graph-dependencies")
+async def graph_dependencies(rule_id: str):
+    for rule in _load_all_rules():
+        if rule.get("rule_id") == rule_id:
+            return _dependency_result(rule)
+    raise HTTPException(404, "规则未找到")
+
+
+@router.post("/{rule_id}/review")
+async def review_rule(rule_id: str, request: RuleReviewRequest):
+    return apply_rule_review(rule_id, request.action, request.reviewer, request.note)
 
 
 @router.post("/{rule_id}/retire")
@@ -637,8 +1063,21 @@ async def retire_rule(rule_id: str):
     rules = _load_all_rules()
     for r in rules:
         if r.get("rule_id") == rule_id:
+            before = r.get("status")
             r["status"] = "retired"
+            r["updated_at"] = datetime.now(timezone.utc).isoformat()
             _save_all_rules(rules)
+            append_audit({
+                "action": "retire",
+                "entity_type": "rule",
+                "entity_id": rule_id,
+                "graph_filename": r.get("graph_filename", ""),
+                "before_status": before,
+                "after_status": "retired",
+                "reviewer": "未署名",
+                "note": "",
+                "affected_rules": [],
+            }, REVIEW_AUDIT_PATH)
             return r
     raise HTTPException(404, "规则未找到")
 

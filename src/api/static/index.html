@@ -19,17 +19,30 @@
       </div>
       <nav id="nav">
         <button class="nav-item active" data-route="dashboard">概览</button>
-        <button class="nav-item" data-route="import">指南导入</button>
-        <button class="nav-item" data-route="packages">知识包</button>
-        <button class="nav-item" data-route="templates">解析模板</button>
-        <button class="nav-item" data-route="entityVocab">实体词典</button>
-        <button class="nav-item" data-route="vocab">概念词汇</button>
-        <button class="nav-item" data-route="graph">知识图谱</button>
-        <button class="nav-item" data-route="tcmGraph">中医图谱</button>
-        <button class="nav-item" data-route="rules">规则管理</button>
-        <button class="nav-item" data-route="standards">标准管理</button>
-        <button class="nav-item" data-route="inference">病历测试</button>
-        <button class="nav-item" data-route="tcmInference">中医辨证</button>
+        <div class="nav-group">
+          <div class="nav-group-title">知识引入</div>
+          <button class="nav-item" data-route="import">指南导入</button>
+          <button class="nav-item" data-route="packages">知识包</button>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">知识审核</div>
+          <button class="nav-item" data-route="review">审核台</button>
+          <button class="nav-item" data-route="graph">知识图谱</button>
+          <button class="nav-item" data-route="tcmGraph">中医图谱</button>
+          <button class="nav-item" data-route="rules">规则管理</button>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">词典与标准</div>
+          <button class="nav-item" data-route="templates">解析模板</button>
+          <button class="nav-item" data-route="entityVocab">实体词典</button>
+          <button class="nav-item" data-route="vocab">概念词汇</button>
+          <button class="nav-item" data-route="standards">标准管理</button>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">验证运行</div>
+          <button class="nav-item" data-route="inference">病历测试</button>
+          <button class="nav-item" data-route="tcmInference">中医辨证</button>
+        </div>
       </nav>
       <div class="sidebar-footer">
         <span class="status-dot"></span>
@@ -64,7 +77,7 @@
 
   <div id="toast" class="toast"></div>
   <script src="/static/vendor/vis-network.min.js?v=20261107neo"></script>
-  <script src="/static/graph-view.js?v=20261107neo"></script>
-  <script src="/static/app.js?v=20261108progress2"></script>
+  <script src="/static/graph-view.js?v=20261109jsonfallback"></script>
+  <script src="/static/app.js?v=20261109templateprivate"></script>
 </body>
 </html>

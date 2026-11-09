@@ -9,5 +9,9 @@
   "disease_evidence": [],
   "sources": [],
   "nodes": [],
-  "relations": []
+  "relations": [],
+  "_repair_stats": {
+    "repaired": 0,
+    "skipped": 0
+  }
 }

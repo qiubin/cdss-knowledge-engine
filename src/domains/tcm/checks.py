@@ -15,10 +15,12 @@ class TcmGraphSemanticChecker:
         nodes = graph.get("nodes") or []
         if isinstance(nodes, dict):
             nodes = list(nodes.values())
-        self.node_ids: Set[str] = {
-            str(item.get("id")) for item in nodes
+        self.nodes = {
+            str(item.get("id")): item for item in nodes
             if isinstance(item, dict) and item.get("id")
         }
+        self.node_ids: Set[str] = set(self.nodes)
+        self._references: List[Dict[str, Any]] = []
         self.syndromes = {
             str(item.get("code")): item
             for item in (graph.get("syndromes") or [])
@@ -34,22 +36,35 @@ class TcmGraphSemanticChecker:
         if not code:
             issues.append(f"缺少{node_type}编码")
             return False
-        if _node_id(node_type, code) not in self.node_ids:
+        node_id = _node_id(node_type, code)
+        node = self.nodes.get(node_id)
+        self._references.append({
+            "kind": "node",
+            "node_id": node_id,
+            "status": str((node or {}).get("review_status") or "draft") if node else "missing",
+        })
+        if node_id not in self.node_ids:
             issues.append(f"图谱缺少{node_type}节点 {code}")
             return False
         return True
 
+    def _unique_references(self) -> List[Dict[str, Any]]:
+        seen: Dict[str, Dict[str, Any]] = {}
+        for ref in self._references:
+            seen[str(ref.get("node_id"))] = ref
+        return list(seen.values())
+
     def check_rule(self, rule: Dict[str, Any]) -> Dict[str, Any]:
         issues: List[str] = []
+        self._references = []
         anchor_type = str(rule.get("anchor_type") or "syndrome")
         anchor_code = str(rule.get("disease_code") or rule.get("anchor_code") or "")
         if not anchor_code:
             issues.append("目标证候编码为空")
         elif anchor_type == "syndrome":
-            if anchor_code not in self.syndromes and _node_id("syndrome", anchor_code) not in self.node_ids:
-                issues.append(f"图谱缺少证候 {anchor_code}")
-        elif anchor_type == "disease" and anchor_code not in self.diseases:
-            issues.append(f"图谱缺少疾病 {anchor_code}")
+            self._require_node(issues, "syndrome", anchor_code)
+        elif anchor_type == "disease":
+            self._require_node(issues, "disease", anchor_code)
 
         self._walk(rule.get("conditions"), issues)
 
@@ -62,6 +77,11 @@ class TcmGraphSemanticChecker:
             if isinstance(herb, dict) and herb.get("code"):
                 self._require_node(issues, "herb", str(herb["code"]))
 
+        references = self._unique_references()
+        review_issues = [
+            f"节点 {ref['node_id']} 当前状态为 {ref['status']}，需要 active"
+            for ref in references if ref.get("status") != "active"
+        ]
         return {
             "rule_id": rule.get("rule_id", ""),
             "name": rule.get("name", ""),
@@ -71,6 +91,9 @@ class TcmGraphSemanticChecker:
             "concept_codes": [],
             "semantic_status": "inconsistent" if issues else "consistent",
             "issues": issues,
+            "references": references,
+            "dependency_status": "passed" if references and not review_issues else "blocked",
+            "review_issues": review_issues,
         }
 
     def _walk(self, condition: Any, issues: List[str]) -> None:

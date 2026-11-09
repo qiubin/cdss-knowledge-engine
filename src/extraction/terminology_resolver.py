@@ -18,6 +18,9 @@ UNIVERSAL_TYPES = {
     "pathology", "biomarker", "molecular_test", "stage", "histology",
     "risk_factor", "medication", "intervention", "treatment_plan",
     "contraindication", "monitoring_requirement",
+    # Order / pathway layer: guideline-level materialization of treatment
+    # plans into orderable items, order sets and whole-cycle care pathways.
+    "order_set", "order_item", "care_pathway", "pathway_phase",
 }
 
 TYPE_ALIASES = {
@@ -32,6 +35,11 @@ TYPE_ALIASES = {
     "禁忌": "contraindication", "禁忌证": "contraindication",
     "监测要求": "monitoring_requirement", "监测": "monitoring_requirement",
     "诊断证据": "diagnostic_evidence", "证据": "diagnostic_evidence",
+    # Order / pathway layer aliases used by guideline text and LLM output.
+    "医嘱套餐": "order_set", "医嘱组套": "order_set", "套餐": "order_set",
+    "医嘱条目": "order_item", "医嘱": "order_item", "医嘱项": "order_item",
+    "诊疗路径": "care_pathway", "临床路径": "care_pathway", "路径": "care_pathway",
+    "路径阶段": "pathway_phase", "治疗阶段": "pathway_phase", "阶段": "pathway_phase",
 }
 
 
@@ -52,6 +60,8 @@ def local_code(entity_type: str, name: str) -> str:
         "risk_factor": "LOCAL-RISK", "medication": "LOCAL-DRUG",
         "intervention": "LOCAL-INT", "treatment_plan": "LOCAL-TP",
         "contraindication": "LOCAL-CONTRA", "monitoring_requirement": "LOCAL-MON",
+        "order_set": "LOCAL-OS", "order_item": "LOCAL-OI",
+        "care_pathway": "LOCAL-CP", "pathway_phase": "LOCAL-PP",
     }.get(entity_type, "LOCAL")
     return f"{prefix}-{digest}"
 

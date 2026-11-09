@@ -36,6 +36,12 @@ ENTITY_KINDS = (
     "herb",
     "contraindication",
     "monitoring_requirement",
+    # Order-set / care-pathway layer.  Dictionary files are optional; missing
+    # files resolve to empty name maps without affecting other kinds.
+    "order_set",
+    "order_item",
+    "care_pathway",
+    "pathway_phase",
 )
 
 _LABEL_KINDS = ("lab", "symptom", "exam", "exam_finding")

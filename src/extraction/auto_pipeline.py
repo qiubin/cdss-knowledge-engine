@@ -84,13 +84,18 @@ def _auto_prompt(group: List[Dict[str, Any]], doc_title: str) -> List[Dict[str, 
         "必须只输出一个 JSON 对象，包含 entities、relations、rules、treatment_plans。"
         "实体类型只能是：disease, symptom, sign, lab, exam, diagnostic_evidence, pathology, "
         "biomarker, molecular_test, stage, histology, risk_factor, medication, intervention, "
-        "treatment_plan, contraindication, monitoring_requirement。"
+        "treatment_plan, contraindication, monitoring_requirement, "
+        "order_set, order_item, care_pathway, pathway_phase。"
         "每个实体必须有 name、entity_type、chunk_id、page、line_start、line_end、quote、confidence。"
         "实体 name 必须是完整临床术语（中文全称），缩写或标准码只写入 code 字段，"
         "不得用 CTN、MYO、SYM_FATIGUE 这类缩写代替完整名称。"
         "编码 code 只有在确定时填写；不确定时填 null，不得编造标准编码。"
         "疾病编码优先使用 ICD-10；药品可用 ATC；检验可用 LOINC；无法确定时留空。"
-        "关系使用 source_name/source_type/target_name/target_type/relation_code/chunk_id。"
+        "关系使用 source_name/source_type/target_name/target_type/relation_code/chunk_id；"
+        "医嘱与路径关系码固定为：TREATMENT_PLAN_MATERIALIZED_AS（治疗方案→医嘱套餐）、"
+        "ORDER_SET_INCLUDES_ITEM（医嘱套餐→医嘱条目）、"
+        "DISEASE_HAS_CARE_PATHWAY（疾病→诊疗路径）、CARE_PATHWAY_HAS_PHASE（诊疗路径→路径阶段）、"
+        "PHASE_USES_ORDER_SET（路径阶段→医嘱套餐）。"
         "规则使用 Rule 结构：rule_id、rule_type(diagnosis/treatment/contraindication/monitoring)、"
         "disease_name、disease_code、conditions、conclusion、source、confidence。"
         "condition 类型只能是：group, lab_concept, exam_finding, symptom, vital, demographic, "
@@ -98,7 +103,15 @@ def _auto_prompt(group: List[Dict[str, Any]], doc_title: str) -> List[Dict[str, 
         "lab_concept 使用 lab_code + concept_code（ELEVATED/DECREASED/ABOVE_ULN_1/POSITIVE/NEGATIVE）；"
         "exam_finding 使用 exam_code + finding_code；symptom 使用 symptom_code；"
         "attribute 使用 attribute_code + operator + attribute_value（组织学、分期、分级、分子标志物）。"
-        "治疗规则必须给出 treatment_plan_id、treatment_name、treatment_items（code/name/entity_type）。"
+        "治疗规则必须给出 treatment_plan_id、treatment_name、treatment_items（code/name/entity_type）；"
+        "若该章节描述了医嘱套餐，conclusion 需附 order_set_ids（同章节 order_set 实体的 code）。"
+        "指南中的医嘱套餐/医嘱组合抽为 order_set 实体，其包含的单条医嘱（药品、检验、检查、"
+        "治疗操作、护理、宣教、随访）抽为 order_item 实体；"
+        "order_item 用 attributes.order_class 标注类别（药品/检验/检查/治疗/手术/护理/宣教/随访），"
+        "用 attributes.required 标注 required/optional，剂量与频次写入 attributes.dose_rule（保留指南原文数值）。"
+        "指南中按病程划分的阶段（如急诊期、急性期、恢复期、维持期、随访期）抽为 pathway_phase 实体，"
+        "用 attributes.sequence 标注顺序（从 1 开始），attributes.entry 写进入条件，"
+        "attributes.exit 写转段/结束条件；全周期路径本身抽为 care_pathway 实体。"
         "每条实体和规则必须带原文页码、行号和引文；不得遗漏溯源。"
         "规则条件优先使用同一章节内的证据，不要把无关章节的检查/症状拼进同一规则。"
     )
@@ -129,6 +142,29 @@ def _auto_prompt(group: List[Dict[str, Any]], doc_title: str) -> List[Dict[str, 
                 "items": [{"code": None, "name": "培美曲塞", "entity_type": "medication"}],
                 "chunk_id": "c1", "page": 1, "line_start": 1, "line_end": 2, "quote": "原文",
             }],
+            "order_sets_example": {
+                "entities": [
+                    {"entity_type": "order_set", "name": "STEMI再灌注医嘱套餐", "code": None,
+                     "attributes": {"priority": "preferred"}, "chunk_id": "c2",
+                     "page": 3, "line_start": 10, "line_end": 20, "quote": "原文", "confidence": 0.9},
+                    {"entity_type": "order_item", "name": "阿司匹林负荷剂量", "code": None,
+                     "attributes": {"order_class": "药品", "required": "required",
+                                    "dose_rule": "300mg 嚼服"}, "chunk_id": "c2",
+                     "page": 3, "line_start": 12, "line_end": 13, "quote": "原文", "confidence": 0.9},
+                    {"entity_type": "pathway_phase", "name": "STEMI急性期", "code": None,
+                     "attributes": {"sequence": 2, "entry": "确诊STEMI",
+                                    "exit": "再灌注完成"}, "chunk_id": "c2",
+                     "page": 3, "line_start": 8, "line_end": 24, "quote": "原文", "confidence": 0.85},
+                ],
+                "relations": [
+                    {"source_name": "STEMI再灌注医嘱套餐", "source_type": "order_set",
+                     "target_name": "阿司匹林负荷剂量", "target_type": "order_item",
+                     "relation_code": "ORDER_SET_INCLUDES_ITEM", "chunk_id": "c2"},
+                    {"source_name": "STEMI急性期", "source_type": "pathway_phase",
+                     "target_name": "STEMI再灌注医嘱套餐", "target_type": "order_set",
+                     "relation_code": "PHASE_USES_ORDER_SET", "chunk_id": "c2"},
+                ],
+            },
         },
         "chunks": payload,
     }
@@ -375,7 +411,7 @@ async def run_auto_pipeline(
     config: Dict[str, Any],
     *,
     graph_filename: str = "",
-    auto_activate: bool = True,
+    auto_activate: bool = False,
     llm_call: Optional[Callable[..., Any]] = None,
     data_root: Optional[Path] = None,
     auto_import_disease: bool = True,
@@ -660,6 +696,15 @@ async def run_auto_pipeline(
     kept = [rule for rule in all_rules if not str(rule.get("rule_id") or "").startswith(f"{doc_id}-")]
     kept.extend(rules)
     rules_path.write_text(json.dumps(kept, ensure_ascii=False, indent=2), encoding="utf-8")
+    try:
+        from ..review.service import sync_blocked_rules_for_graph
+        sync_blocked_rules_for_graph(
+            graph_filename,
+            graph_dir=root / "kg",
+            rules_path=root / "rules" / "managed_rules.json",
+        )
+    except Exception:
+        pass
 
     created_at = datetime.now(timezone.utc).isoformat()
     try:

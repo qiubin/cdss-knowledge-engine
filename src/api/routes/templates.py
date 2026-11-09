@@ -27,7 +27,12 @@ from ...llm import (
     ZHIPU_DEFAULT_MODEL,
     chat_json,
 )
-from ...vocab.entity_vocabulary import EntityVocabularyRepository, graph_usage, resolve_template
+from ...vocab.entity_vocabulary import (
+    EntityVocabularyRepository,
+    graph_usage,
+    resolve_template,
+    template_private_entries,
+)
 from ...vocab.repository import ConceptVocabularyRepository
 
 router = APIRouter(tags=["extraction-templates"])
@@ -241,16 +246,22 @@ async def update_template(template_id: str, payload: TemplatePayload):
 
 @router.get("/api/templates/{template_id}/structure")
 async def get_template_structure(template_id: str):
-    template = resolve_template(templates.get(template_id, allow_retired=True))
-    return {
-        "template_id": template.template_id,
-        "name": template.name,
-        "status": template.status,
-        "entity_types": [item.model_dump() for item in template.entity_types],
-        "relations": [item.model_dump() for item in template.relations],
-        "attributes": [item.model_dump() for item in template.attributes],
-        "concept_codes": template.concept_codes,
-    }
+    raw = templates.get(template_id, allow_retired=True)
+    template = resolve_template(raw)
+    payload = template.model_dump()
+    entity_types = []
+    for raw_type, resolved_type in zip(raw.entity_types, template.entity_types):
+        private_entries = template_private_entries(raw_type)
+        private_codes = {entry.code for entry in private_entries}
+        item = resolved_type.model_dump()
+        item["private_entries"] = [entry.model_dump() for entry in private_entries]
+        item["private_entry_count"] = len(private_entries)
+        item["shared_entry_count"] = sum(
+            1 for entry in resolved_type.entries if entry.code not in private_codes
+        )
+        entity_types.append(item)
+    payload["entity_types"] = entity_types
+    return payload
 
 
 @router.post("/api/templates/{template_id}/entity-types")
@@ -343,9 +354,13 @@ async def update_template_entity(template_id: str, entity_type: str, code: str, 
     if item.code != code:
         raise HTTPException(400, "实体编码不允许修改；请新建实体")
     if owner is not None and owner.vocabulary:
-        _check_concept_entry(owner, item.code)
-        _entity_vocabulary_for(owner).save(item)
-        return resolve_template(template).model_dump()
+        vocabulary = _entity_vocabulary_for(owner)
+        if vocabulary.find(item.code) is not None:
+            _check_concept_entry(owner, item.code)
+            vocabulary.save(item)
+            return resolve_template(template).model_dump()
+    if index < 0:
+        raise HTTPException(404, "模板结构项不存在")
     values[index] = item
     return _validate_and_save(template)
 
@@ -361,11 +376,15 @@ async def delete_template_entity(template_id: str, entity_type: str, code: str):
     ):
         raise HTTPException(409, "该实体仍被关系引用，不能删除")
     if owner is not None and owner.vocabulary:
-        referencing = graph_usage(owner.entity_type, code)
-        if referencing:
-            raise HTTPException(409, f"共享实体 {code} 已被图谱 {'、'.join(referencing)} 引用，不能删除")
-        _entity_vocabulary_for(owner).delete(code)
-        return {"deleted": f"{entity_type}/{code}"}
+        vocabulary = _entity_vocabulary_for(owner)
+        if vocabulary.find(code) is not None:
+            referencing = graph_usage(owner.entity_type, code)
+            if referencing:
+                raise HTTPException(409, f"共享实体 {code} 已被图谱 {'、'.join(referencing)} 引用，不能删除")
+            vocabulary.delete(code)
+            return {"deleted": f"{entity_type}/{code}"}
+    if index < 0:
+        raise HTTPException(404, "模板结构项不存在")
     values.pop(index)
     return _validate_and_save(template)
 

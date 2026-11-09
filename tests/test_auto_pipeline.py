@@ -107,7 +107,7 @@ class AutoPipelineTest(unittest.TestCase):
         self.assertTrue(any(entity_type == "symptom" and code.startswith("LOCAL-SYM-") for entity_type, code in codes))
         self.assertTrue((root / "kg" / result["graph_filename"]).exists())
         self.assertEqual(len(result["rules"]), 2)
-        self.assertTrue(all(rule["status"] == "active" for rule in result["rules"]))
+        self.assertTrue(all(rule["status"] == "draft" for rule in result["rules"]))
         graph = json.loads((root / "kg" / result["graph_filename"]).read_text(encoding="utf-8"))
         self.assertIn("ENTITY:disease:C34.9", {node["id"] for node in graph["nodes"]})
         saved_rules = json.loads((root / "rules" / "managed_rules.json").read_text(encoding="utf-8"))

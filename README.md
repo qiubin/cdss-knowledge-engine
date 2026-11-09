@@ -61,6 +61,8 @@ python tools/_smoke_tcm_inference.py
 
 ```bash
 python3 -m pytest -q
+node --test tests/js/graph_view_fallback.test.js
+python3 -m unittest tests.test_review_status tests.test_rule_dependencies tests.test_graph_review_service tests.test_review_metadata tests.test_review_api tests.test_rule_review_gate tests.test_review_queue tests.test_package_review tests.test_review_orphans -v
 ```
 
 测试覆盖西医静态阈值、ULN、动态趋势、端到端诊断，以及中医模板抽取、证候发现、
@@ -183,9 +185,62 @@ python tools/_rebuild_myocarditis_asset.py
 - 支持自定义 Host 头（反向代理部署时使用）；
 - 上传 PDF 后自动执行：LLM 开放术语发现 → ICD-10/参考库映射（无标准码时生成 `LOCAL-` 稳定码）→ 图谱导入 → 诊断/治疗/禁忌/监测规则 → 结构化治疗方案；
 - 不要求预先补疾病/症状/检查词典；
-- 高置信规则自动启用，低置信规则保留草稿；
+- 规则统一以 `draft` 入库，审核通过后才启用；
 - 每个指南使用独立的 `KG-AUTO-<doc_id>.json` 图谱，避免不同指南互相污染；
 - 接口：`POST /api/auto/import`，配置：`GET/PUT /api/extraction/config`，连接测试：`POST /api/extraction/test-llm`。
+
+## 图谱可视化
+
+知识图谱页优先从 Neo4j 读取邻域子图；未启动 Neo4j 或认证失败时，自动回退到
+`data/kg/*.json` 的本地子图，页面标记为「本地 JSON」，无需任何额外服务。
+Neo4j 可用时，首次打开图谱会自动同步当前 `graph_filename` 的节点。
+
+可选环境变量：`NEO4J_URI`（默认 `bolt://localhost:7687`）、`NEO4J_USER`、
+`NEO4J_PASSWORD`；点击工具栏「刷新」会重新探测 Neo4j。
+
+## 知识审核
+
+指南导入后，图谱节点/关系和规则默认都是草稿，需要逐条审核：
+
+- **知识包**：批量准入并导入为草稿，不自动启用。
+- **知识图谱**：节点/关系可按 `draft / active / rejected / retired / stale` 审核，支持通过、拒绝、失效、恢复。
+- **规则**：启用前要求所有图谱依赖为 `active`；依赖失效时规则自动变为 `blocked`，恢复依赖后不会自动重新启用。
+- **审核人**：图谱页填写审核人姓名，所有动作写入 `data/review/review_log.jsonl`（运行时数据）。
+
+### 审核台
+
+- 导航「审核台」汇总待审图谱、待审规则、被阻断规则、待复核、已通过、孤儿条目和审核记录。
+- 支持搜索、批量通过/拒绝/失效/恢复；批量操作逐条执行、逐条返回结果并写审计。
+
+### 知识包预审
+
+- 知识包页提供「包内预审」，可逐条通过/拒绝实体、关系和规则，支持按筛选批量通过。
+- 导入模式支持「全部导入为草稿」和「仅导入已通过项」；未预审条目在后者中不入库。
+
+### 孤儿条目
+
+- 重新导入时，本次未再出现但此前由同一指南贡献的条目会标记 `orphaned_from`，
+  在审核台「孤儿条目」页签中处理，不自动删除。
+
+### 规则条件补全（无概念条件）
+
+- 规则与图谱语义不一致的常见原因是「无概念条件」：条件组为空、症状条件缺
+  `symptom_code`、证据条件缺 `evidence_id`。
+- 规则管理页提供「补全条件 / 批量补全条件」：从锚点疾病在图谱中的诊断证据链
+  （疾病 → 检验/检查/症状 → 诊断证据）自动生成概念条件（`lab_concept` /
+  `exam_finding` / `symptom`），生成前逐条做图谱语义探查，只有能完整解析的
+  证据才会成为条件；已一致的规则不会被改动。
+- 补全后的条件写入草稿并标记 `condition_source: graph_completion`，审核人可在
+  编辑器中继续调整；启用仍需通过依赖审核门禁。
+
+首次启用审核工作流时执行迁移，为现有已启用规则 bootstrap 依赖：
+
+```bash
+PYTHONPATH=. python3 tools/migrate_review_status.py --dry-run
+PYTHONPATH=. python3 tools/migrate_review_status.py
+```
+
+完整设计见 [docs/review-workflow-design.md](docs/review-workflow-design.md)。
 
 ## 指南溯源
 

@@ -39,7 +39,8 @@
               "gender": null,
               "code": null,
               "observation_type": null,
-              "fact_type": null
+              "fact_type": null,
+              "label": "肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1）"
             },
             {
               "type": "lab_concept",
@@ -60,7 +61,8 @@
               "gender": null,
               "code": null,
               "observation_type": null,
-              "fact_type": null
+              "fact_type": null,
+              "label": "肌红蛋白（MYO） 升高（ELEVATED）"
             }
           ],
           "evidence_id": null,
@@ -78,7 +80,8 @@
           "gender": null,
           "code": null,
           "observation_type": null,
-          "fact_type": null
+          "fact_type": null,
+          "label": "(肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 肌红蛋白（MYO） 升高（ELEVATED）)"
         },
         {
           "type": "group",
@@ -103,7 +106,8 @@
               "gender": null,
               "code": null,
               "observation_type": null,
-              "fact_type": null
+              "fact_type": null,
+              "label": "胸痛（SYM_CHEST_PAIN）"
             },
             {
               "type": "symptom",
@@ -124,7 +128,8 @@
               "gender": null,
               "code": null,
               "observation_type": null,
-              "fact_type": null
+              "fact_type": null,
+              "label": "心悸（SYM_PALPITATION）"
             },
             {
               "type": "symptom",
@@ -145,7 +150,8 @@
               "gender": null,
               "code": null,
               "observation_type": null,
-              "fact_type": null
+              "fact_type": null,
+              "label": "乏力（SYM_FATIGUE）"
             }
           ],
           "evidence_id": null,
@@ -163,7 +169,8 @@
           "gender": null,
           "code": null,
           "observation_type": null,
-          "fact_type": null
+          "fact_type": null,
+          "label": "(胸痛（SYM_CHEST_PAIN） OR 心悸（SYM_PALPITATION） OR 乏力（SYM_FATIGUE）)"
         }
       ],
       "evidence_id": null,
@@ -181,7 +188,8 @@
       "gender": null,
       "code": null,
       "observation_type": null,
-      "fact_type": null
+      "fact_type": null,
+      "label": "((肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 肌红蛋白（MYO） 升高（ELEVATED）) AND (胸痛（SYM_CHEST_PAIN） OR 心悸（SYM_PALPITATION） OR 乏力（SYM_FATIGUE）))"
     },
     "conclusion": {
       "diagnosis": "I40.9",
@@ -220,7 +228,25 @@
     ],
     "created_by": "",
     "created_at": "",
-    "updated_at": "2026-11-08T09:39:38.520451+00:00"
+    "updated_at": "2026-11-09T09:42:20.644522+00:00",
+    "condition_text": "(肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 肌红蛋白（MYO） 升高（ELEVATED）) AND (胸痛（SYM_CHEST_PAIN） OR 心悸（SYM_PALPITATION） OR 乏力（SYM_FATIGUE）)",
+    "blocked_by": [
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:symptom:SYM_CHEST_PAIN",
+        "reason": "retired",
+        "since": "2026-11-09T08:21:20.510894+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I40.9|DISEASE_HAS_SYMPTOM|ENTITY:symptom:SYM_CHEST_PAIN",
+        "reason": "stale",
+        "since": "2026-11-09T08:21:20.510894+00:00"
+      }
+    ],
+    "reviewed_by": "未署名",
+    "reviewed_at": "2026-11-09T09:42:20.644522+00:00",
+    "review_note": "依赖已通过，恢复启用"
   },
   {
     "rule_id": "DOC-76845efb-TREAT-001",
@@ -299,7 +325,8 @@
     ],
     "created_by": "",
     "created_at": "",
-    "updated_at": "2026-11-08T09:39:38.520451+00:00"
+    "updated_at": "2026-11-08T09:39:38.520451+00:00",
+    "condition_text": "同疾病诊断成立后触发"
   },
   {
     "rule_id": "DOC-d51b97dd-AUTO-001",
@@ -341,7 +368,8 @@
               "gender": null,
               "code": null,
               "observation_type": null,
-              "fact_type": null
+              "fact_type": null,
+              "label": "胸痛（SYM_CHEST_PAIN）"
             },
             {
               "type": "symptom",
@@ -362,7 +390,8 @@
               "gender": null,
               "code": null,
               "observation_type": null,
-              "fact_type": null
+              "fact_type": null,
+              "label": "心悸（SYM_PALPITATION）"
             },
             {
               "type": "symptom",
@@ -383,7 +412,8 @@
               "gender": null,
               "code": null,
               "observation_type": null,
-              "fact_type": null
+              "fact_type": null,
+              "label": "头晕（SYM_DIZZINESS）"
             }
           ],
           "evidence_id": null,
@@ -401,7 +431,8 @@
           "gender": null,
           "code": null,
           "observation_type": null,
-          "fact_type": null
+          "fact_type": null,
+          "label": "(胸痛（SYM_CHEST_PAIN） OR 心悸（SYM_PALPITATION） OR 头晕（SYM_DIZZINESS）)"
         },
         {
           "type": "group",
@@ -426,7 +457,8 @@
               "gender": null,
               "code": null,
               "observation_type": null,
-              "fact_type": null
+              "fact_type": null,
+              "label": "超声心动图（ECHO） · 左室肥厚（LV_HYPERTROPHY）"
             },
             {
               "type": "exam_finding",
@@ -447,7 +479,8 @@
               "gender": null,
               "code": null,
               "observation_type": null,
-              "fact_type": null
+              "fact_type": null,
+              "label": "超声心动图（ECHO） · 左室流出道梗阻（LVOT_OBSTRUCTION）"
             }
           ],
           "evidence_id": null,
@@ -465,7 +498,8 @@
           "gender": null,
           "code": null,
           "observation_type": null,
-          "fact_type": null
+          "fact_type": null,
+          "label": "(超声心动图（ECHO） · 左室肥厚（LV_HYPERTROPHY） OR 超声心动图（ECHO） · 左室流出道梗阻（LVOT_OBSTRUCTION）)"
         }
       ],
       "evidence_id": null,
@@ -483,7 +517,8 @@
       "gender": null,
       "code": null,
       "observation_type": null,
-      "fact_type": null
+      "fact_type": null,
+      "label": "((胸痛（SYM_CHEST_PAIN） OR 心悸（SYM_PALPITATION） OR 头晕（SYM_DIZZINESS）) AND (超声心动图（ECHO） · 左室肥厚（LV_HYPERTROPHY） OR 超声心动图（ECHO） · 左室流出道梗阻（LVOT_OBSTRUCTION）))"
     },
     "conclusion": {
       "diagnosis": "I42.2",
@@ -522,7 +557,19 @@
     ],
     "created_by": "",
     "created_at": "",
-    "updated_at": "2026-11-08T09:39:41.443555+00:00"
+    "updated_at": "2026-11-09T09:42:42.503688+00:00",
+    "condition_text": "(胸痛（SYM_CHEST_PAIN） OR 心悸（SYM_PALPITATION） OR 头晕（SYM_DIZZINESS）) AND (超声心动图（ECHO） · 左室肥厚（LV_HYPERTROPHY） OR 超声心动图（ECHO） · 左室流出道梗阻（LVOT_OBSTRUCTION）)",
+    "blocked_by": [
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.2|DISEASE_HAS_SYMPTOM|ENTITY:symptom:SYM_CHEST_PAIN",
+        "reason": "retired",
+        "since": "2026-11-09T07:25:30.942931+00:00"
+      }
+    ],
+    "reviewed_by": "未署名",
+    "reviewed_at": "2026-11-09T09:42:42.503688+00:00",
+    "review_note": "依赖已通过，恢复启用"
   },
   {
     "rule_id": "DOC-d51b97dd-TREAT-001",
@@ -606,6 +653,2120 @@
     ],
     "created_by": "",
     "created_at": "",
-    "updated_at": "2026-11-08T09:39:41.443555+00:00"
+    "updated_at": "2026-11-08T09:39:41.443555+00:00",
+    "condition_text": "同疾病诊断成立后触发"
+  },
+  {
+    "rule_id": "RULE-DOC-5a484f67-DX-001",
+    "version": 1,
+    "domain": "western",
+    "anchor_type": "disease",
+    "rule_type": "diagnosis",
+    "name": "急性ST段抬高型心肌梗死（1型自发性心肌梗死）诊断候选规则",
+    "disease_code": "I21.0",
+    "disease_name": "急性前壁透壁性心肌梗死",
+    "priority": 1,
+    "status": "active",
+    "department": null,
+    "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
+    "conditions": {
+      "type": "group",
+      "operator": "ANY_OF",
+      "children": [
+        {
+          "type": "lab_concept",
+          "operator": null,
+          "children": [],
+          "evidence_id": null,
+          "lab_code": "CTN",
+          "concept_code": "ELEVATED",
+          "parameter": null,
+          "exam_code": null,
+          "finding_code": null,
+          "symptom_code": null,
+          "duration_minutes": null,
+          "vital_code": null,
+          "threshold_value": null,
+          "age_min": null,
+          "age_max": null,
+          "gender": null,
+          "code": null,
+          "observation_type": null,
+          "fact_type": null,
+          "attribute_code": null,
+          "attribute_value": null,
+          "label": "肌钙蛋白（CTN） 升高（ELEVATED）"
+        },
+        {
+          "type": "lab_concept",
+          "operator": null,
+          "children": [],
+          "evidence_id": null,
+          "lab_code": "CTN",
+          "concept_code": "ABOVE_ULN_1",
+          "parameter": null,
+          "exam_code": null,
+          "finding_code": null,
+          "symptom_code": null,
+          "duration_minutes": null,
+          "vital_code": null,
+          "threshold_value": null,
+          "age_min": null,
+          "age_max": null,
+          "gender": null,
+          "code": null,
+          "observation_type": null,
+          "fact_type": null,
+          "attribute_code": null,
+          "attribute_value": null,
+          "label": "肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1）"
+        },
+        {
+          "type": "exam_finding",
+          "operator": null,
+          "children": [],
+          "evidence_id": null,
+          "lab_code": null,
+          "concept_code": null,
+          "parameter": null,
+          "exam_code": "ECG_12LEAD",
+          "finding_code": "PATHOLOGICAL_Q_WAVE",
+          "symptom_code": null,
+          "duration_minutes": null,
+          "vital_code": null,
+          "threshold_value": null,
+          "age_min": null,
+          "age_max": null,
+          "gender": null,
+          "code": null,
+          "observation_type": null,
+          "fact_type": null,
+          "attribute_code": null,
+          "attribute_value": null,
+          "label": "心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE）"
+        },
+        {
+          "type": "exam_finding",
+          "operator": null,
+          "children": [],
+          "evidence_id": null,
+          "lab_code": null,
+          "concept_code": null,
+          "parameter": null,
+          "exam_code": "CORONARY_ANGIO",
+          "finding_code": "THROMBOSIS",
+          "symptom_code": null,
+          "duration_minutes": null,
+          "vital_code": null,
+          "threshold_value": null,
+          "age_min": null,
+          "age_max": null,
+          "gender": null,
+          "code": null,
+          "observation_type": null,
+          "fact_type": null,
+          "attribute_code": null,
+          "attribute_value": null,
+          "label": "冠状动脉造影（CORONARY_ANGIO） · 血栓形成（THROMBOSIS）"
+        }
+      ],
+      "evidence_id": null,
+      "lab_code": null,
+      "concept_code": null,
+      "parameter": null,
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "duration_minutes": null,
+      "vital_code": null,
+      "threshold_value": null,
+      "age_min": null,
+      "age_max": null,
+      "gender": null,
+      "code": null,
+      "observation_type": null,
+      "fact_type": null,
+      "attribute_code": null,
+      "attribute_value": null,
+      "label": "(肌钙蛋白（CTN） 升高（ELEVATED） ANY_OF 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） ANY_OF 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） ANY_OF 冠状动脉造影（CORONARY_ANGIO） · 血栓形成（THROMBOSIS）)"
+    },
+    "condition_text": "肌钙蛋白（CTN） 升高（ELEVATED） ANY_OF 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） ANY_OF 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） ANY_OF 冠状动脉造影（CORONARY_ANGIO） · 血栓形成（THROMBOSIS）",
+    "conclusion": {
+      "diagnosis": "I21.0",
+      "confidence": "medium",
+      "message": "心肌损伤标志物（肌钙蛋白）高于正常上限，伴心电图缺血性改变、病理性Q波或冠状动脉造影提示血栓性阻塞，支持心肌梗死诊断（草稿，需医学审核）。",
+      "action": "提示疑似急性心肌梗死，建议进一步评估确诊",
+      "conclusion_type": null,
+      "treatment_plan_id": null,
+      "treatment_name": null,
+      "priority": null,
+      "treatment_items": [],
+      "treatment_method_code": null,
+      "formula_code": null,
+      "formula_name": null,
+      "herbs": [],
+      "modifications": [],
+      "course": null,
+      "score_threshold": null
+    },
+    "source": {
+      "guideline_id": "DOC-5a484f67",
+      "guideline_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "chunk_id": "DOC-5a484f67_p1_l29-71",
+      "section": "一、心肌梗死分型",
+      "page_start": 1,
+      "page_end": 1,
+      "line_start": 49,
+      "line_end": 71,
+      "quote": "4b型：支架血栓形成引起的心肌梗死。冠状动脉造影或尸检发现支架植入处血栓性阻塞，患者有心肌缺血症状和(或)至少1次心肌损伤标志物高于正常上限。……本指南主要阐述l型心肌梗死(即缺血相关的自发性急性STEMI)的诊断和治疗。"
+    },
+    "exclusions": [],
+    "tags": [
+      "DOC-5a484f67",
+      "auto-generated",
+      "draft",
+      "需医学审核"
+    ],
+    "created_by": "",
+    "created_at": "",
+    "updated_at": "2026-11-09T08:35:08.025152+00:00",
+    "reviewed_by": "未署名",
+    "reviewed_at": "2026-11-09T08:35:08.025152+00:00",
+    "review_note": ""
+  },
+  {
+    "rule_id": "RULE-STEMI-ECG-CTN-001",
+    "version": 1,
+    "domain": "western",
+    "anchor_type": "disease",
+    "rule_type": "diagnosis",
+    "name": "心电图ST段弓背向上抬高伴肌钙蛋白动态上升提示急性ST段抬高型心肌梗死",
+    "disease_code": "I21.0",
+    "disease_name": "急性前壁透壁性心肌梗死",
+    "priority": 1,
+    "status": "active",
+    "department": null,
+    "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
+    "conditions": {
+      "type": "group",
+      "operator": "AND",
+      "children": [
+        {
+          "type": "exam_finding",
+          "operator": null,
+          "children": [],
+          "evidence_id": null,
+          "lab_code": null,
+          "concept_code": null,
+          "parameter": null,
+          "exam_code": "ECG_12LEAD",
+          "finding_code": "ST_CONVEX_ELEVATION",
+          "symptom_code": null,
+          "duration_minutes": null,
+          "vital_code": null,
+          "threshold_value": null,
+          "age_min": null,
+          "age_max": null,
+          "gender": null,
+          "code": null,
+          "observation_type": null,
+          "fact_type": null,
+          "attribute_code": null,
+          "attribute_value": null,
+          "label": "心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION）"
+        },
+        {
+          "type": "lab_concept",
+          "operator": null,
+          "children": [],
+          "evidence_id": null,
+          "lab_code": "CTN",
+          "concept_code": "DYNAMIC_RISE",
+          "parameter": null,
+          "exam_code": null,
+          "finding_code": null,
+          "symptom_code": null,
+          "duration_minutes": null,
+          "vital_code": null,
+          "threshold_value": null,
+          "age_min": null,
+          "age_max": null,
+          "gender": null,
+          "code": null,
+          "observation_type": null,
+          "fact_type": null,
+          "attribute_code": null,
+          "attribute_value": null,
+          "label": "肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE）"
+        }
+      ],
+      "evidence_id": null,
+      "lab_code": null,
+      "concept_code": null,
+      "parameter": null,
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "duration_minutes": null,
+      "vital_code": null,
+      "threshold_value": null,
+      "age_min": null,
+      "age_max": null,
+      "gender": null,
+      "code": null,
+      "observation_type": null,
+      "fact_type": null,
+      "attribute_code": null,
+      "attribute_value": null,
+      "label": "(心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） AND 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE）)"
+    },
+    "condition_text": "心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） AND 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE）",
+    "conclusion": {
+      "diagnosis": "I21.0",
+      "confidence": "high",
+      "message": "典型ST段弓背向上抬高伴肌钙蛋白动态上升，符合STEMI诊断，建议尽早再灌注治疗",
+      "action": "建议立即启动再灌注评估，10~30 min后复查心电图，并监测心肌损伤标志物",
+      "conclusion_type": null,
+      "treatment_plan_id": null,
+      "treatment_name": null,
+      "priority": null,
+      "treatment_items": [],
+      "treatment_method_code": null,
+      "formula_code": null,
+      "formula_name": null,
+      "herbs": [],
+      "modifications": [],
+      "course": null,
+      "score_threshold": null
+    },
+    "source": {
+      "guideline_id": "DOC-5a484f67",
+      "guideline_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "chunk_id": "DOC-5a484f67_p1_l72-81",
+      "section": "二、STEMI的诊断和危险分层",
+      "page_start": 1,
+      "page_end": 2,
+      "line_start": 72,
+      "line_end": 81,
+      "quote": "典型的STEMI早期心电图表现为ST段弓背向上抬高(呈单向曲线)伴或不伴病理性Q波、R波减低……cTn是诊断心肌坏死最特异和敏感的首选心肌损伤标志物，通常在STEMI症状发生后2—4 h开始升高，10～24 h达到峰值"
+    },
+    "exclusions": [],
+    "tags": [
+      "DOC-5a484f67",
+      "auto-generated"
+    ],
+    "created_by": "",
+    "created_at": "",
+    "updated_at": "2026-11-09T08:35:09.750359+00:00",
+    "reviewed_by": "未署名",
+    "reviewed_at": "2026-11-09T08:35:09.750359+00:00",
+    "review_note": ""
+  },
+  {
+    "rule_id": "RULE-STEMI-CTN-NEG-002",
+    "version": 1,
+    "domain": "western",
+    "anchor_type": "disease",
+    "rule_type": "diagnosis",
+    "name": "心电图不明确时需结合肌钙蛋白动态监测排除STEMI",
+    "disease_code": "I21.0",
+    "disease_name": "急性前壁透壁性心肌梗死",
+    "priority": 3,
+    "status": "draft",
+    "department": null,
+    "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
+    "conditions": {
+      "type": "group",
+      "operator": "AND",
+      "children": [
+        {
+          "type": "symptom",
+          "operator": null,
+          "children": [],
+          "evidence_id": null,
+          "lab_code": null,
+          "concept_code": null,
+          "parameter": null,
+          "exam_code": null,
+          "finding_code": null,
+          "symptom_code": "SYM_CHEST_PAIN",
+          "duration_minutes": null,
+          "vital_code": null,
+          "threshold_value": null,
+          "age_min": null,
+          "age_max": null,
+          "gender": null,
+          "code": "SYM_CHEST_PAIN",
+          "observation_type": null,
+          "fact_type": null,
+          "attribute_code": null,
+          "attribute_value": null,
+          "label": "胸痛（SYM_CHEST_PAIN）"
+        },
+        {
+          "type": "lab_concept",
+          "operator": null,
+          "children": [],
+          "evidence_id": null,
+          "lab_code": "CTN",
+          "concept_code": "NEGATIVE",
+          "parameter": null,
+          "exam_code": null,
+          "finding_code": null,
+          "symptom_code": null,
+          "duration_minutes": null,
+          "vital_code": null,
+          "threshold_value": null,
+          "age_min": null,
+          "age_max": null,
+          "gender": null,
+          "code": null,
+          "observation_type": null,
+          "fact_type": null,
+          "attribute_code": null,
+          "attribute_value": null,
+          "label": "肌钙蛋白（CTN） 阴性（NEGATIVE）"
+        }
+      ],
+      "evidence_id": null,
+      "lab_code": null,
+      "concept_code": null,
+      "parameter": null,
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "duration_minutes": null,
+      "vital_code": null,
+      "threshold_value": null,
+      "age_min": null,
+      "age_max": null,
+      "gender": null,
+      "code": null,
+      "observation_type": null,
+      "fact_type": null,
+      "attribute_code": null,
+      "attribute_value": null,
+      "label": "(胸痛（SYM_CHEST_PAIN） AND 肌钙蛋白（CTN） 阴性（NEGATIVE）)"
+    },
+    "condition_text": "胸痛（SYM_CHEST_PAIN） AND 肌钙蛋白（CTN） 阴性（NEGATIVE）",
+    "conclusion": {
+      "diagnosis": "I21.0",
+      "confidence": "low",
+      "message": "症状和心电图能够明确诊断STEMI的患者不需等待心肌损伤标志物结果；首次心电图不能明确诊断时需10~30 min后复查",
+      "action": "建议复查12导联心电图并动态监测肌钙蛋白",
+      "conclusion_type": null,
+      "treatment_plan_id": null,
+      "treatment_name": null,
+      "priority": null,
+      "treatment_items": [],
+      "treatment_method_code": null,
+      "formula_code": null,
+      "formula_name": null,
+      "herbs": [],
+      "modifications": [],
+      "course": null,
+      "score_threshold": null
+    },
+    "source": {
+      "guideline_id": "DOC-5a484f67",
+      "guideline_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "chunk_id": "DOC-5a484f67_p1_l72-81",
+      "section": "二、STEMI的诊断和危险分层",
+      "page_start": 1,
+      "page_end": 2,
+      "line_start": 72,
+      "line_end": 81,
+      "quote": "首次心电图不能明确诊断时，需在10—30 min后复查……症状和心电图能够明确诊断STEMI的患者不需等待心肌损伤标志物和(或)影像学检查结果，而应尽早给予再灌注及其他相关治疗"
+    },
+    "exclusions": [],
+    "tags": [
+      "DOC-5a484f67",
+      "auto-generated"
+    ],
+    "created_by": "",
+    "created_at": "",
+    "updated_at": "2026-11-09T09:02:59.385204+00:00",
+    "condition_source": "graph_completion"
+  },
+  {
+    "rule_id": "RULE_STEMI_ECG_DIAG_DRAFT",
+    "version": 1,
+    "domain": "western",
+    "anchor_type": "disease",
+    "rule_type": "diagnosis",
+    "name": "心电图ST段抬高辅助诊断急性ST段抬高型心肌梗死（草稿）",
+    "disease_code": "I21.0",
+    "disease_name": "急性前壁透壁性心肌梗死",
+    "priority": 1,
+    "status": "draft",
+    "department": null,
+    "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
+    "conditions": {
+      "type": "group",
+      "operator": "AND",
+      "children": [
+        {
+          "type": "group",
+          "operator": "OR",
+          "children": [
+            {
+              "type": "symptom",
+              "symptom_code": "SYM_CHEST_PAIN",
+              "label": "胸痛（SYM_CHEST_PAIN）"
+            }
+          ],
+          "label": "胸痛（SYM_CHEST_PAIN）"
+        },
+        {
+          "type": "group",
+          "operator": "OR",
+          "children": [
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "ELEVATED",
+              "label": "肌钙蛋白（CTN） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "ABOVE_ULN_1",
+              "label": "肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "THROMBOSIS",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "PATHOLOGICAL_Q_WAVE",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "ST_CONVEX_ELEVATION",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "R_WAVE_REDUCTION",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "HYPERACUTE_T_WAVE",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "DYNAMIC_RISE",
+              "label": "肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CK_MB",
+              "concept_code": "ABOVE_ULN_1",
+              "label": "肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CK_MB",
+              "concept_code": "PEAK_SHIFT",
+              "label": "肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "MYO",
+              "concept_code": "ELEVATED",
+              "label": "肌红蛋白（MYO） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CREAT",
+              "concept_code": "ELEVATED",
+              "label": "肌酐（CREAT） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "HBA1C",
+              "concept_code": "ABNORMAL",
+              "label": "糖化血红蛋白（HBA1C） 异常（ABNORMAL）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "GLUCOSE",
+              "concept_code": "ABNORMAL",
+              "label": "血糖（GLUCOSE） 异常（ABNORMAL）"
+            }
+          ],
+          "label": "(肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）)"
+        }
+      ],
+      "label": "(胸痛（SYM_CHEST_PAIN） AND (肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）))"
+    },
+    "condition_text": "胸痛（SYM_CHEST_PAIN） AND (肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）)",
+    "conclusion": {
+      "diagnosis": "I21.0",
+      "confidence": "medium",
+      "message": "疑似心肌梗死症状（胸痛）伴心电图确诊STEMI，建议按急救流程分诊至可行直接PCI的医院",
+      "action": "发病12 h内优先转运行直接PCI",
+      "conclusion_type": null,
+      "treatment_plan_id": null,
+      "treatment_name": null,
+      "priority": null,
+      "treatment_items": [],
+      "treatment_method_code": null,
+      "formula_code": null,
+      "formula_name": null,
+      "herbs": [],
+      "modifications": [],
+      "course": null,
+      "score_threshold": null
+    },
+    "source": {
+      "guideline_id": "DOC-5a484f67",
+      "guideline_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "chunk_id": "DOC-5a484f67_p2_l82-31",
+      "section": "三、STEMI的急救流程",
+      "page_start": 2,
+      "page_end": 3,
+      "line_start": 86,
+      "line_end": 16,
+      "quote": "教育患者在发生疑似心肌梗死症状(胸痛)后尽早呼叫“120”急救中心……确诊STEMI"
+    },
+    "exclusions": [],
+    "tags": [
+      "DOC-5a484f67",
+      "auto-generated"
+    ],
+    "created_by": "",
+    "created_at": "",
+    "updated_at": "2026-11-09T09:03:01.593303+00:00",
+    "condition_source": "graph_completion"
+  },
+  {
+    "rule_id": "RULE_STEMI_DIRECT_PCI_TREATMENT_DRAFT",
+    "version": 1,
+    "domain": "western",
+    "anchor_type": "disease",
+    "rule_type": "diagnosis",
+    "name": "发病12小时内STEMI患者直接PCI再灌注治疗（草稿）",
+    "disease_code": "I21.0",
+    "disease_name": "急性前壁透壁性心肌梗死",
+    "priority": 2,
+    "status": "draft",
+    "department": null,
+    "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
+    "conditions": {
+      "type": "group",
+      "operator": "AND",
+      "children": [
+        {
+          "type": "group",
+          "operator": "OR",
+          "children": [
+            {
+              "type": "symptom",
+              "symptom_code": "SYM_CHEST_PAIN",
+              "label": "胸痛（SYM_CHEST_PAIN）"
+            }
+          ],
+          "label": "胸痛（SYM_CHEST_PAIN）"
+        },
+        {
+          "type": "group",
+          "operator": "OR",
+          "children": [
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "ELEVATED",
+              "label": "肌钙蛋白（CTN） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "ABOVE_ULN_1",
+              "label": "肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "THROMBOSIS",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "PATHOLOGICAL_Q_WAVE",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "ST_CONVEX_ELEVATION",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "R_WAVE_REDUCTION",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "HYPERACUTE_T_WAVE",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "DYNAMIC_RISE",
+              "label": "肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CK_MB",
+              "concept_code": "ABOVE_ULN_1",
+              "label": "肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CK_MB",
+              "concept_code": "PEAK_SHIFT",
+              "label": "肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "MYO",
+              "concept_code": "ELEVATED",
+              "label": "肌红蛋白（MYO） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CREAT",
+              "concept_code": "ELEVATED",
+              "label": "肌酐（CREAT） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "HBA1C",
+              "concept_code": "ABNORMAL",
+              "label": "糖化血红蛋白（HBA1C） 异常（ABNORMAL）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "GLUCOSE",
+              "concept_code": "ABNORMAL",
+              "label": "血糖（GLUCOSE） 异常（ABNORMAL）"
+            }
+          ],
+          "label": "(肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）)"
+        }
+      ],
+      "label": "(胸痛（SYM_CHEST_PAIN） AND (肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）))"
+    },
+    "condition_text": "胸痛（SYM_CHEST_PAIN） AND (肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）)",
+    "conclusion": {
+      "diagnosis": "I21.0",
+      "confidence": "high",
+      "message": "确诊STEMI且发病12 h内者，应优先送至可行直接PCI的医院（特别是FMC后90 min内能实施直接PCI者），并尽可能直接送入心导管室行直接PCI",
+      "action": "直接经皮冠状动脉介入治疗",
+      "conclusion_type": null,
+      "treatment_plan_id": null,
+      "treatment_name": null,
+      "priority": null,
+      "treatment_items": [],
+      "treatment_method_code": null,
+      "formula_code": null,
+      "formula_name": null,
+      "herbs": [],
+      "modifications": [],
+      "course": null,
+      "score_threshold": null
+    },
+    "source": {
+      "guideline_id": "DOC-5a484f67",
+      "guideline_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "chunk_id": "DOC-5a484f67_p2_l82-31",
+      "section": "三、STEMI的急救流程",
+      "page_start": 3,
+      "page_end": 3,
+      "line_start": 16,
+      "line_end": 26,
+      "quote": "优先将发病12 h内的STEMI患者送至可行直接PCI的医院(特别是FMC后90 min内能实施直接PCI者)(I，A)，并尽可能绕过急诊室和冠心病监护病房或普通心脏病房直接将患者送入心导管室行直接PCI"
+    },
+    "exclusions": [],
+    "tags": [
+      "DOC-5a484f67",
+      "auto-generated"
+    ],
+    "created_by": "",
+    "created_at": "",
+    "updated_at": "2026-11-09T09:03:10.209462+00:00",
+    "condition_source": "graph_completion"
+  },
+  {
+    "rule_id": "RULE_STEMI_TRANSFER_PCI_TREATMENT_DRAFT",
+    "version": 1,
+    "domain": "western",
+    "anchor_type": "disease",
+    "rule_type": "diagnosis",
+    "name": "无直接PCI条件医院STEMI患者转运PCI治疗（草稿）",
+    "disease_code": "I21.0",
+    "disease_name": "急性前壁透壁性心肌梗死",
+    "priority": 3,
+    "status": "draft",
+    "department": null,
+    "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
+    "conditions": {
+      "type": "group",
+      "operator": "AND",
+      "children": [
+        {
+          "type": "group",
+          "operator": "OR",
+          "children": [
+            {
+              "type": "symptom",
+              "symptom_code": "SYM_CHEST_PAIN",
+              "label": "胸痛（SYM_CHEST_PAIN）"
+            }
+          ],
+          "label": "胸痛（SYM_CHEST_PAIN）"
+        },
+        {
+          "type": "group",
+          "operator": "OR",
+          "children": [
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "ELEVATED",
+              "label": "肌钙蛋白（CTN） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "ABOVE_ULN_1",
+              "label": "肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "THROMBOSIS",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "PATHOLOGICAL_Q_WAVE",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "ST_CONVEX_ELEVATION",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "R_WAVE_REDUCTION",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "HYPERACUTE_T_WAVE",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "DYNAMIC_RISE",
+              "label": "肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CK_MB",
+              "concept_code": "ABOVE_ULN_1",
+              "label": "肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CK_MB",
+              "concept_code": "PEAK_SHIFT",
+              "label": "肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "MYO",
+              "concept_code": "ELEVATED",
+              "label": "肌红蛋白（MYO） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CREAT",
+              "concept_code": "ELEVATED",
+              "label": "肌酐（CREAT） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "HBA1C",
+              "concept_code": "ABNORMAL",
+              "label": "糖化血红蛋白（HBA1C） 异常（ABNORMAL）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "GLUCOSE",
+              "concept_code": "ABNORMAL",
+              "label": "血糖（GLUCOSE） 异常（ABNORMAL）"
+            }
+          ],
+          "label": "(肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）)"
+        }
+      ],
+      "label": "(胸痛（SYM_CHEST_PAIN） AND (肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）))"
+    },
+    "condition_text": "胸痛（SYM_CHEST_PAIN） AND (肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）)",
+    "conclusion": {
+      "diagnosis": "I21.0",
+      "confidence": "high",
+      "message": "对已经到达无直接PCI条件医院的患者，若能在FMC后120 min内完成转运PCI，则应将患者转运至可行PCI的医院实施直接PCI(I，B)",
+      "action": "转运至可行PCI的医院实施直接PCI",
+      "conclusion_type": null,
+      "treatment_plan_id": null,
+      "treatment_name": null,
+      "priority": null,
+      "treatment_items": [],
+      "treatment_method_code": null,
+      "formula_code": null,
+      "formula_name": null,
+      "herbs": [],
+      "modifications": [],
+      "course": null,
+      "score_threshold": null
+    },
+    "source": {
+      "guideline_id": "DOC-5a484f67",
+      "guideline_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "chunk_id": "DOC-5a484f67_p2_l82-31",
+      "section": "三、STEMI的急救流程",
+      "page_start": 3,
+      "page_end": 3,
+      "line_start": 23,
+      "line_end": 27,
+      "quote": "对已经到达无直接PCI条件医院的患者，若能在FMC后120 min内完成转运PCI，则应将患者转运至可行PCI的医院实施直接PCI(I，B)"
+    },
+    "exclusions": [],
+    "tags": [
+      "DOC-5a484f67",
+      "auto-generated"
+    ],
+    "created_by": "",
+    "created_at": "",
+    "updated_at": "2026-11-09T09:03:12.878613+00:00",
+    "condition_source": "graph_completion"
+  },
+  {
+    "rule_id": "RULE_DRAFT_STEMI_DIAG_001",
+    "version": 1,
+    "domain": "western",
+    "anchor_type": "disease",
+    "rule_type": "diagnosis",
+    "name": "STEMI伴剧烈胸痛镇痛处理线索规则",
+    "disease_code": "I21.0",
+    "disease_name": "急性ST段抬高型心肌梗死",
+    "priority": 50,
+    "status": "draft",
+    "department": null,
+    "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
+    "conditions": {
+      "type": "group",
+      "operator": "AND",
+      "children": [
+        {
+          "type": "symptom",
+          "operator": null,
+          "children": [],
+          "evidence_id": null,
+          "lab_code": null,
+          "concept_code": null,
+          "parameter": null,
+          "exam_code": null,
+          "finding_code": null,
+          "symptom_code": "SYM_CHEST_PAIN",
+          "duration_minutes": null,
+          "vital_code": null,
+          "threshold_value": null,
+          "age_min": null,
+          "age_max": null,
+          "gender": null,
+          "code": "SYM_CHEST_PAIN",
+          "observation_type": null,
+          "fact_type": null,
+          "attribute_code": null,
+          "attribute_value": null,
+          "label": "胸痛（SYM_CHEST_PAIN）"
+        }
+      ],
+      "evidence_id": null,
+      "lab_code": null,
+      "concept_code": null,
+      "parameter": null,
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "duration_minutes": null,
+      "vital_code": null,
+      "threshold_value": null,
+      "age_min": null,
+      "age_max": null,
+      "gender": null,
+      "code": null,
+      "observation_type": null,
+      "fact_type": null,
+      "attribute_code": null,
+      "attribute_value": null,
+      "label": "胸痛（SYM_CHEST_PAIN）"
+    },
+    "condition_text": "胸痛（SYM_CHEST_PAIN）",
+    "conclusion": {
+      "diagnosis": "I21.0",
+      "confidence": "low",
+      "message": "STEMI伴剧烈胸痛患者应迅速给予有效镇痛剂，如静脉注射吗啡3 mg",
+      "action": "提示临床评估并给予镇痛处理，须结合心电图与心肌损伤标志物确诊",
+      "conclusion_type": null,
+      "treatment_plan_id": null,
+      "treatment_name": null,
+      "priority": null,
+      "treatment_items": [],
+      "treatment_method_code": null,
+      "formula_code": null,
+      "formula_name": null,
+      "herbs": [],
+      "modifications": [],
+      "course": null,
+      "score_threshold": null
+    },
+    "source": {
+      "guideline_id": "DOC-5a484f67",
+      "guideline_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "chunk_id": "DOC-5a484f67_p3_l32-43",
+      "section": "四、入院后一般处理",
+      "page_start": 3,
+      "page_end": 3,
+      "line_start": 36,
+      "line_end": 40,
+      "quote": "STEMI伴剧烈胸痛患者应迅速给予有效镇痛剂，如静脉注射吗啡3 mg，必要时间隔5 min重复1次，总量不宜超过15 mg"
+    },
+    "exclusions": [],
+    "tags": [
+      "DOC-5a484f67",
+      "auto-generated"
+    ],
+    "created_by": "",
+    "created_at": "",
+    "updated_at": "2026-11-09T09:03:16.489747+00:00",
+    "condition_source": "graph_completion"
+  },
+  {
+    "rule_id": "RULE_STEMI_DX_001",
+    "version": 1,
+    "domain": "western",
+    "anchor_type": "disease",
+    "rule_type": "diagnosis",
+    "name": "急性ST段抬高型心肌梗死心电图证据规则",
+    "disease_code": "I21.0",
+    "disease_name": "急性前壁透壁性心肌梗死",
+    "priority": 10,
+    "status": "active",
+    "department": null,
+    "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
+    "conditions": {
+      "type": "group",
+      "operator": "AND",
+      "children": [
+        {
+          "type": "exam_finding",
+          "operator": null,
+          "children": [],
+          "evidence_id": null,
+          "lab_code": null,
+          "concept_code": null,
+          "parameter": null,
+          "exam_code": "ECG_12LEAD",
+          "finding_code": "ST_CONVEX_ELEVATION",
+          "symptom_code": null,
+          "duration_minutes": null,
+          "vital_code": null,
+          "threshold_value": null,
+          "age_min": null,
+          "age_max": null,
+          "gender": null,
+          "code": null,
+          "observation_type": null,
+          "fact_type": null,
+          "attribute_code": null,
+          "attribute_value": null,
+          "label": "心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION）"
+        },
+        {
+          "type": "lab_concept",
+          "operator": null,
+          "children": [],
+          "evidence_id": null,
+          "lab_code": "CTN",
+          "concept_code": "DYNAMIC_RISE",
+          "parameter": null,
+          "exam_code": null,
+          "finding_code": null,
+          "symptom_code": null,
+          "duration_minutes": null,
+          "vital_code": null,
+          "threshold_value": null,
+          "age_min": null,
+          "age_max": null,
+          "gender": null,
+          "code": null,
+          "observation_type": null,
+          "fact_type": null,
+          "attribute_code": null,
+          "attribute_value": null,
+          "label": "肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE）"
+        }
+      ],
+      "evidence_id": null,
+      "lab_code": null,
+      "concept_code": null,
+      "parameter": null,
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "duration_minutes": null,
+      "vital_code": null,
+      "threshold_value": null,
+      "age_min": null,
+      "age_max": null,
+      "gender": null,
+      "code": null,
+      "observation_type": null,
+      "fact_type": null,
+      "attribute_code": null,
+      "attribute_value": null,
+      "label": "(心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） AND 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE）)"
+    },
+    "condition_text": "心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） AND 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE）",
+    "conclusion": {
+      "diagnosis": "I21.0",
+      "confidence": "high",
+      "message": "心电图ST段抬高伴肌钙蛋白动态上升，支持急性ST段抬高型心肌梗死诊断",
+      "action": "启动再灌注治疗评估",
+      "conclusion_type": null,
+      "treatment_plan_id": null,
+      "treatment_name": null,
+      "priority": null,
+      "treatment_items": [],
+      "treatment_method_code": null,
+      "formula_code": null,
+      "formula_name": null,
+      "herbs": [],
+      "modifications": [],
+      "course": null,
+      "score_threshold": null
+    },
+    "source": {
+      "guideline_id": "DOC-5a484f67",
+      "guideline_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "chunk_id": "DOC-5a484f67_p3_l44-54",
+      "section": "五、再灌注治疗",
+      "page_start": 3,
+      "page_end": 5,
+      "line_start": 44,
+      "line_end": 54,
+      "quote": "发病12～24 h仍有进行性缺血性胸痛和至少2个胸前导联或肢体导联sT段抬高>0．1 mV"
+    },
+    "exclusions": [],
+    "tags": [
+      "DOC-5a484f67",
+      "auto-generated"
+    ],
+    "created_by": "",
+    "created_at": "",
+    "updated_at": "2026-11-09T08:35:14.481722+00:00",
+    "reviewed_by": "未署名",
+    "reviewed_at": "2026-11-09T08:35:14.481722+00:00",
+    "review_note": ""
+  },
+  {
+    "rule_id": "RULE_STEMI_TX_001",
+    "version": 1,
+    "domain": "western",
+    "anchor_type": "disease",
+    "rule_type": "diagnosis",
+    "name": "急性ST段抬高型心肌梗死静脉溶栓治疗候选规则",
+    "disease_code": "I21.0",
+    "disease_name": "急性前壁透壁性心肌梗死",
+    "priority": 20,
+    "status": "draft",
+    "department": null,
+    "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
+    "conditions": {
+      "type": "group",
+      "operator": "AND",
+      "children": [
+        {
+          "type": "group",
+          "operator": "OR",
+          "children": [
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "ELEVATED",
+              "label": "肌钙蛋白（CTN） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "ABOVE_ULN_1",
+              "label": "肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "THROMBOSIS",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "PATHOLOGICAL_Q_WAVE",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "ST_CONVEX_ELEVATION",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "R_WAVE_REDUCTION",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "HYPERACUTE_T_WAVE",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "DYNAMIC_RISE",
+              "label": "肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CK_MB",
+              "concept_code": "ABOVE_ULN_1",
+              "label": "肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CK_MB",
+              "concept_code": "PEAK_SHIFT",
+              "label": "肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "MYO",
+              "concept_code": "ELEVATED",
+              "label": "肌红蛋白（MYO） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CREAT",
+              "concept_code": "ELEVATED",
+              "label": "肌酐（CREAT） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "HBA1C",
+              "concept_code": "ABNORMAL",
+              "label": "糖化血红蛋白（HBA1C） 异常（ABNORMAL）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "GLUCOSE",
+              "concept_code": "ABNORMAL",
+              "label": "血糖（GLUCOSE） 异常（ABNORMAL）"
+            }
+          ],
+          "label": "(肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）)"
+        },
+        {
+          "type": "symptom",
+          "operator": null,
+          "children": [],
+          "evidence_id": null,
+          "lab_code": null,
+          "concept_code": null,
+          "parameter": null,
+          "exam_code": null,
+          "finding_code": null,
+          "symptom_code": "SYM_CHEST_PAIN",
+          "duration_minutes": null,
+          "vital_code": null,
+          "threshold_value": null,
+          "age_min": null,
+          "age_max": null,
+          "gender": null,
+          "code": null,
+          "observation_type": null,
+          "fact_type": null,
+          "attribute_code": null,
+          "attribute_value": null,
+          "label": "胸痛（SYM_CHEST_PAIN）"
+        }
+      ],
+      "evidence_id": null,
+      "lab_code": null,
+      "concept_code": null,
+      "parameter": null,
+      "exam_code": null,
+      "finding_code": null,
+      "symptom_code": null,
+      "duration_minutes": null,
+      "vital_code": null,
+      "threshold_value": null,
+      "age_min": null,
+      "age_max": null,
+      "gender": null,
+      "code": null,
+      "observation_type": null,
+      "fact_type": null,
+      "attribute_code": null,
+      "attribute_value": null,
+      "label": "((肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）) AND 胸痛（SYM_CHEST_PAIN）)"
+    },
+    "condition_text": "(肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）) AND 胸痛（SYM_CHEST_PAIN）",
+    "conclusion": {
+      "diagnosis": "I21.0",
+      "confidence": "medium",
+      "message": "发病12h以内、预期FMC至PCI时间延迟大于120min且无溶栓禁忌证的患者，可给予静脉溶栓治疗（I，A）；绝对禁忌证包括既往脑出血史、颅内恶性肿瘤、可疑主动脉夹层、活动性出血等",
+      "action": "评估溶栓适应证与禁忌证后给予阿替普酶或替奈普酶，溶栓后3~24h行冠状动脉造影",
+      "conclusion_type": null,
+      "treatment_plan_id": null,
+      "treatment_name": null,
+      "priority": null,
+      "treatment_items": [],
+      "treatment_method_code": null,
+      "formula_code": null,
+      "formula_name": null,
+      "herbs": [],
+      "modifications": [],
+      "course": null,
+      "score_threshold": null
+    },
+    "source": {
+      "guideline_id": "DOC-5a484f67",
+      "guideline_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "chunk_id": "DOC-5a484f67_p3_l44-54",
+      "section": "五、再灌注治疗 (一)溶栓治疗",
+      "page_start": 3,
+      "page_end": 5,
+      "line_start": 44,
+      "line_end": 54,
+      "quote": "发病12 h以内，预期FMC至PCI时间延迟大于120 min，无溶栓禁忌证(I，A)"
+    },
+    "exclusions": [],
+    "tags": [
+      "DOC-5a484f67",
+      "auto-generated",
+      "draft",
+      "treatment"
+    ],
+    "created_by": "",
+    "created_at": "",
+    "updated_at": "2026-11-09T09:03:19.692991+00:00",
+    "condition_source": "graph_completion"
+  },
+  {
+    "rule_id": "RULE_STEMI_TX_002",
+    "version": 1,
+    "domain": "western",
+    "anchor_type": "disease",
+    "rule_type": "diagnosis",
+    "name": "急性ST段抬高型心肌梗死直接PCI治疗候选规则",
+    "disease_code": "I21.0",
+    "disease_name": "急性前壁透壁性心肌梗死",
+    "priority": 20,
+    "status": "active",
+    "department": null,
+    "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
+    "conditions": {
+      "type": "group",
+      "operator": "OR",
+      "children": [
+        {
+          "type": "lab_concept",
+          "lab_code": "CTN",
+          "concept_code": "ELEVATED",
+          "label": "肌钙蛋白（CTN） 升高（ELEVATED）"
+        },
+        {
+          "type": "lab_concept",
+          "lab_code": "CTN",
+          "concept_code": "ABOVE_ULN_1",
+          "label": "肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1）"
+        },
+        {
+          "type": "exam_finding",
+          "finding_code": "THROMBOSIS",
+          "exam_code": "ECG_12LEAD",
+          "label": "心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS）"
+        },
+        {
+          "type": "exam_finding",
+          "finding_code": "PATHOLOGICAL_Q_WAVE",
+          "exam_code": "ECG_12LEAD",
+          "label": "心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE）"
+        },
+        {
+          "type": "exam_finding",
+          "finding_code": "ST_CONVEX_ELEVATION",
+          "exam_code": "ECG_12LEAD",
+          "label": "心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION）"
+        },
+        {
+          "type": "exam_finding",
+          "finding_code": "R_WAVE_REDUCTION",
+          "exam_code": "ECG_12LEAD",
+          "label": "心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION）"
+        },
+        {
+          "type": "exam_finding",
+          "finding_code": "HYPERACUTE_T_WAVE",
+          "exam_code": "ECG_12LEAD",
+          "label": "心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE）"
+        },
+        {
+          "type": "lab_concept",
+          "lab_code": "CTN",
+          "concept_code": "DYNAMIC_RISE",
+          "label": "肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE）"
+        },
+        {
+          "type": "lab_concept",
+          "lab_code": "CK_MB",
+          "concept_code": "ABOVE_ULN_1",
+          "label": "肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1）"
+        },
+        {
+          "type": "lab_concept",
+          "lab_code": "CK_MB",
+          "concept_code": "PEAK_SHIFT",
+          "label": "肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT）"
+        },
+        {
+          "type": "lab_concept",
+          "lab_code": "MYO",
+          "concept_code": "ELEVATED",
+          "label": "肌红蛋白（MYO） 升高（ELEVATED）"
+        },
+        {
+          "type": "lab_concept",
+          "lab_code": "CREAT",
+          "concept_code": "ELEVATED",
+          "label": "肌酐（CREAT） 升高（ELEVATED）"
+        },
+        {
+          "type": "lab_concept",
+          "lab_code": "HBA1C",
+          "concept_code": "ABNORMAL",
+          "label": "糖化血红蛋白（HBA1C） 异常（ABNORMAL）"
+        },
+        {
+          "type": "lab_concept",
+          "lab_code": "GLUCOSE",
+          "concept_code": "ABNORMAL",
+          "label": "血糖（GLUCOSE） 异常（ABNORMAL）"
+        }
+      ],
+      "label": "(肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）)"
+    },
+    "condition_text": "肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）",
+    "conclusion": {
+      "diagnosis": "I21.0",
+      "confidence": "medium",
+      "message": "发病12h内或伴新发左束支传导阻滞的患者应行直接PCI（I，A），争取首诊至直接PCI时间≤90min，常规支架置入",
+      "action": "转运至有直接PCI条件的医院行直接PCI",
+      "conclusion_type": null,
+      "treatment_plan_id": null,
+      "treatment_name": null,
+      "priority": null,
+      "treatment_items": [],
+      "treatment_method_code": null,
+      "formula_code": null,
+      "formula_name": null,
+      "herbs": [],
+      "modifications": [],
+      "course": null,
+      "score_threshold": null
+    },
+    "source": {
+      "guideline_id": "DOC-5a484f67",
+      "guideline_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "chunk_id": "DOC-5a484f67_p3_l44-54",
+      "section": "五、再灌注治疗 (二)介入治疗",
+      "page_start": 3,
+      "page_end": 5,
+      "line_start": 44,
+      "line_end": 54,
+      "quote": "发病12 h内(包括正后壁心肌梗死)或伴有新出现左束支传导阻滞的患者(证据水平A)"
+    },
+    "exclusions": [],
+    "tags": [
+      "DOC-5a484f67",
+      "auto-generated",
+      "draft",
+      "treatment"
+    ],
+    "created_by": "",
+    "created_at": "",
+    "updated_at": "2026-11-09T09:42:48.780934+00:00",
+    "condition_source": "graph_completion"
+  },
+  {
+    "rule_id": "RULE-RV-STEO-EVIDENCE",
+    "version": 1,
+    "domain": "western",
+    "anchor_type": "disease",
+    "rule_type": "diagnosis",
+    "name": "右心室梗死心电图诊断候选规则",
+    "disease_code": "I21.2",
+    "disease_name": "急性其他部位透壁性心肌梗死",
+    "priority": 2,
+    "status": "active",
+    "department": null,
+    "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
+    "conditions": {
+      "type": "group",
+      "operator": "OR",
+      "children": [
+        {
+          "type": "exam_finding",
+          "finding_code": "ST_CONVEX_ELEVATION",
+          "exam_code": "ECG_12LEAD",
+          "label": "心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION）"
+        }
+      ],
+      "label": "心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION）"
+    },
+    "condition_text": "心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION）",
+    "conclusion": {
+      "diagnosis": "I21.2",
+      "confidence": "medium",
+      "message": "右胸前导联(尤为V4R)ST段抬高≥0.1 mV高度提示右心室梗死，建议记录右胸前导联心电图并超声心动图协助诊断",
+      "action": "建议人工复核后启用；结合下壁STEMI背景综合判断",
+      "conclusion_type": null,
+      "treatment_plan_id": null,
+      "treatment_name": null,
+      "priority": null,
+      "treatment_items": [],
+      "treatment_method_code": null,
+      "formula_code": null,
+      "formula_name": null,
+      "herbs": [],
+      "modifications": [],
+      "course": null,
+      "score_threshold": null
+    },
+    "source": {
+      "guideline_id": "DOC-5a484f67",
+      "guideline_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "chunk_id": "DOC-5a484f67_p7_l54-66",
+      "section": "八、右心室梗死",
+      "page_start": 7,
+      "page_end": 7,
+      "line_start": 54,
+      "line_end": 66,
+      "quote": "右胸前导联(尤为V。。)ST段抬高≥0．1 mV高度提示右心室梗死，所有下壁STEMI的患者均应记录右胸前导联心电图"
+    },
+    "exclusions": [],
+    "tags": [
+      "DOC-5a484f67",
+      "auto-generated"
+    ],
+    "created_by": "",
+    "created_at": "",
+    "updated_at": "2026-11-09T09:03:33.461409+00:00",
+    "condition_source": "graph_completion"
+  },
+  {
+    "rule_id": "RULE-STEMI-ADJUVANT-TX",
+    "version": 1,
+    "domain": "western",
+    "anchor_type": "disease",
+    "rule_type": "diagnosis",
+    "name": "急性ST段抬高型心肌梗死其他药物治疗候选规则",
+    "disease_code": "I21.0",
+    "disease_name": "急性前壁透壁性心肌梗死",
+    "priority": 1,
+    "status": "draft",
+    "department": null,
+    "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
+    "conditions": {
+      "type": "group",
+      "operator": "AND",
+      "children": [
+        {
+          "type": "group",
+          "operator": "OR",
+          "children": [
+            {
+              "type": "symptom",
+              "symptom_code": "SYM_CHEST_PAIN",
+              "label": "胸痛（SYM_CHEST_PAIN）"
+            }
+          ],
+          "label": "胸痛（SYM_CHEST_PAIN）"
+        },
+        {
+          "type": "group",
+          "operator": "OR",
+          "children": [
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "ELEVATED",
+              "label": "肌钙蛋白（CTN） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "ABOVE_ULN_1",
+              "label": "肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "THROMBOSIS",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "PATHOLOGICAL_Q_WAVE",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "ST_CONVEX_ELEVATION",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "R_WAVE_REDUCTION",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "HYPERACUTE_T_WAVE",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "DYNAMIC_RISE",
+              "label": "肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CK_MB",
+              "concept_code": "ABOVE_ULN_1",
+              "label": "肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CK_MB",
+              "concept_code": "PEAK_SHIFT",
+              "label": "肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "MYO",
+              "concept_code": "ELEVATED",
+              "label": "肌红蛋白（MYO） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CREAT",
+              "concept_code": "ELEVATED",
+              "label": "肌酐（CREAT） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "HBA1C",
+              "concept_code": "ABNORMAL",
+              "label": "糖化血红蛋白（HBA1C） 异常（ABNORMAL）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "GLUCOSE",
+              "concept_code": "ABNORMAL",
+              "label": "血糖（GLUCOSE） 异常（ABNORMAL）"
+            }
+          ],
+          "label": "(肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）)"
+        }
+      ],
+      "label": "(胸痛（SYM_CHEST_PAIN） AND (肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）))"
+    },
+    "condition_text": "胸痛（SYM_CHEST_PAIN） AND (肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）)",
+    "conclusion": {
+      "diagnosis": "I21.0",
+      "confidence": "medium",
+      "message": "无禁忌证的STEMI患者发病后24 h内常规口服β受体阻滞剂(I,B)；静脉硝酸酯类缓解缺血性胸痛(I,B)；所有无禁忌证患者ACEI长期治疗(I,A)、入院后尽早他汀类治疗(I,A)",
+      "action": "治疗规则默认草稿，需医学审核后启用",
+      "conclusion_type": null,
+      "treatment_plan_id": null,
+      "treatment_name": null,
+      "priority": null,
+      "treatment_items": [],
+      "treatment_method_code": null,
+      "formula_code": null,
+      "formula_name": null,
+      "herbs": [],
+      "modifications": [],
+      "course": null,
+      "score_threshold": null
+    },
+    "source": {
+      "guideline_id": "DOC-5a484f67",
+      "guideline_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "chunk_id": "DOC-5a484f67_p6_l64-53",
+      "section": "七、其他药物治疗",
+      "page_start": 6,
+      "page_end": 7,
+      "line_start": 64,
+      "line_end": 53,
+      "quote": "无禁忌证的STEMI患者应在发病后24 h内常规口服13受体阻滞剂(I，B)……所有无禁忌证的STEMI患者均应给予ACEI长期治疗(I，A)……尽早开始他汀类药物治疗(I，A)"
+    },
+    "exclusions": [],
+    "tags": [
+      "DOC-5a484f67",
+      "auto-generated"
+    ],
+    "created_by": "",
+    "created_at": "",
+    "updated_at": "2026-11-09T09:03:31.954361+00:00",
+    "condition_source": "graph_completion"
+  },
+  {
+    "rule_id": "RULE-RV-REPERFUSION-TX",
+    "version": 1,
+    "domain": "western",
+    "anchor_type": "disease",
+    "rule_type": "diagnosis",
+    "name": "右心室梗死再灌注治疗候选规则",
+    "disease_code": "I21.2",
+    "disease_name": "急性其他部位透壁性心肌梗死",
+    "priority": 1,
+    "status": "active",
+    "department": null,
+    "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
+    "conditions": {
+      "type": "group",
+      "operator": "OR",
+      "children": [
+        {
+          "type": "exam_finding",
+          "finding_code": "ST_CONVEX_ELEVATION",
+          "exam_code": "ECG_12LEAD",
+          "label": "心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION）"
+        }
+      ],
+      "label": "心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION）"
+    },
+    "condition_text": "心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION）",
+    "conclusion": {
+      "diagnosis": "I21.2",
+      "confidence": "medium",
+      "message": "右心室梗死患者应尽早施行再灌注治疗；避免使用利尿剂和血管扩张剂，维持有效右心室前负荷",
+      "action": "治疗规则默认草稿，需医学审核后启用",
+      "conclusion_type": null,
+      "treatment_plan_id": null,
+      "treatment_name": null,
+      "priority": null,
+      "treatment_items": [],
+      "treatment_method_code": null,
+      "formula_code": null,
+      "formula_name": null,
+      "herbs": [],
+      "modifications": [],
+      "course": null,
+      "score_threshold": null
+    },
+    "source": {
+      "guideline_id": "DOC-5a484f67",
+      "guideline_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "chunk_id": "DOC-5a484f67_p7_l54-66",
+      "section": "八、右心室梗死",
+      "page_start": 7,
+      "page_end": 7,
+      "line_start": 54,
+      "line_end": 66,
+      "quote": "预防和治疗原则是维持有效的右心室前负荷，避免使用利尿剂和血管扩张剂……右心室梗死患者应尽早施行再灌注治疗"
+    },
+    "exclusions": [],
+    "tags": [
+      "DOC-5a484f67",
+      "auto-generated"
+    ],
+    "created_by": "",
+    "created_at": "",
+    "updated_at": "2026-11-09T09:03:30.189855+00:00",
+    "condition_source": "graph_completion"
+  },
+  {
+    "rule_id": "RULE-TP-001",
+    "version": 1,
+    "domain": "western",
+    "anchor_type": "disease",
+    "rule_type": "diagnosis",
+    "name": "STEMI二级预防长期药物治疗",
+    "disease_code": "I21.0",
+    "disease_name": "急性ST段抬高型心肌梗死",
+    "priority": 1,
+    "status": "draft",
+    "department": null,
+    "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
+    "conditions": {
+      "type": "group",
+      "operator": "AND",
+      "children": [
+        {
+          "type": "group",
+          "operator": "OR",
+          "children": [
+            {
+              "type": "symptom",
+              "symptom_code": "SYM_CHEST_PAIN",
+              "label": "胸痛（SYM_CHEST_PAIN）"
+            }
+          ],
+          "label": "胸痛（SYM_CHEST_PAIN）"
+        },
+        {
+          "type": "group",
+          "operator": "OR",
+          "children": [
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "ELEVATED",
+              "label": "肌钙蛋白（CTN） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "ABOVE_ULN_1",
+              "label": "肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "THROMBOSIS",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "PATHOLOGICAL_Q_WAVE",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "ST_CONVEX_ELEVATION",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "R_WAVE_REDUCTION",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "HYPERACUTE_T_WAVE",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "DYNAMIC_RISE",
+              "label": "肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CK_MB",
+              "concept_code": "ABOVE_ULN_1",
+              "label": "肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CK_MB",
+              "concept_code": "PEAK_SHIFT",
+              "label": "肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "MYO",
+              "concept_code": "ELEVATED",
+              "label": "肌红蛋白（MYO） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CREAT",
+              "concept_code": "ELEVATED",
+              "label": "肌酐（CREAT） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "HBA1C",
+              "concept_code": "ABNORMAL",
+              "label": "糖化血红蛋白（HBA1C） 异常（ABNORMAL）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "GLUCOSE",
+              "concept_code": "ABNORMAL",
+              "label": "血糖（GLUCOSE） 异常（ABNORMAL）"
+            }
+          ],
+          "label": "(肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）)"
+        }
+      ],
+      "label": "(胸痛（SYM_CHEST_PAIN） AND (肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）))"
+    },
+    "condition_text": "胸痛（SYM_CHEST_PAIN） AND (肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）)",
+    "conclusion": {
+      "diagnosis": "I21.0",
+      "confidence": "medium",
+      "message": "无禁忌证的STEMI患者出院后应长期服用阿司匹林(75～100 mg/d)、ACEI和β受体阻滞剂；他汀类药物维持LDL-C<2.07 mmol/L",
+      "action": "建议启动二级预防药物治疗，需医学审核",
+      "conclusion_type": null,
+      "treatment_plan_id": null,
+      "treatment_name": null,
+      "priority": null,
+      "treatment_items": [],
+      "treatment_method_code": null,
+      "formula_code": null,
+      "formula_name": null,
+      "herbs": [],
+      "modifications": [],
+      "course": null,
+      "score_threshold": null
+    },
+    "source": {
+      "guideline_id": "DOC-5a484f67",
+      "guideline_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "chunk_id": "DOC-5a484f67_p9_l59-181_part1",
+      "section": "十一、二级预防与康复",
+      "page_start": 9,
+      "page_end": 9,
+      "line_start": 111,
+      "line_end": 132,
+      "quote": "若无禁忌证，所有STEMI患者出院后均应长期服用阿司匹林、ACEI和B受体阻滞剂"
+    },
+    "exclusions": [],
+    "tags": [
+      "DOC-5a484f67",
+      "auto-generated"
+    ],
+    "created_by": "",
+    "created_at": "",
+    "updated_at": "2026-11-09T09:03:28.127421+00:00",
+    "condition_source": "graph_completion"
+  },
+  {
+    "rule_id": "RULE-TRT-002",
+    "version": 1,
+    "domain": "western",
+    "anchor_type": "disease",
+    "rule_type": "diagnosis",
+    "name": "STEMI二级预防治疗方案（治疗规则）",
+    "disease_code": "I21.0",
+    "disease_name": "急性ST段抬高型心肌梗死",
+    "priority": 2,
+    "status": "draft",
+    "department": null,
+    "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
+    "conditions": {
+      "type": "group",
+      "operator": "AND",
+      "children": [
+        {
+          "type": "group",
+          "operator": "OR",
+          "children": [
+            {
+              "type": "symptom",
+              "symptom_code": "SYM_CHEST_PAIN",
+              "label": "胸痛（SYM_CHEST_PAIN）"
+            }
+          ],
+          "label": "胸痛（SYM_CHEST_PAIN）"
+        },
+        {
+          "type": "group",
+          "operator": "OR",
+          "children": [
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "ELEVATED",
+              "label": "肌钙蛋白（CTN） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "ABOVE_ULN_1",
+              "label": "肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "THROMBOSIS",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "PATHOLOGICAL_Q_WAVE",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "ST_CONVEX_ELEVATION",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "R_WAVE_REDUCTION",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION）"
+            },
+            {
+              "type": "exam_finding",
+              "finding_code": "HYPERACUTE_T_WAVE",
+              "exam_code": "ECG_12LEAD",
+              "label": "心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CTN",
+              "concept_code": "DYNAMIC_RISE",
+              "label": "肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CK_MB",
+              "concept_code": "ABOVE_ULN_1",
+              "label": "肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CK_MB",
+              "concept_code": "PEAK_SHIFT",
+              "label": "肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "MYO",
+              "concept_code": "ELEVATED",
+              "label": "肌红蛋白（MYO） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "CREAT",
+              "concept_code": "ELEVATED",
+              "label": "肌酐（CREAT） 升高（ELEVATED）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "HBA1C",
+              "concept_code": "ABNORMAL",
+              "label": "糖化血红蛋白（HBA1C） 异常（ABNORMAL）"
+            },
+            {
+              "type": "lab_concept",
+              "lab_code": "GLUCOSE",
+              "concept_code": "ABNORMAL",
+              "label": "血糖（GLUCOSE） 异常（ABNORMAL）"
+            }
+          ],
+          "label": "(肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）)"
+        }
+      ],
+      "label": "(胸痛（SYM_CHEST_PAIN） AND (肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）))"
+    },
+    "condition_text": "胸痛（SYM_CHEST_PAIN） AND (肌钙蛋白（CTN） 升高（ELEVATED） OR 肌钙蛋白（CTN） 超正常上限（ABOVE_ULN_1） OR 心电图（ECG_12LEAD） · 血栓形成（THROMBOSIS） OR 心电图（ECG_12LEAD） · 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 心电图（ECG_12LEAD） · ST段弓背向上抬高（ST_CONVEX_ELEVATION） OR 心电图（ECG_12LEAD） · R波减低（R_WAVE_REDUCTION） OR 心电图（ECG_12LEAD） · 超急期T波（HYPERACUTE_T_WAVE） OR 肌钙蛋白（CTN） 动态上升（DYNAMIC_RISE） OR 肌酸激酶同工酶（CK_MB） 超正常上限（ABOVE_ULN_1） OR 肌酸激酶同工酶（CK_MB） 峰值前移（PEAK_SHIFT） OR 肌红蛋白（MYO） 升高（ELEVATED） OR 肌酐（CREAT） 升高（ELEVATED） OR 糖化血红蛋白（HBA1C） 异常（ABNORMAL） OR 血糖（GLUCOSE） 异常（ABNORMAL）)",
+    "conclusion": {
+      "diagnosis": "I21.0",
+      "confidence": "high",
+      "message": "STEMI二级预防：阿司匹林75~100mg/d（禁忌者改氯吡格雷75mg/d）、ACEI、β受体阻滞剂最大耐受剂量长期治疗(I,B)；他汀类使LDL-C<2.07mmol/L；控制血压<140/90mmHg",
+      "action": "推荐二级预防治疗方案，默认草稿，须医学审核后启用",
+      "conclusion_type": null,
+      "treatment_plan_id": null,
+      "treatment_name": null,
+      "priority": null,
+      "treatment_items": [],
+      "treatment_method_code": null,
+      "formula_code": null,
+      "formula_name": null,
+      "herbs": [],
+      "modifications": [],
+      "course": null,
+      "score_threshold": null
+    },
+    "source": {
+      "guideline_id": "DOC-5a484f67",
+      "guideline_title": "急性ST段抬高型心肌梗死诊断和治疗指南",
+      "chunk_id": "DOC-5a484f67_p9_l59-181_part1",
+      "section": "十一、二级预防与康复",
+      "page_start": 9,
+      "page_end": 9,
+      "line_start": 111,
+      "line_end": 133,
+      "quote": "若无禁忌证，所有STEMI患者出院后均应长期服用阿司匹林、ACEI和B受体阻滞剂……坚持使用他汀类药物，使低密度脂蛋白胆固醇(LDL．C)<2．07 mmol／L"
+    },
+    "exclusions": [],
+    "tags": [
+      "DOC-5a484f67",
+      "auto-generated"
+    ],
+    "created_by": "",
+    "created_at": "",
+    "updated_at": "2026-11-09T09:03:24.752345+00:00",
+    "condition_source": "graph_completion"
   }
 ]

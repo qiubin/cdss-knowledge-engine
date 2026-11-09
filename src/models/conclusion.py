@@ -36,6 +36,8 @@ class Conclusion(BaseModel):
     treatment_name: Optional[str] = None       # display name
     priority_label: Optional[str] = None       # preferred / alternative / rescue
     treatment_items: List[Dict[str, Any]] = Field(default_factory=list)
+    # Order-set materialization of the treatment plan (order_set node codes).
+    order_set_ids: List[str] = Field(default_factory=list)
     triggered_by: List[str] = Field(default_factory=list)  # diagnosis rule_ids that triggered this treatment
     # TCM extension: structured treatment/prescription output.
     treatment_method_code: Optional[str] = None

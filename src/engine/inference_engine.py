@@ -736,6 +736,7 @@ class InferenceEngine:
             treatment_plan_id=rule.conclusion.treatment_plan_id,
             treatment_name=rule.conclusion.treatment_name,
             treatment_items=list(rule.conclusion.treatment_items or []),
+            order_set_ids=list(rule.conclusion.order_set_ids or []),
             priority_label=rule.conclusion.priority,
             treatment_method_code=rule.conclusion.treatment_method_code,
             formula_code=rule.conclusion.formula_code,

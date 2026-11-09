@@ -236,6 +236,32 @@ def _treatment_entities(
     return result
 
 
+def _order_sets_in_window(
+    entities: List[Dict[str, Any]],
+    start: int,
+    end: int,
+) -> List[Dict[str, Any]]:
+    """Order sets described in the same guideline window as the treatment.
+
+    Order sets are guideline-level materialization of a treatment plan; rules
+    carry their codes so the recommendation layer can expand them into
+    orderable items with per-hospital mapping later.
+    """
+    result: List[Dict[str, Any]] = []
+    seen = set()
+    for item in entities:
+        if item.get("entity_type") != "order_set":
+            continue
+        if not _in_window(item, start, end):
+            continue
+        code = str(item.get("code") or "")
+        if not code or code in seen:
+            continue
+        seen.add(code)
+        result.append(item)
+    return result
+
+
 def generate_western_rules(
     entities: List[Dict[str, Any]],
     chunks: List[Dict[str, Any]],
@@ -263,6 +289,7 @@ def generate_western_rules(
             symptoms = _symptom_conditions(chunk_entities, start, end)
             findings = _finding_conditions(chunk_entities, start, end)
             treatments = _treatment_entities(chunk_entities, start, end)
+            order_sets = _order_sets_in_window(chunk_entities, start, end)
 
             children: List[Dict[str, Any]] = []
             if labs:
@@ -294,7 +321,7 @@ def generate_western_rules(
                         "conditions": {"type": "group", "operator": "AND", "children": children},
                     }
 
-            if treatments:
+            if treatments or order_sets:
                 code = str(disease.get("code"))
                 previous = treatment.get(code)
                 if previous is None or len(treatments) > previous["count"]:
@@ -304,6 +331,7 @@ def generate_western_rules(
                         "chunk": chunk,
                         "display_name": _display_name(disease, template),
                         "items": treatments,
+                        "order_sets": order_sets,
                     }
 
     # Primary-disease policy: drop unspecified parent codes when the same
@@ -353,16 +381,45 @@ def generate_western_rules(
         # diagnosis rule to trigger it; otherwise it can never fire.
         if code not in diagnosis:
             continue
+        items = candidate["items"]
+        order_sets = candidate.get("order_sets") or []
+        if not items and not order_sets:
+            continue
         treatment_index += 1
         disease = candidate["disease"]
         chunk = candidate["chunk"]
         display_name = candidate.get("display_name") or disease.get("name") or code
-        items = candidate["items"]
         names = [str(item.get("name") or item.get("code")) for item in items]
         primary = next(
             (item for item in items if item.get("entity_type") == "treatment_plan"),
-            items[0],
+            items[0] if items else (order_sets[0] if order_sets else disease),
         )
+        order_set_ids = [
+            str(item.get("code")) for item in order_sets if item.get("code")
+        ]
+        conclusion = {
+            "diagnosis": code,
+            "confidence": "medium",
+            "conclusion_type": "treatment",
+            "treatment_plan_id": f"TP-{doc_id}-{code}",
+            "treatment_name": f"{display_name}治疗方案",
+            "treatment_items": [
+                {
+                    "code": str(item.get("code") or ""),
+                    "name": str(item.get("name") or item.get("code") or ""),
+                    "entity_type": str(item.get("entity_type") or "medication"),
+                }
+                for item in items if item.get("code")
+            ],
+            "message": "指南同章节推荐：" + "、".join(names[:6]),
+        }
+        if order_set_ids:
+            conclusion["order_set_ids"] = order_set_ids
+            if not names:
+                set_names = [
+                    str(item.get("name") or item.get("code")) for item in order_sets
+                ]
+                conclusion["message"] = "指南同章节医嘱套餐：" + "、".join(set_names[:6])
         rules.append({
             "rule_id": f"{doc_id}-TREAT-{treatment_index:03d}",
             "version": 1,
@@ -379,22 +436,7 @@ def generate_western_rules(
             # same disease; an empty group is therefore a deliberate no-op.
             "conditions": {"type": "group", "operator": "AND", "children": []},
             "condition_text": "同疾病诊断成立后触发",
-            "conclusion": {
-                "diagnosis": code,
-                "confidence": "medium",
-                "conclusion_type": "treatment",
-                "treatment_plan_id": f"TP-{doc_id}-{code}",
-                "treatment_name": f"{display_name}治疗方案",
-                "treatment_items": [
-                    {
-                        "code": str(item.get("code") or ""),
-                        "name": str(item.get("name") or item.get("code") or ""),
-                        "entity_type": str(item.get("entity_type") or "medication"),
-                    }
-                    for item in items if item.get("code")
-                ],
-                "message": "指南同章节推荐：" + "、".join(names[:6]),
-            },
+            "conclusion": conclusion,
             "source": _source(primary, chunk, doc_id, doc_title),
             "tags": ["auto-generated", "treatment", doc_id],
         })

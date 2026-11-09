@@ -15,6 +15,10 @@ data/_reset_archive_*/
 data/uploads/
 evidence_inventory.txt
 
+# Runtime audit data
+data/review/
+data/_review_backup_*/
+
 # Backups
 *.bak
 *.bak-*

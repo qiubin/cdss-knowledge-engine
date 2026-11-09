@@ -61,7 +61,7 @@
         "concept_required": false,
         "entries": [],
         "discovery": true,
-        "vocabulary": false
+        "vocabulary": true
       },
       {
         "entity_type": "intervention",
@@ -105,6 +105,46 @@
         "vocabulary": true,
         "entries": [],
         "discovery": false
+      },
+      {
+        "entity_type": "order_set",
+        "label": "医嘱套餐",
+        "discovery": true,
+        "vocabulary": true,
+        "domain": "western",
+        "color": "#fbd38d",
+        "icon": "clipboard-list",
+        "extraction_hint": "指南中成组的医嘱推荐（如再灌注方案用药组合、监护与复查组合）"
+      },
+      {
+        "entity_type": "order_item",
+        "label": "医嘱条目",
+        "discovery": true,
+        "vocabulary": true,
+        "domain": "western",
+        "color": "#fefcbf",
+        "icon": "pill",
+        "extraction_hint": "套餐内单条可开立医嘱：药品/检验/检查/治疗/护理/宣教/随访"
+      },
+      {
+        "entity_type": "care_pathway",
+        "label": "诊疗路径",
+        "discovery": true,
+        "vocabulary": true,
+        "domain": "western",
+        "color": "#e9d8fd",
+        "icon": "route",
+        "extraction_hint": "覆盖疾病全诊疗周期的路径锚点（入院→治疗→出院→随访）"
+      },
+      {
+        "entity_type": "pathway_phase",
+        "label": "路径阶段",
+        "discovery": true,
+        "vocabulary": true,
+        "domain": "western",
+        "color": "#d6bcfa",
+        "icon": "git-branch",
+        "extraction_hint": "按病程划分的阶段：急诊期/急性期/恢复期/维持期/随访期等"
       }
     ],
     "relations": [
@@ -239,6 +279,46 @@
         "extraction_hint": "抽取治疗方案执行过程中要求的监测项目；同一片段共同出现时建立关系。",
         "concept_code": "",
         "generate_evidence": true
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_MATERIALIZED_AS",
+        "name": "治疗方案物化为医嘱套餐",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "order_set",
+        "cardinality": "1:N",
+        "extraction_hint": "治疗方案的医嘱落地形式（同章节或同疾病语境）"
+      },
+      {
+        "relation_code": "ORDER_SET_INCLUDES_ITEM",
+        "name": "医嘱套餐包含医嘱条目",
+        "source_entity_type": "order_set",
+        "target_entity_type": "order_item",
+        "cardinality": "1:N",
+        "extraction_hint": "套餐罗列的每一条医嘱"
+      },
+      {
+        "relation_code": "DISEASE_HAS_CARE_PATHWAY",
+        "name": "疾病有诊疗路径",
+        "source_entity_type": "disease",
+        "target_entity_type": "care_pathway",
+        "cardinality": "1:N",
+        "extraction_hint": "指南描述了该疾病的规范诊治流程时建立"
+      },
+      {
+        "relation_code": "CARE_PATHWAY_HAS_PHASE",
+        "name": "诊疗路径包含阶段",
+        "source_entity_type": "care_pathway",
+        "target_entity_type": "pathway_phase",
+        "cardinality": "1:N",
+        "extraction_hint": "按病程顺序罗列各阶段"
+      },
+      {
+        "relation_code": "PHASE_USES_ORDER_SET",
+        "name": "路径阶段使用医嘱套餐",
+        "source_entity_type": "pathway_phase",
+        "target_entity_type": "order_set",
+        "cardinality": "N:M",
+        "extraction_hint": "某阶段默认开立的医嘱套餐"
       }
     ],
     "attributes": [
@@ -426,6 +506,82 @@
         "allowed_values": [],
         "concept_code": "",
         "description": "如 发病12小时内、24小时内"
+      },
+      {
+        "attribute_code": "ORDER_CLASS",
+        "name": "医嘱类别",
+        "owner_entity_type": "order_item",
+        "data_type": "string",
+        "required": true,
+        "allowed_values": [
+          "药品",
+          "检验",
+          "检查",
+          "治疗",
+          "手术",
+          "护理",
+          "宣教",
+          "随访"
+        ],
+        "description": "医嘱条目的开立类别"
+      },
+      {
+        "attribute_code": "ORDER_REQUIRED",
+        "name": "必选性",
+        "owner_entity_type": "order_item",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [
+          "required",
+          "optional",
+          "conditional"
+        ],
+        "description": "套餐内该条目为必选/可选/按条件勾选"
+      },
+      {
+        "attribute_code": "ORDER_DOSE_RULE",
+        "name": "剂量频次规则",
+        "owner_entity_type": "order_item",
+        "data_type": "string",
+        "required": false,
+        "description": "指南原文的剂量/频次/途径描述，保留数值供院内参数化"
+      },
+      {
+        "attribute_code": "ORDER_SET_PRIORITY",
+        "name": "套餐优先级",
+        "owner_entity_type": "order_set",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [
+          "preferred",
+          "alternative",
+          "rescue"
+        ],
+        "description": "首选/替代/挽救，与治疗规则优先级语义一致"
+      },
+      {
+        "attribute_code": "PHASE_SEQUENCE",
+        "name": "阶段顺序",
+        "owner_entity_type": "pathway_phase",
+        "data_type": "int",
+        "required": false,
+        "description": "路径内的阶段序号，从 1 开始"
+      },
+      {
+        "attribute_code": "PHASE_ENTRY",
+        "name": "进入条件",
+        "owner_entity_type": "pathway_phase",
+        "data_type": "string",
+        "required": false,
+        "description": "进入该阶段的临床条件（如确诊STEMI、入院完成）"
+      },
+      {
+        "attribute_code": "PHASE_EXIT",
+        "name": "转段条件",
+        "owner_entity_type": "pathway_phase",
+        "data_type": "string",
+        "required": false,
+        "description": "结束/转出该阶段的条件（如再灌注完成、出院评估通过）"
       }
     ],
     "concept_codes": [
@@ -464,7 +620,9 @@
       "对于启用动态发现的实体类型，可抽取词表外新名称；code 可使用候选编码，结果默认为待人工审核。",
       "entity_type 只能使用模板定义的疾病、症状、检验、检查或诊断证据类型。",
       "诊断证据编码可表示检验状态（检验编码:概念编码）或检查形态（发现编码），不要单独输出抽象概念节点。",
-      "entity_type 只能使用模板定义的疾病、症状、检验、检查、诊断证据以及治疗方案、治疗措施、药物、禁忌、监测要求类型。"
+      "entity_type 只能使用模板定义的疾病、症状、检验、检查、诊断证据以及治疗方案、治疗措施、药物、禁忌、监测要求类型。",
+      "指南中的医嘱套餐抽为 order_set 实体，单条医嘱抽为 order_item 并标注 attributes.ORDER_CLASS（药品/检验/检查/治疗/手术/护理/宣教/随访）与 ORDER_REQUIRED；剂量频次写入 ORDER_DOSE_RULE，保留指南原文数值。",
+      "按病程划分的诊治阶段抽为 pathway_phase（attributes: PHASE_SEQUENCE 顺序、PHASE_ENTRY 进入条件、PHASE_EXIT 转段条件），全周期流程抽为 care_pathway；阶段与该阶段默认医嘱套餐用 PHASE_USES_ORDER_SET 连接。"
     ],
     "output_contract": {
       "entities": [
@@ -621,6 +779,42 @@
         "entries": [],
         "discovery": true,
         "vocabulary": true
+      },
+      {
+        "entity_type": "order_set",
+        "label": "医嘱套餐",
+        "discovery": true,
+        "domain": "western",
+        "color": "#fbd38d",
+        "icon": "clipboard-list",
+        "extraction_hint": "指南中成组的医嘱推荐（如再灌注方案用药组合、监护与复查组合）"
+      },
+      {
+        "entity_type": "order_item",
+        "label": "医嘱条目",
+        "discovery": true,
+        "domain": "western",
+        "color": "#fefcbf",
+        "icon": "pill",
+        "extraction_hint": "套餐内单条可开立医嘱：药品/检验/检查/治疗/护理/宣教/随访"
+      },
+      {
+        "entity_type": "care_pathway",
+        "label": "诊疗路径",
+        "discovery": true,
+        "domain": "western",
+        "color": "#e9d8fd",
+        "icon": "route",
+        "extraction_hint": "覆盖疾病全诊疗周期的路径锚点（入院→治疗→出院→随访）"
+      },
+      {
+        "entity_type": "pathway_phase",
+        "label": "路径阶段",
+        "discovery": true,
+        "domain": "western",
+        "color": "#d6bcfa",
+        "icon": "git-branch",
+        "extraction_hint": "按病程划分的阶段：急诊期/急性期/恢复期/维持期/随访期等"
       }
     ],
     "relations": [
@@ -755,6 +949,46 @@
         "extraction_hint": "抽取治疗方案执行过程中要求的监测项目；同一片段共同出现时建立关系。",
         "concept_code": "",
         "generate_evidence": true
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_MATERIALIZED_AS",
+        "name": "治疗方案物化为医嘱套餐",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "order_set",
+        "cardinality": "1:N",
+        "extraction_hint": "治疗方案的医嘱落地形式（同章节或同疾病语境）"
+      },
+      {
+        "relation_code": "ORDER_SET_INCLUDES_ITEM",
+        "name": "医嘱套餐包含医嘱条目",
+        "source_entity_type": "order_set",
+        "target_entity_type": "order_item",
+        "cardinality": "1:N",
+        "extraction_hint": "套餐罗列的每一条医嘱"
+      },
+      {
+        "relation_code": "DISEASE_HAS_CARE_PATHWAY",
+        "name": "疾病有诊疗路径",
+        "source_entity_type": "disease",
+        "target_entity_type": "care_pathway",
+        "cardinality": "1:N",
+        "extraction_hint": "指南描述了该疾病的规范诊治流程时建立"
+      },
+      {
+        "relation_code": "CARE_PATHWAY_HAS_PHASE",
+        "name": "诊疗路径包含阶段",
+        "source_entity_type": "care_pathway",
+        "target_entity_type": "pathway_phase",
+        "cardinality": "1:N",
+        "extraction_hint": "按病程顺序罗列各阶段"
+      },
+      {
+        "relation_code": "PHASE_USES_ORDER_SET",
+        "name": "路径阶段使用医嘱套餐",
+        "source_entity_type": "pathway_phase",
+        "target_entity_type": "order_set",
+        "cardinality": "N:M",
+        "extraction_hint": "某阶段默认开立的医嘱套餐"
       }
     ],
     "attributes": [
@@ -948,6 +1182,82 @@
         "allowed_values": [],
         "concept_code": "",
         "description": "如 发病12小时内、24小时内"
+      },
+      {
+        "attribute_code": "ORDER_CLASS",
+        "name": "医嘱类别",
+        "owner_entity_type": "order_item",
+        "data_type": "string",
+        "required": true,
+        "allowed_values": [
+          "药品",
+          "检验",
+          "检查",
+          "治疗",
+          "手术",
+          "护理",
+          "宣教",
+          "随访"
+        ],
+        "description": "医嘱条目的开立类别"
+      },
+      {
+        "attribute_code": "ORDER_REQUIRED",
+        "name": "必选性",
+        "owner_entity_type": "order_item",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [
+          "required",
+          "optional",
+          "conditional"
+        ],
+        "description": "套餐内该条目为必选/可选/按条件勾选"
+      },
+      {
+        "attribute_code": "ORDER_DOSE_RULE",
+        "name": "剂量频次规则",
+        "owner_entity_type": "order_item",
+        "data_type": "string",
+        "required": false,
+        "description": "指南原文的剂量/频次/途径描述，保留数值供院内参数化"
+      },
+      {
+        "attribute_code": "ORDER_SET_PRIORITY",
+        "name": "套餐优先级",
+        "owner_entity_type": "order_set",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [
+          "preferred",
+          "alternative",
+          "rescue"
+        ],
+        "description": "首选/替代/挽救，与治疗规则优先级语义一致"
+      },
+      {
+        "attribute_code": "PHASE_SEQUENCE",
+        "name": "阶段顺序",
+        "owner_entity_type": "pathway_phase",
+        "data_type": "int",
+        "required": false,
+        "description": "路径内的阶段序号，从 1 开始"
+      },
+      {
+        "attribute_code": "PHASE_ENTRY",
+        "name": "进入条件",
+        "owner_entity_type": "pathway_phase",
+        "data_type": "string",
+        "required": false,
+        "description": "进入该阶段的临床条件（如确诊STEMI、入院完成）"
+      },
+      {
+        "attribute_code": "PHASE_EXIT",
+        "name": "转段条件",
+        "owner_entity_type": "pathway_phase",
+        "data_type": "string",
+        "required": false,
+        "description": "结束/转出该阶段的条件（如再灌注完成、出院评估通过）"
       }
     ],
     "concept_codes": [
@@ -982,7 +1292,9 @@
       "concept_code 只能使用模板 concept_codes 中的值。",
       "entity_type 只能使用模板定义的疾病、症状、检验、检查或诊断证据类型。",
       "诊断证据编码可表示检验状态（检验编码:概念编码）或检查形态（发现编码），不要单独输出抽象概念节点。",
-      "entity_type 只能使用模板定义的疾病、症状、检验、检查、诊断证据以及治疗方案、治疗措施、药物、禁忌、监测要求类型。"
+      "entity_type 只能使用模板定义的疾病、症状、检验、检查、诊断证据以及治疗方案、治疗措施、药物、禁忌、监测要求类型。",
+      "指南中的医嘱套餐抽为 order_set 实体，单条医嘱抽为 order_item 并标注 attributes.ORDER_CLASS（药品/检验/检查/治疗/手术/护理/宣教/随访）与 ORDER_REQUIRED；剂量频次写入 ORDER_DOSE_RULE，保留指南原文数值。",
+      "按病程划分的诊治阶段抽为 pathway_phase（attributes: PHASE_SEQUENCE 顺序、PHASE_ENTRY 进入条件、PHASE_EXIT 转段条件），全周期流程抽为 care_pathway；阶段与该阶段默认医嘱套餐用 PHASE_USES_ORDER_SET 连接。"
     ],
     "output_contract": {
       "entities": [
@@ -1138,6 +1450,42 @@
         "entries": [],
         "discovery": true,
         "vocabulary": true
+      },
+      {
+        "entity_type": "order_set",
+        "label": "医嘱套餐",
+        "discovery": true,
+        "domain": "western",
+        "color": "#fbd38d",
+        "icon": "clipboard-list",
+        "extraction_hint": "指南中成组的医嘱推荐（如再灌注方案用药组合、监护与复查组合）"
+      },
+      {
+        "entity_type": "order_item",
+        "label": "医嘱条目",
+        "discovery": true,
+        "domain": "western",
+        "color": "#fefcbf",
+        "icon": "pill",
+        "extraction_hint": "套餐内单条可开立医嘱：药品/检验/检查/治疗/护理/宣教/随访"
+      },
+      {
+        "entity_type": "care_pathway",
+        "label": "诊疗路径",
+        "discovery": true,
+        "domain": "western",
+        "color": "#e9d8fd",
+        "icon": "route",
+        "extraction_hint": "覆盖疾病全诊疗周期的路径锚点（入院→治疗→出院→随访）"
+      },
+      {
+        "entity_type": "pathway_phase",
+        "label": "路径阶段",
+        "discovery": true,
+        "domain": "western",
+        "color": "#d6bcfa",
+        "icon": "git-branch",
+        "extraction_hint": "按病程划分的阶段：急诊期/急性期/恢复期/维持期/随访期等"
       }
     ],
     "relations": [
@@ -1272,6 +1620,46 @@
         "extraction_hint": "抽取治疗方案执行过程中要求的监测项目；同一片段共同出现时建立关系。",
         "concept_code": "",
         "generate_evidence": true
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_MATERIALIZED_AS",
+        "name": "治疗方案物化为医嘱套餐",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "order_set",
+        "cardinality": "1:N",
+        "extraction_hint": "治疗方案的医嘱落地形式（同章节或同疾病语境）"
+      },
+      {
+        "relation_code": "ORDER_SET_INCLUDES_ITEM",
+        "name": "医嘱套餐包含医嘱条目",
+        "source_entity_type": "order_set",
+        "target_entity_type": "order_item",
+        "cardinality": "1:N",
+        "extraction_hint": "套餐罗列的每一条医嘱"
+      },
+      {
+        "relation_code": "DISEASE_HAS_CARE_PATHWAY",
+        "name": "疾病有诊疗路径",
+        "source_entity_type": "disease",
+        "target_entity_type": "care_pathway",
+        "cardinality": "1:N",
+        "extraction_hint": "指南描述了该疾病的规范诊治流程时建立"
+      },
+      {
+        "relation_code": "CARE_PATHWAY_HAS_PHASE",
+        "name": "诊疗路径包含阶段",
+        "source_entity_type": "care_pathway",
+        "target_entity_type": "pathway_phase",
+        "cardinality": "1:N",
+        "extraction_hint": "按病程顺序罗列各阶段"
+      },
+      {
+        "relation_code": "PHASE_USES_ORDER_SET",
+        "name": "路径阶段使用医嘱套餐",
+        "source_entity_type": "pathway_phase",
+        "target_entity_type": "order_set",
+        "cardinality": "N:M",
+        "extraction_hint": "某阶段默认开立的医嘱套餐"
       }
     ],
     "attributes": [
@@ -1359,6 +1747,82 @@
         "allowed_values": [],
         "concept_code": "",
         "description": "如 发病12小时内、24小时内"
+      },
+      {
+        "attribute_code": "ORDER_CLASS",
+        "name": "医嘱类别",
+        "owner_entity_type": "order_item",
+        "data_type": "string",
+        "required": true,
+        "allowed_values": [
+          "药品",
+          "检验",
+          "检查",
+          "治疗",
+          "手术",
+          "护理",
+          "宣教",
+          "随访"
+        ],
+        "description": "医嘱条目的开立类别"
+      },
+      {
+        "attribute_code": "ORDER_REQUIRED",
+        "name": "必选性",
+        "owner_entity_type": "order_item",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [
+          "required",
+          "optional",
+          "conditional"
+        ],
+        "description": "套餐内该条目为必选/可选/按条件勾选"
+      },
+      {
+        "attribute_code": "ORDER_DOSE_RULE",
+        "name": "剂量频次规则",
+        "owner_entity_type": "order_item",
+        "data_type": "string",
+        "required": false,
+        "description": "指南原文的剂量/频次/途径描述，保留数值供院内参数化"
+      },
+      {
+        "attribute_code": "ORDER_SET_PRIORITY",
+        "name": "套餐优先级",
+        "owner_entity_type": "order_set",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [
+          "preferred",
+          "alternative",
+          "rescue"
+        ],
+        "description": "首选/替代/挽救，与治疗规则优先级语义一致"
+      },
+      {
+        "attribute_code": "PHASE_SEQUENCE",
+        "name": "阶段顺序",
+        "owner_entity_type": "pathway_phase",
+        "data_type": "int",
+        "required": false,
+        "description": "路径内的阶段序号，从 1 开始"
+      },
+      {
+        "attribute_code": "PHASE_ENTRY",
+        "name": "进入条件",
+        "owner_entity_type": "pathway_phase",
+        "data_type": "string",
+        "required": false,
+        "description": "进入该阶段的临床条件（如确诊STEMI、入院完成）"
+      },
+      {
+        "attribute_code": "PHASE_EXIT",
+        "name": "转段条件",
+        "owner_entity_type": "pathway_phase",
+        "data_type": "string",
+        "required": false,
+        "description": "结束/转出该阶段的条件（如再灌注完成、出院评估通过）"
       }
     ],
     "concept_codes": [
@@ -1385,7 +1849,9 @@
       "不要把示例、参考文献或其他疾病内容抽取为诊断证据",
       "entity_type 只能使用模板定义的疾病、症状、检验、检查或诊断证据类型。",
       "诊断证据编码可表示检验状态（检验编码:概念编码）或检查形态（发现编码），不要单独输出抽象概念节点。",
-      "entity_type 只能使用模板定义的疾病、症状、检验、检查、诊断证据以及治疗方案、治疗措施、药物、禁忌、监测要求类型。"
+      "entity_type 只能使用模板定义的疾病、症状、检验、检查、诊断证据以及治疗方案、治疗措施、药物、禁忌、监测要求类型。",
+      "指南中的医嘱套餐抽为 order_set 实体，单条医嘱抽为 order_item 并标注 attributes.ORDER_CLASS（药品/检验/检查/治疗/手术/护理/宣教/随访）与 ORDER_REQUIRED；剂量频次写入 ORDER_DOSE_RULE，保留指南原文数值。",
+      "按病程划分的诊治阶段抽为 pathway_phase（attributes: PHASE_SEQUENCE 顺序、PHASE_ENTRY 进入条件、PHASE_EXIT 转段条件），全周期流程抽为 care_pathway；阶段与该阶段默认医嘱套餐用 PHASE_USES_ORDER_SET 连接。"
     ],
     "output_contract": {},
     "capabilities": [
@@ -1852,6 +2318,42 @@
         "discovery": true,
         "vocabulary": false,
         "entries": []
+      },
+      {
+        "entity_type": "order_set",
+        "label": "医嘱套餐",
+        "discovery": true,
+        "domain": "western",
+        "color": "#fbd38d",
+        "icon": "clipboard-list",
+        "extraction_hint": "指南中成组的医嘱推荐（如再灌注方案用药组合、监护与复查组合）"
+      },
+      {
+        "entity_type": "order_item",
+        "label": "医嘱条目",
+        "discovery": true,
+        "domain": "western",
+        "color": "#fefcbf",
+        "icon": "pill",
+        "extraction_hint": "套餐内单条可开立医嘱：药品/检验/检查/治疗/护理/宣教/随访"
+      },
+      {
+        "entity_type": "care_pathway",
+        "label": "诊疗路径",
+        "discovery": true,
+        "domain": "western",
+        "color": "#e9d8fd",
+        "icon": "route",
+        "extraction_hint": "覆盖疾病全诊疗周期的路径锚点（入院→治疗→出院→随访）"
+      },
+      {
+        "entity_type": "pathway_phase",
+        "label": "路径阶段",
+        "discovery": true,
+        "domain": "western",
+        "color": "#d6bcfa",
+        "icon": "git-branch",
+        "extraction_hint": "按病程划分的阶段：急诊期/急性期/恢复期/维持期/随访期等"
       }
     ],
     "relations": [
@@ -2015,6 +2517,46 @@
         "source_entity_type": "treatment_plan",
         "target_entity_type": "monitoring_requirement",
         "generate_evidence": false
+      },
+      {
+        "relation_code": "TREATMENT_PLAN_MATERIALIZED_AS",
+        "name": "治疗方案物化为医嘱套餐",
+        "source_entity_type": "treatment_plan",
+        "target_entity_type": "order_set",
+        "cardinality": "1:N",
+        "extraction_hint": "治疗方案的医嘱落地形式（同章节或同疾病语境）"
+      },
+      {
+        "relation_code": "ORDER_SET_INCLUDES_ITEM",
+        "name": "医嘱套餐包含医嘱条目",
+        "source_entity_type": "order_set",
+        "target_entity_type": "order_item",
+        "cardinality": "1:N",
+        "extraction_hint": "套餐罗列的每一条医嘱"
+      },
+      {
+        "relation_code": "DISEASE_HAS_CARE_PATHWAY",
+        "name": "疾病有诊疗路径",
+        "source_entity_type": "disease",
+        "target_entity_type": "care_pathway",
+        "cardinality": "1:N",
+        "extraction_hint": "指南描述了该疾病的规范诊治流程时建立"
+      },
+      {
+        "relation_code": "CARE_PATHWAY_HAS_PHASE",
+        "name": "诊疗路径包含阶段",
+        "source_entity_type": "care_pathway",
+        "target_entity_type": "pathway_phase",
+        "cardinality": "1:N",
+        "extraction_hint": "按病程顺序罗列各阶段"
+      },
+      {
+        "relation_code": "PHASE_USES_ORDER_SET",
+        "name": "路径阶段使用医嘱套餐",
+        "source_entity_type": "pathway_phase",
+        "target_entity_type": "order_set",
+        "cardinality": "N:M",
+        "extraction_hint": "某阶段默认开立的医嘱套餐"
       }
     ],
     "attributes": [
@@ -2081,6 +2623,82 @@
           "禁用",
           "慎用"
         ]
+      },
+      {
+        "attribute_code": "ORDER_CLASS",
+        "name": "医嘱类别",
+        "owner_entity_type": "order_item",
+        "data_type": "string",
+        "required": true,
+        "allowed_values": [
+          "药品",
+          "检验",
+          "检查",
+          "治疗",
+          "手术",
+          "护理",
+          "宣教",
+          "随访"
+        ],
+        "description": "医嘱条目的开立类别"
+      },
+      {
+        "attribute_code": "ORDER_REQUIRED",
+        "name": "必选性",
+        "owner_entity_type": "order_item",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [
+          "required",
+          "optional",
+          "conditional"
+        ],
+        "description": "套餐内该条目为必选/可选/按条件勾选"
+      },
+      {
+        "attribute_code": "ORDER_DOSE_RULE",
+        "name": "剂量频次规则",
+        "owner_entity_type": "order_item",
+        "data_type": "string",
+        "required": false,
+        "description": "指南原文的剂量/频次/途径描述，保留数值供院内参数化"
+      },
+      {
+        "attribute_code": "ORDER_SET_PRIORITY",
+        "name": "套餐优先级",
+        "owner_entity_type": "order_set",
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [
+          "preferred",
+          "alternative",
+          "rescue"
+        ],
+        "description": "首选/替代/挽救，与治疗规则优先级语义一致"
+      },
+      {
+        "attribute_code": "PHASE_SEQUENCE",
+        "name": "阶段顺序",
+        "owner_entity_type": "pathway_phase",
+        "data_type": "int",
+        "required": false,
+        "description": "路径内的阶段序号，从 1 开始"
+      },
+      {
+        "attribute_code": "PHASE_ENTRY",
+        "name": "进入条件",
+        "owner_entity_type": "pathway_phase",
+        "data_type": "string",
+        "required": false,
+        "description": "进入该阶段的临床条件（如确诊STEMI、入院完成）"
+      },
+      {
+        "attribute_code": "PHASE_EXIT",
+        "name": "转段条件",
+        "owner_entity_type": "pathway_phase",
+        "data_type": "string",
+        "required": false,
+        "description": "结束/转出该阶段的条件（如再灌注完成、出院评估通过）"
       }
     ],
     "concept_codes": [
@@ -2102,7 +2720,9 @@
     "prompt_instructions": [
       "使用开放临床本体抽取，不受预置词典限制",
       "编码优先使用标准码，无法确定时返回 null 并生成 LOCAL 码",
-      "每个实体和规则必须附带原文页码行号和引文"
+      "每个实体和规则必须附带原文页码行号和引文",
+      "指南中的医嘱套餐抽为 order_set 实体，单条医嘱抽为 order_item 并标注 attributes.ORDER_CLASS（药品/检验/检查/治疗/手术/护理/宣教/随访）与 ORDER_REQUIRED；剂量频次写入 ORDER_DOSE_RULE，保留指南原文数值。",
+      "按病程划分的诊治阶段抽为 pathway_phase（attributes: PHASE_SEQUENCE 顺序、PHASE_ENTRY 进入条件、PHASE_EXIT 转段条件），全周期流程抽为 care_pathway；阶段与该阶段默认医嘱套餐用 PHASE_USES_ORDER_SET 连接。"
     ],
     "output_contract": {
       "entities": [],

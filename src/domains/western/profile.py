@@ -14,6 +14,10 @@ NODE_META = {
     "medication": {"label": "药物", "color": "#9ae6b4", "stroke": "#48bb78", "shape": "dot", "size": 18},
     "contraindication": {"label": "禁忌", "color": "#fc8181", "stroke": "#e53e3e", "shape": "dot", "size": 18},
     "monitoring_requirement": {"label": "监测要求", "color": "#b794f4", "stroke": "#805ad5", "shape": "dot", "size": 18},
+    "order_set": {"label": "医嘱套餐", "color": "#fbd38d", "stroke": "#d69e2e", "shape": "diamond", "size": 24},
+    "order_item": {"label": "医嘱条目", "color": "#fefcbf", "stroke": "#b7791f", "shape": "dot", "size": 16},
+    "care_pathway": {"label": "诊疗路径", "color": "#e9d8fd", "stroke": "#6b46c1", "shape": "diamond", "size": 28},
+    "pathway_phase": {"label": "路径阶段", "color": "#d6bcfa", "stroke": "#553c9a", "shape": "box", "size": 20},
     "pathology": {"label": "病理", "color": "#b83280", "stroke": "#97266d", "shape": "box", "size": 20},
     "biomarker": {"label": "生物标志物", "color": "#38b2ac", "stroke": "#2c7a7b", "shape": "box", "size": 20},
     "molecular_test": {"label": "分子检测", "color": "#4fd1c5", "stroke": "#319795", "shape": "box", "size": 20},
@@ -33,6 +37,14 @@ PATH_PANELS = (
         "title": "治疗方案链路",
         "description": "疾病 → 治疗方案 → 措施/药物/禁忌/监测",
         "spec": "disease->treatment_plan->intervention/medication/contraindication/monitoring_requirement",
+    },
+    {
+        "title": "诊疗路径与医嘱套餐链路",
+        "description": "疾病 → 诊疗路径 → 路径阶段 → 医嘱套餐 → 医嘱条目；治疗方案物化为医嘱套餐",
+        "spec": (
+            "disease->care_pathway->pathway_phase->order_set->order_item;"
+            "treatment_plan->order_set"
+        ),
     },
 )
 
@@ -58,6 +70,7 @@ WESTERN_PROFILE = DomainProfile(
             "disease", "lab", "exam", "diagnostic_evidence", "symptom", "sign",
             "treatment_plan", "intervention", "medication",
             "contraindication", "monitoring_requirement",
+            "order_set", "order_item", "care_pathway", "pathway_phase",
             "pathology", "biomarker", "molecular_test", "stage", "histology",
             "risk_factor",
         ),

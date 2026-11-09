@@ -13,16 +13,29 @@ router = APIRouter(prefix="/api/standards", tags=["standards"])
 STANDARDS_DIR = Path(__file__).parent.parent.parent.parent / "data" / "standards"
 
 
+def _standard_sort_key(item: Dict) -> tuple:
+    return (
+        str(item.get("lab_code") or ""),
+        str(item.get("concept_code") or ""),
+        str(item.get("context_gender") or ""),
+        item.get("context_age_min") or 0,
+        item.get("context_age_max") or 0,
+    )
+
+
 def _load_hospital(hospital_id: str) -> List[Dict]:
     path = STANDARDS_DIR / f"{hospital_id}.json"
     if path.exists():
-        return json.loads(path.read_text(encoding="utf-8"))
+        items = json.loads(path.read_text(encoding="utf-8"))
+        items.sort(key=_standard_sort_key)
+        return items
     return []
 
 
 def _save_hospital(hospital_id: str, items: List[Dict]):
     STANDARDS_DIR.mkdir(parents=True, exist_ok=True)
     path = STANDARDS_DIR / f"{hospital_id}.json"
+    items.sort(key=_standard_sort_key)
     path.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
 
 

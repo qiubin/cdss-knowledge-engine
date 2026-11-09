@@ -57,6 +57,12 @@ DEFAULT_RELATION_NAMES = {
     "TREATMENT_PLAN_INCLUDES_MEDICATION": "治疗方案包含药物",
     "TREATMENT_PLAN_HAS_CONTRAINDICATION": "治疗方案有禁忌",
     "TREATMENT_PLAN_HAS_MONITORING": "治疗方案有监测要求",
+    # Order-set / care-pathway layer (guideline-level materialization).
+    "TREATMENT_PLAN_MATERIALIZED_AS": "治疗方案物化为医嘱套餐",
+    "ORDER_SET_INCLUDES_ITEM": "医嘱套餐包含医嘱条目",
+    "DISEASE_HAS_CARE_PATHWAY": "疾病有诊疗路径",
+    "CARE_PATHWAY_HAS_PHASE": "诊疗路径包含阶段",
+    "PHASE_USES_ORDER_SET": "路径阶段使用医嘱套餐",
 }
 
 def normalize_graph_filename(filename: str = DEFAULT_GRAPH_FILENAME) -> str:
@@ -97,8 +103,12 @@ def _resolve_graph_domain(graph: Dict[str, Any], filename: str) -> str:
     return "western"
 
 
-def _load_graph(filename: str = DEFAULT_GRAPH_FILENAME) -> Dict[str, Any]:
-    path = KG_DIR / normalize_graph_filename(filename)
+def _load_graph(
+    filename: str = DEFAULT_GRAPH_FILENAME,
+    kg_dir: Optional[Path] = None,
+) -> Dict[str, Any]:
+    base = Path(kg_dir) if kg_dir is not None else KG_DIR
+    path = base / normalize_graph_filename(filename)
     graph: Dict[str, Any]
     if path.exists():
         graph = json.loads(path.read_text(encoding="utf-8"))
@@ -137,8 +147,13 @@ def _load_graph(filename: str = DEFAULT_GRAPH_FILENAME) -> Dict[str, Any]:
     return graph
 
 
-def _save_graph(data: Dict[str, Any], filename: str = DEFAULT_GRAPH_FILENAME):
-    path = KG_DIR / normalize_graph_filename(filename)
+def _save_graph(
+    data: Dict[str, Any],
+    filename: str = DEFAULT_GRAPH_FILENAME,
+    kg_dir: Optional[Path] = None,
+):
+    base = Path(kg_dir) if kg_dir is not None else KG_DIR
+    path = base / normalize_graph_filename(filename)
     payload = dict(data)
     if isinstance(data.get("nodes"), dict):
         payload["nodes"] = list(data["nodes"].values())
@@ -570,6 +585,22 @@ def _ensure_treatment_plan_semantics(
         _upsert_semantic_relation(
             graph, plan_id, relation_code, item_id, relation_names, refs,
         )
+    # Materialize guideline order sets referenced by the rule conclusion so
+    # the graph carries the plan → order-set projection used by
+    # recommendation surfaces.
+    for order_set_code in conclusion.get("order_set_ids") or []:
+        code = str(order_set_code or "").strip()
+        if not code:
+            continue
+        set_node = graph["nodes"].get(_semantic_node_id("order_set", code))
+        order_set_id = _upsert_semantic_node(
+            graph, "order_set", code,
+            str((set_node or {}).get("name") or code), refs,
+        )["id"]
+        _upsert_semantic_relation(
+            graph, plan_id, "TREATMENT_PLAN_MATERIALIZED_AS", order_set_id,
+            relation_names, refs,
+        )
 
 
 def _ensure_rule_semantics(
@@ -700,6 +731,8 @@ async def import_graph(request: GraphImportRequest):
         ).graph.legacy_graph_filename
     graph_filename = normalize_graph_filename(requested_graph)
     graph = _load_graph(graph_filename)
+    from src.review.metadata import apply_import_review_metadata, snapshot_hashes
+    previous_hashes = snapshot_hashes(graph)
     graph.setdefault("diseases", [])
     graph.setdefault("evidences", [])
     graph.setdefault("disease_evidence", [])
@@ -915,7 +948,17 @@ async def import_graph(request: GraphImportRequest):
                     "quote": source.get("quote", ""),
                 })
         _ensure_semantic_layer(graph, graph_filename)
+        apply_import_review_metadata(
+            graph, previous_hashes, request.doc_id,
+            current_chunk_ids={chunk.get("chunk_id") for chunk in request.chunks},
+        )
         _save_graph(graph, graph_filename)
+        try:
+            from src.review.service import sync_blocked_rules_for_graph
+            sync_blocked_rules_for_graph(graph_filename)
+        except Exception:
+            import logging
+            logging.getLogger(__name__).warning("同步规则阻断状态失败", exc_info=True)
         return {
             "doc_id": request.doc_id,
             "domain": domain,
@@ -1120,7 +1163,17 @@ async def import_graph(request: GraphImportRequest):
     )
     _ensure_semantic_layer(graph, graph_filename)
 
+    apply_import_review_metadata(
+        graph, previous_hashes, request.doc_id,
+        current_chunk_ids={chunk.get("chunk_id") for chunk in request.chunks},
+    )
     _save_graph(graph, graph_filename)
+    try:
+        from src.review.service import sync_blocked_rules_for_graph
+        sync_blocked_rules_for_graph(graph_filename)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning("同步规则阻断状态失败", exc_info=True)
     vocabulary = ConceptVocabulary()
     vocabulary.load(str(KG_DIR.parent / "vocab" / "concepts.json"))
     unknown_concepts = sorted({

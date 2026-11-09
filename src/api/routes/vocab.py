@@ -12,6 +12,7 @@ from pydantic import ValidationError
 from src.domains import normalize_domain
 from src.extraction.models import TemplateEntityEntry
 from src.kg.schema import ConceptDefinition
+from src.vocab.entity_classification import classify_entries
 from src.vocab.entity_vocabulary import EntityVocabularyRepository, graph_usage
 from src.vocab.reference_vocabulary import ReferenceVocabularyRepository
 from src.vocab.repository import ConceptVocabularyRepository
@@ -197,7 +198,8 @@ async def list_entity_dictionaries():
 
 @router.get("/entities/{entity_type}")
 async def list_entity_entries(entity_type: str):
-    return [item.model_dump() for item in EntityVocabularyRepository(entity_type).list()]
+    entries = [item.model_dump() for item in EntityVocabularyRepository(entity_type).list()]
+    return classify_entries(entity_type, entries)
 
 
 @router.post("/entities/{entity_type}")
@@ -207,14 +209,16 @@ async def create_entity_entry(entity_type: str, entry: Dict):
     if repository.find(parsed.code):
         raise HTTPException(409, f"共享词表 {entity_type} 中编码 {parsed.code} 已存在")
     _check_concept_entry(entity_type, parsed.code)
-    return repository.save(parsed, is_new=True).model_dump()
+    saved = repository.save(parsed, is_new=True)
+    return classify_entries(entity_type, [saved.model_dump()])[0]
 
 
 @router.put("/entities/{entity_type}/{code}")
 async def update_entity_entry(entity_type: str, code: str, entry: Dict):
     parsed = _validate_entry(entity_type, _parse_entry(entry, code))
     _check_concept_entry(entity_type, parsed.code)
-    return EntityVocabularyRepository(entity_type).save(parsed).model_dump()
+    saved = EntityVocabularyRepository(entity_type).save(parsed)
+    return classify_entries(entity_type, [saved.model_dump()])[0]
 
 
 @router.delete("/entities/{entity_type}/{code}")

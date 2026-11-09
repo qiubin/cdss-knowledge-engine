@@ -56,6 +56,7 @@
     graph: ["知识图谱", "管理疾病、诊断证据和指南出处"],
     tcmGraph: ["中医图谱", "证候为中心的辨证、治法与方药知识图谱"],
     rules: ["规则管理", "规则使用抽象证据概念，不保存医院阈值"],
+    review: ["审核台", "跨图谱与规则的待办、阻断、待复核与审核记录"],
     standards: ["标准管理", "按医院维护概念到检验判定阈值的标准"],
     inference: ["病历测试", "用模拟病历调用知识图谱、规则和医院标准"],
     tcmInference: ["中医辨证", "输入症状、舌象、脉象，输出证候、治法与方药"],
@@ -73,7 +74,14 @@
     const text = await response.text();
     let data;
     try { data = text ? JSON.parse(text) : null; } catch (_) { data = { message: text }; }
-    if (!response.ok) throw new Error((data && (data.detail || data.message)) || `请求失败 ${response.status}`);
+    if (!response.ok) {
+      const detail = data && data.detail;
+      const message = typeof detail === "string"
+        ? detail
+        : detail ? JSON.stringify(detail)
+        : (data && data.message) || `请求失败 ${response.status}`;
+      throw new Error(message);
+    }
     return data;
   }
 
@@ -88,6 +96,15 @@
     setTimeout(() => { el.className = "toast"; }, isError ? 5000 : 2800);
   }
   const badge = (value) => `<span class="badge ${esc(value)}">${esc(value)}</span>`;
+  const REVIEW_LABELS = {
+    draft: "待审核", active: "已通过", rejected: "已拒绝",
+    retired: "已失效", stale: "待复核", blocked: "已阻断", testing: "测试中",
+    approved: "预审通过",
+  };
+  const reviewBadge = (value) => {
+    const status = value || "draft";
+    return `<span class="badge ${esc(status)}">${esc(REVIEW_LABELS[status] || status)}</span>`;
+  };
   const conceptName = (code) => {
     const item = state.vocab.find((v) => v.code === code);
     return item ? `${item.name_cn} (${code})` : code || "-";
@@ -134,7 +151,7 @@
     return pagedTableState[key];
   }
 
-  function pagedPanel({ key, title, description = "", headers, items, filters = [], placeholder = "搜索…", emptyText = "暂无数据" }) {
+  function pagedPanel({ key, title, description = "", headers, items, filters = [], placeholder = "搜索…", emptyText = "暂无数据", actions = "" }) {
     const ts = tableStateFor(key);
     pagedTableData[key] = { headers, items, filters, emptyText };
     const filterHtml = filters.map((filter) => `
@@ -143,7 +160,7 @@
         ${filter.options.map((option) => `<option value="${esc(option.value)}" ${ts.filters[filter.key] === option.value ? "selected" : ""}>${esc(option.label ?? option.value)}</option>`).join("")}
       </select>`).join("");
     return `<section class="panel">
-      <div class="panel-head"><div><h3>${esc(title)}</h3>${description ? `<p>${esc(description)}</p>` : ""}</div></div>
+      <div class="panel-head"><div><h3>${esc(title)}</h3>${description ? `<p>${esc(description)}</p>` : ""}</div><div class="actions">${actions}</div></div>
       <div class="panel-body flush">
         <div class="table-toolbar">
           <input type="search" class="table-search" data-table-search="${key}" placeholder="${esc(placeholder)}" value="${esc(ts.query)}">
@@ -165,7 +182,10 @@
       if (query && !String(item.text || "").toLowerCase().includes(query)) return false;
       return data.filters.every((filter) => {
         const selected = ts.filters[filter.key] || "";
-        return !selected || String(item.values?.[filter.key] ?? "") === selected;
+        if (!selected) return true;
+        const value = item.values?.[filter.key];
+        if (Array.isArray(value)) return value.map(String).includes(selected);
+        return String(value ?? "") === selected;
       });
     });
   }
@@ -282,6 +302,7 @@
       else if (state.route === "graph") await renderGraph();
       else if (state.route === "tcmGraph") await renderTcmGraph();
       else if (state.route === "rules") await renderRules();
+      else if (state.route === "review") await renderReviewCenter();
       else if (state.route === "standards") await renderStandards();
       else if (state.route === "tcmInference") await renderTcmInference();
       else await renderInference();
@@ -576,7 +597,7 @@
     startImportJob("auto", file.name);
     const form = new FormData();
     form.append("file", file);
-    form.append("auto_activate", "true");
+    form.append("auto_activate", "false");
     try {
       state.autoResult = await api("/api/auto/import", { method: "POST", body: form });
       state.doc = await api(`/api/pdf/${state.autoResult.doc_id}/result`);
@@ -929,12 +950,35 @@
 
   async function renderTemplateStructure() {
     await loadBase();
-    const template = await api(`/api/templates/${state.templateStructureId}`);
+    const template = await api(`/api/templates/${state.templateStructureId}/structure`);
     const back = '<button id="templateBack" class="btn ghost">返回模板列表</button>';
     const conceptOption = (code) => {
       const item = state.vocab.find((v) => v.code === code);
       return item ? `${item.name_cn} / ${item.code}` : code || "不绑定概念";
     };
+    const privateEntities = template.entity_types.flatMap((owner) =>
+      (owner.private_entries || []).map((item) => ({ owner, item }))
+    ).sort((left, right) => {
+      const typeOrder = String(left.owner.entity_type).localeCompare(String(right.owner.entity_type), "zh-Hans-CN");
+      return typeOrder || String(left.item.name).localeCompare(String(right.item.name), "zh-Hans-CN");
+    });
+    const privateEntityTypes = template.entity_types.filter((item) => !item.vocabulary);
+    const typeCounts = privateEntities.reduce((counts, { owner }) => {
+      counts.set(owner.entity_type, (counts.get(owner.entity_type) || 0) + 1);
+      return counts;
+    }, new Map());
+    const entityTypeFilters = [...typeCounts.entries()]
+      .sort(([left], [right]) => left.localeCompare(right, "zh-Hans-CN"))
+      .map(([value, count]) => ({ value, label: `${typeName[value] || value}（${count}）` }));
+    const entityTableKey = `template-private-entities-${template.template_id}`;
+    const entityItems = privateEntities.map(({ owner, item }) => ({
+      text: [item.code, item.name, ...(item.aliases || []), owner.label, owner.entity_type].join(" "),
+      values: { entity_type: owner.entity_type },
+      html: `<tr><td>${esc(typeName[owner.entity_type] || owner.label || owner.entity_type)}</td><td class="mono">${esc(item.code)}</td><td>${esc(item.name)}</td><td><div class="quote">${esc((item.aliases || []).join(" / "))}</div></td><td><div class="actions"><button class="btn sm" data-struct-kind="entity" data-struct-key="${esc(owner.entity_type)}/${esc(item.code)}" data-struct-mode="edit">编辑</button><button class="btn sm danger" data-struct-kind="entity" data-struct-key="${esc(owner.entity_type)}/${esc(item.code)}" data-struct-mode="delete">删除</button></div></td></tr>`,
+    }));
+    const addPrivateEntity = privateEntityTypes.length
+      ? '<button id="addEntity" class="btn primary">新增私有实体</button>'
+      : "";
     content.innerHTML = `
       ${panel(`${template.name} · 结构管理`, `
         <div class="inline-controls">
@@ -944,12 +988,20 @@
           <div class="field"><label>概念边界</label><input readonly value="${template.concept_codes.length} 个概念"></div>
         </div>
       `, "", "本页是 Schema 层：实体类型、关系、属性构成解析契约；具体实体在「实体词典」（术语层）维护；医院阈值只保存在标准管理中")}
-      ${panel("实体类型", table(["类型编码", "名称", "编码字段", "实体数", "词表", "操作"], template.entity_types.map((item) => `
-        <tr><td class="mono">${esc(item.entity_type)}</td><td>${esc(item.label)}</td><td class="mono">${esc(item.code_field)}</td><td>${item.entries.length}</td><td>${item.vocabulary ? `<button class="badge active" data-goto-vocab="${esc(item.entity_type)}" title="点击进入实体词典管理">共享词表</button>` : '<span class="badge draft" title="实体内嵌在模板中">模板私有</span>'}</td><td><div class="actions"><button class="btn sm" data-struct-kind="entity-type" data-struct-key="${esc(item.entity_type)}" data-struct-mode="edit">编辑</button><button class="btn sm danger" data-struct-kind="entity-type" data-struct-key="${esc(item.entity_type)}" data-struct-mode="delete">删除</button></div></td></tr>`
+      ${panel("实体类型", table(["类型编码", "名称", "编码字段", "私有 / 共享实体", "词表", "操作"], template.entity_types.map((item) => `
+        <tr><td class="mono">${esc(item.entity_type)}</td><td>${esc(item.label)}</td><td class="mono">${esc(item.code_field)}</td><td>${item.private_entry_count ?? (item.private_entries || item.entries).length} 私有${item.shared_entry_count ? ` <span class="muted">/ ${item.shared_entry_count} 共享</span>` : ""}</td><td>${item.vocabulary ? `<button class="badge active" data-goto-vocab="${esc(item.entity_type)}" title="点击进入实体词典管理">共享词表</button>` : '<span class="badge draft" title="实体内嵌在模板中">模板私有</span>'}</td><td><div class="actions"><button class="btn sm" data-struct-kind="entity-type" data-struct-key="${esc(item.entity_type)}" data-struct-mode="edit">编辑</button><button class="btn sm danger" data-struct-kind="entity-type" data-struct-key="${esc(item.entity_type)}" data-struct-mode="delete">删除</button></div></td></tr>`
       )), '<button id="addEntityType" class="btn primary">新增实体类型</button>', "实体类型决定图谱节点族和输出类型")}
-      ${panel("实体", table(["类型", "编码", "名称", "别名 / 正则", "操作"], template.entity_types.flatMap((owner) => owner.entries.map((item) => `
-        <tr><td>${esc(typeName[owner.entity_type] || owner.entity_type)}${owner.vocabulary ? ' <span class="badge active" title="该实体保存在共享词表中">共享</span>' : ""}</td><td class="mono">${esc(item.code)}</td><td>${esc(item.name)}</td><td><div class="quote">${esc((item.aliases || []).join(" / "))}</div></td><td><div class="actions"><button class="btn sm" data-struct-kind="entity" data-struct-key="${esc(owner.entity_type)}/${esc(item.code)}" data-struct-mode="edit">编辑</button><button class="btn sm danger" data-struct-kind="entity" data-struct-key="${esc(owner.entity_type)}/${esc(item.code)}" data-struct-mode="delete">删除</button></div></td></tr>`
-      ))), '<button id="addEntity" class="btn primary">新增实体</button>', "本地解析使用别名匹配；大模型解析只允许模板编码；共享词表实体由全部引用模板共用")}
+      ${pagedPanel({
+        key: entityTableKey,
+        title: "实体（仅模板私有）",
+        description: "共享词表中已有的实体不再重复展示，请在「实体词典」统一维护；这里只管理模板自有的实体。",
+        headers: ["类型", "编码", "名称", "别名 / 正则", "操作"],
+        items: entityItems,
+        filters: [{ key: "entity_type", label: "实体类型", options: entityTypeFilters }],
+        placeholder: "搜索编码、名称或别名…",
+        emptyText: entityItems.length ? "没有匹配的私有实体" : "当前模板没有私有实体，共享词条请到实体词典维护",
+        actions: addPrivateEntity,
+      })}
       ${panel("关系", table(["编码", "名称", "源类型", "目标类型", "限定编码", "证据概念", "说明", "操作"], template.relations.map((item) => `
         <tr><td class="mono">${esc(item.relation_code)}</td><td>${esc(item.name)}</td><td>${esc(item.source_entity_type)}${item.source_code ? ` / ${esc(item.source_code)}` : ""}</td><td>${esc(item.target_entity_type)}${item.target_code ? ` / ${esc(item.target_code)}` : ""}</td><td class="mono">${esc(item.cardinality)}</td><td>${item.concept_code ? conceptChip(item.concept_code) : "-"}</td><td><div class="quote">${esc(item.extraction_hint)}</div></td><td><div class="actions"><button class="btn sm" data-struct-kind="relation" data-struct-key="${esc(item.relation_code)}" data-struct-mode="edit">编辑</button><button class="btn sm danger" data-struct-kind="relation" data-struct-key="${esc(item.relation_code)}" data-struct-mode="delete">删除</button></div></td></tr>`
       )), '<button id="addRelation" class="btn primary">新增关系</button>', "关系约束图谱导入和大模型抽取，避免自由生成无边界的边")}
@@ -962,41 +1014,51 @@
       state.entityVocabType = b.dataset.gotoVocab;
       navigate("entityVocab");
     });
+    bindPagedTable(entityTableKey);
     $("#editTemplateMeta").onclick = () => openTemplateEditor(template);
     $("#addEntityType").onclick = () => openTemplateItemEditor("entity-type", null);
-    $("#addEntity").onclick = () => openTemplateItemEditor("entity", null);
+    if ($("#addEntity")) $("#addEntity").onclick = () => openTemplateItemEditor("entity", null, true, { privateOnly: true });
     $("#addRelation").onclick = () => openTemplateItemEditor("relation", null);
     $("#addAttribute").onclick = () => openTemplateItemEditor("attribute", null);
-    content.querySelectorAll("[data-struct-mode]").forEach((button) => {
+    const handleStructureAction = async (button) => {
       const kind = button.dataset.structKind, key = button.dataset.structKey, mode = button.dataset.structMode;
       if (mode === "delete") {
-        button.onclick = async () => {
-          if (!confirm("确认删除该模板结构项？")) return;
-          if (kind === "entity") {
-            const [entityType, code] = key.split("/");
-            await api(`/api/templates/${template.template_id}/entities/${entityType}/${code}`, { method: "DELETE" });
-          } else {
-            await api(`/api/templates/${template.template_id}/${kind === "entity-type" ? "entity-types" : `${kind}s`}/${encodeURIComponent(key)}`, { method: "DELETE" });
-          }
-          toast("模板结构项已删除");
-          renderTemplateStructure();
-        };
+        if (!confirm("确认删除该模板结构项？")) return;
+        if (kind === "entity") {
+          const [entityType, code] = key.split("/");
+          await api(`/api/templates/${template.template_id}/entities/${entityType}/${code}`, { method: "DELETE" });
+        } else {
+          await api(`/api/templates/${template.template_id}/${kind === "entity-type" ? "entity-types" : `${kind}s`}/${encodeURIComponent(key)}`, { method: "DELETE" });
+        }
+        toast("模板结构项已删除");
+        renderTemplateStructure();
       } else {
         const source = kind === "entity-type"
           ? template.entity_types.find((item) => item.entity_type === key)
           : kind === "entity"
-            ? (() => { const [type, code] = key.split("/"); const owner = template.entity_types.find((item) => item.entity_type === type); return owner.entries.find((item) => item.code === code); })()
+            ? (() => { const [type, code] = key.split("/"); const owner = template.entity_types.find((item) => item.entity_type === type); return (owner.private_entries || owner.entries).find((item) => item.code === code); })()
             : template[`${kind}s`].find((item) => item[kind === "relation" ? "relation_code" : "attribute_code"] === key);
-        button.onclick = () => openTemplateItemEditor(kind, kind === "entity" ? { ...source, __key: key } : source);
+        openTemplateItemEditor(kind, kind === "entity" ? { ...source, __key: key } : source);
       }
+    };
+    content.querySelectorAll("[data-struct-mode]").forEach((button) => {
+      if (button.dataset.structKind === "entity") return;
+      button.onclick = () => handleStructureAction(button);
+    });
+    const entityTableBody = document.querySelector(`[data-table-body="${entityTableKey}"]`);
+    if (entityTableBody) entityTableBody.addEventListener("click", (event) => {
+      const button = event.target.closest('[data-struct-kind="entity"][data-struct-mode]');
+      if (button) handleStructureAction(button);
     });
   }
 
-  function openTemplateItemEditor(kind, item, isNew = false) {
+  function openTemplateItemEditor(kind, item, isNew = false, options = {}) {
     const value = item || {};
     isNew = isNew || !item;
     const option = (selected, current, label) => `<option value="${esc(current)}" ${selected === current ? "selected" : ""}>${esc(label)}</option>`;
-    const entityOptions = (selected) => state.templates.find((t) => t.template_id === state.templateStructureId).entity_types.map((t) => option(selected, t.entity_type, `${t.label} / ${t.entity_type}`)).join("");
+    const structureTypes = state.templates.find((t) => t.template_id === state.templateStructureId)?.entity_types || [];
+    const entityTypes = options.privateOnly ? structureTypes.filter((t) => !t.vocabulary) : structureTypes;
+    const entityOptions = (selected) => entityTypes.map((t) => option(selected, t.entity_type, `${t.label} / ${t.entity_type}`)).join("");
     const conceptOptions = (selected = "") => `<option value="" ${!selected ? "selected" : ""}>不绑定概念</option>${state.vocab.map((v) => option(selected, v.code, `${v.name_cn} / ${v.code}`)).join("")}`;
     const label = { "entity-type": "实体类型", entity: "实体", relation: "关系", attribute: "属性" }[kind];
     let fields = "";
@@ -1075,13 +1137,60 @@
     await loadBase();
     const dictionaries = await api("/api/vocab/entities");
     if (!state.entityVocabType || !dictionaries.some((d) => d.entity_type === state.entityVocabType)) {
-      state.entityVocabType = dictionaries[0]?.entity_type || "";
+      state.entityVocabType = dictionaries.find((d) => d.entity_type === "disease")?.entity_type
+        || dictionaries[0]?.entity_type
+        || "";
     }
     const selected = dictionaries.find((d) => d.entity_type === state.entityVocabType) || null;
     const entries = selected ? await api(`/api/vocab/entities/${encodeURIComponent(selected.entity_type)}`) : [];
     const totalEntries = dictionaries.reduce((sum, d) => sum + d.entry_count, 0);
     const templateCount = new Set(dictionaries.flatMap((d) => d.referencing_templates.map((t) => t.template_id))).size;
     const dictLabel = (type) => typeName[type] || type;
+    const specialtiesOf = (item) => (item.specialties?.length ? item.specialties : [item.specialty || "未分类"]);
+    const diseasesOf = (item) => (item.diseases?.length ? item.diseases : (item.disease_tags?.length ? item.disease_tags : ["未分类"]));
+    const uniqueSorted = (values) => [...new Set(values.filter(Boolean).map(String))].sort((a, b) => a.localeCompare(b, "zh-Hans-CN"));
+    const countBy = (values) => values.reduce((counts, value) => counts.set(value, (counts.get(value) || 0) + 1), new Map());
+    const specialtyOptions = uniqueSorted(entries.flatMap(specialtiesOf));
+    const diseaseOptions = uniqueSorted(entries.flatMap(diseasesOf));
+    const domainOptions = uniqueSorted(entries.map((item) => item.domain === "tcm" ? "tcm" : item.domain === "western" ? "western" : "shared"));
+    const specialtyCounts = countBy(entries.flatMap(specialtiesOf));
+    const diseaseCounts = countBy(entries.flatMap(diseasesOf));
+    const domainCounts = countBy(entries.map((item) => item.domain === "tcm" ? "tcm" : item.domain === "western" ? "western" : "shared"));
+    const domainLabels = { western: "西医", tcm: "中医", shared: "共享" };
+    const classifiedCount = entries.filter((item) => specialtiesOf(item).some((value) => value !== "未分类") || diseasesOf(item).some((value) => value !== "未分类")).length;
+    const tableKey = `entity-vocab-${selected?.entity_type || "none"}`;
+    const tagList = (values, limit = 2) => {
+      const visible = values.slice(0, limit);
+      const more = values.length - visible.length;
+      return `${visible.map((value) => `<span class="badge">${esc(value)}</span>`).join(" ")}${more > 0 ? ` <span class="muted">+${more}</span>` : ""}`;
+    };
+    const entryItems = entries.map((item) => {
+      const specialties = specialtiesOf(item);
+      const diseases = diseasesOf(item);
+      const domain = item.domain === "tcm" ? "tcm" : item.domain === "western" ? "western" : "shared";
+      return {
+        text: [item.code, item.name, ...(item.aliases || []), ...specialties, ...diseases, item.standard_system, item.standard_code].join(" "),
+        values: { domain, specialty: specialties, disease: diseases },
+        html: `<tr>
+          <td class="mono">${esc(item.code)}</td>
+          <td><strong>${esc(item.name)}</strong></td>
+          <td>${badge(domain)}</td>
+          <td>${tagList(specialties)}</td>
+          <td>${tagList(diseases)}</td>
+          <td>${esc(item.standard_system || "-")}${item.standard_code ? `<div class="mono muted">${esc(item.standard_code)}</div>` : ""}</td>
+          <td><div class="quote">${esc((item.aliases || []).join(" / "))}</div></td>
+          <td><div class="actions"><button class="btn sm" data-entry-edit="${esc(item.code)}">编辑</button><button class="btn sm danger" data-entry-delete="${esc(item.code)}">删除</button></div></td>
+        </tr>`,
+      };
+    });
+    const filters = [
+      { key: "domain", label: "领域", options: domainOptions.map((value) => ({ value, label: `${domainLabels[value] || value}（${domainCounts.get(value) || 0}）` })) },
+      { key: "specialty", label: "专科", options: specialtyOptions.map((value) => ({ value, label: `${value}（${specialtyCounts.get(value) || 0}）` })) },
+    ];
+    if (selected && selected.entity_type !== "disease") {
+      filters.push({ key: "disease", label: "关联疾病", options: diseaseOptions.map((value) => ({ value, label: `${value}（${diseaseCounts.get(value) || 0}）` })) });
+    }
+    const activeFilters = filters.filter((filter) => filter.options.length > 1);
     content.innerHTML = `
       ${panel("三层架构", `<div class="pipeline">
         <div class="step done"><strong>Schema 层 · 解析模板</strong><span>实体类型、关系、属性契约</span></div>
@@ -1092,34 +1201,53 @@
         <div class="kpi"><span>词典数</span><strong>${dictionaries.length}</strong><small>按实体类型分文件</small></div>
         <div class="kpi"><span>实体总数</span><strong>${totalEntries}</strong><small>共享术语条目</small></div>
         <div class="kpi"><span>引用模板数</span><strong>${templateCount}</strong><small>通过共享词表引用词典</small></div>
-        <div class="kpi"><span>当前词典</span><strong>${selected ? entries.length : 0}</strong><small>${esc(selected ? dictLabel(selected.entity_type) : "-")} 条目</small></div>
+        <div class="kpi"><span>当前词典</span><strong>${selected ? entries.length : 0}</strong><small>${esc(selected ? dictLabel(selected.entity_type) : "-")} 条目 · 已分类 ${classifiedCount}</small></div>
       </div>
       ${panel("词典选择", `
         <div class="inline-controls">
           <div class="field"><label>实体类型词典</label><select id="entityVocabSelector">${dictionaries.map((d) => `<option value="${esc(d.entity_type)}" ${d.entity_type === state.entityVocabType ? "selected" : ""}>${esc(dictLabel(d.entity_type))} / ${esc(d.entity_type)}（${d.entry_count} 实体 · ${d.referencing_templates.length} 模板引用）</option>`).join("")}</select></div>
         </div>
       `, "", "同一实体类型只有一个词典；所有勾选“共享词表”的模板都读取这里")}
-      ${selected ? panel(`${esc(dictLabel(selected.entity_type))}词典（${entries.length}）`, table(["编码", "名称", "领域", "标准体系", "标准编码", "别名 / 正则", "操作"], entries.map((item) => `
-        <tr><td class="mono">${esc(item.code)}</td><td><strong>${esc(item.name)}</strong></td><td>${badge(item.domain === "tcm" ? "tcm" : item.domain === "western" ? "western" : "shared")}</td><td>${esc(item.standard_system || "-")}</td><td class="mono">${esc(item.standard_code || "-")}</td><td><div class="quote">${esc((item.aliases || []).join(" / "))}</div></td><td><div class="actions"><button class="btn sm" data-entry-edit="${esc(item.code)}">编辑</button><button class="btn sm danger" data-entry-delete="${esc(item.code)}">删除</button></div></td></tr>`
-      )), '<button id="importIcd10" class="btn ghost">从标准库导入</button><button id="newEntityEntry" class="btn primary">新增实体</button>', "疾病类实体统一按 ICD-10 编码和标准名称维护；标准库只读供搜索选用，导入后才会参与解析识别") : '<div class="empty">暂无词典；在解析模板中将实体类型设为共享词表后自动创建</div>'}
+      ${selected ? pagedPanel({
+        key: tableKey,
+        title: `${dictLabel(selected.entity_type)}词典（${entries.length}）`,
+        description: `按专科、关联疾病筛选；已分类 ${classifiedCount}/${entries.length} 条。专科和疾病默认从图谱关联自动推断，可在编辑中手工覆盖。`,
+        headers: ["编码", "名称", "领域", "专科", "关联疾病", "标准", "别名 / 正则", "操作"],
+        items: entryItems,
+        filters: activeFilters,
+        placeholder: "搜索编码、名称、别名、专科或疾病…",
+        emptyText: "没有匹配的实体",
+        actions: '<button id="importIcd10" class="btn ghost">从标准库导入</button><button id="newEntityEntry" class="btn primary">新增实体</button>',
+      }) : '<div class="empty">暂无词典；在解析模板中将实体类型设为共享词表后自动创建</div>'}
       ${selected && selected.referencing_templates.length ? panel("引用该词典的模板", table(["模板", "ID", "状态"], selected.referencing_templates.map((t) => `
         <tr><td><strong>${esc(t.name)}</strong></td><td class="mono">${esc(t.template_id)}</td><td>${badge(t.status)}</td></tr>`
       )), "", "这些模板的实体类型勾选了“共享词表”，词典修改后无需逐模板维护") : ""}
     `;
     $("#entityVocabSelector").onchange = (event) => { state.entityVocabType = event.target.value; renderEntityVocab(); };
     const newButton = $("#newEntityEntry");
-    if (newButton) newButton.onclick = () => openEntityEntryEditor(selected.entity_type, null);
+    if (newButton && selected) newButton.onclick = () => openEntityEntryEditor(selected.entity_type, null);
     const importButton = $("#importIcd10");
-    if (importButton) importButton.onclick = () => openIcd10Importer(selected.entity_type);
-    content.querySelectorAll("[data-entry-edit]").forEach((button) => button.onclick = () =>
-      openEntityEntryEditor(selected.entity_type, entries.find((item) => item.code === button.dataset.entryEdit)));
-    content.querySelectorAll("[data-entry-delete]").forEach((button) => button.onclick = async () => {
-      if (!confirm(`确认从共享词典删除 ${button.dataset.entryDelete}？`)) return;
-      try {
-        await api(`/api/vocab/entities/${encodeURIComponent(selected.entity_type)}/${encodeURIComponent(button.dataset.entryDelete)}`, { method: "DELETE" });
-        toast("共享实体已删除"); renderEntityVocab();
-      } catch (error) { toast(error.message, true); }
-    });
+    if (importButton && selected) importButton.onclick = () => openIcd10Importer(selected.entity_type);
+    bindPagedTable(tableKey);
+    const tableBody = document.querySelector(`[data-table-body="${tableKey}"]`);
+    if (tableBody && selected) {
+      tableBody.addEventListener("click", async (event) => {
+        const editButton = event.target.closest("[data-entry-edit]");
+        if (editButton) {
+          const item = entries.find((row) => row.code === editButton.dataset.entryEdit);
+          if (item) openEntityEntryEditor(selected.entity_type, item);
+          return;
+        }
+        const deleteButton = event.target.closest("[data-entry-delete]");
+        if (!deleteButton) return;
+        const code = deleteButton.dataset.entryDelete;
+        if (!confirm(`确认从共享词典删除 ${code}？`)) return;
+        try {
+          await api(`/api/vocab/entities/${encodeURIComponent(selected.entity_type)}/${encodeURIComponent(code)}`, { method: "DELETE" });
+          toast("共享实体已删除"); renderEntityVocab();
+        } catch (error) { toast(error.message, true); }
+      });
+    }
   }
 
   function openEntityEntryEditor(entityType, item, isNew = false) {
@@ -1129,6 +1257,8 @@
       standard_system: entityType === "disease" ? "ICD-10" : "",
       standard_code: "",
       source: entityType === "disease" ? "ICD-10" : "",
+      specialty: "",
+      disease_tags: [],
     };
     isNew = isNew || !item;
     const isDisease = entityType === "disease";
@@ -1147,6 +1277,8 @@
     const notice = isDisease
       ? `疾病字典按 ICD-10 编码和标准名称维护；标准编码自动等于疾病编码。`
       : `保存后立即对全部引用「${esc(typeName[entityType] || entityType)}」词典的同领域模板生效。`;
+    const derivedSpecialty = (value.specialties || []).filter((entry) => entry && entry !== "未分类").join("、");
+    const derivedDiseases = (value.diseases || []).filter((entry) => entry && entry !== "未分类");
     $("#editorBody").innerHTML = `
       <h3>${isNew ? "新增共享实体" : "编辑共享实体"} · ${esc(typeName[entityType] || entityType)}</h3>
       <div class="form-grid">
@@ -1154,14 +1286,18 @@
         <div class="field"><label>实体名称</label><input name="name" value="${esc(value.name)}"></div>
         ${domainField}
         ${standardFields}
+        <div class="field"><label>专科</label><input name="specialty" value="${esc(value.specialty || "")}" placeholder="${esc(derivedSpecialty || "例如：心血管内科")}"></div>
+        <div class="field wide"><label>关联疾病（每行一个，留空自动归类）</label><textarea name="disease_tags" placeholder="${esc(derivedDiseases.join("\n") || "例如：急性心肌梗死")}">${esc((value.disease_tags || []).join("\n"))}</textarea></div>
         <div class="field wide"><label>别名 / 正则（每行一个）</label><textarea name="aliases">${esc((value.aliases || []).join("\n"))}</textarea></div>
-        <div class="field wide muted">${notice}</div>
+        <div class="field wide muted">${notice} 专科和关联疾病留空时，列表会使用图谱关联自动归类；手工填写后以手工值为准。</div>
       </div>`;
     const dialog = $("#editorDialog"); dialog.showModal();
     $("#editorSave").onclick = async () => {
       const form = $("#editorBody");
       const payload = Object.fromEntries([...form.querySelectorAll("input,select,textarea")].map((input) => [input.name, input.value]));
       payload.aliases = (payload.aliases || "").split(/\n+/).map((v) => v.trim()).filter(Boolean);
+      payload.disease_tags = (payload.disease_tags || "").split(/\n+/).map((v) => v.trim()).filter(Boolean);
+      payload.specialty = (payload.specialty || "").trim();
       if (isDisease) {
         payload.domain = "western";
         payload.standard_system = "ICD-10";
@@ -1388,17 +1524,30 @@
       try { selected = await api(`/api/guide-packages/${state.guidePackageId}`); }
       catch (_) { state.guidePackageId = ""; }
     }
+    let packageItems = null;
+    if (selected) {
+      try { packageItems = await api(`/api/guide-packages/${selected.package_id}/items`); }
+      catch (_) { packageItems = null; }
+    }
     const checkBadge = (status) => `<span class="badge ${status === "passed" ? "active" : status === "warning" ? "draft" : "danger"}">${status === "passed" ? "通过" : status === "warning" ? "提醒" : "失败"}</span>`;
-    const packageStatusLabel = (status) => ({
+    const importStatuses = ["imported", "ready_for_test", "published"];
+    const isImported = (item) => Boolean(item?.imported) || Boolean(item?.import_result?.success);
+    const hasImportStateMismatch = (item) => Boolean(
+      item && importStatuses.includes(item.status) && !isImported(item)
+    );
+    const packageStatusLabel = (item) => {
+      const status = typeof item === "string" ? item : item?.status;
+      if (typeof item === "object" && hasImportStateMismatch(item)) return "待导入（状态不一致）";
+      return ({
       generated: "待审核",
       reviewed: "已审核",
       imported: "已导入（待修正）",
       ready_for_test: "已导入（可测试）",
       published: "已发布",
       failed: "导入失败",
-    }[status] || status);
-    const isImported = (item) => Boolean(item?.import_result?.success) || ["imported", "ready_for_test", "published"].includes(item?.status);
-    const packageConfirmed = selected && ["reviewed", "imported", "ready_for_test", "published"].includes(selected.status);
+      }[status] || status);
+    };
+    const packageConfirmed = selected && (isImported(selected) || selected.status === "reviewed");
     content.innerHTML = `
       <div class="pipeline">
         <div class="step done"><strong>1 审核预检</strong><span>查看自动检查与问题明细</span></div>
@@ -1408,13 +1557,16 @@
       </div>
       ${panel("指南知识包", table(["知识包 / 指南", "目标证候/诊断", "候选内容", "预检", "状态", "更新时间", "操作"], state.guidePackages.map((item) => {
         const check = item.check_summary || {};
-        return `<tr><td><strong>${esc(item.package_id)}</strong><div class="muted">${esc(item.doc_title)}</div><div>${badge(normalizeDomainClient(item.domain))}</div></td><td class="mono">${esc(item.target_disease_code)}</td><td>${item.entity_count} 实体${item.syndrome_count ? `（证候 ${item.syndrome_count}）` : ""}<br>${item.relation_count} 关系 / ${item.rule_count} 规则</td><td>${check.passed || 0} 通过 / ${check.warning || 0} 提醒 / ${check.failed || 0} 失败</td><td><span class="badge ${esc(item.status)}">${esc(packageStatusLabel(item.status))}</span></td><td class="nowrap">${esc(formatTime(item.updated_at))}</td><td><div class="actions"><button class="btn sm" data-package-detail="${esc(item.package_id)}">查看 / 审核</button></div></td></tr>`;
+        return `<tr><td><strong>${esc(item.package_id)}</strong><div class="muted">${esc(item.doc_title)}</div><div>${badge(normalizeDomainClient(item.domain))}</div></td><td class="mono">${esc(item.target_disease_code)}</td><td>${item.entity_count} 实体${item.syndrome_count ? `（证候 ${item.syndrome_count}）` : ""}<br>${item.relation_count} 关系 / ${item.rule_count} 规则</td><td>${check.passed || 0} 通过 / ${check.warning || 0} 提醒 / ${check.failed || 0} 失败</td><td><span class="badge ${esc(item.status)}">${esc(packageStatusLabel(item))}</span></td><td class="nowrap">${esc(formatTime(item.updated_at))}</td><td><div class="actions"><button class="btn sm" data-package-detail="${esc(item.package_id)}">查看 / 审核</button></div></td></tr>`;
       })), '<button id="refreshPackages" class="btn primary">刷新列表</button>', "先审核预检，再在详情中一次性导入图谱和草稿规则；导入不会启用规则")}
       ${selected ? `
-        <div class="result-banner ${selected.status === "ready_for_test" ? "ok" : selected.status === "failed" ? "error" : "warning"}">
-          <strong>${esc(selected.doc_title)}</strong> / ${esc(selected.package_id)} 状态：${esc(packageStatusLabel(selected.status))} ${badge(normalizeDomainClient(selected.domain))}
+        <div class="result-banner ${isImported(selected) ? "ok" : selected.status === "failed" ? "error" : "warning"}">
+          <strong>${esc(selected.doc_title)}</strong> / ${esc(selected.package_id)} 状态：${esc(packageStatusLabel(selected))} ${badge(normalizeDomainClient(selected.domain))}
           <div class="muted">目标 ${esc(selected.target_anchor_type || "疾病")} ${esc(selected.target_disease_code)}；模板 ${esc(selected.template_id || "-")}；目标图谱 ${esc(selected.graph_filename || "stemi_graph.json")}。${normalizeDomainClient(selected.domain) === "tcm" ? "中医知识包不检查医院检验标准，重点检查证候构成、方剂组成和配伍禁忌。" : "图谱只保存抽象证据语义，医院阈值仍在标准管理中维护。"}</div>
         </div>
+        ${hasImportStateMismatch(selected) ? `
+          <div class="result-banner warning"><strong>知识包尚未真正入库</strong><div>当前流程状态显示为已导入，但没有任何导入记录。请使用下方“导入图谱和草稿规则”完成入库；导入后 ${(selected.suggested_rules || []).length} 条候选规则会以 draft 状态出现。</div></div>
+        ` : ""}
         ${isImported(selected) ? `
           <div class="result-banner ok"><strong>该知识包已导入</strong><div>图谱实体和关系已更新，规则已保存为草稿但未启用。下一步请到规则管理逐条审核启用。</div><div class="actions"><button id="goRules" class="btn primary">前往规则管理启用</button></div></div>
           <details class="debug-panel"><summary>高级：重新导入</summary><div class="actions"><button id="reimportPackage" class="btn danger">重新导入图谱和草稿规则</button></div></details>
@@ -1424,13 +1576,17 @@
               ${selected.status === "generated"
                 ? '<button id="approvePackage" class="btn primary">确认审核通过</button><span class="muted">请先核对下方自动预检与候选内容；确认后才能进入导入。</span>'
                 : '<button id="importSelectedPackage" class="btn primary">导入图谱和草稿规则</button><span class="muted">图谱将更新，规则保存为草稿，不会自动启用。</span>'}
+              <div class="field"><label>导入模式</label><select id="packageImportMode">
+                <option value="draft">全部导入为草稿</option>
+                <option value="approved_only">仅导入已通过项</option>
+              </select></div>
             </div>
           `, "", "知识包只在审核通过后入库一次；规则启用请到规则管理操作")}
         `}
         <details class="debug-panel"><summary>高级：手动修改流程状态</summary>
           <div class="inline-controls">
-            <div class="field"><label>流程状态</label><select id="packageStatus">${["generated", "reviewed", "imported", "ready_for_test", "published", "failed"].map((s) => `<option value="${s}" ${selected.status === s ? "selected" : ""}>${packageStatusLabel(s)}</option>`).join("")}</select></div>
-            <button id="savePackageStatus" class="btn">保存状态</button>
+            <div class="field"><label>流程状态</label><select id="packageStatus">${!(["generated", "reviewed", "failed", ...(isImported(selected) ? importStatuses : [])]).includes(selected.status) ? `<option value="${esc(selected.status)}" selected disabled>${esc(packageStatusLabel(selected))}</option>` : ""}${["generated", "reviewed", "failed", ...(isImported(selected) ? importStatuses : [])].map((s) => `<option value="${s}" ${selected.status === s ? "selected" : ""}>${packageStatusLabel(s)}</option>`).join("")}</select></div>
+            <button id="savePackageStatus" class="btn" ${(["generated", "reviewed", "failed", ...(isImported(selected) ? importStatuses : [])]).includes(selected.status) ? "" : "disabled"}>保存状态</button>
           </div>
         </details>
         ${panel("自动预检", table(["检查项", "结论", "问题明细"], (selected.checks || []).map((item) => `<tr><td><strong>${esc(item.title)}</strong><div class="mono muted">${esc(item.code)}</div></td><td>${checkBadge(item.status)}</td><td>${item.issues?.length ? `<ul class="issue-list">${item.issues.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul>` : '<span class="muted">未发现问题</span>'}</td></tr>`)))}
@@ -1446,6 +1602,21 @@
           ["候选关系", (selected.suggested_relations || []).length, (selected.suggested_relations || []).map((item) => `${item.source_code} → ${item.relation_code} → ${item.target_code || item.target_concept_code}`).join("；") || "导入时按同片段结构兜底生成"],
           ["候选规则", (selected.suggested_rules || []).length, (selected.suggested_rules || []).map((item) => `${item.rule_id} → ${item.disease_code}`).join("；") || "-"],
         ].map((row) => `<tr><td>${esc(row[0])}</td><td>${row[1]}</td><td><div class="quote">${esc(row[2])}</div></td></tr>`)))}
+        ${packageItems ? panel("包内预审", `
+          <div class="review-toolbar">
+            <div class="field"><label>审核人</label><input id="packageReviewer" value="${esc(localStorage.getItem("cdssReviewer") || "")}" placeholder="姓名"></div>
+            <div class="field"><label>筛选</label><select id="packageItemStatus">
+              <option value="">全部</option>
+              <option value="draft">待预审</option>
+              <option value="approved">预审通过</option>
+              <option value="rejected">预审拒绝</option>
+            </select></div>
+            <input id="packageItemSearch" type="search" placeholder="搜索名称 / 编码 / 条目 ID…">
+            <button id="packageBatchApprove" class="btn sm primary">批量通过当前筛选</button>
+            <span class="muted">通过 ${packageItems.summary.approved} / 待审 ${packageItems.summary.draft} / 拒绝 ${packageItems.summary.rejected}；表格最多展示前 200 条。</span>
+          </div>
+          <div id="packageItemTable"></div>
+        `, "", "只有预审通过的条目才会在「仅导入已通过项」模式下入库；未预审条目视为草稿") : ""}
         ${selected.import_result ? (() => {
           const imported = selected.import_result;
           const graph = imported.graph || {};
@@ -1460,6 +1631,65 @@
         })() : ""}
       ` : '<div class="empty">暂无选中知识包；请先在指南导入页上传并生成。</div>'}
     `;
+    const renderPackageItemTable = () => {
+      const mount = $("#packageItemTable");
+      if (!mount || !packageItems) return;
+      const status = $("#packageItemStatus")?.value || "";
+      const query = ($("#packageItemSearch")?.value || "").trim().toLowerCase();
+      const items = (packageItems.items || []).filter((item) => {
+        if (status && item.status !== status) return false;
+        return !query || `${item.name || ""} ${item.code || ""} ${item.item_id}`.toLowerCase().includes(query);
+      }).slice(0, 200);
+      mount.innerHTML = table(["", "类型", "条目", "状态", "操作"], items.map((item) => `
+        <tr>
+          <td><input type="checkbox" data-package-select="${esc(item.item_id)}"></td>
+          <td>${esc(item.item_type)}${item.entity_type ? ` / ${esc(item.entity_type)}` : ""}</td>
+          <td><strong>${esc(item.name || item.rule_id || item.item_id)}</strong><div class="mono muted">${esc(item.code || item.item_id)}</div></td>
+          <td>${reviewBadge(item.status)}</td>
+          <td><div class="actions">
+            <button class="btn sm primary" data-package-item="${esc(item.item_id)}" data-package-action="approve">通过</button>
+            <button class="btn sm danger" data-package-item="${esc(item.item_id)}" data-package-action="reject">拒绝</button>
+            <button class="btn sm" data-package-item="${esc(item.item_id)}" data-package-action="restore">恢复</button>
+          </div></td>
+        </tr>`));
+      mount.querySelectorAll("[data-package-item]").forEach((button) => button.onclick = async () => {
+        try {
+          await api(`/api/guide-packages/${selected.package_id}/items/review`, { json: {
+            items: [button.dataset.packageItem],
+            action: button.dataset.packageAction,
+            reviewer: ($("#packageReviewer")?.value || "").trim() || "未署名",
+          }});
+          localStorage.setItem("cdssReviewer", ($("#packageReviewer")?.value || "").trim());
+          toast("预审状态已更新");
+          renderGuidePackages();
+        } catch (error) { toast(error.message, true); }
+      });
+    };
+    renderPackageItemTable();
+    $("#packageItemStatus")?.addEventListener("change", renderPackageItemTable);
+    $("#packageItemSearch")?.addEventListener("input", renderPackageItemTable);
+    $("#packageReviewer")?.addEventListener("change", (event) => {
+      localStorage.setItem("cdssReviewer", event.target.value.trim());
+    });
+    $("#packageBatchApprove")?.addEventListener("click", async () => {
+      const status = $("#packageItemStatus")?.value || "";
+      const query = ($("#packageItemSearch")?.value || "").trim().toLowerCase();
+      const ids = (packageItems.items || []).filter((item) => {
+        if (status && item.status !== status) return false;
+        return !query || `${item.name || ""} ${item.code || ""} ${item.item_id}`.toLowerCase().includes(query);
+      }).map((item) => item.item_id);
+      if (!ids.length) { toast("没有可预审的条目", true); return; }
+      if (!confirm(`将通过当前筛选的 ${ids.length} 条条目？`)) return;
+      try {
+        await api(`/api/guide-packages/${selected.package_id}/items/review`, { json: {
+          items: ids,
+          action: "approve",
+          reviewer: ($("#packageReviewer")?.value || "").trim() || "未署名",
+        }});
+        toast(`已通过 ${ids.length} 条`);
+        renderGuidePackages();
+      } catch (error) { toast(error.message, true); }
+    });
     $("#refreshPackages").onclick = renderGuidePackages;
     content.querySelectorAll("[data-package-detail]").forEach((button) => button.onclick = () => {
       state.guidePackageId = button.dataset.packageDetail;
@@ -1482,12 +1712,13 @@
   }
 
   async function importGuidePackage(packageId, force = false) {
+    const mode = $("#packageImportMode")?.value || "draft";
     const message = force
-      ? "确认重新导入该知识包？图谱会按当前包内容重新写入，同名草稿规则会被更新，规则仍不会自动启用。"
-      : "确认导入该知识包？图谱实体和关系将入库，规则保存为草稿，不会自动启用。";
+      ? `确认重新导入该知识包（模式：${mode === "approved_only" ? "仅导入已通过项" : "全部导入为草稿"}）？图谱会按当前包内容重新写入，同名草稿规则会被更新，规则仍不会自动启用。`
+      : `确认导入该知识包（模式：${mode === "approved_only" ? "仅导入已通过项" : "全部导入为草稿"}）？图谱实体和关系将入库，规则保存为草稿，不会自动启用。`;
     if (!confirm(message)) return;
     try {
-      const result = await api(`/api/guide-packages/${packageId}/import`, { json: { reviewed_only: false } });
+      const result = await api(`/api/guide-packages/${packageId}/import`, { json: { reviewed_only: false, mode } });
       const ruleErrors = result.rules?.errors?.length || 0;
       toast(ruleErrors ? `导入完成，但 ${ruleErrors} 条规则失败，请查看知识包详情` : "导入完成：规则已保存为草稿，请到规则管理启用", Boolean(ruleErrors));
       state.guidePackageId = packageId;
@@ -1495,9 +1726,9 @@
     } catch (error) { toast(error.message, true); }
   }
 
-  async function renderGraph() {
+  async function renderGraph(options = {}) {
     await loadBase();
-    resetPagedTables();
+    if (!options.preserveTableState) resetPagedTables();
     state.graphs = (await api("/api/kg/graphs")).filter((item) => normalizeDomainClient(item.domain) === "western");
     if (!state.graphs.some((item) => item.graph_filename === state.graphFilename)) {
       state.graphFilename = state.graphs.find((item) => item.graph_filename === "KG-GENERIC_GUIDELINE_V1.json")?.graph_filename || state.graphs[0]?.graph_filename || "stemi_graph.json";
@@ -1544,17 +1775,33 @@
       return [...new Set(refs)].slice(0, 3).join(" / ");
     };
 
-    const relationItems = semanticRelations.map((relation) => ({
-      text: `${relation.source_node_id} ${relation.relation_name || ""} ${relation.relation_code || ""} ${relation.target_node_id}`,
-      values: { relation_code: relation.relation_code || "" },
-      html: `<tr>
-        <td>${semanticLabel(relation.source_node_id)}</td>
-        <td><strong>${esc(relation.relation_name || relation.relation_code)}</strong><div class="mono muted">${esc(relation.relation_code)}</div></td>
-        <td>${semanticLabel(relation.target_node_id)}</td>
-        <td>${semanticRef(relation.source_refs)}</td>
-        <td>${badge(relation.review_status || "draft")}</td>
-      </tr>`,
-    }));
+    const relationItems = semanticRelations.map((relation, index) => {
+      const status = relation.review_status || "draft";
+      const actions = [
+        (status === "draft" || status === "stale")
+          ? `<button class="btn sm primary" data-review-relation="${index}" data-review-action="approve">通过</button>
+             <button class="btn sm danger" data-review-relation="${index}" data-review-action="reject">拒绝</button>`
+          : "",
+        status === "active"
+          ? `<button class="btn sm" data-review-relation="${index}" data-review-action="retire">失效</button>`
+          : "",
+        (status === "rejected" || status === "retired")
+          ? `<button class="btn sm" data-review-relation="${index}" data-review-action="restore">恢复</button>`
+          : "",
+      ].filter(Boolean).join(" ");
+      return {
+        text: `${relation.source_node_id} ${relation.relation_name || ""} ${relation.relation_code || ""} ${relation.target_node_id} ${status}`,
+        values: { relation_code: relation.relation_code || "", review_status: status },
+        html: `<tr>
+          <td>${semanticLabel(relation.source_node_id)}</td>
+          <td><strong>${esc(relation.relation_name || relation.relation_code)}</strong><div class="mono muted">${esc(relation.relation_code)}</div></td>
+          <td>${semanticLabel(relation.target_node_id)}</td>
+          <td>${semanticRef(relation.source_refs)}</td>
+          <td>${reviewBadge(status)}</td>
+          <td><div class="actions">${actions || '<span class="muted">无</span>'}</div></td>
+        </tr>`,
+      };
+    });
     const relationOptions = [...new Map(
       semanticRelations
         .filter((relation) => relation.relation_code)
@@ -1586,17 +1833,34 @@
         .map((id) => [id, { value: id, label: semanticNodeIndex[id]?.name || id }]),
     ).values()];
 
-    const nodeItems = semanticNodes.map((node) => ({
-      text: `${node.node_type} ${node.name} ${node.code || ""} ${node.concept_code || ""}`,
-      values: { node_type: node.node_type || "" },
-      html: `<tr>
-        <td>${esc(typeName[node.node_type] || node.node_type)}</td>
-        <td><strong>${esc(node.name)}</strong></td>
-        <td class="mono">${esc(node.code || node.concept_code || "-")}</td>
-        <td>${semanticRef(node.source_refs)}</td>
-        <td>${badge(node.review_status || "draft")}</td>
-      </tr>`,
-    }));
+    const nodeItems = semanticNodes.map((node) => {
+      const status = node.review_status || "draft";
+      const actions = [
+        (status === "draft" || status === "stale")
+          ? `<button class="btn sm primary" data-review-node="${esc(node.id)}" data-review-action="approve">通过</button>
+             <button class="btn sm danger" data-review-node="${esc(node.id)}" data-review-action="reject">拒绝</button>`
+          : "",
+        status === "active"
+          ? `<button class="btn sm" data-review-node="${esc(node.id)}" data-review-action="retire">失效</button>`
+          : "",
+        (status === "rejected" || status === "retired")
+          ? `<button class="btn sm" data-review-node="${esc(node.id)}" data-review-action="restore">恢复</button>`
+          : "",
+        `<button class="btn sm ghost" data-node-detail="${esc(node.id)}">详情</button>`,
+      ].filter(Boolean).join(" ");
+      return {
+        text: `${node.node_type} ${node.name} ${node.code || ""} ${node.concept_code || ""} ${status}`,
+        values: { node_type: node.node_type || "", review_status: status },
+        html: `<tr>
+          <td>${esc(typeName[node.node_type] || node.node_type)}</td>
+          <td><strong>${esc(node.name)}</strong></td>
+          <td class="mono">${esc(node.code || node.concept_code || "-")}</td>
+          <td>${semanticRef(node.source_refs)}</td>
+          <td>${reviewBadge(status)}</td>
+          <td><div class="actions">${actions}</div></td>
+        </tr>`,
+      };
+    });
     const nodeTypeOptions = [...new Set(semanticNodes.map((node) => node.node_type).filter(Boolean))]
       .map((type) => ({ value: type, label: typeName[type] || type }));
 
@@ -1654,6 +1918,7 @@
       ${panel("图谱选择", `
         <div class="inline-controls">
           <div class="field"><label>知识图谱</label><select id="graphSelector">${state.graphs.map((item) => `<option value="${esc(item.graph_filename)}" ${item.graph_filename === state.graphFilename ? "selected" : ""}>${esc(item.graph_filename)}</option>`).join("")}</select></div>
+          <div class="field"><label>审核人</label><input id="reviewerName" value="${esc(localStorage.getItem("cdssReviewer") || "")}" placeholder="姓名"></div>
         </div>
       `, "", "不同疾病指南可入不同图谱；规则、推理和同步检查按规则所属图谱执行")}
       <div class="grid c4">
@@ -1669,9 +1934,18 @@
         key: "relations",
         title: "语义关系",
         description: "检验、检查、症状和诊断证据之间的显式逻辑边",
-        headers: ["源节点", "关系", "目标节点", "溯源", "状态"],
+        headers: ["源节点", "关系", "目标节点", "溯源", "审核状态", "操作"],
         items: relationItems,
-        filters: [{ key: "relation_code", label: "关系", options: relationOptions }],
+        filters: [
+          { key: "relation_code", label: "关系", options: relationOptions },
+          { key: "review_status", label: "审核状态", options: [
+            { value: "draft", label: "待审核" },
+            { value: "active", label: "已通过" },
+            { value: "rejected", label: "已拒绝" },
+            { value: "retired", label: "已失效" },
+            { value: "stale", label: "待复核" },
+          ] },
+        ],
         placeholder: "搜索节点、关系…",
       })}
       ${pagedPanel({
@@ -1687,9 +1961,18 @@
         key: "nodes",
         title: "语义节点",
         description: "节点编码与解析模板、概念词汇和规则条件共用同一语义",
-        headers: ["类型", "名称", "编码", "来源", "状态"],
+        headers: ["类型", "名称", "编码", "来源", "审核状态", "操作"],
         items: nodeItems,
-        filters: [{ key: "node_type", label: "类型", options: nodeTypeOptions }],
+        filters: [
+          { key: "node_type", label: "类型", options: nodeTypeOptions },
+          { key: "review_status", label: "审核状态", options: [
+            { value: "draft", label: "待审核" },
+            { value: "active", label: "已通过" },
+            { value: "rejected", label: "已拒绝" },
+            { value: "retired", label: "已失效" },
+            { value: "stale", label: "待复核" },
+          ] },
+        ],
         placeholder: "搜索名称、编码、类型…",
       })}
       ${pagedPanel({
@@ -1732,6 +2015,97 @@
     }
     ["relations", "paths", "nodes", "evidences", "links", "sources"].forEach(bindPagedTable);
     $("#graphSelector").onchange = (e) => { state.graphFilename = e.target.value; renderGraph(); };
+    $("#reviewerName").onchange = (event) => {
+      localStorage.setItem("cdssReviewer", event.target.value.trim());
+    };
+
+    const currentReviewer = () => {
+      const value = ($("#reviewerName")?.value || "").trim();
+      if (value) localStorage.setItem("cdssReviewer", value);
+      return value || "未署名";
+    };
+
+    const submitNodeReview = async (nodeId, action) => {
+      try {
+        if (action === "reject" || action === "retire") {
+          const impact = await api(`/api/kg/nodes/${encodeURIComponent(nodeId)}/impact?graph_filename=${encodeURIComponent(state.graphFilename)}`);
+          const message = `该操作将影响 ${impact.incident_relations} 条关系、${impact.rules.total} 条规则（已启用 ${impact.rules.active} 条）。确认继续？`;
+          if (!confirm(message)) return;
+        }
+        const note = prompt("审核意见（可选）") || "";
+        await api(`/api/kg/nodes/${encodeURIComponent(nodeId)}/review?graph_filename=${encodeURIComponent(state.graphFilename)}`, {
+          json: { action, reviewer: currentReviewer(), note },
+        });
+        toast("节点审核状态已更新");
+        renderGraph({ preserveTableState: true });
+      } catch (error) { toast(error.message, true); }
+    };
+
+    const submitRelationReview = async (index, action) => {
+      const relation = semanticRelations[index];
+      if (!relation) return;
+      try {
+        if (action === "reject" || action === "retire") {
+          const params = new URLSearchParams({
+            graph_filename: state.graphFilename,
+            source_node_id: relation.source_node_id,
+            relation_code: relation.relation_code,
+            target_node_id: relation.target_node_id,
+          });
+          const impact = await api(`/api/kg/relations/impact?${params}`);
+          if (!confirm(`该操作将影响 ${impact.rules.total} 条规则（已启用 ${impact.rules.active} 条）。确认继续？`)) return;
+        }
+        const note = prompt("审核意见（可选）") || "";
+        await api(`/api/kg/relations/review?graph_filename=${encodeURIComponent(state.graphFilename)}`, {
+          json: {
+            action,
+            reviewer: currentReviewer(),
+            note,
+            source_node_id: relation.source_node_id,
+            relation_code: relation.relation_code,
+            target_node_id: relation.target_node_id,
+          },
+        });
+        toast("关系审核状态已更新");
+        renderGraph({ preserveTableState: true });
+      } catch (error) { toast(error.message, true); }
+    };
+
+    const openNodeDetail = async (nodeId) => {
+      try {
+        const detail = await api(`/api/kg/nodes/${encodeURIComponent(nodeId)}?graph_filename=${encodeURIComponent(state.graphFilename)}`);
+        const rules = detail.dependents?.rules || [];
+        $("#editorBody").innerHTML = `
+          <h3>${esc(detail.node.name)} <span class="mono muted">${esc(detail.node.code || detail.node.id)}</span></h3>
+          <p>类型：${esc(typeName[detail.node.node_type] || detail.node.node_type)}　状态：${reviewBadge(detail.node.review_status)}</p>
+          <h4>指南溯源</h4>
+          <div class="quote">${esc((detail.node.source_refs || []).join("；") || "-")}</div>
+          <h4>依赖规则（${rules.length}）</h4>
+          ${table(["规则", "状态", "依赖状态"], rules.map((rule) => `<tr><td class="mono">${esc(rule.rule_id)}</td><td>${reviewBadge(rule.status)}</td><td>${esc(rule.dependency_status || "-")}</td></tr>`))}
+        `;
+        const dialog = $("#editorDialog");
+        const save = $("#editorSave");
+        save.hidden = true;
+        dialog.onclose = () => { save.hidden = false; dialog.onclose = null; };
+        $("#editorCancel").onclick = () => dialog.close();
+        dialog.showModal();
+      } catch (error) { toast(error.message, true); }
+    };
+
+    content.onclick = (event) => {
+      const nodeButton = event.target.closest("[data-review-node]");
+      if (nodeButton) {
+        submitNodeReview(nodeButton.dataset.reviewNode, nodeButton.dataset.reviewAction);
+        return;
+      }
+      const relationButton = event.target.closest("[data-review-relation]");
+      if (relationButton) {
+        submitRelationReview(Number(relationButton.dataset.reviewRelation), relationButton.dataset.reviewAction);
+        return;
+      }
+      const detailButton = event.target.closest("[data-node-detail]");
+      if (detailButton) openNodeDetail(detailButton.dataset.nodeDetail);
+    };
   }
 
   async function renderTcmGraph() {
@@ -2067,6 +2441,144 @@
     return record;
   }
 
+  async function renderReviewCenter() {
+    const tab = state.reviewTab || "graph";
+    const reviewer = localStorage.getItem("cdssReviewer") || "";
+    const query = (state.reviewQuery || "").trim();
+    const queueUrl = `/api/review/queue?limit=300${query ? `&q=${encodeURIComponent(query)}` : ""}`;
+    const [queue, audit] = await Promise.all([
+      api(queueUrl),
+      tab === "audit" ? api("/api/review/audit?limit=100") : Promise.resolve({ items: [] }),
+    ]);
+    const allItems = queue.items || [];
+    const typeLabel = { graph_node: "节点", graph_relation: "关系", rule: "规则", package: "知识包" };
+    const itemLabel = (item) => {
+      if (item.item_type === "rule") return `${item.rule_id} · ${item.name || ""}`;
+      if (item.item_type === "graph_relation") return `${item.source_node_id} -${item.relation_code}-> ${item.target_node_id}`;
+      if (item.item_type === "package") return `${item.package_id} · ${item.doc_title || ""}`;
+      return `${item.name || ""}（${item.code || item.node_id}）`;
+    };
+    const items = allItems.filter((item) => {
+      if (tab === "graph") return ["graph_node", "graph_relation"].includes(item.item_type) && ["draft", "stale"].includes(item.status);
+      if (tab === "rules") return item.item_type === "rule" && ["draft", "testing"].includes(item.status);
+      if (tab === "blocked") return item.item_type === "rule" && item.status === "blocked";
+      if (tab === "stale") return item.status === "stale";
+      if (tab === "active") return item.status === "active" && ["graph_node", "graph_relation", "rule"].includes(item.item_type);
+      if (tab === "orphan") return Boolean(item.orphaned_from && item.orphaned_from.length);
+      return false;
+    }).filter((item) => (
+      !query || `${itemLabel(item)} ${item.graph_filename || ""}`.toLowerCase().includes(query.toLowerCase())
+    ));
+    const tabs = [
+      ["graph", "待审图谱"], ["rules", "待审规则"], ["blocked", "被阻断"],
+      ["stale", "待复核"], ["active", "已通过"], ["orphan", "孤儿条目"],
+      ["audit", "审核记录"],
+    ];
+    const tabHtml = tabs.map(([key, label]) => `<button class="review-tab ${tab === key ? "active" : ""}" data-review-tab="${key}">${label}</button>`).join("");
+    const dependencyCount = (item) => item.dependent_rule_count ?? item.dependency_summary?.total ?? "-";
+    const rows = items.map((item, index) => `<tr>
+      <td><input type="checkbox" data-review-select="${index}"></td>
+      <td>${esc(typeLabel[item.item_type] || item.item_type)}</td>
+      <td><strong>${esc(itemLabel(item))}</strong>${item.orphaned_from?.length ? `<div class="muted">孤儿来源：${esc(item.orphaned_from.join("、"))}</div>` : ""}</td>
+      <td>${reviewBadge(item.status)}</td>
+      <td class="mono muted">${esc(item.graph_filename || "-")}</td>
+      <td>${esc(String(dependencyCount(item)))}</td>
+    </tr>`);
+    const statusBadge = (value) => value ? reviewBadge(value) : '<span class="muted">-</span>';
+    const auditRows = (audit.items || []).map((row) => `<tr>
+      <td class="nowrap">${esc(formatTime(row.ts))}</td>
+      <td>${esc(row.entity_type || "-")}</td>
+      <td class="mono">${esc(row.entity_id || "-")}</td>
+      <td>${esc(row.action || "-")}</td>
+      <td>${statusBadge(row.before_status)} → ${statusBadge(row.after_status)}</td>
+      <td>${esc(row.reviewer || "-")}</td>
+      <td>${esc(row.note || "-")}</td>
+    </tr>`);
+    const truncated = queue.summary && queue.summary.total > allItems.length
+      ? `<span class="muted">队列共 ${queue.summary.total} 条，当前展示前 ${allItems.length} 条；请用筛选缩小范围。</span>`
+      : "";
+    content.innerHTML = `
+      <div class="review-tabs">${tabHtml}</div>
+      ${panel(tab === "audit" ? "审核记录" : "待办列表", tab === "audit"
+        ? table(["时间", "类型", "条目", "动作", "状态变化", "审核人", "意见"], auditRows)
+        : `
+          <div class="review-toolbar">
+            <div class="field"><label>审核人</label><input id="reviewCenterReviewer" value="${esc(reviewer)}" placeholder="姓名"></div>
+            <div class="field"><label>搜索</label><input id="reviewSearch" type="search" value="${esc(state.reviewQuery || "")}" placeholder="名称 / 编码 / 规则 ID…"></div>
+            <span class="muted">当前 ${items.length} 条；批量操作逐条执行并写审计。</span>
+            ${truncated}
+            <div class="actions">
+              <button class="btn sm primary" data-review-bulk="approve">批量通过</button>
+              <button class="btn sm danger" data-review-bulk="reject">批量拒绝</button>
+              <button class="btn sm" data-review-bulk="retire">批量失效</button>
+              <button class="btn sm" data-review-bulk="restore">批量恢复</button>
+            </div>
+          </div>
+          ${table(['<input type="checkbox" id="reviewSelectAll">', "类型", "条目", "状态", "图谱", "依赖规则数"], rows)}
+        `, "", "审核台汇总图谱与规则的待办；批量动作按条目状态逐条校验，失败项会返回原因")}
+    `;
+    const reviewerInput = $("#reviewCenterReviewer");
+    if (reviewerInput) {
+      reviewerInput.onchange = (event) => localStorage.setItem("cdssReviewer", event.target.value.trim());
+    }
+    let reviewSearchTimer = null;
+    const searchInput = $("#reviewSearch");
+    if (searchInput) {
+      searchInput.oninput = (event) => {
+        clearTimeout(reviewSearchTimer);
+        const value = event.target.value;
+        reviewSearchTimer = setTimeout(() => {
+          state.reviewQuery = value;
+          renderReviewCenter();
+        }, 250);
+      };
+    }
+    $("#reviewSelectAll")?.addEventListener("change", (event) => {
+      content.querySelectorAll("[data-review-select]").forEach((input) => { input.checked = event.target.checked; });
+    });
+    content.querySelectorAll("[data-review-tab]").forEach((button) => button.onclick = () => {
+      state.reviewTab = button.dataset.reviewTab;
+      renderReviewCenter();
+    });
+    content.querySelectorAll("[data-review-bulk]").forEach((button) => button.onclick = async () => {
+      const selected = [...content.querySelectorAll("[data-review-select]:checked")]
+        .map((input) => items[Number(input.dataset.reviewSelect)])
+        .filter(Boolean);
+      if (!selected.length) { toast("请先勾选条目", true); return; }
+      const action = button.dataset.reviewBulk;
+      if (action === "reject" || action === "retire") {
+        const affected = selected.reduce((sum, item) => (
+          sum + (item.item_type === "rule" ? 1 : (item.dependent_rule_count || 0))
+        ), 0);
+        if (!confirm(`将处理 ${selected.length} 条，涉及 ${affected} 条规则/依赖。确认继续？`)) return;
+      }
+      const note = prompt("审核意见（可选）") || "";
+      const payload = selected.map((item) => ({
+        item_type: item.item_type,
+        graph_filename: item.graph_filename || "",
+        node_id: item.node_id || "",
+        source_node_id: item.source_node_id || "",
+        relation_code: item.relation_code || "",
+        target_node_id: item.target_node_id || "",
+        rule_id: item.rule_id || "",
+      }));
+      try {
+        const result = await api("/api/review/bulk", { json: {
+          items: payload,
+          action,
+          reviewer: (($("#reviewCenterReviewer")?.value || "").trim()) || "未署名",
+          note,
+        }});
+        const firstError = (result.results || []).find((entry) => !entry.ok);
+        const detail = firstError
+          ? `；首个失败：${typeof firstError.error === "string" ? firstError.error : JSON.stringify(firstError.error)}`
+          : "";
+        toast(`批量完成：成功 ${result.succeeded}，失败 ${result.failed}${detail}`, result.failed > 0);
+        renderReviewCenter();
+      } catch (error) { toast(error.message, true); }
+    });
+  }
+
   async function renderRules() {
     await loadBase();
     const [graph, sync] = await Promise.all([api("/api/kg/graph"), api("/api/rules/sync-check")]);
@@ -2092,10 +2604,32 @@
       <option value="">全部疾病 / 证候</option>
       ${[...diseaseMap.entries()].sort((a, b) => a[1].localeCompare(b[1], "zh-Hans-CN")).map(([code, name]) => `<option value="${esc(code)}" ${state.ruleDisease === code ? "selected" : ""}>${esc(name)}（${esc(code)}）</option>`).join("")}
     </select>`;
-    content.innerHTML = panel("规则列表", table(["规则 / 结论", "目标证候/诊断", "条件逻辑", "关联概念", "图谱语义", "所属图谱", "优先级", "状态", "操作"], visibleRules.map((r) => {
+    const inconsistentIds = new Set(
+      (state.ruleSync?.rules || []).filter((item) => item.semantic_status !== "consistent").map((item) => item.rule_id)
+    );
+    content.innerHTML = panel("规则列表", table(["规则 / 结论", "目标证候/诊断", "条件逻辑", "关联概念", "图谱语义", "图谱依赖", "所属图谱", "优先级", "状态", "操作"], visibleRules.map((r) => {
       const disease = graph.diseases.find((d) => d.code === r.disease_code);
-      return `<tr><td><strong>${esc(r.name)}</strong><div class="mono muted">${esc(r.rule_id)} v${r.version}</div><div>${badge(r.rule_type || "diagnosis")} ${badge(normalizeDomainClient(r.domain))}</div></td><td>${esc(disease ? disease.name_cn : r.disease_name || r.disease_code)}</td><td><div class="quote">${esc(conditionText(r.conditions))}</div></td><td>${ruleConceptChips(r)}</td><td>${ruleSyncBadge(r.rule_id)}</td><td class="mono muted">${esc(r.graph_filename || "stemi_graph.json")}</td><td>${r.priority}</td><td>${badge(r.status)}</td><td><div class="actions"><button class="btn sm" data-rule-edit="${esc(r.rule_id)}">编辑</button><button class="btn sm" data-rule-status="${esc(r.rule_id)}" data-status="${r.status === "active" ? "retire" : "activate"}">${r.status === "active" ? "停用" : "启用"}</button><button class="btn sm danger" data-rule-delete="${esc(r.rule_id)}">删除</button></div></td></tr>`;
-    })), `<span class="nowrap">${domainFilter}${diseaseFilter}${syncStatus}<button id="activateConsistent" class="btn">批量启用一致规则</button><button id="newRule" class="btn primary">新建规则</button></span>`, "条件引用概念词汇，执行时按患者所属医院解析标准；启用前检查疾病、实体和概念链路");
+      const dependency = r.dependency_summary || {};
+      const dependencyTone = dependency.blocked ? "danger" : (dependency.total && dependency.active === dependency.total ? "active" : "draft");
+      const dependencyLabel = dependency.blocked
+        ? `${dependency.total - dependency.active} 项未通过`
+        : `${dependency.active || 0}/${dependency.total || 0} 已审核`;
+      const dependencyCell = dependency.total
+        ? `<button class="btn sm ${dependencyTone}" data-rule-deps="${esc(r.rule_id)}">${dependencyLabel}</button>`
+        : (dependency.blocked ? '<span class="badge danger">图谱无效</span>' : '<span class="muted">无依赖</span>');
+      const ruleAction = r.status === "active"
+        ? { action: "retire", label: "停用" }
+        : (r.status === "rejected" || r.status === "retired"
+          ? { action: "restore", label: "恢复" }
+          : { action: "approve", label: "启用" });
+      const completeButton = inconsistentIds.has(r.rule_id)
+        ? `<button class="btn sm" data-rule-complete="${esc(r.rule_id)}">补全条件</button>`
+        : "";
+      const approveDepsButton = dependency.blocked
+        ? `<button class="btn sm primary" data-rule-approve-deps="${esc(r.rule_id)}">补审依赖</button>`
+        : "";
+      return `<tr><td><strong>${esc(r.name)}</strong><div class="mono muted">${esc(r.rule_id)} v${r.version}</div><div>${badge(r.rule_type || "diagnosis")} ${badge(normalizeDomainClient(r.domain))}</div></td><td>${esc(disease ? disease.name_cn : r.disease_name || r.disease_code)}</td><td><div class="quote">${esc(conditionText(r.conditions))}</div></td><td>${ruleConceptChips(r)}</td><td>${ruleSyncBadge(r.rule_id)}</td><td>${dependencyCell}</td><td class="mono muted">${esc(r.graph_filename || "stemi_graph.json")}</td><td>${r.priority}</td><td>${reviewBadge(r.status)}</td><td><div class="actions">${completeButton}${approveDepsButton}<button class="btn sm" data-rule-edit="${esc(r.rule_id)}">编辑</button><button class="btn sm" data-rule-status="${esc(r.rule_id)}" data-rule-action="${ruleAction.action}">${ruleAction.label}</button><button class="btn sm danger" data-rule-delete="${esc(r.rule_id)}">删除</button></div></td></tr>`;
+    })), `<span class="nowrap">${domainFilter}${diseaseFilter}${syncStatus}<button id="completeConditions" class="btn">批量补全条件</button><button id="activateConsistent" class="btn">批量启用一致规则</button><button id="newRule" class="btn primary">新建规则</button></span>`, "条件引用概念词汇，执行时按患者所属医院解析标准；启用前检查疾病、实体、概念链路和图谱审核状态");
     $("#newRule").onclick = () => openRuleEditor(null);
     $("#activateConsistent").onclick = async () => {
       if (!confirm("将启用当前筛选范围内图谱语义一致且通过质量检查的草稿规则，确认继续？")) return;
@@ -2109,6 +2643,28 @@
         renderRules();
       } catch (error) { toast(error.message, true); }
     };
+    $("#completeConditions").onclick = async () => {
+      const ids = visibleRules.filter((rule) => inconsistentIds.has(rule.rule_id)).map((rule) => rule.rule_id);
+      if (!ids.length) { toast("当前筛选范围内没有图谱不一致的规则", true); return; }
+      if (!confirm(`将按图谱证据为 ${ids.length} 条不一致规则自动补全概念条件（写入草稿条件，可再编辑）。确认继续？`)) return;
+      try {
+        const result = await api("/api/rules/complete-conditions", { json: {
+          rule_ids: ids,
+          reviewer: localStorage.getItem("cdssReviewer") || "未署名",
+        }});
+        toast(`补全 ${result.succeeded} 条，跳过 ${result.failed} 条`, result.failed > 0);
+        renderRules();
+      } catch (error) { toast(error.message, true); }
+    };
+    content.querySelectorAll("[data-rule-complete]").forEach((button) => button.onclick = async () => {
+      try {
+        const result = await api(`/api/rules/${encodeURIComponent(button.dataset.ruleComplete)}/complete-conditions`, {
+          json: { reviewer: localStorage.getItem("cdssReviewer") || "未署名" },
+        });
+        toast(`条件已按图谱补全（语义${result.semantic_status === "consistent" ? "已一致" : "仍不一致"}，依赖${result.dependency_status === "passed" ? "已通过" : "待审核"}）`, result.semantic_status !== "consistent");
+        renderRules();
+      } catch (error) { toast(error.message, true); }
+    });
     $("#ruleDiseaseFilter").onchange = (event) => {
       state.ruleDisease = event.target.value;
       renderRules();
@@ -2119,7 +2675,73 @@
       renderRules();
     };
     content.querySelectorAll("[data-rule-edit]").forEach((b) => b.onclick = () => openRuleEditor(state.rules.find((r) => r.rule_id === b.dataset.ruleEdit)));
-    content.querySelectorAll("[data-rule-status]").forEach((b) => b.onclick = async () => { await api(`/api/rules/${b.dataset.ruleStatus}/${b.dataset.status}`, { method: "POST" }); toast("状态已更新"); render(); });
+    content.querySelectorAll("[data-rule-status]").forEach((b) => b.onclick = async () => {
+      try {
+        await api(`/api/rules/${encodeURIComponent(b.dataset.ruleStatus)}/review`, {
+          json: {
+            action: b.dataset.ruleAction,
+            reviewer: localStorage.getItem("cdssReviewer") || "未署名",
+          },
+        });
+        toast("状态已更新");
+        render();
+      } catch (error) { toast(error.message, true); }
+    });
+    const approveRuleDependencies = async (ruleId) => {
+      try {
+        const result = await api(`/api/rules/${encodeURIComponent(ruleId)}/approve-dependencies`, {
+          json: { reviewer: localStorage.getItem("cdssReviewer") || "未署名" },
+        });
+        const parts = [`节点 ${result.approved_nodes} 个`, `关系 ${result.approved_relations} 条`];
+        if (result.skipped?.length) parts.push(`跳过 ${result.skipped.length}（曾拒绝/失效需人工）`);
+        if (result.missing?.length) parts.push(`缺失 ${result.missing.length}（需先补概念）`);
+        const blocked = result.rule_status === "blocked" || result.gate_error;
+        toast(
+          `依赖补审完成：${parts.join("，")}；规则状态：${REVIEW_LABELS[result.rule_status] || result.rule_status}`
+          + (result.gate_error ? `；${String(result.gate_error).slice(0, 120)}` : ""),
+          blocked || Boolean(result.missing?.length),
+        );
+        renderRules();
+      } catch (error) { toast(error.message, true); }
+    };
+    content.querySelectorAll("[data-rule-approve-deps]").forEach((button) => button.onclick = () => {
+      if (!confirm("将自动通过该规则的全部待审依赖（先节点后关系；被拒绝/失效/缺失项会跳过并提示），并恢复被阻断的规则。确认继续？")) return;
+      approveRuleDependencies(button.dataset.ruleApproveDeps);
+    });
+    content.querySelectorAll("[data-rule-deps]").forEach((button) => {
+      button.onclick = async () => {
+        try {
+          const result = await api(`/api/rules/${encodeURIComponent(button.dataset.ruleDeps)}/graph-dependencies`);
+          const refs = result.references || [];
+          const missingCount = refs.filter((ref) => ref.status === "missing").length;
+          const manualCount = refs.filter((ref) => ["rejected", "retired"].includes(ref.status)).length;
+          $("#editorBody").innerHTML = `
+            <h3>图谱依赖 <span class="mono muted">${esc(result.rule_id)}</span></h3>
+            <p>依赖状态：${result.dependency_status === "passed" ? reviewBadge("active") : reviewBadge("blocked")}</p>
+            ${table(["类型", "条目", "状态"], refs.map((ref) => `<tr>
+              <td>${ref.kind === "node" ? "节点" : "关系"}</td>
+              <td class="mono">${esc(ref.node_id || `${ref.source_node_id} -${ref.relation_code}-> ${ref.target_node_id}`)}</td>
+              <td>${reviewBadge(ref.status === "active" ? "active" : "draft")} <span class="muted">${esc(ref.status)}</span></td>
+            </tr>`))}
+            ${(result.issues || []).length ? `<div class="result-banner error"><strong>图谱语义问题</strong>${result.issues.map((issue) => `<div>${esc(issue)}</div>`).join("")}</div>` : ""}
+            ${(result.review_issues || []).length ? `<div class="result-banner warning">${result.review_issues.map((issue) => `<div>${esc(issue)}</div>`).join("")}</div>` : ""}
+            ${missingCount ? `<div class="result-banner error">有 ${missingCount} 个依赖在图谱中不存在，无法自动通过；请先补全概念或修正规则条件。</div>` : ""}
+            ${manualCount ? `<div class="result-banner warning">有 ${manualCount} 个依赖曾被拒绝/失效，需要人工处理，一键补审会跳过它们。</div>` : ""}
+            ${result.dependency_status !== "passed" && !missingCount ? `<div class="actions"><button class="btn sm primary" data-deps-approve="${esc(result.rule_id)}">一键通过待审依赖${result.status === "blocked" ? "并恢复启用" : ""}</button></div>` : ""}
+          `;
+          const dialog = $("#editorDialog");
+          const save = $("#editorSave");
+          save.hidden = true;
+          dialog.onclose = () => { save.hidden = false; dialog.onclose = null; };
+          $("#editorCancel").onclick = () => dialog.close();
+          $("#editorBody").querySelector("[data-deps-approve]")?.addEventListener("click", async () => {
+            dialog.close();
+            await approveRuleDependencies(result.rule_id);
+          });
+          dialog.showModal();
+        } catch (error) { toast(error.message, true); }
+      };
+    });
     content.querySelectorAll("[data-rule-delete]").forEach((b) => b.onclick = async () => {
       if (!confirm("确认删除该规则？")) return;
       await api(`/api/rules/${b.dataset.ruleDelete}`, { method: "DELETE" }); toast("规则已删除"); render();
@@ -2195,6 +2817,28 @@
     const hospital = state.hospitalId || (state.hospitals[0] && state.hospitals[0].hospital_id) || "";
     state.hospitalId = hospital;
     state.standards = hospital ? await api(`/api/standards/${hospital}`) : [];
+    const labRequirements = new Map();
+    const collectLabRequirements = (node) => {
+      if (!node || typeof node !== "object") return;
+      if (node.type === "lab_concept" && node.lab_code && node.concept_code) {
+        labRequirements.set(`${node.lab_code}:${node.concept_code}`, {
+          lab_code: node.lab_code,
+          concept_code: node.concept_code,
+        });
+      }
+      (node.children || []).forEach(collectLabRequirements);
+    };
+    state.rules
+      .filter((rule) => normalizeDomainClient(rule.domain) === "western")
+      .forEach((rule) => collectLabRequirements(rule.conditions));
+    const activeStandardKeys = new Set(state.standards
+      .filter((standard) => standard.status === "active")
+      .map((standard) => `${standard.lab_code}:${standard.concept_code}`));
+    const requiredStandards = [...labRequirements.values()]
+      .sort((a, b) => `${a.lab_code}:${a.concept_code}`.localeCompare(`${b.lab_code}:${b.concept_code}`, "zh-Hans-CN"));
+    const missingStandardCount = requiredStandards.filter(
+      (item) => !activeStandardKeys.has(`${item.lab_code}:${item.concept_code}`)
+    ).length;
     const editing = state.standardEditIndex >= 0 ? state.standards[state.standardEditIndex] : null;
     const formValue = (field, fallback = "") => {
       const value = editing && editing[field] !== null && editing[field] !== undefined ? editing[field] : fallback;
@@ -2208,6 +2852,10 @@
           <button id="loadNewHospital" class="btn">切换 / 创建</button>
         </div>
       `, "", "每家医院可维护不同检验标准；规则仍然只引用概念")}
+      ${panel("规则标准覆盖", requiredStandards.length ? table(["检验", "抽象概念", "覆盖状态"], requiredStandards.map((item) => {
+        const covered = activeStandardKeys.has(`${item.lab_code}:${item.concept_code}`);
+        return `<tr><td class="mono">${esc(item.lab_code)}</td><td>${esc(conceptName(item.concept_code))}</td><td>${covered ? '<span class="badge active">已覆盖</span>' : '<span class="badge danger">缺失</span>'}</td></tr>`;
+      })) : '<div class="empty">当前没有规则引用检验标准。</div>', "", missingStandardCount ? `当前医院缺少 ${missingStandardCount} 项规则所需标准` : "当前医院规则引用的检验概念均已覆盖")}
       ${panel(editing ? `编辑标准 #${state.standardEditIndex + 1}` : "新增标准", `
         <div class="form-grid">
           <div class="field"><label>检验编码</label><input id="stdLabCode" value="${formValue("lab_code")}" placeholder="MYO"></div>

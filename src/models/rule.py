@@ -40,6 +40,10 @@ class RuleConclusion(BaseModel):
     # Structured local treatment plan: medications/interventions from the
     # same guideline section.  Each item is {code, name, entity_type}.
     treatment_items: List[Dict[str, Any]] = Field(default_factory=list)
+    # Guideline-level order sets that materialize this treatment plan
+    # (order_set entity codes in the bound graph).  The recommendation layer
+    # expands them into orderable items; guideline quotes stay on the nodes.
+    order_set_ids: List[str] = Field(default_factory=list)
     # TCM extension: structured treatment/prescription output.
     treatment_method_code: Optional[str] = None
     formula_code: Optional[str] = None

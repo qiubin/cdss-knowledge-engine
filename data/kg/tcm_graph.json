@@ -11,5 +11,9 @@
   "sources": [],
   "nodes": [],
   "relations": [],
-  "syndromes": []
+  "syndromes": [],
+  "_repair_stats": {
+    "mode": "tcm",
+    "dangling_relations_removed": 0
+  }
 }

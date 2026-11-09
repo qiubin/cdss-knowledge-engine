@@ -30,6 +30,7 @@ from src.extraction.service import extract_local, relation_pairs_for_chunk
 from src.vocab.entity_vocabulary import (
     EntityVocabularyRepository,
     resolve_template,
+    template_private_entries,
 )
 
 
@@ -120,6 +121,23 @@ class SharedVocabularyTest(unittest.TestCase):
             [(item["code"], item["name"]) for item in result.entities],
             [("PRURITUS", "瘙痒")],
         )
+
+    def test_private_entries_exclude_codes_already_in_shared_dictionary(self):
+        repo = EntityVocabularyRepository("symptom", self.dir)
+        repo.save(TemplateEntityEntry(code="FEVER", name="发热"), is_new=True)
+        type_def = TemplateEntityType(
+            entity_type="symptom",
+            label="症状",
+            vocabulary=True,
+            entries=[
+                TemplateEntityEntry(code="FEVER", name="发热（模板覆盖）"),
+                TemplateEntityEntry(code="RASH", name="皮疹"),
+            ],
+        )
+
+        private = template_private_entries(type_def, self.dir)
+
+        self.assertEqual([entry.code for entry in private], ["RASH"])
 
 
 class PerChunkOccurrenceTest(unittest.TestCase):

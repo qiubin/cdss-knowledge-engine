@@ -31,7 +31,8 @@ TEMPLATE_PATH = ROOT / "data" / "templates" / "extraction_templates.json"
 PACKAGE_DIR.mkdir(parents=True, exist_ok=True)
 
 ALLOWED_STATUS = {"generated", "reviewed", "imported", "ready_for_test", "published", "failed"}
-IMPORTABLE_STATUS = {"generated", "reviewed", "imported", "failed"}
+IMPORTABLE_STATUS = set(ALLOWED_STATUS)
+IMPORT_MANAGED_STATUS = {"imported", "ready_for_test", "published"}
 GRAPH_ENTITY_TYPES = {
     "disease", "lab", "exam", "diagnostic_evidence", "symptom",
     "treatment_plan", "intervention", "medication", "contraindication",
@@ -56,6 +57,124 @@ class GuidePackageUpdateRequest(BaseModel):
 
 class GuidePackageImportRequest(BaseModel):
     reviewed_only: bool = False
+    mode: str = "draft"
+
+
+class PackageItemReviewRequest(BaseModel):
+    items: List[str] = []
+    action: str
+    reviewer: str = "未署名"
+    note: str = ""
+
+
+PACKAGE_REVIEW_STATUSES = {"draft", "approved", "rejected"}
+
+
+def _entity_item_id(entity: Dict[str, Any]) -> str:
+    code = entity.get("code") or entity.get("concept_code") or entity.get("name")
+    return f"entity:{entity.get('entity_type')}:{code}"
+
+
+def _relation_item_id(relation: Dict[str, Any]) -> str:
+    target = relation.get("target_code") or relation.get("target_concept_code") or ""
+    return f"relation:{relation.get('source_code')}:{relation.get('relation_code')}:{target}"
+
+
+def _rule_item_id(rule: Dict[str, Any]) -> str:
+    return f"rule:{rule.get('rule_id')}"
+
+
+def _package_items(package: Dict[str, Any]) -> List[Dict[str, Any]]:
+    reviews = package.get("item_review") or {}
+    items: List[Dict[str, Any]] = []
+    seen = set()
+    for entity in package.get("entities") or []:
+        item_id = _entity_item_id(entity)
+        if item_id in seen:
+            continue
+        seen.add(item_id)
+        review = reviews.get(item_id) or {}
+        items.append({
+            "item_id": item_id,
+            "item_type": "entity",
+            "entity_type": entity.get("entity_type", ""),
+            "name": entity.get("name", ""),
+            "code": entity.get("code") or entity.get("concept_code") or "",
+            "chunk_id": entity.get("chunk_id", ""),
+            "page": entity.get("page"),
+            "line_start": entity.get("line_start"),
+            "line_end": entity.get("line_end"),
+            "status": review.get("status", "draft"),
+            "reviewed_by": review.get("reviewed_by", ""),
+            "reviewed_at": review.get("reviewed_at", ""),
+            "note": review.get("note", ""),
+        })
+    for relation in package.get("suggested_relations") or []:
+        item_id = _relation_item_id(relation)
+        if item_id in seen:
+            continue
+        seen.add(item_id)
+        review = reviews.get(item_id) or {}
+        items.append({
+            "item_id": item_id,
+            "item_type": "relation",
+            "relation_code": relation.get("relation_code", ""),
+            "source_code": relation.get("source_code", ""),
+            "target_code": relation.get("target_code") or relation.get("target_concept_code") or "",
+            "chunk_id": relation.get("chunk_id", ""),
+            "status": review.get("status", "draft"),
+            "reviewed_by": review.get("reviewed_by", ""),
+            "reviewed_at": review.get("reviewed_at", ""),
+            "note": review.get("note", ""),
+        })
+    for rule in package.get("suggested_rules") or []:
+        item_id = _rule_item_id(rule)
+        if item_id in seen:
+            continue
+        seen.add(item_id)
+        review = reviews.get(item_id) or {}
+        items.append({
+            "item_id": item_id,
+            "item_type": "rule",
+            "rule_id": rule.get("rule_id", ""),
+            "name": rule.get("name", ""),
+            "rule_type": rule.get("rule_type", ""),
+            "status": review.get("status", "draft"),
+            "reviewed_by": review.get("reviewed_by", ""),
+            "reviewed_at": review.get("reviewed_at", ""),
+            "note": review.get("note", ""),
+        })
+    return items
+
+
+def _filter_approved(package: Dict[str, Any]) -> Dict[str, List[Dict[str, Any]]]:
+    reviews = package.get("item_review") or {}
+    approved = {
+        item_id for item_id, review in reviews.items()
+        if review.get("status") == "approved"
+    }
+    entities = [
+        entity for entity in package.get("entities") or []
+        if _entity_item_id(entity) in approved
+    ]
+    approved_entity_ids = {_entity_item_id(entity) for entity in entities}
+    relations = [
+        relation for relation in package.get("suggested_relations") or []
+        if _relation_item_id(relation) in approved
+        and _entity_item_id({
+            "entity_type": relation.get("source_type"),
+            "code": relation.get("source_code"),
+        }) in approved_entity_ids
+        and _entity_item_id({
+            "entity_type": relation.get("target_type"),
+            "code": relation.get("target_code") or relation.get("target_concept_code"),
+        }) in approved_entity_ids
+    ]
+    rules = [
+        rule for rule in package.get("suggested_rules") or []
+        if _rule_item_id(rule) in approved
+    ]
+    return {"entities": entities, "suggested_relations": relations, "suggested_rules": rules}
 
 
 def _now() -> str:
@@ -674,10 +793,69 @@ async def update_package(package_id: str, request: GuidePackageUpdateRequest):
     if request.status is not None:
         if request.status not in ALLOWED_STATUS:
             raise HTTPException(422, "无效的知识包状态")
+        if (
+            request.status in IMPORT_MANAGED_STATUS
+            and not (package.get("import_result") or {}).get("success")
+        ):
+            raise HTTPException(
+                422,
+                "知识包尚未完成导入，不能手动标记为已导入；请先执行导入图谱和草稿规则",
+            )
         package["status"] = request.status
         package["checks"] = _build_checks(package)
     _save_package(package)
     return package
+
+
+@router.get("/{package_id}/items")
+async def list_package_items(
+    package_id: str,
+    status: Optional[str] = None,
+    item_type: Optional[str] = None,
+    q: Optional[str] = None,
+):
+    package = _load_package(package_id)
+    items = _package_items(package)
+    if status:
+        items = [item for item in items if item["status"] == status]
+    if item_type:
+        items = [item for item in items if item["item_type"] == item_type]
+    query = (q or "").strip().lower()
+    if query:
+        items = [
+            item for item in items
+            if query in f"{item.get('name', '')} {item.get('code', '')} {item.get('item_id', '')}".lower()
+        ]
+    summary = {
+        "total": len(items),
+        "draft": sum(1 for item in items if item["status"] == "draft"),
+        "approved": sum(1 for item in items if item["status"] == "approved"),
+        "rejected": sum(1 for item in items if item["status"] == "rejected"),
+    }
+    return {"package_id": package_id, "summary": summary, "items": items}
+
+
+@router.post("/{package_id}/items/review")
+async def review_package_items(package_id: str, request: PackageItemReviewRequest):
+    if request.action not in {"approve", "reject", "restore"}:
+        raise HTTPException(422, "无效的预审动作")
+    package = _load_package(package_id)
+    known = {item["item_id"] for item in _package_items(package)}
+    unknown = [item_id for item_id in request.items if item_id not in known]
+    if unknown:
+        raise HTTPException(422, "未知条目: " + ", ".join(unknown[:10]))
+    status = {"approve": "approved", "reject": "rejected", "restore": "draft"}[request.action]
+    now = _now()
+    reviews = package.setdefault("item_review", {})
+    for item_id in request.items:
+        reviews[item_id] = {
+            "status": status,
+            "reviewed_by": request.reviewer or "未署名",
+            "reviewed_at": now,
+            "note": request.note,
+        }
+    _save_package(package)
+    return {"package_id": package_id, "updated": len(request.items), "items": _package_items(package)}
 
 
 @router.post("/{package_id}/import")
@@ -687,18 +865,35 @@ async def import_package(package_id: str, request: GuidePackageImportRequest):
         raise HTTPException(422, "该知识包尚未标记为 reviewed")
     if package.get("status") not in IMPORTABLE_STATUS:
         raise HTTPException(422, f"当前状态不允许导入: {package.get('status')}")
+    if request.mode not in {"draft", "approved_only"}:
+        raise HTTPException(422, "无效的导入模式")
+
+    entities = package.get("entities", [])
+    relations = package.get("suggested_relations", [])
+    candidate_rules = package.get("suggested_rules", [])
+    if request.mode == "approved_only":
+        filtered = _filter_approved(package)
+        entities = filtered["entities"]
+        relations = filtered["suggested_relations"]
+        candidate_rules = filtered["suggested_rules"]
+        if not entities:
+            raise HTTPException(422, "没有预审通过的实体，无法导入")
+        target = package.get("target_disease_code")
+        approved_codes = {item.get("code") for item in entities}
+        if target not in approved_codes:
+            raise HTTPException(422, "目标疾病/证候未通过预审，无法导入")
 
     graph_request = GraphImportRequest(
         doc_id=package["doc_id"],
         doc_title=package["doc_title"],
         domain=package.get("domain", ""),
         target_disease_code=package["target_disease_code"],
-        entities=package.get("entities", []),
+        entities=entities,
         chunks=package.get("chunks", []),
-        suggested_relations=package.get("suggested_relations", []),
+        suggested_relations=relations,
         template_id=package.get("template_id", ""),
         graph_filename=package.get("graph_filename", ""),
-        candidate_rules=package.get("suggested_rules", []),
+        candidate_rules=candidate_rules,
     )
     try:
         graph_result = await import_graph(graph_request)
@@ -715,10 +910,10 @@ async def import_package(package_id: str, request: GuidePackageImportRequest):
         raise
 
     rule_result = await import_rules(RuleImportRequest(
-        rules=package.get("suggested_rules", []),
+        rules=candidate_rules,
         graph_filename=package.get("graph_filename", ""),
     ))
-    rule_ids = {item.get("rule_id") for item in package.get("suggested_rules", [])}
+    rule_ids = {item.get("rule_id") for item in candidate_rules}
     all_rules = json.loads((ROOT / "data" / "rules" / "managed_rules.json").read_text(encoding="utf-8"))
     package_rules = [item for item in all_rules if item.get("rule_id") in rule_ids]
     try:
@@ -730,6 +925,7 @@ async def import_package(package_id: str, request: GuidePackageImportRequest):
     package["import_result"] = {
         "imported_at": _now(),
         "success": not rule_result.get("errors"),
+        "mode": request.mode,
         "graph": graph_result,
         "rules": {**rule_result, "sync_check": sync_result},
         "error": "",

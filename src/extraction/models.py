@@ -25,6 +25,11 @@ class TemplateEntityEntry(BaseModel):
     standard_system: str = ""
     standard_code: str = ""
     source: str = ""
+    # Optional classification metadata for the shared vocabulary browser.
+    # ``specialty`` is a manually maintained primary specialty; the API also
+    # derives a ``specialties`` list from linked diseases when it is empty.
+    specialty: str = ""
+    disease_tags: List[str] = Field(default_factory=list)
     # Default attributes carried by a dictionary entry (e.g. HERB_ROLE /
     # HERB_DOSE).  Extraction-time values override these defaults.
     attributes: Dict[str, Any] = Field(default_factory=dict)

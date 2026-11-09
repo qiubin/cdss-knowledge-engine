@@ -50,11 +50,126 @@
     return Array.isArray(value) ? value : Object.values(value || {});
   }
 
+  // Build a subgraph from the JSON graph already loaded by the page.  This is
+  // the zero-dependency fallback used when Neo4j is not running; its traversal
+  // mirrors the server's depth/limit neighbourhood query.
+  function localPayload(graph, options = {}) {
+    const profile = graph.profile || {};
+    const anchorTypes = new Set(
+      options.anchorTypes || profile.anchor_types || ["disease"]
+    );
+    const depth = Math.min(Math.max(Number(options.depth) || 2, 1), 3);
+    const limit = Math.max(Number(options.limit) || 80, 1);
+    const centerCode = String(options.centerCode || "");
+    const allNodes = asArray(graph.nodes).filter(node => node && node.id);
+    const nodeIndex = new Map(allNodes.map(node => [node.id, node]));
+    const allRelations = asArray(graph.relations)
+      .filter(relation => relation
+        && nodeIndex.has(relation.source_node_id)
+        && nodeIndex.has(relation.target_node_id))
+      .map((relation, index) => ({
+        ...relation,
+        id: relation.id || `json-edge-${index}`,
+      }));
+
+    const degrees = new Map();
+    allRelations.forEach(relation => {
+      degrees.set(relation.source_node_id, (degrees.get(relation.source_node_id) || 0) + 1);
+      degrees.set(relation.target_node_id, (degrees.get(relation.target_node_id) || 0) + 1);
+    });
+
+    const anchors = allNodes.filter(node => anchorTypes.has(node.node_type));
+    const autoCenter = anchors.slice().sort((a, b) => {
+      const delta = (degrees.get(b.id) || 0) - (degrees.get(a.id) || 0);
+      if (delta) return delta;
+      return String(a.code || a.id).localeCompare(String(b.code || b.id), "zh-Hans-CN");
+    })[0] || null;
+    const requestedCenter = centerCode
+      ? allNodes.find(node => node.code === centerCode) || null
+      : null;
+    const center = requestedCenter || autoCenter;
+
+    const adjacency = new Map();
+    allRelations.forEach(relation => {
+      if (!adjacency.has(relation.source_node_id)) adjacency.set(relation.source_node_id, []);
+      if (!adjacency.has(relation.target_node_id)) adjacency.set(relation.target_node_id, []);
+      adjacency.get(relation.source_node_id).push(relation.target_node_id);
+      adjacency.get(relation.target_node_id).push(relation.source_node_id);
+    });
+
+    let selectedIds = new Set();
+    if (center) {
+      const queue = [[center.id, 0]];
+      selectedIds.add(center.id);
+      for (let cursor = 0; cursor < queue.length && selectedIds.size < limit; cursor += 1) {
+        const [nodeId, level] = queue[cursor];
+        if (level >= depth) continue;
+        const neighbors = (adjacency.get(nodeId) || []).slice().sort();
+        for (const nextId of neighbors) {
+          if (selectedIds.size >= limit) break;
+          if (!selectedIds.has(nextId)) {
+            selectedIds.add(nextId);
+            queue.push([nextId, level + 1]);
+          }
+        }
+      }
+    } else {
+      selectedIds = new Set(allNodes.slice(0, limit).map(node => node.id));
+    }
+
+    const nodes = allNodes
+      .filter(node => selectedIds.has(node.id))
+      .sort((a, b) => String(a.name || a.code || a.id)
+        .localeCompare(String(b.name || b.code || b.id), "zh-Hans-CN"));
+    const relations = allRelations.filter(relation => (
+      selectedIds.has(relation.source_node_id) && selectedIds.has(relation.target_node_id)
+    ));
+
+    return {
+      graph_filename: options.graphFilename || graph.graph_filename || "",
+      center_code: center ? (center.code || "") : "",
+      depth,
+      limit,
+      nodes,
+      relations,
+      total_nodes: allNodes.length,
+      total_relations: allRelations.length,
+      engine: "json",
+    };
+  }
+
+  // Prefer Neo4j (server-side neighbourhood + sync); fall back to the local
+  // JSON graph when the endpoint is down, empty or unreachable.
+  async function loadPayload(url, localGraph, options = {}, fetchImpl) {
+    const requester = fetchImpl || (typeof fetch === "function" ? fetch : null);
+    if (requester) {
+      try {
+        const response = await requester(url);
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.detail || "Neo4j 图谱读取失败");
+        if (!Array.isArray(payload.nodes) || !payload.nodes.length) {
+          throw new Error("Neo4j 图谱为空");
+        }
+        return { ...payload, engine: "neo4j" };
+      } catch (error) {
+        return {
+          ...localPayload(localGraph, options),
+          fallback_reason: (error && error.message) || "Neo4j 不可用",
+        };
+      }
+    }
+    return {
+      ...localPayload(localGraph, options),
+      fallback_reason: "fetch 不可用",
+    };
+  }
+
   function create(container, graph, options = {}) {
     if (!container) return null;
     destroy();
 
     const graphFilename = options.graphFilename || graph.graph_filename || "KG-GENERIC_GUIDELINE_V1.json";
+    const localGraph = graph;
     const profile = options.profile || graph.profile || {};
     activeMeta = profile.node_meta || options.nodeMeta || {};
     const domain = profile.domain || options.domain || "western";
@@ -91,7 +206,10 @@
       selectedId: "",
       network: null,
       loading: false,
-      viewMode: "all"
+      viewMode: "all",
+      engine: "neo4j",
+      fallbackReason: "",
+      neo4jDown: false
     };
 
     container.innerHTML = `
@@ -142,8 +260,8 @@
           <div class="kgviz-legend" id="kgLegend"></div>
         </div>
         <div class="kgviz-footer">
-          <span id="kgCounts">Neo4j 连接中…</span>
-          <span>数据引擎：Neo4j</span>
+          <span id="kgCounts">加载中…</span>
+          <span id="kgEngine">数据引擎：Neo4j</span>
         </div>
       </div>
     `;
@@ -161,6 +279,17 @@
     function setStatus(message, tone = "") {
       statusEl.className = `kg-load-status${tone ? ` ${tone}` : ""}`;
       statusEl.textContent = message;
+    }
+
+    function engineLabel() {
+      return state.engine === "json" ? "本地 JSON" : "Neo4j";
+    }
+
+    function updateEngineChrome() {
+      const engineEl = container.querySelector("#kgEngine");
+      if (engineEl) engineEl.textContent = `数据引擎：${engineLabel()}`;
+      const browserBtn = container.querySelector("#kgBrowser");
+      if (browserBtn) browserBtn.style.display = state.engine === "neo4j" ? "" : "none";
     }
 
     function setInfo(nodeOrEdge, kind) {
@@ -273,7 +402,8 @@
       if (!state.network) return;
       const data = buildData();
       state.network.setData(data);
-      countsEl.textContent = `Neo4j：${data.nodes.length} 个节点 / ${data.edges.length} 条关系`;
+      countsEl.textContent = `${engineLabel()}：${data.nodes.length} 个节点 / ${data.edges.length} 条关系`;
+      updateEngineChrome();
       container.__cdssGraph = {
         network: state.network,
         nodeCount: data.nodes.length,
@@ -298,10 +428,53 @@
       setInfo(state.loadedNodes.find(node => node.id === nodeId), nodeId ? "node" : null);
     }
 
-    async function load() {
+    function applyPayload(payload) {
+      state.loadedNodes = payload.nodes || [];
+      state.loadedEdges = payload.relations || [];
+      state.engine = payload.engine || "neo4j";
+      state.fallbackReason = payload.fallback_reason || "";
+      state.lastLoadedAt = new Date().toISOString();
+      state.enabledTypes = new Set(allTypes);
+      container.querySelectorAll("[data-kg-type]").forEach(input => { input.checked = true; });
+      render();
+      if (payload.browser_url) {
+        container.querySelector("#kgBrowser").dataset.url = payload.browser_url;
+      }
+      if (!state.loadedNodes.length) {
+        setStatus(`${engineLabel()} 图谱为空；请先导入指南或选择其他图谱。`, "error");
+        infoEl.className = "kgviz-info empty-info";
+        infoEl.innerHTML = `
+          <p><strong>${escapeHtml(engineLabel())} 图谱为空。</strong></p>
+          <p>请先在“指南导入”生成知识包，或切换其他图谱后刷新。</p>
+        `;
+      } else if (state.engine === "json") {
+        setStatus("Neo4j 不可用，已加载本地 JSON 图谱；节点可拖动，滚轮可缩放。", "ok");
+      } else {
+        setStatus("Neo4j 图谱已加载；节点可拖动，滚轮可缩放。", "ok");
+      }
+    }
+
+    function localOptions() {
+      return {
+        graphFilename: state.graphFilename,
+        centerCode: state.centerCode,
+        depth: state.depth,
+        limit: state.maxNodes,
+        anchorTypes: [...activeAnchorTypes]
+      };
+    }
+
+    async function load({ probeNeo4j = false } = {}) {
       if (state.loading) return;
       state.loading = true;
-      setStatus("正在读取 Neo4j 图谱…", "loading");
+      // After a failure, keep using the local graph for cheap interactions
+      // (center/depth/limit changes) until the user explicitly refreshes.
+      if (state.neo4jDown && !probeNeo4j) {
+        applyPayload(localPayload(localGraph, localOptions()));
+        state.loading = false;
+        return;
+      }
+      setStatus("正在读取图谱…", "loading");
       const params = new URLSearchParams({
         graph_filename: state.graphFilename,
         center_code: state.centerCode || "",
@@ -309,27 +482,20 @@
         limit: String(state.maxNodes)
       });
       try {
-        const response = await fetch(`/api/kg/neo4j/graph?${params}`);
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload.detail || "Neo4j 图谱读取失败");
-        state.loadedNodes = payload.nodes || [];
-        state.loadedEdges = payload.relations || [];
-        state.lastLoadedAt = new Date().toISOString();
-        state.enabledTypes = new Set(allTypes);
-        container.querySelectorAll("[data-kg-type]").forEach(input => { input.checked = true; });
-        render();
-        setStatus("Neo4j 图谱已加载；节点可拖动，滚轮可缩放。", "ok");
-        if (payload.browser_url) {
-          container.querySelector("#kgBrowser").dataset.url = payload.browser_url;
+        const payload = await loadPayload(
+          `/api/kg/neo4j/graph?${params}`,
+          localGraph,
+          localOptions()
+        );
+        if (payload.engine === "neo4j") {
+          state.neo4jDown = false;
+        } else if (payload.fallback_reason && payload.fallback_reason !== "Neo4j 图谱为空") {
+          state.neo4jDown = true;
         }
+        applyPayload(payload);
       } catch (error) {
-        setStatus(error.message || "Neo4j 暂不可用", "error");
-        countsEl.textContent = "Neo4j 未连接";
-        infoEl.className = "kgviz-info empty-info";
-        infoEl.innerHTML = `
-          <p><strong>Neo4j 图谱暂未就绪。</strong></p>
-          <p>请先启动 Neo4j，并导入当前图谱；然后点击“刷新”。</p>
-        `;
+        setStatus(error.message || "图谱加载失败", "error");
+        countsEl.textContent = `${engineLabel()} 未连接`;
       } finally {
         state.loading = false;
       }
@@ -391,7 +557,7 @@
         lastLoadedAt: state.lastLoadedAt || "",
         reload: load
       };
-      countsEl.textContent = `Neo4j：${data.nodes.length} 个节点 / ${data.edges.length} 条关系`;
+      countsEl.textContent = `${engineLabel()}：${data.nodes.length} 个节点 / ${data.edges.length} 条关系`;
     }
 
     function wire() {
@@ -436,7 +602,7 @@
         setStatus("正在重新布局…", "loading");
       };
       container.querySelector("#kgFit").onclick = () => state.network?.fit({ animation: { duration: 500, easingFunction: "easeOutQuad" } });
-      container.querySelector("#kgReload").onclick = load;
+      container.querySelector("#kgReload").onclick = () => load({ probeNeo4j: true });
       container.querySelector("#kgBrowser").onclick = event => {
         const url = event.currentTarget.dataset.url || "http://localhost:7474/browser/";
         window.open(url, "_blank", "noopener");
@@ -456,5 +622,5 @@
     return active;
   }
 
-  window.CdssGraphView = { mount: create, destroy };
+  window.CdssGraphView = { mount: create, destroy, localPayload, loadPayload };
 })();

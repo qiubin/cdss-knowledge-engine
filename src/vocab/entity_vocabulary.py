@@ -105,6 +105,24 @@ def merged_entries(
     return entries
 
 
+def template_private_entries(
+    type_def: TemplateEntityType,
+    directory: Path = ENTITY_VOCAB_DIR,
+) -> List[TemplateEntityEntry]:
+    """Return template-local entries that are not owned by the shared dictionary.
+
+    A template may carry local entries even when its entity type also references
+    a shared vocabulary (for example legacy or discipline-specific entries).
+    The structure-management UI only needs the genuinely private subset; codes
+    already present in the shared dictionary must be maintained centrally.
+    """
+    shared_codes = {
+        entry.code
+        for entry in EntityVocabularyRepository(type_def.entity_type, directory).list()
+    }
+    return [entry for entry in type_def.entries if entry.code not in shared_codes]
+
+
 def resolve_template(
     template: ExtractionTemplate,
     directory: Path = ENTITY_VOCAB_DIR,
