@@ -92,6 +92,38 @@ def _or_group(entities: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     return {"type": "group", "operator": "OR", "children": children}
 
 
+def _attribute(entity: Dict[str, Any], code: str, default: Any = None) -> Any:
+    return (entity.get("attributes") or {}).get(code, default)
+
+
+def _weighted_observation(
+    entity: Dict[str, Any],
+    weight: float,
+    required: bool = False,
+) -> Optional[Dict[str, Any]]:
+    if not _code(entity):
+        return None
+    item = _observation(entity)
+    configured_weight = _attribute(entity, "SYMPTOM_WEIGHT")
+    try:
+        item["weight"] = float(configured_weight) if configured_weight is not None else float(weight)
+    except (TypeError, ValueError):
+        item["weight"] = float(weight)
+    item["required"] = str(_attribute(entity, "SYMPTOM_NECESSITY") or "") == "required" or bool(required)
+    return item
+
+
+def _required_main_group(main_symptoms: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Require at least one main symptom without double-counting its weight."""
+    children = [_observation(item) for item in main_symptoms if _code(item)]
+    if not children:
+        return None
+    if len(children) == 1:
+        children[0]["weight"] = 0.0
+        return children[0]
+    return {"type": "group", "operator": "OR", "children": children, "weight": 0.0}
+
+
 class TcmPatternRuleGenerator(RuleGenerator):
     rule_type = "tcm_pattern"
 
@@ -124,20 +156,66 @@ class TcmPatternRuleGenerator(RuleGenerator):
                 item for item in symptoms
                 if str((item.get("attributes") or {}).get("SYMPTOM_ROLE") or "") == "次症"
             ]
-            groups = [
-                _or_group(main_symptoms),
-                _or_group(secondary_symptoms),
-                _or_group(_same_chunk(by_type.get("tongue", []), chunk_id)),
-                _or_group(_same_chunk(by_type.get("pulse", []), chunk_id)),
-                _or_group(_same_chunk(by_type.get("sign", []), chunk_id)),
-            ]
-            children = [group for group in groups if group]
-            leaf_count = sum(
-                len(group.get("children", [group])) if group.get("type") == "group" else 1
-                for group in children
-            )
+
+            condition_style = str(config.get("condition_style") or "group")
+            required_children: List[Dict[str, Any]] = []
+            if condition_style == "weighted_group":
+                children = []
+                for item in main_symptoms:
+                    child = _weighted_observation(item, float(config.get("symptom_weight", 3)))
+                    if child:
+                        children.append(child)
+                for item in secondary_symptoms:
+                    child = _weighted_observation(item, float(config.get("secondary_symptom_weight", 1)))
+                    if child:
+                        children.append(child)
+                for entity_type, weight_key in (
+                    ("tongue", "tongue_weight"),
+                    ("pulse", "pulse_weight"),
+                    ("sign", "sign_weight"),
+                ):
+                    for item in _same_chunk(by_type.get(entity_type, []), chunk_id):
+                        child = _weighted_observation(item, float(config.get(weight_key, 1)))
+                        if child:
+                            children.append(child)
+
+                required_group = _required_main_group(main_symptoms)
+                if required_group:
+                    required_children.append(required_group)
+                leaf_count = len(children)
+            else:
+                groups = [
+                    _or_group(main_symptoms),
+                    _or_group(secondary_symptoms),
+                    _or_group(_same_chunk(by_type.get("tongue", []), chunk_id)),
+                    _or_group(_same_chunk(by_type.get("pulse", []), chunk_id)),
+                    _or_group(_same_chunk(by_type.get("sign", []), chunk_id)),
+                ]
+                children = [group for group in groups if group]
+                leaf_count = sum(
+                    len(group.get("children", [group])) if group.get("type") == "group" else 1
+                    for group in children
+                )
             if leaf_count < int(config.get("min_conditions", 2)):
                 continue
+
+            conditions: Dict[str, Any]
+            if condition_style == "weighted_group":
+                parameter: Dict[str, Any] = {}
+                if bool(config.get("require_tongue_or_pulse")):
+                    parameter["require_tongue_or_pulse"] = True
+                conditions = {
+                    "type": "weighted_group",
+                    "operator": "AND",
+                    "scoring": str(config.get("scoring") or "normalized_weight_sum"),
+                    "threshold": float(config.get("score_threshold", 0.4)),
+                    "children": children,
+                    "required_children": required_children,
+                }
+                if parameter:
+                    conditions["parameter"] = parameter
+            else:
+                conditions = {"type": "group", "operator": "AND", "children": children}
 
             rules.append({
                 "rule_id": f"{doc_id}-TCM-PATTERN-{len(rules) + 1:03d}",
@@ -151,7 +229,7 @@ class TcmPatternRuleGenerator(RuleGenerator):
                 "priority": 50,
                 "status": "draft",
                 "graph_filename": resolve_template_graph_filename(template),
-                "conditions": {"type": "group", "operator": "AND", "children": children},
+                "conditions": conditions,
                 "conclusion": {
                     "diagnosis": syndrome_code,
                     "confidence": "medium",

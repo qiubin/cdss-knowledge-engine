@@ -18,8 +18,25 @@ class MetadataTest(unittest.TestCase):
         apply_import_review_metadata(graph, previous, "DOC-1")
         self.assertEqual(graph["nodes"][0]["review_status"], "active")
 
+    def test_provenance_only_change_keeps_active(self):
+        """Another guideline sharing the same entity only grows source_refs —
+        an approved node must NOT flip to stale."""
+        graph = {
+            "nodes": [{
+                "id": "N1", "node_type": "symptom", "code": "S1", "name": "症状",
+                "review_status": "active", "source_refs": ["DOC-1_p1_l1-10"],
+                "source_doc_ids": ["DOC-1"],
+            }],
+            "relations": [],
+        }
+        previous = snapshot_hashes(graph)
+        graph["nodes"][0]["source_refs"].append("DOC-2_p3_l1-5")
+        apply_import_review_metadata(graph, previous, "DOC-2")
+        self.assertEqual(graph["nodes"][0]["review_status"], "active")
+        self.assertIn("DOC-2", graph["nodes"][0]["source_doc_ids"])
+
     def test_changed_active_node_becomes_stale(self):
-        graph = {"nodes": [{"id": "N1", "node_type": "symptom", "code": "S1", "name": "旧名", "review_status": "active"}], "relations": []}
+        graph = {"nodes": [{"id": "N1", "node_type": "symptom", "code": "S1", "name": "旧名", "review_status": "active", "source_refs": ["DOC-1_p1_l1-5"]}], "relations": []}
         previous = snapshot_hashes(graph)
         graph["nodes"][0]["name"] = "新名"
         apply_import_review_metadata(graph, previous, "DOC-1")

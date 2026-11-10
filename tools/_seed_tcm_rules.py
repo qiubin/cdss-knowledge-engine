@@ -16,11 +16,11 @@ from src.extraction.service import extract_local
 
 
 async def main() -> None:
-    template = ExtractionTemplateRepository().get("TCM_GUIDELINE_V1")
+    template = ExtractionTemplateRepository().get("TCM_GUIDELINE_V2")
     result = extract_local(CHUNKS, template, "DOC-TCM-DEMO", "中医胸痹心痛病诊疗方案")
     imported = await import_rules(RuleImportRequest(
         rules=result.suggested_rules,
-        graph_filename="tcm_graph.json",
+        graph_filename="KG-TCM-DEMO.json",
     ))
     print("import:", imported)
 

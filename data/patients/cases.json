@@ -44,6 +44,32 @@
       "description": "45 岁男性，上呼吸道感染后 5 天胸闷心悸，肌钙蛋白轻度升高，EF 48%。",
       "default": false,
       "category": "急性心肌炎"
+    },
+    {
+      "case_id": "TCM-CASE-001",
+      "file": "demo_tcm_patient.json",
+      "name": "中医 · 胸痹心痛病气阴两虚证",
+      "domain": "tcm",
+      "description": "62 岁男性，胸闷、气短、乏力、自汗，舌淡红、苔薄白，脉细弱，用于辨证与方药回归测试。",
+      "default": false,
+      "category": "中医辨证",
+      "expected": {
+        "top_syndrome": "TCM_SYN_QI_YIN_XU",
+        "min_score": 0.8,
+        "must_include_formula": "TCM_FORMULA_SHENGMAI_SAN",
+        "must_not_trigger": [
+          "TCM_SYN_TAN_ZHUO_BI_ZU"
+        ]
+      }
+    },
+    {
+      "case_id": "auto-doc-6ed4dedc",
+      "file": "auto_doc-6ed4dedc_patient.json",
+      "name": "室间隔缺损 · 自动测试病例",
+      "domain": "western",
+      "description": "由知识包自动生成的阳性测试病例（中国 常见先天性心脏病经皮介入治疗指南2021），满足规则 DR-VSD-OCCLUSION-001 的条件。",
+      "default": false,
+      "category": "室间隔缺损"
     }
   ]
 }

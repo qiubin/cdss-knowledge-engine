@@ -16,7 +16,7 @@ from src.extraction.service import extract_local
 
 
 async def main() -> None:
-    template = ExtractionTemplateRepository().get("TCM_GUIDELINE_V1")
+    template = ExtractionTemplateRepository().get("TCM_GUIDELINE_V2")
     result = extract_local(CHUNKS, template, "DOC-TCM-DEMO", "中医胸痹心痛病诊疗方案")
     response = await import_graph(GraphImportRequest(
         doc_id="DOC-TCM-DEMO",
@@ -26,8 +26,8 @@ async def main() -> None:
         entities=result.entities,
         chunks=CHUNKS,
         suggested_relations=result.suggested_relations,
-        template_id="TCM_GUIDELINE_V1",
-        graph_filename="tcm_graph.json",
+        template_id="TCM_GUIDELINE_V2",
+        graph_filename="KG-TCM-DEMO.json",
         candidate_rules=result.suggested_rules,
     ))
     print("import:", response)

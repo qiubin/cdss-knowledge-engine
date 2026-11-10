@@ -48,6 +48,10 @@ class Conclusion(BaseModel):
     course: Optional[str] = None
     # Pattern scoring (TCM) and condition counts.
     score: Optional[float] = None
+    score_breakdown: Dict[str, Any] = Field(default_factory=dict)
+    matched_items: List[Dict[str, Any]] = Field(default_factory=list)
+    unmatched_items: List[Dict[str, Any]] = Field(default_factory=list)
+    missing_items: List[Dict[str, Any]] = Field(default_factory=list)
     matched_conditions: int = 0
     total_conditions: int = 0
     confidence: str = "medium"  # high / medium / low

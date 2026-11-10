@@ -48,11 +48,15 @@ class GuidePackageGenerateRequest(BaseModel):
     target_disease_code: str = ""
     template_id: str = ""
     status: str = "generated"
+    graph_target: Optional[Dict[str, Any]] = None
+    reimport_confirmed: bool = False
 
 
 class GuidePackageUpdateRequest(BaseModel):
     status: Optional[str] = None
     target_disease_code: Optional[str] = None
+    graph_target: Optional[Dict[str, Any]] = None
+    reimport_confirmed: bool = False
 
 
 class GuidePackageImportRequest(BaseModel):
@@ -275,6 +279,85 @@ def _resolve_graph_filename(template_id: str) -> str:
         template_id=template_id,
         graph_filename=str(template.get("graph_filename") or ""),
     ))
+
+
+def _safe_graph_filename(filename: str) -> str:
+    name = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(filename or "").strip()).strip("._-")
+    if not name:
+        raise HTTPException(422, "图谱文件名不能为空")
+    if not name.endswith(".json"):
+        name += ".json"
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*\.json", name) or ".." in name:
+        raise HTTPException(422, "图谱文件名无效")
+    return name
+
+
+def _resolve_graph_target(
+    request: Optional[Dict[str, Any]],
+    domain: str,
+    template_id: str,
+    doc_id: str,
+) -> Dict[str, Any]:
+    """Resolve and validate the explicit graph target for a guideline package."""
+    raw = request or {}
+    mode = str(raw.get("mode") or "").strip().lower()
+    if mode not in {"new", "existing", "legacy", ""}:
+        raise HTTPException(422, "图谱目标只支持 new、existing 或 legacy")
+    requested = str(raw.get("filename") or "").strip()
+
+    if not mode:
+        if normalize_domain(domain) == TCM:
+            mode = "new"
+            requested = f"KG-TCM-{_safe_graph_filename(doc_id)[:-5]}.json"
+        else:
+            mode = "legacy"
+            requested = _resolve_graph_filename(template_id)
+        requested = _safe_graph_filename(requested)
+    elif mode == "new":
+        requested = requested or f"KG-TCM-{_safe_graph_filename(doc_id)[:-5]}.json"
+        requested = _safe_graph_filename(requested)
+    else:
+        if not requested:
+            raise HTTPException(422, "追加既有图谱时必须选择图谱文件")
+        requested = _safe_graph_filename(requested)
+
+    path = ROOT / "data" / "kg" / requested
+    if mode == "existing":
+        if not path.exists():
+            raise HTTPException(404, f"目标图谱不存在: {requested}")
+        try:
+            graph = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            raise HTTPException(422, f"目标图谱不是有效 JSON: {requested}")
+        graph_domain = normalize_domain(graph.get("domain") or "")
+        if not graph_domain:
+            # Compatibility with files created before explicit domain metadata.
+            graph_domain = normalize_domain(_resolve_graph_filename(template_id) == requested and domain or "western")
+        if normalize_domain(domain) == TCM and graph_domain != TCM:
+            raise HTTPException(422, "中医模板只能追加 domain=tcm 的图谱")
+        if normalize_domain(domain) == TCM and int(graph.get("schema_version") or 1) < 2:
+            raise HTTPException(422, "目标中医图谱 schema_version 必须大于等于 2")
+        if graph.get("source") == "builtin-demo":
+            raise HTTPException(422, "内置示例图谱只用于演示，不能作为指南导入目标")
+    elif path.exists():
+        try:
+            graph = json.loads(path.read_text(encoding="utf-8"))
+            graph_domain = normalize_domain(graph.get("domain") or "")
+        except Exception:
+            graph_domain = ""
+        if graph_domain and graph_domain != normalize_domain(domain):
+            raise HTTPException(422, "新建图谱文件名已被其他领域占用")
+
+    return {"mode": mode, "filename": requested, "domain": normalize_domain(domain)}
+
+
+def _validate_graph_target_change(package: Dict[str, Any], target: Dict[str, Any]) -> None:
+    previous = package.get("graph_target") or {
+        "mode": "legacy", "filename": package.get("graph_filename", ""), "domain": package.get("domain", "")
+    }
+    changed = previous.get("filename") != target.get("filename")
+    if changed and (package.get("import_result") or {}).get("success"):
+        raise HTTPException(409, "知识包已成功导入；变更目标图谱必须显式确认重新导入")
 
 
 def _selected_target(
@@ -603,16 +686,32 @@ def _build_checks(package: Dict[str, Any]) -> List[Dict[str, Any]]:
     invalid_entities = [
         {"index": index, "entity_type": item.get("entity_type", ""), "name": item.get("name", "")}
         for index, item in enumerate(entities)
-        if item.get("entity_type") not in allowed_types
-        or not (item.get("code") or item.get("concept_code"))
+        if not (item.get("code") or item.get("concept_code"))
+    ]
+    open_entities = [
+        item for item in entities
+        if (item.get("code") or item.get("concept_code"))
+        and item.get("entity_type") not in allowed_types
     ]
     checks.append({
         "code": "graph_entities",
         "status": "passed" if not invalid_entities else "failed",
         "title": "图谱实体预检",
-        "issues": [f"第 {item['index'] + 1} 条实体缺少编码或类型不支持" for item in invalid_entities],
-        "details": [type_counts],
+        "issues": [f"第 {item['index'] + 1} 条实体缺少编码" for item in invalid_entities],
+        "details": [type_counts, {"open_import_count": len(open_entities)}],
     })
+    if open_entities:
+        names = sorted({str(item.get("entity_type")) for item in open_entities})
+        checks.append({
+            "code": "open_entities",
+            "status": "warning",
+            "title": "模板外实体开放导入",
+            "issues": [
+                f"{len(open_entities)} 条模板外实体（类型：{'、'.join(names)}）将以草稿节点导入，"
+                "请在图谱审核中确认；确认后可通过「加入实体词典」沉淀到共享词库"
+            ],
+            "details": [{"open_types": names, "count": len(open_entities)}],
+        })
 
     entity_concept_codes = []
     for item in entities:
@@ -665,6 +764,7 @@ def _package_summary(package: Dict[str, Any]) -> Dict[str, Any]:
         "domain": normalize_domain(package.get("domain") or "western"),
         "template_id": package.get("template_id", ""),
         "graph_filename": package.get("graph_filename", ""),
+        "graph_target": package.get("graph_target", {}),
         "target_disease_code": package.get("target_disease_code", ""),
         "target_anchor_type": package.get("target_anchor_type", ""),
         "status": package.get("status", "generated"),
@@ -707,6 +807,9 @@ async def generate_package(request: GuidePackageGenerateRequest):
         or template_meta.get("domain")
     )
     profile = get_profile(domain)
+    graph_target = _resolve_graph_target(
+        request.graph_target, domain, template_id, request.doc_id
+    )
     anchor_types = profile.graph.anchor_types
     target = _selected_target(entities, request.target_disease_code, anchor_types)
     target_entity = next(
@@ -719,6 +822,14 @@ async def generate_package(request: GuidePackageGenerateRequest):
     if existing_path.exists():
         existing = _read(existing_path)
         created_at = existing.get("created_at", created_at)
+        try:
+            _validate_graph_target_change(existing, graph_target)
+        except HTTPException as exc:
+            if not request.reimport_confirmed:
+                raise exc
+        if (existing.get("import_result") or {}).get("success"):
+            package_id = f"PKG-{request.doc_id}-{uuid.uuid4().hex[:8].upper()}"
+            existing_path = _package_path(package_id)
 
     package = {
         "package_id": package_id,
@@ -726,7 +837,8 @@ async def generate_package(request: GuidePackageGenerateRequest):
         "doc_title": doc["doc_title"],
         "domain": domain,
         "template_id": template_id,
-        "graph_filename": _resolve_graph_filename(template_id),
+        "graph_filename": graph_target["filename"],
+        "graph_target": graph_target,
         "target_disease_code": target,
         "target_anchor_type": str(target_entity.get("entity_type") or ""),
         "status": request.status,
@@ -779,6 +891,18 @@ async def get_package(package_id: str, include_content: bool = True):
 async def update_package(package_id: str, request: GuidePackageUpdateRequest):
     package = _load_package(package_id)
     profile = get_profile(package.get("domain"))
+    if request.graph_target is not None:
+        graph_target = _resolve_graph_target(
+            request.graph_target,
+            str(package.get("domain") or "western"),
+            str(package.get("template_id") or ""),
+            str(package.get("doc_id") or package_id),
+        )
+        if graph_target["filename"] != package.get("graph_filename") and (package.get("import_result") or {}).get("success"):
+            if not request.reimport_confirmed:
+                raise HTTPException(409, "知识包已成功导入；变更目标图谱必须显式确认重新导入")
+        package["graph_target"] = graph_target
+        package["graph_filename"] = graph_target["filename"]
     if request.target_disease_code is not None:
         package["target_disease_code"] = _selected_target(
             package.get("entities", []),
@@ -934,12 +1058,57 @@ async def import_package(package_id: str, request: GuidePackageImportRequest):
         package["status"] = "ready_for_test"
     else:
         package["status"] = "imported"
+
+    # 自动生成一份阳性测试病历，供「病历测试」页即时验证（失败不阻断导入）。
+    test_case = None
+    try:
+        from src.review.test_case_generator import generate_case_for_package
+        test_case = generate_case_for_package(package)
+    except Exception as exc:
+        test_case = {"error": str(exc)[:200]}
+
+    package["checks"] = _build_checks(package)
+    package["import_result"] = {
+        "imported_at": _now(),
+        "success": not rule_result.get("errors"),
+        "graph": graph_result,
+        "rules": {**rule_result, "sync_check": sync_result},
+        "test_case": test_case,
+        "error": "",
+    }
     _save_package(package)
     return {
         "package_id": package_id,
         "status": package["status"],
         "graph": graph_result,
         "rules": {**rule_result, "sync_check": sync_result},
+        "test_case": test_case,
         "checks": package["checks"],
         "remaining_action": "请在规则管理中人工审核并逐条启用",
+    }
+
+
+@router.post("/{package_id}/generate-test-case")
+async def generate_test_case(package_id: str):
+    """为知识包（重新）生成一份阳性测试病历，写入病历测试的病例列表。
+
+    门槛只要求包内有候选规则：重新生成知识包会清空 import_result，
+    但已入库的规则条件仍然有效，可以继续生成/更新测试病例。
+    """
+    package = _load_package(package_id)
+    if not (package.get("suggested_rules") or []):
+        raise HTTPException(422, "该知识包没有候选规则，无法生成测试病历")
+    from src.review.test_case_generator import generate_case_for_package
+
+    try:
+        result = generate_case_for_package(package)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return {
+        "package_id": package_id,
+        "case": result["case"],
+        "patient_file": result["patient_file"],
+        "rule_id": result["rule_id"],
+        "summary": result["summary"],
+        "hint": "已写入「病历测试」的病例列表，选择该病例即可验证推理；规则需审核启用后才会出现在疑似诊断中。",
     }

@@ -39,3 +39,6 @@ _patch_service*.py
 
 # OS
 .DS_Store
+
+# runtime import history
+data/imports/

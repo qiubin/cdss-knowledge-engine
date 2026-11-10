@@ -27,11 +27,11 @@ tcm_profile = check("/api/profiles/tcm")
 assert "syndrome" in tcm_profile["anchor_types"]
 
 templates = check("/api/templates?domain=tcm")
-assert any(item["template_id"] == "TCM_GUIDELINE_V1" for item in templates)
+assert any(item["template_id"] == "TCM_GUIDELINE_V2" for item in templates)
 
 graphs = check("/api/kg/graphs?domain=tcm")
-assert any(item["graph_filename"] == "tcm_graph.json" for item in graphs)
-graph = check("/api/kg/graph?graph_filename=tcm_graph.json")
+assert any(item["graph_filename"] == "KG-TCM-DEMO.json" for item in graphs)
+graph = check("/api/kg/graph?graph_filename=KG-TCM-DEMO.json")
 assert graph["domain"] == "tcm"
 assert graph["profile"]["domain"] == "tcm"
 assert len(graph["nodes"]) > 0

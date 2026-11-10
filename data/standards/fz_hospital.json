@@ -706,5 +706,19 @@
     "threshold_value": 6.5,
     "threshold_unit": "%",
     "source_note": "通用成人参考范围（演示数据），请医院检验科复核"
+  },
+  {
+    "hospital_id": "FZ_HOSPITAL",
+    "lab_code": "LVEF",
+    "lab_name": "左室射血分数",
+    "concept_code": "DECREASED",
+    "operator": "<",
+    "threshold_value": 50.0,
+    "threshold_unit": "%",
+    "ref_source": "STATIC",
+    "effective_from": "2024-01-01",
+    "version": 1,
+    "status": "active",
+    "source_note": "福州某院：超声心动图常规参考：LVEF 降低为 < 50%"
   }
 ]

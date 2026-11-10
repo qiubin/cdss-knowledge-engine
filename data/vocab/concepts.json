@@ -135,5 +135,65 @@
     "evaluator_type": "observation_present",
     "domain": "tcm",
     "is_active": true
+  },
+  {
+    "code": "UNKNOWN",
+    "name_cn": "未采集/未知",
+    "name_en": "unknown",
+    "category": "unknown",
+    "description": "未采集或不能确定，与确认阴性 ABSENT 区分",
+    "evaluator_type": "observation_present",
+    "domain": "tcm",
+    "is_active": true
+  },
+  {
+    "code": "MILD",
+    "name_cn": "轻度",
+    "name_en": "mild",
+    "category": "severity",
+    "description": "轻度",
+    "evaluator_type": "observation_present",
+    "domain": "tcm",
+    "is_active": true
+  },
+  {
+    "code": "MODERATE",
+    "name_cn": "中度",
+    "name_en": "moderate",
+    "category": "severity",
+    "description": "中度",
+    "evaluator_type": "observation_present",
+    "domain": "tcm",
+    "is_active": true
+  },
+  {
+    "code": "SEVERE",
+    "name_cn": "重度",
+    "name_en": "severe",
+    "category": "severity",
+    "description": "重度",
+    "evaluator_type": "observation_present",
+    "domain": "tcm",
+    "is_active": true
+  },
+  {
+    "code": "PARTIAL_PRESENT",
+    "name_cn": "部分存在",
+    "name_en": "partial_present",
+    "category": "observation_present",
+    "description": "仅部分证据存在",
+    "evaluator_type": "observation_present",
+    "domain": "tcm",
+    "is_active": true
+  },
+  {
+    "code": "TCM_EVIDENCE_INSUFFICIENT",
+    "name_cn": "中医辨证证据不足",
+    "name_en": "tcm_evidence_insufficient",
+    "category": "tcm_pattern_concept",
+    "description": "必要或加权证据不足，证候暂不成立",
+    "evaluator_type": "observation_present",
+    "domain": "tcm",
+    "is_active": true
   }
 ]

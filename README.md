@@ -51,7 +51,6 @@ python3 scripts/run_demo.py
 
 ```bash
 python tools/_seed_tcm_vocab.py
-python tools/_add_tcm_template.py
 python tools/_seed_tcm_graph.py
 python tools/_seed_tcm_rules.py
 python tools/_smoke_tcm_inference.py

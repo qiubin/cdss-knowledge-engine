@@ -1,0 +1,539 @@
+{
+  "graph_id": "KG-TCM-DEMO",
+  "name": "中医胸痹心痛示例图谱",
+  "description": "内置演示数据：用于中医辨证测试台回归，不作为用户导入图谱的默认目标。",
+  "source": "builtin-demo",
+  "domain": "tcm",
+  "schema_version": 2,
+  "anchor_types": [
+    "syndrome",
+    "disease"
+  ],
+  "nodes": [
+    {
+      "id": "ENTITY:syndrome:TCM_SYN_QI_YIN_XU",
+      "node_type": "syndrome",
+      "code": "TCM_SYN_QI_YIN_XU",
+      "concept_code": "",
+      "name": "气阴两虚证",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:symptom:SYM_CHEST_TIGHTNESS",
+      "node_type": "symptom",
+      "code": "SYM_CHEST_TIGHTNESS",
+      "concept_code": "",
+      "name": "胸闷",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:symptom:SYM_SHORTNESS_BREATH",
+      "node_type": "symptom",
+      "code": "SYM_SHORTNESS_BREATH",
+      "concept_code": "",
+      "name": "气短",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:symptom:SYM_FATIGUE",
+      "node_type": "symptom",
+      "code": "SYM_FATIGUE",
+      "concept_code": "",
+      "name": "乏力",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:symptom:SYM_SPONTANEOUS_SWEAT",
+      "node_type": "symptom",
+      "code": "SYM_SPONTANEOUS_SWEAT",
+      "concept_code": "",
+      "name": "自汗",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:tongue:TCM_TONGUE_PALE_RED",
+      "node_type": "tongue",
+      "code": "TCM_TONGUE_PALE_RED",
+      "concept_code": "",
+      "name": "舌淡红",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:tongue:TCM_COATING_THIN_WHITE",
+      "node_type": "tongue",
+      "code": "TCM_COATING_THIN_WHITE",
+      "concept_code": "",
+      "name": "苔薄白",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:pulse:TCM_PULSE_THREADY_WEAK",
+      "node_type": "pulse",
+      "code": "TCM_PULSE_THREADY_WEAK",
+      "concept_code": "",
+      "name": "脉细弱",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:treatment_method:TCM_METHOD_YIQI_YANGYIN",
+      "node_type": "treatment_method",
+      "code": "TCM_METHOD_YIQI_YANGYIN",
+      "concept_code": "",
+      "name": "益气养阴",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:formula:TCM_FORMULA_SHENGMAI_SAN",
+      "node_type": "formula",
+      "code": "TCM_FORMULA_SHENGMAI_SAN",
+      "concept_code": "",
+      "name": "生脉散",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:herb:TCM_HERB_RENSHEN",
+      "node_type": "herb",
+      "code": "TCM_HERB_RENSHEN",
+      "concept_code": "",
+      "name": "人参",
+      "attributes": {
+        "HERB_ROLE": "君",
+        "HERB_DOSE": "10g"
+      },
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:herb:TCM_HERB_MAIDONG",
+      "node_type": "herb",
+      "code": "TCM_HERB_MAIDONG",
+      "concept_code": "",
+      "name": "麦冬",
+      "attributes": {
+        "HERB_ROLE": "臣",
+        "HERB_DOSE": "15g"
+      },
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:herb:TCM_HERB_WUWEIZI",
+      "node_type": "herb",
+      "code": "TCM_HERB_WUWEIZI",
+      "concept_code": "",
+      "name": "五味子",
+      "attributes": {
+        "HERB_ROLE": "佐",
+        "HERB_DOSE": "6g"
+      },
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:syndrome:TCM_SYN_TAN_ZHUO_BI_ZU",
+      "node_type": "syndrome",
+      "code": "TCM_SYN_TAN_ZHUO_BI_ZU",
+      "concept_code": "",
+      "name": "痰浊闭阻证",
+      "attributes": {},
+      "source_refs": [
+        "c2"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:symptom:SYM_EXCESS_PHLEGM",
+      "node_type": "symptom",
+      "code": "SYM_EXCESS_PHLEGM",
+      "concept_code": "",
+      "name": "痰多",
+      "attributes": {},
+      "source_refs": [
+        "c2"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:symptom:SYM_BODY_HEAVINESS",
+      "node_type": "symptom",
+      "code": "SYM_BODY_HEAVINESS",
+      "concept_code": "",
+      "name": "肢体沉重",
+      "attributes": {},
+      "source_refs": [
+        "c2"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:tongue:TCM_TONGUE_PALE_FLABBY",
+      "node_type": "tongue",
+      "code": "TCM_TONGUE_PALE_FLABBY",
+      "concept_code": "",
+      "name": "舌淡胖",
+      "attributes": {},
+      "source_refs": [
+        "c2"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:tongue:TCM_COATING_WHITE_GREASY",
+      "node_type": "tongue",
+      "code": "TCM_COATING_WHITE_GREASY",
+      "concept_code": "",
+      "name": "苔白腻",
+      "attributes": {},
+      "source_refs": [
+        "c2"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:pulse:TCM_PULSE_WIRY_SLIPPERY",
+      "node_type": "pulse",
+      "code": "TCM_PULSE_WIRY_SLIPPERY",
+      "concept_code": "",
+      "name": "脉弦滑",
+      "attributes": {},
+      "source_refs": [
+        "c2"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:pulse:TCM_PULSE_WIRY",
+      "node_type": "pulse",
+      "code": "TCM_PULSE_WIRY",
+      "concept_code": "",
+      "name": "脉弦",
+      "attributes": {},
+      "source_refs": [
+        "c2"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:pathogenesis:TCM_PATH_TAN_ZHUO",
+      "node_type": "pathogenesis",
+      "code": "TCM_PATH_TAN_ZHUO",
+      "concept_code": "",
+      "name": "痰浊",
+      "attributes": {},
+      "source_refs": [
+        "c2"
+      ],
+      "review_status": "active"
+    },
+    {
+      "id": "ENTITY:disease:TCM_DIS_XIONG_BI_XIN_TONG",
+      "node_type": "disease",
+      "code": "TCM_DIS_XIONG_BI_XIN_TONG",
+      "concept_code": "",
+      "name": "胸痹心痛病",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    }
+  ],
+  "relations": [
+    {
+      "source_node_id": "ENTITY:syndrome:TCM_SYN_QI_YIN_XU",
+      "relation_code": "SYNDROME_HAS_SYMPTOM",
+      "relation_name": "证候主症次症",
+      "target_node_id": "ENTITY:symptom:SYM_CHEST_TIGHTNESS",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:syndrome:TCM_SYN_QI_YIN_XU",
+      "relation_code": "SYNDROME_HAS_SYMPTOM",
+      "relation_name": "证候主症次症",
+      "target_node_id": "ENTITY:symptom:SYM_SHORTNESS_BREATH",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:syndrome:TCM_SYN_QI_YIN_XU",
+      "relation_code": "SYNDROME_HAS_SYMPTOM",
+      "relation_name": "证候主症次症",
+      "target_node_id": "ENTITY:symptom:SYM_FATIGUE",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:syndrome:TCM_SYN_QI_YIN_XU",
+      "relation_code": "SYNDROME_HAS_SYMPTOM",
+      "relation_name": "证候主症次症",
+      "target_node_id": "ENTITY:symptom:SYM_SPONTANEOUS_SWEAT",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:syndrome:TCM_SYN_QI_YIN_XU",
+      "relation_code": "SYNDROME_HAS_TONGUE",
+      "relation_name": "证候舌象",
+      "target_node_id": "ENTITY:tongue:TCM_TONGUE_PALE_RED",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:syndrome:TCM_SYN_QI_YIN_XU",
+      "relation_code": "SYNDROME_HAS_TONGUE",
+      "relation_name": "证候舌象",
+      "target_node_id": "ENTITY:tongue:TCM_COATING_THIN_WHITE",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:syndrome:TCM_SYN_QI_YIN_XU",
+      "relation_code": "SYNDROME_HAS_PULSE",
+      "relation_name": "证候脉象",
+      "target_node_id": "ENTITY:pulse:TCM_PULSE_THREADY_WEAK",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:syndrome:TCM_SYN_QI_YIN_XU",
+      "relation_code": "SYNDROME_TREATED_BY_METHOD",
+      "relation_name": "证候治法",
+      "target_node_id": "ENTITY:treatment_method:TCM_METHOD_YIQI_YANGYIN",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:treatment_method:TCM_METHOD_YIQI_YANGYIN",
+      "relation_code": "METHOD_HAS_FORMULA",
+      "relation_name": "治法代表方",
+      "target_node_id": "ENTITY:formula:TCM_FORMULA_SHENGMAI_SAN",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:formula:TCM_FORMULA_SHENGMAI_SAN",
+      "relation_code": "FORMULA_CONTAINS_HERB",
+      "relation_name": "方剂组成",
+      "target_node_id": "ENTITY:herb:TCM_HERB_RENSHEN",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:formula:TCM_FORMULA_SHENGMAI_SAN",
+      "relation_code": "FORMULA_CONTAINS_HERB",
+      "relation_name": "方剂组成",
+      "target_node_id": "ENTITY:herb:TCM_HERB_MAIDONG",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:formula:TCM_FORMULA_SHENGMAI_SAN",
+      "relation_code": "FORMULA_CONTAINS_HERB",
+      "relation_name": "方剂组成",
+      "target_node_id": "ENTITY:herb:TCM_HERB_WUWEIZI",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:syndrome:TCM_SYN_TAN_ZHUO_BI_ZU",
+      "relation_code": "SYNDROME_HAS_SYMPTOM",
+      "relation_name": "证候主症次症",
+      "target_node_id": "ENTITY:symptom:SYM_EXCESS_PHLEGM",
+      "attributes": {},
+      "source_refs": [
+        "c2"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:syndrome:TCM_SYN_TAN_ZHUO_BI_ZU",
+      "relation_code": "SYNDROME_HAS_SYMPTOM",
+      "relation_name": "证候主症次症",
+      "target_node_id": "ENTITY:symptom:SYM_BODY_HEAVINESS",
+      "attributes": {},
+      "source_refs": [
+        "c2"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:syndrome:TCM_SYN_TAN_ZHUO_BI_ZU",
+      "relation_code": "SYNDROME_HAS_TONGUE",
+      "relation_name": "证候舌象",
+      "target_node_id": "ENTITY:tongue:TCM_TONGUE_PALE_FLABBY",
+      "attributes": {},
+      "source_refs": [
+        "c2"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:syndrome:TCM_SYN_TAN_ZHUO_BI_ZU",
+      "relation_code": "SYNDROME_HAS_TONGUE",
+      "relation_name": "证候舌象",
+      "target_node_id": "ENTITY:tongue:TCM_COATING_WHITE_GREASY",
+      "attributes": {},
+      "source_refs": [
+        "c2"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:syndrome:TCM_SYN_TAN_ZHUO_BI_ZU",
+      "relation_code": "SYNDROME_HAS_PULSE",
+      "relation_name": "证候脉象",
+      "target_node_id": "ENTITY:pulse:TCM_PULSE_WIRY_SLIPPERY",
+      "attributes": {},
+      "source_refs": [
+        "c2"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:syndrome:TCM_SYN_TAN_ZHUO_BI_ZU",
+      "relation_code": "SYNDROME_HAS_PULSE",
+      "relation_name": "证候脉象",
+      "target_node_id": "ENTITY:pulse:TCM_PULSE_WIRY",
+      "attributes": {},
+      "source_refs": [
+        "c2"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:syndrome:TCM_SYN_TAN_ZHUO_BI_ZU",
+      "relation_code": "SYNDROME_HAS_PATHOGENESIS",
+      "relation_name": "证候病机",
+      "target_node_id": "ENTITY:pathogenesis:TCM_PATH_TAN_ZHUO",
+      "attributes": {},
+      "source_refs": [
+        "c2"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:disease:TCM_DIS_XIONG_BI_XIN_TONG",
+      "relation_code": "DISEASE_HAS_SYNDROME",
+      "relation_name": "疾病辨证分型",
+      "target_node_id": "ENTITY:syndrome:TCM_SYN_QI_YIN_XU",
+      "attributes": {},
+      "source_refs": [
+        "c1"
+      ],
+      "review_status": "active"
+    },
+    {
+      "source_node_id": "ENTITY:disease:TCM_DIS_XIONG_BI_XIN_TONG",
+      "relation_code": "DISEASE_HAS_SYNDROME",
+      "relation_name": "疾病辨证分型",
+      "target_node_id": "ENTITY:syndrome:TCM_SYN_TAN_ZHUO_BI_ZU",
+      "attributes": {},
+      "source_refs": [
+        "c2"
+      ],
+      "review_status": "active"
+    }
+  ],
+  "syndromes": [
+    {
+      "code": "TCM_SYN_QI_YIN_XU",
+      "name_cn": "气阴两虚证"
+    },
+    {
+      "code": "TCM_SYN_TAN_ZHUO_BI_ZU",
+      "name_cn": "痰浊闭阻证"
+    }
+  ],
+  "diseases": [
+    {
+      "code": "TCM_DIS_XIONG_BI_XIN_TONG",
+      "name_cn": "胸痹心痛病",
+      "name_en": ""
+    }
+  ],
+  "evidences": [],
+  "sources": []
+}

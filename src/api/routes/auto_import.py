@@ -44,6 +44,16 @@ async def auto_import(
             auto_activate=str(auto_activate or "false").lower() not in {"false", "0", "no"},
         )
     except Exception as error:
+        from .pdf import _append_import_log
+        _append_import_log({
+            "doc_id": doc_id,
+            "doc_title": doc_title,
+            "filename": file.filename,
+            "status": "failed",
+            "mode": "auto",
+            "stage": "pipeline",
+            "error": str(error)[:300],
+        })
         file_path.unlink(missing_ok=True)
         raise HTTPException(422, f"自动生成失败: {str(error)}") from error
 
@@ -69,6 +79,25 @@ async def auto_import(
     }
     _doc_store[doc_id] = doc_record
     _persist_doc(doc_record)
+    from .pdf import _append_import_log
+    _append_import_log({
+        "doc_id": doc_id,
+        "doc_title": doc_title,
+        "filename": file.filename,
+        "status": "success",
+        "mode": "auto",
+        "template_id": AUTO_TEMPLATE_ID,
+        "domain": "western",
+        "graph_filename": result["graph_filename"],
+        "package_id": result["package_id"],
+        "page_count": parsed.get("total_pages", 0),
+        "entity_count": len(result["entities"]),
+        "relation_count": len(result["relations"]),
+        "rule_count": len(result["rules"]),
+        "active_rule_count": len([rule for rule in result["rules"] if rule.get("status") == "active"]),
+        "warning_count": len(result["warnings"]),
+        "duration_ms": result["metadata"].get("duration_ms"),
+    })
     return {
         "doc_id": doc_id,
         "package_id": result["package_id"],

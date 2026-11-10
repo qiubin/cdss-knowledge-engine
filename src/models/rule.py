@@ -70,11 +70,14 @@ class RuleCondition(BaseModel):
     - "observation": generic observation (TCM tongue/pulse/sign/constitution)
     - "fact": consume a fact produced by an earlier inference stage
     """
-    type: str  # group / evidence / lab_concept / exam_finding / symptom / vital / demographic / past_history / medication / observation / fact
+    type: str  # group / weighted_group / evidence / lab_concept / exam_finding / symptom / vital / demographic / past_history / medication / observation / fact
     operator: Optional[str] = None  # AND / OR / NOT for groups; > < >= <= = for numeric
+    scoring: Optional[str] = None
+    threshold: Optional[float] = None
 
     # For group type
     children: List["RuleCondition"] = Field(default_factory=list)
+    required_children: List["RuleCondition"] = Field(default_factory=list)
 
     # For evidence type
     evidence_id: Optional[str] = None
@@ -106,6 +109,8 @@ class RuleCondition(BaseModel):
 
     # For observation type: symptom / tongue / pulse / sign / constitution
     observation_type: Optional[str] = None
+    weight: Optional[float] = None
+    required: Optional[bool] = None
     # For fact type: syndrome / treatment / disease
     fact_type: Optional[str] = None
     # For attribute type: histology / stage / biomarker / grade ...

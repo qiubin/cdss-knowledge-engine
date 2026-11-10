@@ -8,12 +8,13 @@
     hospitalId: "XM_FIRST",
     doc: null,
     guidePackages: [],
+    targetGraphs: [],
     guidePackageId: "",
     importTab: "entities",
     graph: null,
     graphs: [],
     graphFilename: "KG-GENERIC_GUIDELINE_V1.json",
-    tcmGraphFilename: "tcm_graph.json",
+    tcmGraphFilename: "",
     graphFilter: "",
     rules: [],
     ruleSync: null,
@@ -32,6 +33,10 @@
     standardEditIndex: -1,
     inferenceResult: null,
     tcmInferenceResult: null,
+    tcmTestResult: null,
+    tcmTestCases: [],
+    tcmTestCaseId: "",
+    tcmExpected: null,
     autoResult: null,
     lastLlmProvider: "",
     demoCases: [],
@@ -113,6 +118,9 @@
     const text = String(value || "").trim().toLowerCase();
     return ["tcm", "中医", "中医内科"].includes(text) ? "tcm" : "western";
   };
+  const availableTcmTargetGraphs = (items) => items.filter((item) => (
+    item.source !== "builtin-demo" && Number(item.schema_version || 1) >= 2
+  ));
   const typeName = {
     disease: "疾病", lab: "检验", concept: "概念", exam: "检查", exam_finding: "检查发现",
     symptom: "症状", diagnostic_evidence: "诊断证据", syndrome: "证候", tongue: "舌象",
@@ -456,6 +464,7 @@
     const doc = state.doc;
     content.innerHTML = `
       <div id="importJobPanel"></div>
+      ${panel("导入历史", '<div id="importHistoryBody" class="muted">加载中…</div>', "", "记录每次上传（含一键自动）的成功与失败；新文档使用新编号，不会覆盖历史记录")}
       ${panel("一键自动生成（LLM 推荐）", `
         <div class="inline-controls">
           <button id="autoUploadBtn" class="btn primary">选择指南 PDF 自动生成</button>
@@ -508,6 +517,21 @@
     if (state.importJob?.status === "running") setImportBusy(true);
     renderImportJob();
     if (doc) renderImportResult();
+    api("/api/pdf/import-logs?limit=50").then((logs) => {
+      const body = $("#importHistoryBody");
+      if (!body) return;
+      if (!logs.length) { body.innerHTML = '<div class="empty">暂无导入记录；每次上传（含失败）都会在这里留痕。</div>'; return; }
+      body.className = "";
+      body.innerHTML = table(["时间", "文档", "方式", "结果", "数量", "耗时", "失败原因"], logs.map((log) => `<tr>
+        <td class="nowrap mono">${esc(formatTime(log.ts))}</td>
+        <td><strong>${esc(log.doc_title || "-")}</strong><div class="mono muted">${esc(log.doc_id || "")}</div></td>
+        <td>${log.mode === "auto" ? "一键自动" : log.mode === "llm" ? "大模型" : log.mode === "local" ? "本地模板" : esc(log.mode || "-")}</td>
+        <td>${log.status === "success" ? '<span class="badge active">成功</span>' : '<span class="badge danger">失败</span>'}</td>
+        <td class="muted">${log.status === "success" ? `${log.entity_count ?? "-"} 实体 / ${log.relation_count ?? "-"} 关系 / ${log.rule_count ?? "-"} 规则` : "-"}</td>
+        <td class="mono muted">${log.duration_ms != null ? `${log.duration_ms} ms` : "-"}</td>
+        <td>${esc(log.error || "-")}</td>
+      </tr>`));
+    }).catch(() => {});
   }
 
   function importLog(message, level = "info") {
@@ -690,7 +714,18 @@
       })() : ""}
       ${panel("审核与生成知识包", `
         <div class="inline-controls">
-          <div class="field"><label>${domain === "tcm" ? "目标证候" : "目标疾病"}</label><select id="targetDisease">${anchors.map((d) => `<option value="${esc(d.code)}" ${d.code === target ? "selected" : ""}>${esc(d.name)} ${esc(d.code)}</option>`).join("")}</select></div>
+          <div class="field"><label>主目标${domain === "tcm" ? "证候" : "疾病"}（预检锚点）</label><select id="targetDisease">${anchors.map((d) => `<option value="${esc(d.code)}" ${d.code === target ? "selected" : ""}>${esc(d.name)} ${esc(d.code)}</option>`).join("")}</select></div>
+          <div class="muted" style="flex-basis:100%">${anchors.length > 1
+            ? `本次将导入包内全部 ${anchors.length} 个${domain === "tcm" ? "证候" : "疾病"}：${esc(anchors.map((d) => `${d.name}（${d.code}）`).join("、"))}。主目标仅用于预检锚点与诊断链路定位，不是唯一导入对象。`
+            : "主目标仅用于预检锚点与诊断链路定位；包内全部实体、关系和规则都会导入。"}</div>
+          ${domain === "tcm" ? `
+          <div class="field"><label>目标图谱</label><select id="graphTargetMode">
+            <option value="new" selected>新建独立中医图谱</option>
+            <option value="existing">追加既有中医图谱</option>
+          </select></div>
+          <div class="field hidden" id="newGraphNameField"><label>图谱文件名（可选）</label><input id="newGraphName" placeholder="留空自动生成 KG-TCM-{doc_id}.json"></div>
+          <div class="field hidden" id="graphTargetField"><label>既有图谱</label><select id="graphTargetFilename"><option value="">加载中</option></select></div>
+          <div class="field hidden" id="legacyGraphField"><label>模板绑定图谱</label><input id="legacyGraphName" value="${esc(doc.graph_filename || doc.extraction?.graph_filename || "")}" readonly></div>` : ""}
           <button id="generatePackage" class="btn primary">生成知识包并进入审核</button>
         </div>
         <p class="muted">生成后进入「知识包」页查看自动预检并完成入库；此处不再单独导入图谱或规则。</p>
@@ -698,6 +733,24 @@
       <section class="panel"><div class="tabs">${tabs.map(([id, text]) => `<button class="tab ${state.importTab === id ? "active" : ""}" data-import-tab="${id}">${text}</button>`).join("")}</div><div id="importTabBody" class="panel-body"></div></section>
     `;
     $("#targetDisease").onchange = (e) => { doc.targetDisease = e.target.value; };
+    const graphMode = $("#graphTargetMode");
+    if (graphMode) {
+      const renderGraphTargetFields = () => {
+        $("#newGraphNameField")?.classList.toggle("hidden", graphMode.value !== "new");
+        $("#graphTargetField")?.classList.toggle("hidden", graphMode.value !== "existing");
+        $("#legacyGraphField")?.classList.toggle("hidden", graphMode.value !== "legacy");
+      };
+      graphMode.onchange = async () => {
+        renderGraphTargetFields();
+        if (graphMode.value !== "existing") return;
+        try {
+          state.targetGraphs = availableTcmTargetGraphs(await api("/api/kg/graphs?domain=tcm"));
+          const selector = $("#graphTargetFilename");
+          selector.innerHTML = state.targetGraphs.map((item) => `<option value="${esc(item.graph_filename)}">${esc(item.graph_filename)}（证候 ${item.syndromes || 0}）</option>`).join("");
+        } catch (error) { toast(error.message, true); }
+      };
+      renderGraphTargetFields();
+    }
     $("#generatePackage").onclick = generatePackage;
     box.querySelectorAll("[data-import-tab]").forEach((btn) => btn.onclick = () => { state.importTab = btn.dataset.importTab; renderImportResult(); });
     renderImportTab();
@@ -1530,12 +1583,20 @@
     const doc = state.doc;
     if (!doc) return toast("请先上传或选择解析文档", true);
     try {
+      const graphMode = $("#graphTargetMode");
+      const graphTarget = graphMode ? {
+        mode: graphMode.value,
+        filename: graphMode.value === "existing"
+          ? $("#graphTargetFilename")?.value || ""
+          : ($("#newGraphName")?.value || "").trim(),
+      } : undefined;
       const result = await api("/api/guide-packages/generate", { json: {
         doc_id: doc.doc_id,
         domain: doc.extraction?.domain || doc.domain || "",
         target_disease_code: doc.targetDisease || $("#targetDisease")?.value || "",
         template_id: doc.template_id || $("#uploadTemplate")?.value || "",
         status: "generated",
+        ...(graphTarget ? { graph_target: graphTarget } : {}),
       } });
       state.guidePackageId = result.package.package_id;
       const failed = result.package.checks.filter((item) => item.status === "failed").length;
@@ -1592,11 +1653,26 @@
           <strong>${esc(selected.doc_title)}</strong> / ${esc(selected.package_id)} 状态：${esc(packageStatusLabel(selected))} ${badge(normalizeDomainClient(selected.domain))}
           <div class="muted">目标 ${esc(selected.target_anchor_type || "疾病")} ${esc(selected.target_disease_code)}；模板 ${esc(selected.template_id || "-")}；目标图谱 ${esc(selected.graph_filename || "stemi_graph.json")}。${normalizeDomainClient(selected.domain) === "tcm" ? "中医知识包不检查医院检验标准，重点检查证候构成、方剂组成和配伍禁忌。" : "图谱只保存抽象证据语义，医院阈值仍在标准管理中维护。"}</div>
         </div>
+        ${normalizeDomainClient(selected.domain) === "tcm" ? panel("目标图谱配置", `
+          <div class="inline-controls">
+            <div class="field"><label>模式</label><select id="packageGraphMode">
+              <option value="new" ${(!selected.graph_target?.mode || selected.graph_target?.mode === "new") ? "selected" : ""}>新建</option>
+              <option value="existing" ${selected.graph_target?.mode === "existing" ? "selected" : ""}>追加既有</option>
+            </select></div>
+            <div class="field ${selected.graph_target?.mode === "existing" ? "" : "hidden"}" id="packageGraphExistingField">
+              <label>既有图谱</label><select id="packageGraphFilename"><option value="">加载中</option></select>
+            </div>
+            <div class="field ${(!selected.graph_target?.mode || selected.graph_target?.mode === "new") ? "" : "hidden"}" id="packageGraphNewField">
+              <label>新图谱文件名</label><input id="packageGraphNewName" value="${selected.graph_target?.mode !== "existing" ? esc(selected.graph_filename || "") : ""}" placeholder="留空自动生成">
+            </div>
+            <button id="saveGraphTarget" class="btn sm">保存目标图谱</button>
+          </div>
+        `, "", "导入前可自由变更；已导入的知识包变更目标后，需重新导入才会写入新图谱，原图谱内容不变") : ""}
         ${hasImportStateMismatch(selected) ? `
           <div class="result-banner warning"><strong>知识包尚未真正入库</strong><div>当前流程状态显示为已导入，但没有任何导入记录。请使用下方“导入图谱和草稿规则”完成入库；导入后 ${(selected.suggested_rules || []).length} 条候选规则会以 draft 状态出现。</div></div>
         ` : ""}
         ${isImported(selected) ? `
-          <div class="result-banner ok"><strong>该知识包已导入</strong><div>图谱实体和关系已更新，规则已保存为草稿但未启用。下一步请到规则管理逐条审核启用。</div><div class="actions"><button id="goRules" class="btn primary">前往规则管理启用</button></div></div>
+          <div class="result-banner ok"><strong>该知识包已导入</strong><div>图谱实体和关系已更新，规则已保存为草稿但未启用。下一步请到规则管理逐条审核启用。</div><div class="actions"><button id="goRules" class="btn primary">前往规则管理启用</button><button id="genTestCase" class="btn">生成测试病历</button><span class="muted" id="genTestCaseHint">${(selected.import_result?.test_case?.case?.name) ? `已自动生成：${esc(selected.import_result.test_case.case.name)}` : (selected.import_result?.test_case?.error ? `自动生成失败：${esc(selected.import_result.test_case.error)}` : "")}</span></div></div>
           <details class="debug-panel"><summary>高级：重新导入</summary><div class="actions"><button id="reimportPackage" class="btn danger">重新导入图谱和草稿规则</button></div></details>
         ` : `
           ${panel("下一步", `
@@ -1724,6 +1800,58 @@
       renderGuidePackages();
     });
     if (!selected) return;
+    const renderPackageGraphFields = () => {
+      const mode = $("#packageGraphMode")?.value || "new";
+      $("#packageGraphNewField")?.classList.toggle("hidden", mode !== "new");
+      $("#packageGraphExistingField")?.classList.toggle("hidden", mode !== "existing");
+    };
+    const loadPackageGraphs = async () => {
+      const selector = $("#packageGraphFilename");
+      if (!selector) return;
+      selector.innerHTML = '<option value="">加载中</option>';
+      try {
+        const graphs = availableTcmTargetGraphs(await api("/api/kg/graphs?domain=tcm"));
+        state.targetGraphs = graphs;
+        if (!graphs.length) {
+          selector.innerHTML = '<option value="">暂无可用中医图谱</option>';
+          return;
+        }
+        const current = selected.graph_target?.mode === "existing" ? selected.graph_filename : "";
+        selector.innerHTML = graphs.map((item) => `<option value="${esc(item.graph_filename)}" ${item.graph_filename === current ? "selected" : ""}>${esc(item.graph_filename)}（证候 ${item.syndromes || 0}）</option>`).join("");
+      } catch (error) {
+        selector.innerHTML = '<option value="">加载失败</option>';
+        toast(error.message, true);
+      }
+    };
+    $("#packageGraphMode")?.addEventListener("change", () => {
+      renderPackageGraphFields();
+      if ($("#packageGraphMode").value === "existing") loadPackageGraphs();
+    });
+    $("#saveGraphTarget")?.addEventListener("click", async () => {
+      const mode = $("#packageGraphMode")?.value || "new";
+      const filename = mode === "existing"
+        ? ($("#packageGraphFilename")?.value || "").trim()
+        : ($("#packageGraphNewName")?.value || "").trim();
+      if (mode === "existing" && !filename) { toast("请选择要追加的中医图谱", true); return; }
+      const imported = Boolean(selected.import_result?.success);
+      const changed = mode !== (selected.graph_target?.mode || "new") || (Boolean(filename) && filename !== selected.graph_filename);
+      let reimportConfirmed = false;
+      if (imported && changed) {
+        const message = `该知识包已导入。确认将目标图谱改为「${filename || "自动生成"}」？保存后还需重新导入，才会写入新图谱。`;
+        if (!confirm(message)) return;
+        reimportConfirmed = true;
+      }
+      try {
+        await api(`/api/guide-packages/${selected.package_id}`, {
+          method: "PUT",
+          json: { graph_target: { mode, filename }, reimport_confirmed: reimportConfirmed },
+        });
+        toast(reimportConfirmed ? "目标图谱已变更；请重新导入以写入新图谱" : "目标图谱已保存");
+        renderGuidePackages();
+      } catch (error) { toast(error.message, true); }
+    });
+    renderPackageGraphFields();
+    if ($("#packageGraphMode")?.value === "existing") loadPackageGraphs();
     $("#savePackageStatus")?.addEventListener("click", async () => {
       await api(`/api/guide-packages/${selected.package_id}`, { method: "PUT", json: { status: $("#packageStatus").value } });
       toast("知识包状态已保存");
@@ -1737,6 +1865,13 @@
     $("#importSelectedPackage")?.addEventListener("click", () => importGuidePackage(selected.package_id));
     $("#reimportPackage")?.addEventListener("click", () => importGuidePackage(selected.package_id, true));
     $("#goRules")?.addEventListener("click", () => navigate("rules"));
+    $("#genTestCase")?.addEventListener("click", async () => {
+      try {
+        const result = await api(`/api/guide-packages/${selected.package_id}/generate-test-case`, { json: {} });
+        toast(`测试病历已生成：${result.case.name}；请到「病历测试」页选择该病例（规则启用后即可看到疑似诊断）`);
+        renderGuidePackages();
+      } catch (error) { toast(error.message, true); }
+    });
   }
 
   async function importGuidePackage(packageId, force = false) {
@@ -2152,19 +2287,37 @@
       try {
         const detail = await api(`/api/kg/nodes/${encodeURIComponent(nodeId)}?graph_filename=${encodeURIComponent(state.graphFilename)}`);
         const rules = detail.dependents?.rules || [];
+        const openImported = Boolean((detail.node.attributes || {}).open_import);
         $("#editorBody").innerHTML = `
           <h3>${esc(detail.node.name)} <span class="mono muted">${esc(detail.node.code || detail.node.id)}</span></h3>
-          <p>类型：${esc(typeName[detail.node.node_type] || detail.node.node_type)}　状态：${reviewBadge(detail.node.review_status)}</p>
+          <p>类型：${esc(typeName[detail.node.node_type] || detail.node.node_type)}　状态：${reviewBadge(detail.node.review_status)}${openImported ? ' <span class="badge draft">开放导入</span>' : ""}</p>
+          ${openImported ? '<div class="result-banner warning">该条目来自开放抽取（模板外类型或词库外实体）。确认无误后请「通过」审核，并建议加入实体词典，供后续解析直接命中。</div>' : ""}
           <h4>指南溯源</h4>
           <div class="quote">${esc((detail.node.source_refs || []).join("；") || "-")}</div>
           <h4>依赖规则（${rules.length}）</h4>
           ${table(["规则", "状态", "依赖状态"], rules.map((rule) => `<tr><td class="mono">${esc(rule.rule_id)}</td><td>${reviewBadge(rule.status)}</td><td>${esc(rule.dependency_status || "-")}</td></tr>`))}
+          <div class="actions">
+            <button class="btn sm primary" id="nodeAddVocab">加入实体词典</button>
+            <span class="muted">审核确认后的实体沉淀到共享词典，后续本地/大模型解析可直接命中，不再依赖人工补录。</span>
+          </div>
         `;
         const dialog = $("#editorDialog");
         const save = $("#editorSave");
         save.hidden = true;
         dialog.onclose = () => { save.hidden = false; dialog.onclose = null; };
         $("#editorCancel").onclick = () => dialog.close();
+        $("#nodeAddVocab").onclick = async () => {
+          try {
+            const node = detail.node;
+            await api(`/api/vocab/entities/${encodeURIComponent(node.node_type)}`, { json: {
+              code: node.code || "",
+              name: node.name || "",
+              aliases: [],
+              domain: node.node_type === "syndrome" || node.node_type === "tongue" || node.node_type === "pulse" ? "tcm" : "",
+            }});
+            toast(`已加入实体词典：${node.name}（${node.code}）`);
+          } catch (error) { toast(error.message, true); }
+        };
         dialog.showModal();
       } catch (error) { toast(error.message, true); }
     };
@@ -2195,8 +2348,8 @@
       return;
     }
     if (!state.tcmGraphFilename || !graphs.some((item) => item.graph_filename === state.tcmGraphFilename)) {
-      state.tcmGraphFilename = graphs.find((item) => item.graph_filename === "tcm_graph.json")?.graph_filename
-        || graphs[0].graph_filename;
+      const nonLegacyGraph = graphs.find((item) => item.graph_filename !== "tcm_graph.json");
+      state.tcmGraphFilename = nonLegacyGraph?.graph_filename || graphs[0].graph_filename;
     }
     const graph = await api(`/api/kg/graph?graph_filename=${encodeURIComponent(state.tcmGraphFilename)}`);
     const nodes = Array.isArray(graph.nodes) ? graph.nodes : Object.values(graph.nodes || {});
@@ -2204,7 +2357,7 @@
     if (!nodes.length) {
       content.innerHTML = panel(
         "中医图谱",
-        '<div class="empty">该图谱当前为空。请先在「指南导入」上传中医指南，选择 TCM_GUIDELINE_V1 模板，生成并导入知识包后，证候、舌脉、治法与方药节点会显示在这里。</div>',
+        '<div class="empty">该图谱当前为空。请先在「指南导入」上传中医指南，选择中医模板，生成并导入知识包后，证候、舌脉、治法与方药节点会显示在这里。</div>',
         "",
         "图谱已清空，等待重新导入指南生成",
       );
@@ -2522,7 +2675,10 @@
     const tab = state.reviewTab || "graph";
     const reviewer = localStorage.getItem("cdssReviewer") || "";
     const query = (state.reviewQuery || "").trim();
-    const queueUrl = `/api/review/queue?limit=300${query ? `&q=${encodeURIComponent(query)}` : ""}`;
+    const queueItemType = tab === "rules" || tab === "blocked"
+      ? "rule"
+      : (["graph", "stale", "orphan"].includes(tab) ? "graph" : "");
+    const queueUrl = `/api/review/queue?limit=300${queueItemType ? `&item_type=${queueItemType}` : ""}${query ? `&q=${encodeURIComponent(query)}` : ""}`;
     const [queue, audit] = await Promise.all([
       api(queueUrl),
       tab === "audit" ? api("/api/review/audit?limit=100") : Promise.resolve({ items: [] }),
@@ -2571,8 +2727,13 @@
       <td>${esc(row.reviewer || "-")}</td>
       <td>${esc(row.note || "-")}</td>
     </tr>`);
-    const truncated = queue.summary && queue.summary.total > allItems.length
-      ? `<span class="muted">队列共 ${queue.summary.total} 条，当前展示前 ${allItems.length} 条；请用筛选缩小范围。</span>`
+    const trunc = queue.truncated || {};
+    const truncParts = [];
+    if (trunc.graph_nodes || trunc.graph_relations) truncParts.push("图谱条目");
+    if (trunc.rules) truncParts.push("规则");
+    if (trunc.packages) truncParts.push("知识包");
+    const truncated = truncParts.length
+      ? `<span class="muted">${esc(truncParts.join("、"))}超出展示上限，请用搜索缩小范围。</span>`
       : "";
     content.innerHTML = `
       <div class="review-tabs">${tabHtml}</div>
@@ -3096,11 +3257,14 @@
   }
 
   async function renderTcmInference() {
-    const [symptoms, tongues, pulses] = await Promise.all([
+    const [symptoms, tongues, pulses, signs, constitutions] = await Promise.all([
       api("/api/vocab/entities/symptom"),
       api("/api/vocab/entities/tongue"),
       api("/api/vocab/entities/pulse"),
+      api("/api/vocab/entities/sign"),
+      api("/api/vocab/entities/constitution"),
     ]);
+    state.tcmTestCases = await api("/api/inference/demo-patients?domain=tcm");
     const optionGroup = (title, type, items, description) => panel(
       title,
       `<div class="tcm-options">${items.map((item) => `
@@ -3116,14 +3280,20 @@
         <div class="inline-controls">
           <button id="tcmRunBtn" class="btn primary">运行辨证</button>
           <button id="tcmDemoBtn" class="btn secondary">载入示例病历</button>
+          <button id="tcmTestBtn" class="btn secondary">运行用例测试</button>
+          <div class="field"><label>中医测试用例</label><select id="tcmTestCaseSelector">
+            <option value="">选择用例</option>
+            ${state.tcmTestCases.map((item) => `<option value="${esc(item.case_id)}" ${item.case_id === state.tcmTestCaseId ? "selected" : ""}>${esc(item.name || item.case_id)}</option>`).join("")}
+          </select></div>
           <span class="muted">示例病历：气阴两虚证（胸闷、气短、乏力、自汗，舌淡红、苔薄白，脉细弱）</span>
-        </div>`)}
+        </div>`, "", "用例测试只在本次请求中评估草稿辨证规则，不会改写规则状态")}
       <div id="tcmForm">
         ${optionGroup("症状（主症/次症）", "symptom", symptoms, "勾选病历中记录的症状")}
         ${optionGroup("舌象", "tongue", tongues, "舌质与舌苔分别勾选")}
         ${optionGroup("脉象", "pulse", pulses, "可多选复合脉象")}
       </div>
       <div id="tcmInferenceResult">${state.tcmInferenceResult ? "" : '<div class="empty">选择观察项后运行辨证</div>'}</div>
+      <div id="tcmTestResult">${state.tcmTestResult ? "" : '<div class="empty">选择测试用例后运行断言比对</div>'}</div>
     `;
     $("#tcmRunBtn").onclick = runTcmInference;
     $("#tcmDemoBtn").onclick = async () => {
@@ -3136,7 +3306,29 @@
         toast("已载入中医示例病历");
       } catch (error) { toast(error.message, true); }
     };
+    $("#tcmTestBtn").onclick = runTcmTestCase;
+    $("#tcmTestCaseSelector").onchange = async (event) => {
+      state.tcmTestCaseId = event.target.value;
+      await loadTcmTestCase();
+    };
     if (state.tcmInferenceResult) renderTcmInferenceResult();
+    if (state.tcmTestResult) renderTcmTestResult();
+  }
+
+  async function loadTcmTestCase() {
+    if (!state.tcmTestCaseId) {
+      state.tcmExpected = null;
+      return;
+    }
+    try {
+      const payload = await api(`/api/inference/demo-case?case_id=${encodeURIComponent(state.tcmTestCaseId)}`);
+      const selected = new Set((payload.patient.observations || []).map((item) => `${item.observation_type}:${item.code}`));
+      document.querySelectorAll("#tcmForm input[data-obs-key]").forEach((input) => {
+        input.checked = selected.has(input.dataset.obsKey);
+      });
+      state.tcmExpected = payload.case.expected || null;
+      toast(`已载入用例：${payload.case.name || payload.case.case_id}`);
+    } catch (error) { toast(error.message, true); }
   }
 
   async function runTcmInference() {
@@ -3167,6 +3359,48 @@
       });
       renderTcmInferenceResult();
     } catch (error) { toast(error.message, true); }
+  }
+
+  async function runTcmTestCase() {
+    if (!state.tcmTestCaseId) { toast("请先选择中医测试用例", true); return; }
+    if (!state.tcmExpected) await loadTcmTestCase();
+    const observations = collectTcmObservations();
+    if (!observations.length) { toast("请至少选择一个观察项", true); return; }
+    const patient = {
+      patient_id: `TCM-TEST-${state.tcmTestCaseId}`,
+      hospital_id: "TCM_DEMO",
+      age: 60,
+      gender: "U",
+      observations,
+      labs: [],
+      exam_findings: [],
+      symptoms: [],
+      vitals: [],
+      past_history: [],
+      current_medications: [],
+      allergies: [],
+    };
+    try {
+      state.tcmTestResult = await api("/api/inference/test-case", {
+        json: {
+          patient,
+          domain: "tcm",
+          case_id: state.tcmTestCaseId,
+          expected: state.tcmExpected,
+          include_draft_patterns: true,
+        },
+      });
+      renderTcmTestResult();
+    } catch (error) { toast(error.message, true); }
+  }
+
+  function collectTcmObservations() {
+    return [...document.querySelectorAll("#tcmForm input[data-obs-key]:checked")].map((input) => ({
+      observation_type: input.dataset.obsType,
+      code: input.dataset.obsCode,
+      name: input.dataset.obsName,
+      present: true,
+    }));
   }
 
   function renderTcmInferenceResult() {
@@ -3209,6 +3443,51 @@
       ${panel("方药建议", table(["证候", "方剂", "组成（剂量/君臣佐使）", "指南溯源"], prescriptionRows))}
       ${contra.length ? panel("禁忌", table(["证候", "禁忌", "指南溯源"], contra.map((item) => `<tr><td>${esc(item.anchor_name)}</td><td>${esc(item.message)}</td><td class="mono">${esc(item.guideline_source || "-")}</td></tr>`))) : ""}
       ${!conclusions.length ? '<div class="result-banner warning">未匹配到证候规则：请确认规则已启用，且观察项覆盖主症/舌脉条件。</div>' : ""}
+    `;
+  }
+
+  function renderTcmTestResult() {
+    const result = state.tcmTestResult;
+    const mount = $("#tcmTestResult");
+    if (!mount || !result) return;
+    const checks = result.checks || [];
+    const candidates = result.ranked_syndromes || [];
+    const dependencies = result.dependencies || [];
+    const categoryText = (item) => Object.entries((item.score_breakdown || {}).categories || {})
+      .map(([type, value]) => `${type}:${Math.round((value.score || 0) * 100)}%`).join("、") || "-";
+    const checkRows = checks.map((item) => `
+      <tr>
+        <td>${badge(item.passed ? "high" : "low")} ${esc(item.label)}</td>
+        <td><div class="mono">${esc(JSON.stringify(item.expected))}</div></td>
+        <td><div class="mono">${esc(JSON.stringify(item.actual))}</div></td>
+        <td>${esc(item.reason || "-")}</td>
+      </tr>`);
+    const candidateRows = candidates.map((item) => {
+      const conclusion = item.conclusion || {};
+      return `
+        <tr>
+          <td>${badge(item.matched ? "high" : "low")} ${esc(conclusion.anchor_name || conclusion.disease_name || "-")}<div class="mono muted">${esc(conclusion.anchor_code || "-")}</div></td>
+          <td>${conclusion.score != null ? `${(conclusion.score * 100).toFixed(1)}%` : "-"}<div class="muted">阈值 ${esc(((conclusion.score_breakdown || {}).threshold ?? "-"))}</div></td>
+          <td>${esc(categoryText(conclusion))}</td>
+          <td>${(conclusion.matched_items || []).map((x) => `<div>${esc(x.code)}</div>`).join("") || "-"}</td>
+          <td>${(conclusion.missing_items || []).map((x) => `<div>${esc(x.code)}</div>`).join("") || "-"}</td>
+          <td><div>${esc(item.condition_text || "-")}</div><div class="mono muted">${esc(item.graph_filename || "-")}</div></td>
+        </tr>`;
+    });
+    mount.innerHTML = `
+      <div class="result-banner ${result.passed ? "ok" : "warning"}">
+        ${result.passed ? "用例通过" : "用例未通过"}：${checks.filter((item) => item.passed).length}/${checks.length} 项断言通过；候选证候 ${candidates.length} 条。
+      </div>
+      ${panel("预期与实际", table(["断言", "预期", "实际", "原因"], checkRows), "", "断言覆盖首选证候、最低评分、代表方剂和禁止触发证候")}
+      ${panel("候选证候排序", table(["证候", "加权评分", "分类覆盖", "命中证据", "缺失证据", "规则与图谱"], candidateRows), "", "候选包含 active/testing/draft 规则；缺失表示病历未采集，未采集证据不进入评分分子")}
+      ${dependencies.length ? panel("测试依赖", table(["规则", "类型", "状态", "图谱", "指南溯源"], dependencies.map((item) => `
+        <tr>
+          <td>${esc(item.rule_name || item.rule_id)}<div class="mono muted">${esc(item.rule_id)}</div></td>
+          <td class="mono">${esc(item.rule_type)}</td>
+          <td>${badge(item.status)}</td>
+          <td class="mono">${esc(item.graph_filename || "-")}</td>
+          <td class="mono">${esc((item.source || {}).guideline_title || "-")}</td>
+        </tr>`))) : ""}
     `;
   }
 

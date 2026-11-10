@@ -24,6 +24,10 @@ class TemplateEntityEntry(BaseModel):
     # standard code; TCM diseases keep a local stable code plus ICD-11 TM1.
     standard_system: str = ""
     standard_code: str = ""
+    # Multi-standard mapping list.  ``standard_system``/``standard_code`` stay
+    # as the primary legacy projection so existing templates, APIs and tests
+    # continue to work unchanged.
+    standard_mappings: List[Dict[str, Any]] = Field(default_factory=list)
     source: str = ""
     # Optional classification metadata for the shared vocabulary browser.
     # ``specialty`` is a manually maintained primary specialty; the API also
@@ -117,6 +121,7 @@ class ExtractionTemplate(BaseModel):
     rule_generation: List[Dict[str, Any]] = Field(default_factory=list)
     # External terminology the template's codes are mapped to (optional).
     standard_system: str = ""
+    standard_mappings: List[Dict[str, Any]] = Field(default_factory=list)
 
     @property
     def allowed_entity_types(self) -> List[str]:

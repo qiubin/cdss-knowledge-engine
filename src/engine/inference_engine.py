@@ -53,8 +53,14 @@ class InferenceEngine:
         self.terminology = terminology or Terminology(vocabulary)
         self._current_kg = kg_client
         self._current_facts: Dict[str, Dict[str, Conclusion]] = {}
+        self._last_weighted_detail: Dict[str, Any] = {}
 
-    def run(self, patient: PatientSnapshot, department: Optional[str] = None) -> List[Conclusion]:
+    def run(
+        self,
+        patient: PatientSnapshot,
+        department: Optional[str] = None,
+        include_draft_patterns: bool = False,
+    ) -> List[Conclusion]:
         """Run domain-staged inference on a patient snapshot.
 
         Stages are declared by the domain profile.  Western medicine keeps the
@@ -86,6 +92,10 @@ class InferenceEngine:
                     if rule.rule_type in stage.rule_types
                 ]
             allowed_status = {"active", "draft"} if stage.draft_allowed else {"active"}
+            if include_draft_patterns and stage.rule_types == ("tcm_pattern",):
+                # A test run may exercise candidate diagnosis rules, but this
+                # does not change their persisted status.
+                allowed_status = {"active", "testing", "draft"}
             stage_rules = [
                 rule for rule in stage_rules
                 if rule.status in allowed_status
@@ -125,12 +135,66 @@ class InferenceEngine:
                     logger.warning(f"Rule {rule.rule_id} evaluation failed: {e}")
                 finally:
                     self._current_kg = self.kg
+                self._last_weighted_detail = {}
 
             conclusions.extend(stage_conclusions)
             self._materialize_facts(facts, stage_conclusions)
 
         conclusions.sort(key=lambda c: (-c.priority, c.rule_type))
         return conclusions
+
+    def evaluate_tcm_pattern_candidates(
+        self,
+        patient: PatientSnapshot,
+        department: Optional[str] = None,
+        include_draft_patterns: bool = True,
+    ) -> List[Dict[str, Any]]:
+        """Return matched and near-miss TCM pattern candidates for test review.
+
+        The normal ``run`` API only exposes conclusions that crossed their
+        threshold.  A test workbench also needs the failed top expectation, so
+        this method evaluates every available pattern rule and reports why it
+        did or did not form.
+        """
+        candidate_rules = [
+            rule for rule in self.rule_repo.list_all()
+            if rule.rule_type == "tcm_pattern"
+            and normalize_domain(getattr(rule, "domain", "western")) == self.domain
+            and (department is None or rule.department is None or rule.department == department)
+            and rule.status in (
+                {"active", "testing", "draft"} if include_draft_patterns else {"active"}
+            )
+        ]
+        candidate_rules.sort(key=lambda rule: -rule.priority)
+        candidates: List[Dict[str, Any]] = []
+        profile = get_profile(self.domain)
+        for rule in candidate_rules:
+            self._current_facts = {}
+            self._current_kg = (
+                self.graph_client_factory(str(rule.graph_filename or profile.graph.legacy_graph_filename))
+                if self.graph_client_factory
+                else self.kg
+            )
+            try:
+                matched, traces = self._evaluate_condition(rule.conditions, patient)
+                conclusion = self._build_conclusion(rule, traces, patient)
+                candidates.append({
+                    "matched": matched,
+                    "conclusion": conclusion.model_dump(),
+                })
+            except Exception as exc:
+                logger.warning(f"Rule {rule.rule_id} candidate evaluation failed: {exc}")
+            finally:
+                self._current_kg = self.kg
+                self._last_weighted_detail = {}
+        candidates.sort(
+            key=lambda item: (
+                not bool(item["matched"]),
+                -float((item["conclusion"].get("score") or 0.0)),
+                -int((item["conclusion"].get("priority") or 0)),
+            )
+        )
+        return candidates
 
     @staticmethod
     def _materialize_facts(
@@ -152,6 +216,8 @@ class InferenceEngine:
         """Recursively evaluate a condition tree."""
         if condition.type == "group":
             return self._evaluate_group(condition, patient)
+        elif condition.type == "weighted_group":
+            return self._evaluate_weighted_group(condition, patient)
         elif condition.type == "evidence":
             return self._evaluate_evidence(condition, patient)
         elif condition.type == "lab_concept":
@@ -202,6 +268,159 @@ class InferenceEngine:
             matched = False
 
         return matched, all_traces
+
+    @staticmethod
+    def _condition_key(condition: RuleCondition) -> str:
+        return (
+            condition.code
+            or condition.symptom_code
+            or f"{condition.lab_code}:{condition.concept_code}"
+            or f"{condition.exam_code}:{condition.finding_code}"
+            or ""
+        )
+
+    def _observation_leaf_state(
+        self,
+        condition: RuleCondition,
+        patient: PatientSnapshot,
+    ) -> Dict[str, Any]:
+        """Return matched/absent/unknown plus weighted evidence for one leaf."""
+        observation_type = condition.observation_type or "symptom"
+        code = self._condition_key(condition)
+        item = patient.get_observation(observation_type, code)
+        state = "unknown"
+        severity_factor = 1.0
+        if observation_type == "symptom":
+            symptom = patient.get_symptom(code)
+            if symptom is not None:
+                state = "matched" if symptom.present else "absent"
+                severity_factor = {
+                    "MILD": 0.6, "mild": 0.6,
+                    "MODERATE": 0.8, "moderate": 0.8,
+                }.get(str(symptom.severity or "").upper(), 1.0)
+                item = None
+        if item is not None and state == "unknown":
+            state = "matched" if item.present else "absent"
+            severity_factor = {
+                "MILD": 0.6, "mild": 0.6,
+                "MODERATE": 0.8, "moderate": 0.8,
+            }.get(str(item.severity or "").upper(), 1.0)
+        if state == "unknown":
+            trace = None
+        else:
+            matched, traces = self._evaluate_condition(condition, patient)
+            state = "matched" if matched else "absent"
+            trace = traces[0] if traces else None
+        return {
+            "type": observation_type,
+            "code": code,
+            "state": state,
+            "weight": float(condition.weight if condition.weight is not None else 1.0),
+            "effective_weight": round(float(condition.weight if condition.weight is not None else 1.0) * severity_factor, 3),
+            "required": bool(condition.required),
+            "trace": trace,
+        }
+
+    def _evaluate_weighted_group(
+        self,
+        condition: RuleCondition,
+        patient: PatientSnapshot,
+    ) -> Tuple[bool, List[EvidenceTrace]]:
+        """Evaluate required evidence and a normalized weighted sum.
+
+        UNKNOWN observations are excluded from evidence but still reduce the
+        denominator. This deliberately differs from ABSENT, which is observed
+        negative evidence and contributes zero to the numerator.
+        """
+        scoring = condition.scoring or "normalized_weight_sum"
+        if scoring != "normalized_weight_sum":
+            self._last_weighted_detail = {
+                "matched": False,
+                "reason": f"unsupported scoring: {scoring}",
+            }
+            return False, []
+
+        required_specs = [*(condition.required_children or [])]
+        children = list(condition.children or [])
+        main_children = [
+            child for child in children
+            if child not in required_specs and not child.required
+        ]
+        leaves: List[Dict[str, Any]] = []
+        traces: List[EvidenceTrace] = []
+        failed_required: List[Dict[str, Any]] = []
+
+        def evaluate_leaf(child: RuleCondition) -> Dict[str, Any]:
+            if child.type == "observation":
+                return self._observation_leaf_state(child, patient)
+            matched, child_traces = self._evaluate_condition(child, patient)
+            traces.extend(child_traces)
+            return {
+                "type": child.type,
+                "code": self._condition_key(child),
+                "state": "matched" if matched else "absent",
+                "weight": float(child.weight if child.weight is not None else 1.0),
+                "effective_weight": float(child.weight if child.weight is not None else 1.0),
+                "required": bool(child.required),
+                "trace": child_traces[0] if child_traces else None,
+            }
+
+        for child in required_specs:
+            detail = evaluate_leaf(child)
+            detail["required"] = True
+            leaves.append(detail)
+            if detail["state"] != "matched":
+                failed_required.append({key: detail[key] for key in ("type", "code", "state")})
+        for child in main_children:
+            leaves.append(evaluate_leaf(child))
+
+        total_weight = sum(float(item.get("weight", 1.0)) for item in leaves)
+        matched_weight = sum(float(item.get("effective_weight", 0.0)) for item in leaves if item["state"] == "matched")
+        score = matched_weight / total_weight if total_weight else 0.0
+        threshold = float(condition.threshold if condition.threshold is not None else 0.0)
+        categories: Dict[str, Dict[str, float]] = {}
+        for item in leaves:
+            bucket = categories.setdefault(str(item["type"]), {"matched_weight": 0.0, "total_weight": 0.0})
+            bucket["total_weight"] += float(item["weight"])
+            if item["state"] == "matched":
+                bucket["matched_weight"] += float(item["effective_weight"])
+        for bucket in categories.values():
+            bucket["score"] = bucket["matched_weight"] / bucket["total_weight"] if bucket["total_weight"] else 0.0
+
+        coverage_ok = True
+        coverage_reasons: List[str] = []
+        if bool((condition.parameter or {}).get("require_tongue_or_pulse")):
+            coverage_ok = any(
+                item["state"] == "matched" and str(item["type"]) in {"tongue", "pulse"}
+                for item in leaves
+            )
+            if not coverage_ok:
+                coverage_reasons.append("缺少已确认的舌象或脉象证据")
+
+        matched = not failed_required and score >= threshold and coverage_ok
+        detail = {
+            "matched": matched,
+            "score": round(score, 4),
+            "threshold": threshold,
+            "matched_weight": round(matched_weight, 3),
+            "total_weight": round(total_weight, 3),
+            "categories": categories,
+            "required_failed": failed_required,
+            "coverage_reasons": coverage_reasons,
+            "matched_items": [{k: v for k, v in item.items() if k != "trace"} for item in leaves if item["state"] == "matched"],
+            "unmatched_items": [{k: v for k, v in item.items() if k != "trace"} for item in leaves if item["state"] == "absent"],
+            "missing_items": [{k: v for k, v in item.items() if k != "trace"} for item in leaves if item["state"] == "unknown"],
+        }
+        self._last_weighted_detail = detail
+        traces.extend(item["trace"] for item in leaves if item["state"] == "matched" and item.get("trace"))
+        unique_traces: List[EvidenceTrace] = []
+        seen_trace_ids = set()
+        for trace in traces:
+            if trace.evidence_id in seen_trace_ids:
+                continue
+            seen_trace_ids.add(trace.evidence_id)
+            unique_traces.append(trace)
+        return matched, unique_traces
 
     def _evaluate_evidence(
         self,
@@ -710,6 +929,17 @@ class InferenceEngine:
         total_conditions = self._count_leaves(rule.conditions)
         matched_conditions = len(traces)
         score = (matched_conditions / total_conditions) if total_conditions else None
+        score_breakdown: Dict[str, Any] = {}
+        matched_items: List[Dict[str, Any]] = []
+        unmatched_items: List[Dict[str, Any]] = []
+        missing_items: List[Dict[str, Any]] = []
+        if rule.conditions.type == "weighted_group":
+            weighted = dict(self._last_weighted_detail or {})
+            score = float(weighted.get("score", 0.0))
+            score_breakdown = weighted
+            matched_items = list(weighted.get("matched_items", []))
+            unmatched_items = list(weighted.get("unmatched_items", []))
+            missing_items = list(weighted.get("missing_items", []))
         confidence = rule.conclusion.confidence
         if rule.rule_type == "tcm_pattern" and score is not None:
             confidence = "high" if score >= 0.8 else "medium" if score >= 0.6 else "low"
@@ -745,6 +975,10 @@ class InferenceEngine:
             modifications=list(rule.conclusion.modifications or []),
             course=rule.conclusion.course,
             score=score,
+            score_breakdown=score_breakdown,
+            matched_items=matched_items,
+            unmatched_items=unmatched_items,
+            missing_items=missing_items,
             matched_conditions=matched_conditions,
             total_conditions=total_conditions,
             triggered_by=trigger_ids or [],

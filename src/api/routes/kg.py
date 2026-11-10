@@ -871,13 +871,21 @@ async def import_graph(request: GraphImportRequest):
         # concept/finding types remain rule vocabulary rather than graph nodes.
         if node_type in skip_semantic_types:
             continue
-        if node_type not in allowed_types:
-            warnings.append(f"已忽略模板外实体类型 {node_type}（{entity.get('name', '')}）")
+        if not node_type:
+            warnings.append(f"实体缺少类型，已跳过（{entity.get('name', '')}）")
             continue
+        entity_attrs = dict(entity.get("attributes") or {})
+        if node_type not in allowed_types:
+            # 开放抽取：模板外类型不再丢弃，而是以草稿节点入库，由审核人
+            # 在图谱审核中确认（可通过「加入实体词典」沉淀到共享词库）。
+            warnings.append(
+                f"开放导入模板外类型 {node_type}（{entity.get('name', '')}），已入草稿待审核确认"
+            )
+            entity_attrs = {**entity_attrs, "open_import": True}
         _upsert_semantic_node(
             graph, node_type, code, entity.get("name", ""),
             [entity.get("chunk_id", "")],
-            attributes=entity.get("attributes") or {},
+            attributes=entity_attrs,
         )
 
     for relation in request.suggested_relations:
@@ -1227,6 +1235,7 @@ async def list_graphs(domain: Optional[str] = None):
             graphs.append({
                 "graph_filename": path.name,
                 "domain": graph_domain,
+                "source": str(item.get("source") or ""),
                 "domain_label": profile.label,
                 "schema_version": item.get("schema_version", 1),
                 "anchor_types": item.get("anchor_types", list(profile.graph.anchor_types)),

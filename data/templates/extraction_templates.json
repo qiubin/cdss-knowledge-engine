@@ -15,7 +15,7 @@
         "code_field": "code",
         "concept_required": false,
         "entries": [],
-        "discovery": false,
+        "discovery": true,
         "vocabulary": true
       },
       {
@@ -24,7 +24,7 @@
         "code_field": "code",
         "concept_required": false,
         "entries": [],
-        "discovery": false,
+        "discovery": true,
         "vocabulary": true
       },
       {
@@ -42,7 +42,7 @@
         "code_field": "code",
         "concept_required": false,
         "entries": [],
-        "discovery": false,
+        "discovery": true,
         "vocabulary": true
       },
       {
@@ -1863,332 +1863,6 @@
     "standard_system": ""
   },
   {
-    "template_id": "TCM_GUIDELINE_V1",
-    "name": "中医指南抽取模板",
-    "description": "中医指南/诊疗方案：病-证-症-舌脉-病机-治法-方药抽取与候选规则生成",
-    "version": 1,
-    "is_default": false,
-    "status": "active",
-    "domain": "tcm",
-    "specialty": "中医内科",
-    "graph_filename": "tcm_graph.json",
-    "standard_system": "ICD-11 TM1 / 中医药学名词（本地稳定码 + 标准映射）",
-    "entity_types": [
-      {
-        "entity_type": "disease",
-        "label": "中医疾病",
-        "discovery": true,
-        "discovery_suffixes": [
-          "病"
-        ],
-        "vocabulary": true,
-        "entries": [
-          {
-            "code": "TCM_DIS_XIONG_BI_XIN_TONG",
-            "name": "胸痹心痛病",
-            "aliases": [
-              "胸痹心痛病",
-              "胸痹",
-              "心痛病"
-            ],
-            "standard_code": "ICD11-TM1:SF01",
-            "source": "自建种子",
-            "attributes": {},
-            "domain": "tcm",
-            "standard_system": "ICD-11 TM1"
-          },
-          {
-            "code": "TCM_DIS_XIAO_KE",
-            "name": "消渴病",
-            "aliases": [
-              "消渴病",
-              "消渴"
-            ],
-            "standard_code": "ICD11-TM1:SD30",
-            "source": "自建种子",
-            "attributes": {},
-            "domain": "tcm",
-            "standard_system": "ICD-11 TM1"
-          }
-        ]
-      },
-      {
-        "entity_type": "syndrome",
-        "label": "证候",
-        "discovery": true,
-        "discovery_suffixes": [
-          "证候",
-          "证",
-          "型"
-        ],
-        "vocabulary": true,
-        "entries": []
-      },
-      {
-        "entity_type": "symptom",
-        "label": "症状",
-        "vocabulary": true,
-        "entries": []
-      },
-      {
-        "entity_type": "tongue",
-        "label": "舌象",
-        "vocabulary": true,
-        "entries": []
-      },
-      {
-        "entity_type": "pulse",
-        "label": "脉象",
-        "vocabulary": true,
-        "entries": []
-      },
-      {
-        "entity_type": "sign",
-        "label": "体征",
-        "vocabulary": true,
-        "entries": []
-      },
-      {
-        "entity_type": "pathogenesis",
-        "label": "病机",
-        "vocabulary": true,
-        "entries": []
-      },
-      {
-        "entity_type": "treatment_method",
-        "label": "治法",
-        "discovery": true,
-        "vocabulary": true,
-        "entries": []
-      },
-      {
-        "entity_type": "formula",
-        "label": "方剂",
-        "discovery": true,
-        "vocabulary": true,
-        "entries": []
-      },
-      {
-        "entity_type": "herb",
-        "label": "中药",
-        "vocabulary": true,
-        "entries": []
-      },
-      {
-        "entity_type": "contraindication",
-        "label": "禁忌",
-        "discovery": true,
-        "vocabulary": true,
-        "entries": []
-      }
-    ],
-    "relations": [
-      {
-        "relation_code": "DISEASE_HAS_SYNDROME",
-        "name": "疾病辨证分型",
-        "source_entity_type": "disease",
-        "target_entity_type": "syndrome",
-        "generate_evidence": false
-      },
-      {
-        "relation_code": "SYNDROME_HAS_SYMPTOM",
-        "name": "证候主症次症",
-        "source_entity_type": "syndrome",
-        "target_entity_type": "symptom",
-        "generate_evidence": false
-      },
-      {
-        "relation_code": "SYNDROME_HAS_TONGUE",
-        "name": "证候舌象",
-        "source_entity_type": "syndrome",
-        "target_entity_type": "tongue",
-        "generate_evidence": false
-      },
-      {
-        "relation_code": "SYNDROME_HAS_PULSE",
-        "name": "证候脉象",
-        "source_entity_type": "syndrome",
-        "target_entity_type": "pulse",
-        "generate_evidence": false
-      },
-      {
-        "relation_code": "SYNDROME_HAS_SIGN",
-        "name": "证候体征",
-        "source_entity_type": "syndrome",
-        "target_entity_type": "sign",
-        "generate_evidence": false
-      },
-      {
-        "relation_code": "SYNDROME_HAS_PATHOGENESIS",
-        "name": "证候病机",
-        "source_entity_type": "syndrome",
-        "target_entity_type": "pathogenesis",
-        "generate_evidence": false
-      },
-      {
-        "relation_code": "SYNDROME_TREATED_BY_METHOD",
-        "name": "证候治法",
-        "source_entity_type": "syndrome",
-        "target_entity_type": "treatment_method",
-        "generate_evidence": false
-      },
-      {
-        "relation_code": "METHOD_HAS_FORMULA",
-        "name": "治法代表方",
-        "source_entity_type": "treatment_method",
-        "target_entity_type": "formula",
-        "generate_evidence": false
-      },
-      {
-        "relation_code": "FORMULA_CONTAINS_HERB",
-        "name": "方剂组成",
-        "source_entity_type": "formula",
-        "target_entity_type": "herb",
-        "generate_evidence": false
-      },
-      {
-        "relation_code": "SYNDROME_HAS_CONTRAINDICATION",
-        "name": "证候禁忌",
-        "source_entity_type": "syndrome",
-        "target_entity_type": "contraindication",
-        "generate_evidence": false
-      }
-    ],
-    "attributes": [
-      {
-        "attribute_code": "SYMPTOM_ROLE",
-        "name": "症状角色",
-        "owner_entity_type": "symptom",
-        "data_type": "enum",
-        "required": false,
-        "allowed_values": [
-          "主症",
-          "次症"
-        ],
-        "description": "主症用于证候成立的必要条件，次症用于加权"
-      },
-      {
-        "attribute_code": "HERB_ROLE",
-        "name": "君臣佐使",
-        "owner_entity_type": "herb",
-        "data_type": "enum",
-        "required": false,
-        "allowed_values": [
-          "君",
-          "臣",
-          "佐",
-          "使"
-        ]
-      },
-      {
-        "attribute_code": "HERB_DOSE",
-        "name": "剂量",
-        "owner_entity_type": "herb",
-        "data_type": "string",
-        "required": false
-      },
-      {
-        "attribute_code": "SYNDROME_LOCATION",
-        "name": "病位",
-        "owner_entity_type": "syndrome",
-        "data_type": "string",
-        "required": false
-      },
-      {
-        "attribute_code": "SYNDROME_NATURE",
-        "name": "病性",
-        "owner_entity_type": "syndrome",
-        "data_type": "string",
-        "required": false
-      },
-      {
-        "attribute_code": "FORMULA_SOURCE",
-        "name": "方剂出处",
-        "owner_entity_type": "formula",
-        "data_type": "string",
-        "required": false
-      },
-      {
-        "attribute_code": "CONTRAINDICATION_LEVEL",
-        "name": "禁忌级别",
-        "owner_entity_type": "contraindication",
-        "data_type": "enum",
-        "required": false,
-        "allowed_values": [
-          "禁用",
-          "慎用"
-        ]
-      }
-    ],
-    "concept_codes": [
-      "PRESENT",
-      "ABSENT",
-      "TCM_PATTERN_FORMED",
-      "TCM_PATTERN_NOT_FORMED"
-    ],
-    "relation_hints": [
-      "同一证候章节中的症状、舌象、脉象、治法、方剂应建立关系",
-      "方剂与中药组成关系需保留君臣佐使与剂量",
-      "异病同证、同病异证均通过证候节点连接，不复制证候"
-    ],
-    "rule_hints": [
-      "每个证候至少生成一条辨证规则，条件来自同一章节",
-      "治法规则依赖证候事实，方药规则依赖治法与方剂关系",
-      "所有候选规则保持 draft，需中医师审核后启用"
-    ],
-    "prompt_instructions": [
-      "你是中医临床指南知识抽取引擎。",
-      "严格区分中医疾病（以“病”结尾）与证候（以“证/证候/型”结尾），证候是辨证规则的锚点。",
-      "症状需区分主症与次症；舌象、脉象作为独立实体，不要并入症状。",
-      "治法、方剂、中药分别抽取；方剂组成需记录君臣佐使和剂量。",
-      "不要将西医检验指标、影像检查混入中医证候条件。",
-      "不添加模板外编码，不遗漏页码、行号和原文引文。"
-    ],
-    "output_contract": {
-      "entities": "模板允许的中医实体",
-      "suggested_relations": "证候-症状/舌/脉/治法/方剂、方剂-中药关系",
-      "suggested_rules": "tcm_pattern / tcm_treatment / tcm_prescription 候选规则"
-    },
-    "capabilities": [
-      "tcm_pattern",
-      "tcm_treatment",
-      "tcm_prescription",
-      "tcm_contraindication"
-    ],
-    "rule_generation": [
-      {
-        "rule_type": "tcm_pattern",
-        "anchor": "syndrome",
-        "condition_types": [
-          "symptom",
-          "tongue",
-          "pulse",
-          "sign"
-        ],
-        "min_conditions": 2,
-        "score_threshold": 0.4
-      },
-      {
-        "rule_type": "tcm_treatment",
-        "anchor": "syndrome",
-        "via": "SYNDROME_TREATED_BY_METHOD"
-      },
-      {
-        "rule_type": "tcm_prescription",
-        "anchor": "syndrome",
-        "via": [
-          "METHOD_HAS_FORMULA",
-          "FORMULA_CONTAINS_HERB"
-        ]
-      },
-      {
-        "rule_type": "tcm_contraindication",
-        "anchor": "syndrome",
-        "via": "SYNDROME_HAS_CONTRAINDICATION"
-      }
-    ]
-  },
-  {
     "template_id": "UNIVERSAL_GUIDELINE_V1",
     "name": "通用指南自动抽取模板",
     "description": "LLM 驱动的开放本体：疾病/症状/检查/检验/病理/分子/药物/方案/禁忌，一次导入生成图谱与规则",
@@ -2736,5 +2410,635 @@
       "treatment"
     ],
     "rule_generation": []
+  },
+  {
+    "template_id": "TCM_GUIDELINE_V2",
+    "name": "中医指南抽取模板 V2",
+    "description": "中医指南/共识 V2：体质、病因、证素、经络腧穴、外治与调护，以及多标准映射与加权辨证",
+    "version": 2,
+    "is_default": true,
+    "status": "active",
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "graph_filename": "",
+    "standard_system": "GB/T 16751 / ICD-11 TM1 / 中医药学名词（本地稳定码 + 多标准映射）",
+    "entity_types": [
+      {
+        "entity_type": "disease",
+        "label": "中医疾病",
+        "discovery": true,
+        "discovery_suffixes": [
+          "病"
+        ],
+        "vocabulary": true,
+        "entries": [
+          {
+            "code": "TCM_DIS_XIONG_BI_XIN_TONG",
+            "name": "胸痹心痛病",
+            "aliases": [
+              "胸痹心痛病",
+              "胸痹",
+              "心痛病"
+            ],
+            "standard_code": "ICD11-TM1:SF01",
+            "source": "自建种子",
+            "attributes": {},
+            "domain": "tcm",
+            "standard_system": "ICD-11 TM1",
+            "standard_mappings": [
+              {
+                "system": "ICD-11_TM1",
+                "version": "current",
+                "code": "ICD11-TM1:SF01",
+                "status": "active"
+              }
+            ]
+          },
+          {
+            "code": "TCM_DIS_XIAO_KE",
+            "name": "消渴病",
+            "aliases": [
+              "消渴病",
+              "消渴"
+            ],
+            "standard_code": "ICD11-TM1:SD30",
+            "source": "自建种子",
+            "attributes": {},
+            "domain": "tcm",
+            "standard_system": "ICD-11 TM1",
+            "standard_mappings": [
+              {
+                "system": "ICD-11_TM1",
+                "version": "current",
+                "code": "ICD11-TM1:SD30",
+                "status": "active"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "entity_type": "syndrome",
+        "label": "证候",
+        "discovery": true,
+        "discovery_suffixes": [
+          "证候",
+          "证",
+          "型"
+        ],
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "symptom",
+        "label": "症状",
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "tongue",
+        "label": "舌象",
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "pulse",
+        "label": "脉象",
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "sign",
+        "label": "体征",
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "pathogenesis",
+        "label": "病机",
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "treatment_method",
+        "label": "治法",
+        "discovery": true,
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "formula",
+        "label": "方剂",
+        "discovery": true,
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "herb",
+        "label": "中药",
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "contraindication",
+        "label": "禁忌",
+        "discovery": true,
+        "vocabulary": true,
+        "entries": []
+      },
+      {
+        "entity_type": "constitution",
+        "label": "体质",
+        "description": "体质/素体状态",
+        "vocabulary": true,
+        "discovery": true,
+        "entries": []
+      },
+      {
+        "entity_type": "etiology",
+        "label": "病因",
+        "description": "病因/诱因",
+        "vocabulary": true,
+        "discovery": true,
+        "entries": []
+      },
+      {
+        "entity_type": "syndrome_element",
+        "label": "证素",
+        "description": "病位与病性证素",
+        "vocabulary": true,
+        "discovery": true,
+        "entries": []
+      },
+      {
+        "entity_type": "meridian",
+        "label": "经络",
+        "description": "经络",
+        "vocabulary": true,
+        "discovery": false,
+        "entries": []
+      },
+      {
+        "entity_type": "acupoint",
+        "label": "腧穴",
+        "description": "腧穴",
+        "vocabulary": true,
+        "discovery": false,
+        "entries": []
+      },
+      {
+        "entity_type": "external_therapy",
+        "label": "外治疗法",
+        "description": "针灸/外治法",
+        "vocabulary": true,
+        "discovery": true,
+        "entries": []
+      },
+      {
+        "entity_type": "care_guidance",
+        "label": "调护",
+        "description": "调护与随访",
+        "vocabulary": true,
+        "discovery": true,
+        "entries": []
+      },
+      {
+        "entity_type": "western_disease",
+        "label": "西医疾病映射",
+        "description": "仅用于中西医对照，不作为中医辨证条件",
+        "vocabulary": true,
+        "discovery": true,
+        "entries": []
+      }
+    ],
+    "relations": [
+      {
+        "relation_code": "DISEASE_HAS_SYNDROME",
+        "name": "疾病辨证分型",
+        "source_entity_type": "disease",
+        "target_entity_type": "syndrome",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_HAS_SYMPTOM",
+        "name": "证候主症次症",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "symptom",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_HAS_TONGUE",
+        "name": "证候舌象",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "tongue",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_HAS_PULSE",
+        "name": "证候脉象",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "pulse",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_HAS_SIGN",
+        "name": "证候体征",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "sign",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_HAS_PATHOGENESIS",
+        "name": "证候病机",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "pathogenesis",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_TREATED_BY_METHOD",
+        "name": "证候治法",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "treatment_method",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "METHOD_HAS_FORMULA",
+        "name": "治法代表方",
+        "source_entity_type": "treatment_method",
+        "target_entity_type": "formula",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "FORMULA_CONTAINS_HERB",
+        "name": "方剂组成",
+        "source_entity_type": "formula",
+        "target_entity_type": "herb",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_HAS_CONTRAINDICATION",
+        "name": "证候禁忌",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "contraindication",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "DISEASE_HAS_MAIN_SYNDROME",
+        "name": "疾病主要证候",
+        "source_entity_type": "disease",
+        "target_entity_type": "syndrome",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "DISEASE_HAS_SECONDARY_SYNDROME",
+        "name": "疾病兼夹证候",
+        "source_entity_type": "disease",
+        "target_entity_type": "syndrome",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_COMBINED_WITH",
+        "name": "证候兼夹/合并证候",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "syndrome",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_TRANSFORMS_TO",
+        "name": "证候转化证候",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "syndrome",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_HAS_ELEMENT",
+        "name": "证候证素",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "syndrome_element",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "DISEASE_MAPS_TO_WESTERN",
+        "name": "中医疾病西医疾病对照",
+        "source_entity_type": "disease",
+        "target_entity_type": "western_disease",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "FORMULA_HAS_MODIFICATION",
+        "name": "方剂方剂加减",
+        "source_entity_type": "formula",
+        "target_entity_type": "herb",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "ACUPOINT_BELONGS_TO_MERIDIAN",
+        "name": "腧穴所属经络",
+        "source_entity_type": "acupoint",
+        "target_entity_type": "meridian",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "THERAPY_TARGETS_SYNDROME",
+        "name": "外治疗法干预证候",
+        "source_entity_type": "external_therapy",
+        "target_entity_type": "syndrome",
+        "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_HAS_CARE_GUIDANCE",
+        "name": "证候调护要求",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "care_guidance",
+        "generate_evidence": false
+      }
+    ],
+    "attributes": [
+      {
+        "attribute_code": "SYMPTOM_ROLE",
+        "name": "症状角色",
+        "owner_entity_type": "symptom",
+        "data_type": "enum",
+        "required": false,
+        "allowed_values": [
+          "主症",
+          "次症"
+        ],
+        "description": "主症用于证候成立的必要条件，次症用于加权"
+      },
+      {
+        "attribute_code": "HERB_ROLE",
+        "name": "君臣佐使",
+        "owner_entity_type": "herb",
+        "data_type": "enum",
+        "required": false,
+        "allowed_values": [
+          "君",
+          "臣",
+          "佐",
+          "使"
+        ]
+      },
+      {
+        "attribute_code": "HERB_DOSE",
+        "name": "剂量",
+        "owner_entity_type": "herb",
+        "data_type": "string",
+        "required": false
+      },
+      {
+        "attribute_code": "SYNDROME_LOCATION",
+        "name": "病位",
+        "owner_entity_type": "syndrome",
+        "data_type": "string",
+        "required": false
+      },
+      {
+        "attribute_code": "SYNDROME_NATURE",
+        "name": "病性",
+        "owner_entity_type": "syndrome",
+        "data_type": "string",
+        "required": false
+      },
+      {
+        "attribute_code": "FORMULA_SOURCE",
+        "name": "方剂出处",
+        "owner_entity_type": "formula",
+        "data_type": "string",
+        "required": false
+      },
+      {
+        "attribute_code": "CONTRAINDICATION_LEVEL",
+        "name": "禁忌级别",
+        "owner_entity_type": "contraindication",
+        "data_type": "enum",
+        "required": false,
+        "allowed_values": [
+          "禁用",
+          "慎用"
+        ]
+      },
+      {
+        "attribute_code": "SYMPTOM_WEIGHT",
+        "name": "症状权重",
+        "owner_entity_type": "symptom",
+        "data_type": "number",
+        "required": false,
+        "description": "主症默认 3，次症默认 1"
+      },
+      {
+        "attribute_code": "SYMPTOM_NECESSITY",
+        "name": "症状必要性",
+        "owner_entity_type": "symptom",
+        "data_type": "enum",
+        "required": false,
+        "allowed_values": [
+          "required",
+          "optional"
+        ],
+        "description": "required 表示未采集时不满足必要证据"
+      },
+      {
+        "attribute_code": "TONGUE_DETAIL",
+        "name": "舌象细节",
+        "owner_entity_type": "tongue",
+        "data_type": "object",
+        "required": false,
+        "description": "舌质/舌苔/润燥等结构化细节"
+      },
+      {
+        "attribute_code": "PULSE_DETAIL",
+        "name": "脉象细节",
+        "owner_entity_type": "pulse",
+        "data_type": "object",
+        "required": false,
+        "description": "脉位/脉势/兼脉等结构化细节"
+      },
+      {
+        "attribute_code": "SYNDROME_MIN_CRITERIA",
+        "name": "证候最低判据",
+        "owner_entity_type": "syndrome",
+        "data_type": "object",
+        "required": false,
+        "description": "必要证据、分类覆盖与阈值"
+      },
+      {
+        "attribute_code": "FORMULA_PREPARATION",
+        "name": "方剂煎法",
+        "owner_entity_type": "formula",
+        "data_type": "string",
+        "required": false,
+        "description": "煎煮/服法"
+      },
+      {
+        "attribute_code": "FORMULA_COURSE",
+        "name": "方剂疗程",
+        "owner_entity_type": "formula",
+        "data_type": "string",
+        "required": false,
+        "description": "疗程"
+      },
+      {
+        "attribute_code": "FORMULA_PRIORITY",
+        "name": "方剂优先级",
+        "owner_entity_type": "formula",
+        "data_type": "enum",
+        "required": false,
+        "allowed_values": [
+          "preferred",
+          "alternative"
+        ],
+        "description": "代表方或备选方"
+      },
+      {
+        "attribute_code": "HERB_MAX_DOSE",
+        "name": "中药最大剂量",
+        "owner_entity_type": "herb",
+        "data_type": "string",
+        "required": false,
+        "description": "安全上限"
+      },
+      {
+        "attribute_code": "HERB_PREGNANCY_RESTRICTION",
+        "name": "中药妊娠禁忌",
+        "owner_entity_type": "herb",
+        "data_type": "enum",
+        "required": false,
+        "allowed_values": [
+          "禁用",
+          "慎用",
+          "无"
+        ],
+        "description": "用药安全约束"
+      },
+      {
+        "attribute_code": "EVIDENCE_LEVEL",
+        "name": "证据级别",
+        "owner_entity_type": "formula",
+        "data_type": "enum",
+        "required": false,
+        "allowed_values": [
+          "A",
+          "B",
+          "C",
+          "专家共识"
+        ],
+        "description": "指南推荐证据级别"
+      },
+      {
+        "attribute_code": "RECOMMENDATION_STRENGTH",
+        "name": "推荐强度",
+        "owner_entity_type": "formula",
+        "data_type": "enum",
+        "required": false,
+        "allowed_values": [
+          "强推荐",
+          "弱推荐"
+        ],
+        "description": "指南推荐强度"
+      }
+    ],
+    "concept_codes": [
+      "PRESENT",
+      "ABSENT",
+      "UNKNOWN",
+      "MILD",
+      "MODERATE",
+      "SEVERE",
+      "PARTIAL_PRESENT",
+      "TCM_PATTERN_FORMED",
+      "TCM_PATTERN_NOT_FORMED",
+      "TCM_EVIDENCE_INSUFFICIENT"
+    ],
+    "relation_hints": [
+      "同一证候章节中的症状、舌象、脉象、治法、方剂应建立关系并保留主次与权重",
+      "体质、病因、证素、外治和调护只在 V2 关系中扩展，不替换病-证-方药主链",
+      "多标准映射保留本地稳定码，标准码只放在 standard_mappings"
+    ],
+    "rule_hints": [
+      "每个证候至少生成一条辨证规则，条件来自同一章节",
+      "治法规则依赖证候事实，方药规则依赖治法与方剂关系",
+      "所有候选规则保持 draft，需中医师审核后启用"
+    ],
+    "prompt_instructions": [
+      "你是中医临床指南知识抽取引擎，按 V2 契约抽取病-证-症-舌脉-病机-治法-方药主链。",
+      "同步抽取体质、病因、证素、经络腧穴、外治疗法、调护和西医疾病对照。",
+      "症状必须输出 SYMPTOM_ROLE 和 SYMPTOM_WEIGHT，舌脉输出结构化细节。",
+      "方药记录煎法、疗程、优先级、证据级别、推荐强度和中药安全约束。",
+      "不要把 western_disease 当作中医诊断条件，只建立 DISEASE_MAPS_TO_WESTERN 映射。"
+    ],
+    "output_contract": {
+      "entities": "模板允许的 V2 中医实体与西医疾病对照",
+      "suggested_relations": "V2 病证/证素/外治/调护/方剂加减/经络腧穴关系",
+      "suggested_rules": "加权 weighted_group 或兼容 group 的 TCM 候选规则"
+    },
+    "capabilities": [
+      "tcm_pattern",
+      "tcm_treatment",
+      "tcm_prescription",
+      "tcm_contraindication"
+    ],
+    "rule_generation": [
+      {
+        "rule_type": "tcm_pattern",
+        "anchor": "syndrome",
+        "condition_types": [
+          "symptom",
+          "tongue",
+          "pulse",
+          "sign"
+        ],
+        "min_conditions": 2,
+        "score_threshold": 0.6,
+        "condition_style": "weighted_group",
+        "scoring": "normalized_weight_sum",
+        "symptom_weight": 3,
+        "secondary_symptom_weight": 1,
+        "tongue_weight": 2,
+        "pulse_weight": 2,
+        "sign_weight": 1,
+        "require_tongue_or_pulse": true
+      },
+      {
+        "rule_type": "tcm_treatment",
+        "anchor": "syndrome",
+        "via": "SYNDROME_TREATED_BY_METHOD"
+      },
+      {
+        "rule_type": "tcm_prescription",
+        "anchor": "syndrome",
+        "via": [
+          "METHOD_HAS_FORMULA",
+          "FORMULA_CONTAINS_HERB"
+        ]
+      },
+      {
+        "rule_type": "tcm_contraindication",
+        "anchor": "syndrome",
+        "via": "SYNDROME_HAS_CONTRAINDICATION"
+      }
+    ],
+    "standard_mappings": [
+      {
+        "system": "GB/T_16751.1",
+        "version": "current",
+        "status": "active"
+      },
+      {
+        "system": "GB/T_16751.2",
+        "version": "current",
+        "status": "active"
+      },
+      {
+        "system": "ICD-11_TM1",
+        "version": "current",
+        "status": "active"
+      },
+      {
+        "system": "WHO_ICD-11_TM1",
+        "version": "current",
+        "status": "active"
+      }
+    ]
   }
 ]

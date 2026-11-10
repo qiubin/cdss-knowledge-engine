@@ -1,0 +1,28 @@
+{
+  "patient_id": "DEMO-DOC-6ed4dedc",
+  "hospital_id": "XM_FIRST",
+  "age": 58,
+  "gender": "M",
+  "labs": [],
+  "exam_findings": [
+    {
+      "exam_code": "ECHO",
+      "exam_name": "超声心动图",
+      "finding_code": "VSD_SIZE_QPQS",
+      "finding_name": "VSD_SIZE_QPQS",
+      "present": true
+    }
+  ],
+  "symptoms": [
+    {
+      "symptom_code": "SYM_SHORTNESS_BREATH",
+      "symptom_name": "气短",
+      "present": true
+    }
+  ],
+  "observations": [],
+  "vitals": [],
+  "past_history": [],
+  "current_medications": [],
+  "clinical_attributes": {}
+}

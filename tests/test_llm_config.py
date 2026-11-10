@@ -7,6 +7,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import httpx
+
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
@@ -23,11 +25,17 @@ from src.llm.client import (
     resolve_api_format,
     resolve_api_key,
 )
-from fastapi.testclient import TestClient
 from src.api.main import app
 
 
-class LLMConfigTest(unittest.TestCase):
+class LLMConfigTest(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.client = None
+
+    async def asyncTearDown(self):
+        if self.client is not None:
+            await self.client.aclose()
+
     def test_endpoint_url_normalization(self):
         self.assertEqual(
             endpoint_url("https://api.openai.com/v1"),
@@ -108,16 +116,19 @@ class LLMConfigTest(unittest.TestCase):
         # Stored config still has the key for the provider call.
         self.assertEqual(repository.load()["llm"]["api_key"], "sk-1234567890abcdef")
 
-    def test_config_api_saves_and_masks_key(self):
+    async def test_config_api_saves_and_masks_key(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         repository = ExtractionConfigRepository(Path(tmp.name) / "config.json")
         original = template_routes.config_repo
         template_routes.config_repo = repository
         self.addCleanup(setattr, template_routes, "config_repo", original)
-        client = TestClient(app)
+        client = httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+        )
+        self.client = client
 
-        saved = client.put("/api/extraction/config", json={"config": {
+        saved = (await client.put("/api/extraction/config", json={"config": {
             "default_mode": "auto",
             "llm": {
                 "base_url": "https://example.test/v1",
@@ -125,16 +136,16 @@ class LLMConfigTest(unittest.TestCase):
                 "api_key": "sk-abcdefghijklmnop",
                 "api_key_env": "OPENAI_API_KEY",
             },
-        }}).json()
+        }})).json()
         self.assertNotIn("api_key", saved["llm"])
         self.assertTrue(saved["llm"]["api_key_configured"])
         self.assertIn("****", saved["llm"]["api_key_masked"])
         self.assertEqual(saved["default_mode"], "auto")
 
-        cleared = client.put("/api/extraction/config", json={"config": {
+        cleared = (await client.put("/api/extraction/config", json={"config": {
             "default_mode": "auto",
             "llm": {"api_key": "__CLEAR__"},
-        }}).json()
+        }})).json()
         self.assertFalse(cleared["llm"]["api_key_configured"])
 
 

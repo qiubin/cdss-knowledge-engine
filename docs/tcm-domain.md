@@ -23,13 +23,20 @@
 
 ## 2. 模板契约
 
-`TCM_GUIDELINE_V1`（`data/templates/extraction_templates.json`）定义：
+`TCM_GUIDELINE_V2` 是唯一的中医抽取模板，`graph_filename` 为空。导入时必须先
+选择新建图谱或既有图谱，模板不再固定绑定 `tcm_graph.json`。
 
-- 实体类型：中医疾病、证候、症状、舌象、脉象、体征、病机、治法、方剂、中药、禁忌
-- 关系：疾病辨证分型、证候主症/舌/脉、证候治法、治法方药、方剂组成、证候禁忌
-- 属性：症状角色（主症/次症）、君臣佐使、剂量、病位、病性、禁忌级别
-- `capabilities`: `tcm_pattern` / `tcm_treatment` / `tcm_prescription` / `tcm_contraindication`
-- `rule_generation`: 每类规则的锚点、条件实体、最小条件数、评分阈值
+V2 在 V1 基础上增加：
+
+- 实体类型：体质、病因、证素、经络、腧穴、外治疗法、调护、西医疾病映射
+- 多标准映射：中医疾病支持本地稳定码、GB/T 16751 与 ICD-11 TM1 映射
+- 加权辨证：主症、次症、舌象、脉象按权重生成 `weighted_group` 规则
+- 外治与调护：针灸、推拿、贴敷等疗法和生活调护要求可进入同一证候链路
+- 中西医对照：中医疾病到西医疾病只建立映射，不作为辨证条件
+
+基础链路仍覆盖中医疾病、证候、症状、舌象、脉象、体征、病机、治法、方剂、
+中药和禁忌；`capabilities` 保持 `tcm_pattern` / `tcm_treatment` /
+`tcm_prescription` / `tcm_contraindication`。
 
 实体编码采用「本地稳定码 + `standard_code` 映射」。种子数据在
 `data/vocab/entities/{syndrome,symptom,tongue,pulse,formula,herb,...}.json`。
@@ -75,19 +82,18 @@
 | `GET /api/profiles` | 领域展示契约 |
 | `GET /api/templates?domain=tcm` | 中医模板 |
 | `GET /api/kg/graphs?domain=tcm` | 中医图谱列表（含证候数、节点类型统计） |
-| `GET /api/kg/graph?graph_filename=tcm_graph.json` | 图谱 + profile |
+| `GET /api/kg/graph?graph_filename=KG-TCM-DEMO.json` | 图谱 + profile |
 | `GET /api/vocab/entities` | 实体字典（含 label/domain/color） |
 | `GET /api/rules` | 规则列表（含 domain/anchor_type/rule_type） |
 | `POST /api/inference/run` `{patient, domain:"tcm"}` | 中医辨证推理 |
 | `GET /api/inference/demo-patient?domain=tcm` | 中医示例病历 |
-| `GET /api/kg/neo4j/graph?graph_filename=tcm_graph.json` | Neo4j 视图（按证候为中心） |
+| `GET /api/kg/neo4j/graph?graph_filename=KG-TCM-DEMO.json` | Neo4j 视图（按证候为中心） |
 
 ## 6. 种子数据与演示
 
 ```bash
 python tools/_seed_tcm_vocab.py       # 实体字典 + 概念谓词
-python tools/_add_tcm_template.py     # TCM_GUIDELINE_V1 模板
-python tools/_seed_tcm_graph.py       # 生成 data/kg/tcm_graph.json
+python tools/_seed_tcm_graph.py       # 生成 data/kg/KG-TCM-DEMO.json
 python tools/_seed_tcm_rules.py       # 导入并启用辨证规则
 python tools/_smoke_tcm_inference.py  # 辨证 → 治法 → 方药 冒烟测试
 python tools/_smoke_tcm_api.py        # API 冒烟测试

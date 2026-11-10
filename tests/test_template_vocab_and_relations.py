@@ -300,13 +300,26 @@ class GraphImportTest(unittest.TestCase):
         ))
         self.assertEqual(result["warnings"], [])
 
-    def test_out_of_template_type_warns_instead_of_silently_dropping(self):
+    def test_out_of_template_type_open_imports_as_draft(self):
+        """模板外类型不再静默丢弃：开放导入为草稿节点，等待审核确认。"""
         result = self._import([
             {"entity_type": "disease", "code": "C83.3", "name": "弥漫大B细胞淋巴瘤", "chunk_id": "c1"},
             {"entity_type": "smoke", "code": "SMOKING", "name": "吸烟", "chunk_id": "c1"},
         ])
-        self.assertNotIn("ENTITY:smoke:SMOKING", self._node_ids())
-        self.assertTrue(any("smoke" in warning for warning in result["warnings"]))
+        node = next(
+            (item for item in self._node_ids() if item == "ENTITY:smoke:SMOKING"),
+            None,
+        )
+        self.assertIsNotNone(node, "模板外类型实体应开放导入图谱")
+        graph = self._graph()
+        smoke = next(
+            (item for item in graph.get("nodes", []) if item.get("id") == "ENTITY:smoke:SMOKING"),
+            None,
+        )
+        self.assertIsNotNone(smoke)
+        self.assertEqual(smoke.get("review_status"), "draft")
+        self.assertTrue(smoke.get("attributes", {}).get("open_import"))
+        self.assertTrue(any("开放导入" in warning and "smoke" in warning for warning in result["warnings"]))
 
     def test_repeated_occurrence_accumulates_source_refs(self):
         entities = [

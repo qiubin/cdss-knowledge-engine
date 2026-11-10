@@ -36,7 +36,7 @@ CHUNKS = [
 
 
 def main() -> None:
-    template = ExtractionTemplateRepository().get("TCM_GUIDELINE_V1")
+    template = ExtractionTemplateRepository().get("TCM_GUIDELINE_V2")
     result = extract_local(CHUNKS, template, "DOC-TCM-TEST", "中医测试指南")
 
     print("entities:", Counter(item["entity_type"] for item in result.entities))

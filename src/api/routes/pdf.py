@@ -24,6 +24,18 @@ logger = logging.getLogger("uvicorn.error")
 
 UPLOAD_DIR = Path(__file__).parent.parent.parent.parent / "data" / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+# Append-only import history: one record per upload attempt (success or
+# failure).  New documents always get a fresh DOC id, so records never
+# overwrite older ones.
+IMPORT_LOG_PATH = UPLOAD_DIR.parent / "imports" / "import_log.jsonl"
+
+
+def _append_import_log(entry: Dict[str, Any], path: Optional[Path] = None) -> None:
+    target = Path(path) if path is not None else IMPORT_LOG_PATH
+    target.parent.mkdir(parents=True, exist_ok=True)
+    payload = {**entry, "ts": entry.get("ts") or _now()}
+    with target.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(payload, ensure_ascii=False, default=str) + "\n")
 
 _doc_store: Dict[str, Dict[str, Any]] = {}
 _PARSED_SUFFIX = ".parsed.json"
@@ -300,6 +312,20 @@ async def upload_pdf(
     doc_id = f"DOC-{uuid.uuid4().hex[:8]}"
     file_path = UPLOAD_DIR / f"{doc_id}.pdf"
 
+    import time
+    started = time.time()
+    mode = (extraction_mode or "").lower()
+
+    def _log_import(status: str, **extra) -> None:
+        _append_import_log({
+            "doc_id": doc_id,
+            "doc_title": doc_title,
+            "filename": file.filename,
+            "status": status,
+            "mode": mode,
+            **extra,
+        })
+
     content = await file.read()
     file_path.write_bytes(content)
 
@@ -307,6 +333,7 @@ async def upload_pdf(
         parsed = parse_pdf(file_path, doc_id)
     except Exception as e:
         file_path.unlink(missing_ok=True)
+        _log_import("failed", stage="parse", error=str(e)[:300])
         raise HTTPException(422, f"PDF解析失败: {str(e)}")
 
     config = extraction_config.load()
@@ -329,6 +356,7 @@ async def upload_pdf(
     template: ExtractionTemplate = extraction_templates.get(selected_template_id)
     if requested_domain and normalize_domain(template.domain) != requested_domain:
         file_path.unlink(missing_ok=True)
+        _log_import("failed", stage="template", error=f"模板 {template.template_id} 不属于 {requested_domain}")
         raise HTTPException(422, f"解析模板 {template.template_id} 不属于 {requested_domain} 领域")
     try:
         provider_result = await extract(
@@ -336,6 +364,7 @@ async def upload_pdf(
         )
     except Exception as e:
         file_path.unlink(missing_ok=True)
+        _log_import("failed", stage="extract", template_id=template.template_id, error=str(e)[:300])
         raise HTTPException(422, f"实体抽取失败: {str(e)}")
 
     extra_warnings = [WARN_NO_TEXT_LAYER] if parsed.get("ocr_used") else []
@@ -387,7 +416,38 @@ async def upload_pdf(
     _doc_store[doc_id] = doc_record
     _persist_doc(doc_record)
 
+    _log_import(
+        "success",
+        template_id=template.template_id,
+        domain=normalize_domain(template.domain),
+        pages=parsed["total_pages"],
+        lines=parsed["total_lines"],
+        chunk_count=len(parsed["chunks"]),
+        entity_count=len(provider_result.entities),
+        relation_count=len(provider_result.suggested_relations),
+        rule_count=len(provider_result.suggested_rules),
+        ocr_used=bool(parsed.get("ocr_used")),
+        duration_ms=int((time.time() - started) * 1000),
+    )
+
     return result
+
+
+@router.get("/import-logs")
+async def get_import_logs(limit: int = 100):
+    """最近导入历史（含失败），每条记录一个文档的一次导入尝试。"""
+    if not IMPORT_LOG_PATH.exists():
+        return []
+    rows: List[Dict[str, Any]] = []
+    for line in IMPORT_LOG_PATH.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rows.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return rows[-max(1, int(limit)):][::-1]
 
 
 @router.get("/{doc_id}/lines")

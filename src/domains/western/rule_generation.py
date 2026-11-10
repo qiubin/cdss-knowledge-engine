@@ -77,10 +77,9 @@ def _diseases_in_chunk(chunk_entities: List[Dict[str, Any]]) -> List[Dict[str, A
         name = str(entity.get("name") or "")
         if not code or not name or name in GENERIC_DISEASE_BLOCKLIST:
             continue
-        # Auto-discovered names are retained in the graph for review, but only
-        # dictionary-backed diseases generate rules.
-        if code.startswith("AUTO-"):
-            continue
+        # Auto-discovered diseases (AUTO-) also generate candidate rules.  They
+        # stay draft end-to-end: the rule cannot activate until its disease
+        # node passes graph review, so open discovery is safe.
         diseases.setdefault(code, entity)
     return sorted(
         diseases.values(),

@@ -55,7 +55,7 @@ CHUNKS = [
 
 
 def tcm_template():
-    return ExtractionTemplateRepository().get("TCM_GUIDELINE_V1")
+    return ExtractionTemplateRepository().get("TCM_GUIDELINE_V2")
 
 
 class DomainProfileTest(unittest.TestCase):
@@ -88,7 +88,7 @@ class DiseaseDictionaryTest(unittest.TestCase):
         self.assertNotIn("TCM_DIS_XIONG_BI_XIN_TONG", codes)
 
     def test_tcm_template_uses_local_tcm_diseases_without_icd10_leakage(self):
-        codes = self._disease_codes("TCM_GUIDELINE_V1")
+        codes = self._disease_codes("TCM_GUIDELINE_V2")
         self.assertIn("TCM_DIS_XIONG_BI_XIN_TONG", codes)
         self.assertNotIn("I21.0", codes)
 
@@ -117,9 +117,13 @@ class TcmTemplateTest(unittest.TestCase):
     def test_template_contract(self):
         template = tcm_template()
         self.assertEqual(template.domain, "tcm")
-        self.assertEqual(template.graph_filename, "tcm_graph.json")
+        self.assertEqual(template.graph_filename, "")
         self.assertIn("tcm_pattern", template.capabilities)
         self.assertIn("FORMULA_CONTAINS_HERB", {item.relation_code for item in template.relations})
+
+    def test_v2_is_the_only_active_tcm_template(self):
+        templates = [item for item in ExtractionTemplateRepository().list_available() if item.domain == "tcm"]
+        self.assertEqual([item.template_id for item in templates], ["TCM_GUIDELINE_V2"])
 
     def test_local_extraction_and_rule_families(self):
         result = extract_local(CHUNKS, tcm_template(), "DOC-TCM-T", "中医测试指南")
@@ -189,7 +193,7 @@ class TcmGraphAndInferenceTest(unittest.TestCase):
             entities=self.result.entities,
             chunks=CHUNKS,
             suggested_relations=self.result.suggested_relations,
-            template_id="TCM_GUIDELINE_V1",
+            template_id="TCM_GUIDELINE_V2",
             graph_filename="tcm_test_graph.json",
             candidate_rules=self.result.suggested_rules,
         )
@@ -274,9 +278,9 @@ class TcmPackageChecksTest(unittest.TestCase):
         )
         self.assertEqual(
             guide_packages._selected_template_id(
-                {"extraction": {"template_id": "TCM_GUIDELINE_V1"}}, "", "tcm"
+                {"extraction": {"template_id": "TCM_GUIDELINE_V2"}}, "", "tcm"
             ),
-            "TCM_GUIDELINE_V1",
+            "TCM_GUIDELINE_V2",
         )
 
     def test_target_selection_prefers_most_frequent_anchor(self):
@@ -294,7 +298,7 @@ class TcmPackageChecksTest(unittest.TestCase):
     def _package(self, entities, relations):
         return {
             "domain": "tcm",
-            "template_id": "TCM_GUIDELINE_V1",
+            "template_id": "TCM_GUIDELINE_V2",
             "target_disease_code": "TCM_SYN_QI_YIN_XU",
             "entities": entities,
             "suggested_relations": relations,

@@ -196,7 +196,7 @@ def _sync_tcm_template_diseases(tcm_diseases) -> None:
         return
     templates = json.loads(path.read_text(encoding="utf-8"))
     for template in templates:
-        if template.get("template_id") != "TCM_GUIDELINE_V1":
+        if template.get("template_id") != "TCM_GUIDELINE_V2":
             continue
         for entity_type in template.get("entity_types", []):
             if entity_type.get("entity_type") == "disease":
@@ -210,7 +210,7 @@ def main() -> None:
     for entity_type, entries in DATA.items():
         if entity_type == "disease":
             # The shared dictionary is pure ICD-10; TCM diseases stay local
-            # to TCM_GUIDELINE_V1 so they cannot leak into western templates.
+            # to TCM_GUIDELINE_V2 so they cannot leak into western templates.
             entries = western_disease_entries()
         (BASE / f"{entity_type}.json").write_text(
             json.dumps(entries, ensure_ascii=False, indent=2), encoding="utf-8"

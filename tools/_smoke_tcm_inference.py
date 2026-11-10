@@ -22,7 +22,7 @@ def main() -> None:
     ))
     vocab = ConceptVocabulary()
     vocab.load(str(ROOT / "data" / "vocab" / "concepts.json"))
-    kg = JsonGraphClient(str(ROOT / "data" / "kg" / "tcm_graph.json"))
+    kg = JsonGraphClient(str(ROOT / "data" / "kg" / "KG-TCM-DEMO.json"))
     rules = JsonRuleRepository(str(ROOT / "data" / "rules"))
     standards = JsonStandardRepository(str(ROOT / "data" / "standards"))
 

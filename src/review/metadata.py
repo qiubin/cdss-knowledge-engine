@@ -29,12 +29,18 @@ def _hash(payload: Dict[str, Any]) -> str:
 
 
 def node_content_hash(node: Dict[str, Any]) -> str:
+    """Fingerprint of the *clinical content* of a node.
+
+    ``source_refs`` is deliberately excluded: importing another guideline that
+    shares this entity appends provenance refs, which must NOT flip an
+    approved node back to stale.  Only real content changes (name / code /
+    attributes) mark a node stale on reimport.
+    """
     return _hash({
         "node_type": node.get("node_type"),
         "code": node.get("code"),
         "name": node.get("name"),
         "attributes": node.get("attributes") or {},
-        "source_refs": sorted(node.get("source_refs") or []),
     })
 
 
@@ -44,7 +50,6 @@ def relation_content_hash(relation: Dict[str, Any]) -> str:
         "relation_code": relation.get("relation_code"),
         "target_node_id": relation.get("target_node_id"),
         "attributes": relation.get("attributes") or {},
-        "source_refs": sorted(relation.get("source_refs") or []),
     })
 
 
@@ -141,6 +146,8 @@ def apply_import_review_metadata(
         node["content_hash"] = new
         if old is None or old != new:
             node["last_imported_at"] = now
+        # 溯源增长（即使临床内容未变）也要记录贡献来源，供孤儿检测使用
+        if doc_id in derive_doc_ids(node.get("source_refs")):
             docs = set(node.get("source_doc_ids") or [])
             docs.add(doc_id)
             node["source_doc_ids"] = sorted(docs)
@@ -164,6 +171,7 @@ def apply_import_review_metadata(
         relation["content_hash"] = new
         if old is None or old != new:
             relation["last_imported_at"] = now
+        if doc_id in derive_doc_ids(relation.get("source_refs")):
             docs = set(relation.get("source_doc_ids") or [])
             docs.add(doc_id)
             relation["source_doc_ids"] = sorted(docs)

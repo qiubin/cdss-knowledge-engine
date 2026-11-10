@@ -27,6 +27,12 @@ NODE_META = {
     "contraindication": {"label": "禁忌", "color": "#fc8181", "stroke": "#e53e3e", "shape": "dot", "size": 18},
     "meridian": {"label": "经络", "color": "#4299e1", "stroke": "#2b6cb0", "shape": "box", "size": 18},
     "acupoint": {"label": "腧穴", "color": "#63b3ed", "stroke": "#3182ce", "shape": "dot", "size": 16},
+    "constitution": {"label": "体质", "color": "#f6ad55", "stroke": "#dd6b20", "shape": "dot", "size": 18},
+    "etiology": {"label": "病因", "color": "#e2e8f0", "stroke": "#a0aec0", "shape": "dot", "size": 18},
+    "syndrome_element": {"label": "证素", "color": "#faf089", "stroke": "#d69e2e", "shape": "dot", "size": 18},
+    "external_therapy": {"label": "外治疗法", "color": "#4fd1c5", "stroke": "#2c7a7b", "shape": "box", "size": 22},
+    "care_guidance": {"label": "调护", "color": "#bee3f8", "stroke": "#3182ce", "shape": "box", "size": 20},
+    "western_disease": {"label": "西医疾病映射", "color": "#cbd5e0", "stroke": "#718096", "shape": "diamond", "size": 20},
 }
 
 PATH_PANELS = (
@@ -39,6 +45,26 @@ PATH_PANELS = (
         "title": "治法方药链路",
         "description": "证候 → 治法 → 方剂 → 中药",
         "spec": "syndrome->treatment_method->formula->herb",
+    },
+    {
+        "title": "病机证素链路",
+        "description": "证候 → 病机 → 证素，支撑辨证解释",
+        "spec": "syndrome->pathogenesis->syndrome_element",
+    },
+    {
+        "title": "外治调护链路",
+        "description": "外治疗法 → 证候 → 调护要求",
+        "spec": "external_therapy->syndrome->care_guidance",
+    },
+    {
+        "title": "经络腧穴链路",
+        "description": "腧穴 → 经络，服务针灸与外治定位",
+        "spec": "acupoint->meridian",
+    },
+    {
+        "title": "中西医对照链路",
+        "description": "中医疾病 → 西医疾病映射，只作对照不参与辨证",
+        "spec": "disease->western_disease",
     },
 )
 
@@ -55,7 +81,7 @@ TCM_PROFILE = DomainProfile(
     domain=TCM,
     label="中医",
     description="辨证、治法与方药推理",
-    default_template_id="TCM_GUIDELINE_V1",
+    default_template_id="TCM_GUIDELINE_V2",
     graph=GraphProfile(
         domain=TCM,
         label="中医知识图谱",
@@ -63,7 +89,9 @@ TCM_PROFILE = DomainProfile(
         allowed_entity_types=(
             "disease", "syndrome", "symptom", "tongue", "pulse", "sign",
             "pathogenesis", "treatment_method", "formula", "herb",
-            "contraindication", "meridian", "acupoint",
+            "contraindication", "meridian", "acupoint", "constitution",
+            "etiology", "syndrome_element", "external_therapy",
+            "care_guidance", "western_disease",
         ),
         # TCM pattern conditions reference observation nodes directly; the
         # western diagnostic-evidence projection is intentionally unused.
