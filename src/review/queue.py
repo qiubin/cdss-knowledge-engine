@@ -47,6 +47,11 @@ def build_queue(
         graph_files = [normalize_graph_filename(graph_filename)]
     target_domain = normalize_domain(domain) if domain else ""
     query = str(q or "").strip().lower()
+    # "graph" is a convenience alias covering nodes and relations, so the
+    # review center can fetch one tab's payload without pulling rules too.
+    want_graph = item_type in (None, "", "graph", "graph_node", "graph_relation")
+    want_rules = item_type in (None, "", "rule")
+    want_packages = item_type in (None, "", "package")
 
     items: List[Dict[str, Any]] = []
     for filename in graph_files:
@@ -54,7 +59,7 @@ def build_queue(
         graph_domain = normalize_domain(graph.get("domain") or "western")
         if target_domain and graph_domain != target_domain:
             continue
-        if item_type in (None, "", "graph_node", "graph_relation"):
+        if want_graph:
             wanted = (
                 "node" if item_type == "graph_node"
                 else "relation" if item_type == "graph_relation"
@@ -69,7 +74,7 @@ def build_queue(
                 })
 
     rules = service._load_rules()
-    if rules:
+    if want_rules and rules:
         sync = check_rule_sync(rules, graph_loader=service._load_graph)
         by_id = {item["rule_id"]: item for item in sync["rules"]}
     else:
@@ -114,7 +119,7 @@ def build_queue(
             "issues": result.get("issues", []),
         })
 
-    if packages is not None and item_type in (None, "", "package"):
+    if packages is not None and want_packages:
         for package in _package_items(packages):
             if status and package["status"] != status:
                 continue
@@ -126,18 +131,29 @@ def build_queue(
                 continue
             items.append(package)
 
-    order = {"graph_node": 0, "graph_relation": 1, "rule": 2, "package": 3}
     status_order = {
         "draft": 0, "stale": 1, "blocked": 2, "rejected": 3,
         "active": 4, "retired": 5,
     }
-    items.sort(key=lambda item: (
-        status_order.get(item.get("status"), 9),
-        order.get(item.get("item_type"), 9),
-        item.get("graph_filename", ""),
-        item.get("name", ""),
-    ))
-    limited = items[:max(1, int(limit))]
+
+    def _sort_key(item: Dict[str, Any]):
+        return (
+            status_order.get(item.get("status"), 9),
+            item.get("graph_filename", ""),
+            item.get("name", ""),
+        )
+
+    # Slice per item type so a flood of graph entries cannot starve rules (or
+    # packages) out of the page: each category gets up to ``limit`` slots.
+    safe_limit = max(1, int(limit))
+    limited: List[Dict[str, Any]] = []
+    truncated: Dict[str, bool] = {}
+    for kind in ("graph_node", "graph_relation", "rule", "package"):
+        subset = sorted(
+            (item for item in items if item["item_type"] == kind), key=_sort_key,
+        )
+        limited.extend(subset[:safe_limit])
+        truncated[kind] = len(subset) > safe_limit
     summary = {
         "graph_nodes": dict(Counter(
             item["status"] for item in items if item["item_type"] == "graph_node"
@@ -153,4 +169,4 @@ def build_queue(
         )),
         "total": len(items),
     }
-    return {"summary": summary, "items": limited}
+    return {"summary": summary, "truncated": truncated, "items": limited}

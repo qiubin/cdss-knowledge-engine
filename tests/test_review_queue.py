@@ -54,6 +54,32 @@ class QueueTest(unittest.TestCase):
         self.assertIn("rule", item_types)
         self.assertEqual(queue["summary"]["total"], len(queue["items"]))
 
+    def test_rules_not_starved_by_graph_items(self):
+        # A flood of graph entries must not push rules out of the page:
+        # each item type gets its own ``limit`` slots.
+        import json as _json
+        graph_path = self.service.graph_dir / "BIG.json"
+        nodes = [
+            {"id": f"ENTITY:symptom:SYM_{i}", "node_type": "symptom",
+             "code": f"SYM_{i}", "name": f"批量症状{i}", "review_status": "draft"}
+            for i in range(6)
+        ]
+        graph_path.write_text(_json.dumps({
+            "schema_version": 1, "domain": "western", "anchor_types": ["disease"],
+            "diseases": [{"code": "B1.0", "name_cn": "批量测试病"}],
+            "evidences": [], "disease_evidence": [], "sources": [],
+            "nodes": nodes, "relations": [],
+        }, ensure_ascii=False), encoding="utf-8")
+        queue = build_queue(self.service, packages=[], graph_files=["BIG.json", "QUEUE.json"], limit=3)
+        rules = [item for item in queue["items"] if item["item_type"] == "rule"]
+        self.assertEqual(len(rules), 1, "规则必须出现在页面中，不能被图谱条目挤掉")
+        self.assertTrue(queue["truncated"]["graph_node"])
+
+    def test_graph_alias_excludes_rules(self):
+        queue = build_queue(self.service, packages=[], graph_files=["QUEUE.json"], item_type="graph", limit=50)
+        self.assertTrue(queue["items"])
+        self.assertTrue(all(item["item_type"].startswith("graph_") for item in queue["items"]))
+
     def test_queue_filters_status_and_search(self):
         queue = build_queue(
             self.service, packages=[], graph_files=["QUEUE.json"],
