@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -12,7 +13,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import org.kie.api.io.ResourceType;
 import org.kie.api.runtime.KieSession;
-import org.kie.internal.builder.KieHelper;
+import org.kie.internal.utils.KieHelper;
 
 /**
  * Stateless Drools matching sidecar.
@@ -22,19 +23,10 @@ import org.kie.internal.builder.KieHelper;
  * GET /health -> 200 {"status":"ok"}
  *
  * Facts carry only *satisfied* atoms, so DRL patterns test presence and
- * {@code not} means "atom absent for that rule".
+ * {@code not} means "atom absent for that rule".  DRL files import
+ * {@link Key} (a real classpath class) instead of declaring it dynamically.
  */
 public class Main {
-
-    public static class Key {
-        private String ruleId;
-        private String code;
-
-        public String getRuleId() { return ruleId; }
-        public void setRuleId(String ruleId) { this.ruleId = ruleId; }
-        public String getCode() { return code; }
-        public void setCode(String code) { this.code = code; }
-    }
 
     public static void main(String[] args) throws Exception {
         int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8090"));
@@ -72,9 +64,7 @@ public class Main {
             List<String> matched = new ArrayList<>();
             session.setGlobal("matched", matched);
             for (JsonNode fact : facts) {
-                Key key = new Key();
-                key.setRuleId(fact.path("ruleId").asText(""));
-                key.setCode(fact.path("code").asText(""));
+                Key key = new Key(fact.path("ruleId").asText(""), fact.path("code").asText(""));
                 session.insert(key);
             }
             session.fireAllRules();
@@ -84,7 +74,7 @@ public class Main {
         }
     }
 
-    private static void respond(HttpExchange exchange, int status, String body) throws Exception {
+    private static void respond(HttpExchange exchange, int status, String body) throws IOException {
         byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "application/json");
         exchange.sendResponseHeaders(status, bytes.length);

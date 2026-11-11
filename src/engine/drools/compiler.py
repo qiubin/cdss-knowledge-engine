@@ -27,10 +27,7 @@ DRL_HEADER = """package cdss;
 
 global java.util.List matched;
 
-declare Key
-    ruleId : String
-    code : String
-end
+import dev.cdss.sidecar.Key
 
 """
 

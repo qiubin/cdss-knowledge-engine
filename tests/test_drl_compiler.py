@@ -72,7 +72,7 @@ def test_rule_set_includes_header():
     drl = compile_rule_set([compiled])
     assert drl.startswith("package cdss;")
     assert "global java.util.List matched;" in drl
-    assert "declare Key" in drl
+    assert "import dev.cdss.sidecar.Key" in drl
 
 
 def test_walk_order_matches_lhs_ids():
