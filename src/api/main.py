@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from src.review.errors import ReviewError
 
-from .routes import pdf, kg, rules, standards, inference, templates, vocab, guide_packages, neo4j_graph, profiles, auto_import, kg_review
+from .routes import pdf, kg, rules, engine, standards, inference, templates, vocab, guide_packages, neo4j_graph, profiles, auto_import, kg_review
 
 app = FastAPI(title="CDSS Knowledge Engine", version="1.0.0")
 
@@ -25,6 +25,7 @@ app.add_middleware(
 app.include_router(pdf.router)
 app.include_router(kg.router)
 app.include_router(rules.router)
+app.include_router(engine.router)
 app.include_router(standards.router)
 app.include_router(inference.router)
 app.include_router(templates.router)
