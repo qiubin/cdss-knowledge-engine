@@ -85,13 +85,64 @@ class InferenceEngine:
         department: Optional[str] = None,
         include_draft_patterns: bool = False,
     ) -> List[Conclusion]:
-        """Run domain-staged inference on a patient snapshot.
+        """Run domain-staged inference with the native matcher."""
+        return self._run_stages(
+            patient, department, include_draft_patterns,
+            matcher=self._native_match_stage,
+        )
+
+    def _eval_rule_with_graph(
+        self, rule: Rule, patient: PatientSnapshot
+    ) -> Tuple[bool, List[EvidenceTrace], Dict[str, Any]]:
+        """Evaluate one rule with its own graph bound, swallowing+logging errors."""
+        profile = get_profile(self.domain)
+        self._current_kg = (
+            self.graph_client_factory(str(rule.graph_filename or profile.graph.legacy_graph_filename))
+            if self.graph_client_factory
+            else self.kg
+        )
+        try:
+            matched, traces = self._evaluate_condition(rule.conditions, patient)
+        except Exception as e:
+            logger.warning(f"Rule {rule.rule_id} evaluation failed: {e}")
+            matched, traces = False, []
+        finally:
+            self._current_kg = self.kg
+        weighted = dict(self._last_weighted_detail or {})
+        self._last_weighted_detail = {}
+        return matched, traces, weighted
+
+    def _native_match_stage(
+        self,
+        stage_rules: List[Rule],
+        patient: PatientSnapshot,
+    ) -> Dict[str, Tuple[List[EvidenceTrace], Dict[str, Any]]]:
+        """Evaluate each stage rule natively, keeping matched rules only."""
+        results: Dict[str, Tuple[List[EvidenceTrace], Dict[str, Any]]] = {}
+        for rule in stage_rules:
+            matched, traces, weighted = self._eval_rule_with_graph(rule, patient)
+            if matched:
+                results[rule.rule_id] = (traces, weighted)
+        return results
+
+    def _run_stages(
+        self,
+        patient: PatientSnapshot,
+        department: Optional[str] = None,
+        include_draft_patterns: bool = False,
+        matcher=None,
+    ) -> List[Conclusion]:
+        """Staged inference.  ``matcher(stage_rules, patient)`` returns
+        ``{rule_id: (traces, weighted_detail)}`` for the rules that matched;
+        rules absent from the mapping are treated as unmatched.  Drools mode
+        supplies a different matcher without touching stage logic.
 
         Stages are declared by the domain profile.  Western medicine keeps the
         historical diagnosis → treatment flow; TCM runs pattern → treatment →
         prescription → contraindication.  Conclusions from each stage are
         materialized as facts so later ``fact`` conditions can consume them.
         """
+        matcher = matcher or self._native_match_stage
         profile = get_profile(self.domain)
         all_rules = list(self.rule_repo.list_all())
         explicit_types = {
@@ -139,33 +190,31 @@ class InferenceEngine:
                 stage_rules = [rule for rule in stage_rules if rule.disease_code in prior_codes]
 
             self._current_facts = facts
+            matched_map = matcher(stage_rules, patient)
             stage_conclusions: List[Conclusion] = []
             for rule in stage_rules:
-                self._current_kg = (
-                    self.graph_client_factory(str(rule.graph_filename or profile.graph.legacy_graph_filename))
-                    if self.graph_client_factory
-                    else self.kg
-                )
+                entry = matched_map.get(rule.rule_id)
+                if entry is None:
+                    continue
+                traces, weighted = entry
+                self._last_weighted_detail = weighted or {}
                 try:
-                    matched, traces = self._evaluate_condition(rule.conditions, patient)
-                    if matched:
-                        trigger_ids = [
-                            c.rule_id for c in conclusions
-                            if c.disease_code == rule.disease_code
-                            and c.rule_type not in {"treatment", "tcm_treatment", "tcm_prescription"}
-                        ]
-                        conclusion = self._build_conclusion(
-                            rule, traces, patient,
-                            trigger_ids=trigger_ids
-                            if rule.rule_type in {"treatment", "tcm_treatment", "tcm_prescription"}
-                            else None,
-                        )
-                        stage_conclusions.append(conclusion)
+                    trigger_ids = [
+                        c.rule_id for c in conclusions
+                        if c.disease_code == rule.disease_code
+                        and c.rule_type not in {"treatment", "tcm_treatment", "tcm_prescription"}
+                    ]
+                    conclusion = self._build_conclusion(
+                        rule, traces, patient,
+                        trigger_ids=trigger_ids
+                        if rule.rule_type in {"treatment", "tcm_treatment", "tcm_prescription"}
+                        else None,
+                    )
+                    stage_conclusions.append(conclusion)
                 except Exception as e:
-                    logger.warning(f"Rule {rule.rule_id} evaluation failed: {e}")
+                    logger.warning(f"Rule {rule.rule_id} conclusion build failed: {e}")
                 finally:
-                    self._current_kg = self.kg
-                self._last_weighted_detail = {}
+                    self._last_weighted_detail = {}
 
             conclusions.extend(stage_conclusions)
             self._materialize_facts(facts, stage_conclusions)
