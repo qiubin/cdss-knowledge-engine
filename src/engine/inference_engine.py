@@ -1,6 +1,7 @@
 """Inference engine - evaluates rules against patient data."""
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -19,6 +20,13 @@ from .evaluators.factory import EvaluatorFactory
 from .terminology import Terminology
 
 logger = logging.getLogger(__name__)
+
+# Leaf condition types whose evaluation is deterministic per patient and
+# therefore memoizable. Groups/facts depend on stage state and stay dynamic.
+_CACHEABLE_LEAF_TYPES = {
+    "evidence", "lab_concept", "exam_finding", "symptom", "vital",
+    "demographic", "past_history", "medication", "observation", "attribute",
+}
 
 
 class InferenceEngine:
@@ -68,6 +76,7 @@ class InferenceEngine:
         self._current_kg = kg_client
         self._current_facts: Dict[str, Dict[str, Conclusion]] = {}
         self._last_weighted_detail: Dict[str, Any] = {}
+        self._atom_cache: Dict[str, tuple] = {}
 
     def run(
         self,
@@ -90,6 +99,7 @@ class InferenceEngine:
             for rule_type in stage.rule_types
         }
 
+        self._atom_cache = {}
         conclusions: List[Conclusion] = []
         facts: Dict[str, Dict[str, Conclusion]] = {}
 
@@ -180,6 +190,7 @@ class InferenceEngine:
             )
         ]
         candidate_rules.sort(key=lambda rule: -rule.priority)
+        self._atom_cache = {}
         candidates: List[Dict[str, Any]] = []
         profile = get_profile(self.domain)
         for rule in candidate_rules:
@@ -222,12 +233,65 @@ class InferenceEngine:
             if conclusion.treatment_method_code:
                 facts.setdefault("treatment", {})[conclusion.treatment_method_code] = conclusion
 
+    def _atom_cache_key(self, condition: RuleCondition) -> Optional[str]:
+        ctype = condition.type
+        if ctype == "lab_concept":
+            return (
+                f"lab_concept:{condition.lab_code}:{condition.concept_code}:"
+                + json.dumps(condition.parameter or {}, sort_keys=True, ensure_ascii=False)
+            )
+        if ctype == "exam_finding":
+            return f"exam_finding:{condition.exam_code}:{condition.finding_code}:{condition.concept_code}"
+        if ctype == "symptom":
+            return f"symptom:{condition.symptom_code}:{condition.duration_minutes}:{condition.concept_code}"
+        if ctype == "vital":
+            return f"vital:{condition.vital_code}:{condition.operator}:{condition.threshold_value}"
+        if ctype == "demographic":
+            return f"demographic:{condition.age_min}:{condition.age_max}:{condition.gender}"
+        if ctype in {"past_history", "medication"}:
+            return f"{ctype}:{condition.code}"
+        if ctype == "observation":
+            return f"observation:{condition.observation_type or 'symptom'}:{condition.code}:{condition.concept_code}"
+        if ctype == "attribute":
+            return f"attribute:{condition.attribute_code}:{condition.operator}:{json.dumps(condition.attribute_value, sort_keys=True, ensure_ascii=False, default=str)}"
+        if ctype == "evidence":
+            # Evidence lookup depends on the per-rule graph; the factory caches
+            # one client instance per filename, so instance id is a stable
+            # scoping key within a single run (the cache resets every run).
+            return f"evidence:{id(self._current_kg)}:{condition.evidence_id}"
+        return None
+
+    def _evaluate_condition_cached(
+        self, condition: RuleCondition, patient: PatientSnapshot
+    ) -> Tuple[bool, List[EvidenceTrace]]:
+        key = self._atom_cache_key(condition)
+        if key is not None:
+            cached = self._atom_cache.get(key)
+            if cached is not None:
+                matched, traces = cached
+                return matched, [trace.model_copy() for trace in traces]
+        matched, traces = self._evaluate_condition_uncached(condition, patient)
+        if key is not None:
+            self._atom_cache[key] = (matched, traces)
+            return matched, [trace.model_copy() for trace in traces]
+        return matched, traces
+
     def _evaluate_condition(
         self,
         condition: RuleCondition,
         patient: PatientSnapshot,
     ) -> Tuple[bool, List[EvidenceTrace]]:
         """Recursively evaluate a condition tree."""
+        if condition.type in _CACHEABLE_LEAF_TYPES:
+            return self._evaluate_condition_cached(condition, patient)
+        return self._evaluate_condition_uncached(condition, patient)
+
+    def _evaluate_condition_uncached(
+        self,
+        condition: RuleCondition,
+        patient: PatientSnapshot,
+    ) -> Tuple[bool, List[EvidenceTrace]]:
+        """Original leaf dispatch chain (the cacheable leaves are memoized above)."""
         if condition.type == "group":
             return self._evaluate_group(condition, patient)
         elif condition.type == "weighted_group":
