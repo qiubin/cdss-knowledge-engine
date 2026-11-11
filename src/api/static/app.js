@@ -45,6 +45,8 @@
     caseSavedAt: "",
     importRequestToken: 0,
     importJob: null,
+    reviewSelectedKey: "",
+    reviewItems: [],
   };
   let importTimer = null;
   window.__cdssState = state;
@@ -369,9 +371,6 @@
     const graphFilename = state.graphFilename;
     const selectedRules = rules.filter((rule) => (rule.graph_filename || "KG-GENERIC_GUIDELINE_V1.json") === graphFilename);
     const activeRules = selectedRules.filter((rule) => rule.status === "active");
-    const allStandards = standardOverview.hospitals.flatMap((hospital) =>
-      hospital.standards.map((standard) => ({ ...standard, hospital_id: hospital.hospital_id }))
-    );
     const reviewSummary = reviewQueue.summary || {};
     const sumStatuses = (counter, statuses) => statuses.reduce((sum, s) => sum + (counter?.[s] || 0), 0);
     const pendingReview =
@@ -384,8 +383,6 @@
     const planDiseaseLinks = semanticRelations.filter((relation) => relation.relation_code === "DISEASE_HAS_TREATMENT_PLAN");
     const medNodes = semanticNodes.filter((node) => node.node_type === "medication");
     const interventionNodes = semanticNodes.filter((node) => node.node_type === "intervention");
-    const diseaseNode = (code) => semanticNodes.find((node) => node.node_type === "disease" && node.code === code);
-    const evidenceSource = (evidence) => graph.sources.find((source) => source.chunk_id === (evidence.source_refs || [])[0]);
     const steps = [
       ["上传指南", `${docs.length} 份文档`, docs.length ? "done" : "pending"],
       ["知识包生成", "候选图谱与规则", "pending"],
@@ -399,7 +396,7 @@
         <div class="inline-controls">
           <div class="field"><label>当前图谱</label><select id="dashboardGraph">${graphs.map((item) => `<option value="${esc(item.graph_filename)}" ${item.graph_filename === graphFilename ? "selected" : ""}>${esc(item.graph_filename)}</option>`).join("")}</select></div>
         </div>
-      `, "", "疾病、证据、规则明细和统计口径都跟随当前图谱；规则执行仍按规则自身配置的图谱加载")}
+      `, "", "统计口径跟随当前图谱；规则执行仍按规则自身配置的图谱加载")}
       <div class="grid c4">
         <div class="kpi"><span>疾病节点</span><strong>${graph.diseases.length}</strong><small>当前图谱 ICD 实体</small></div>
         <div class="kpi"><span>诊断证据</span><strong>${graph.evidences.length}</strong><small>${graph.disease_evidence.length} 条疾病关联</small></div>
@@ -420,33 +417,6 @@
           <button class="btn" data-quick="tcmInference">中医辨证</button>
         </div>`, "", "按 引入 → 审核 → 验证 的主线组织；示例患者已内置在病历测试页")}
       ${panel("已上传文档", table(["文档", "ID", "页数", "实体", "上传时间"], docs.map((d) => `<tr><td>${esc(d.doc_title)}</td><td class="mono">${esc(d.doc_id)}</td><td>${d.total_pages}</td><td>${d.entity_count}</td><td class="nowrap">${esc(formatTime(d.uploaded_at))}</td></tr>`)))}
-      ${panel(`疾病节点明细（${graph.diseases.length}）`, table(["疾病 / ICD", "英文名", "关联证据", "节点溯源", "审核状态"], graph.diseases.map((d) => {
-        const node = diseaseNode(d.code);
-        const evidenceCount = graph.disease_evidence.filter((link) => link.disease_code === d.code).length;
-        const sourceRef = node?.source_refs?.[0];
-        return `<tr><td><strong>${esc(d.name_cn)}</strong><div class="mono muted">${esc(d.code)}</div></td><td>${esc(d.name_en || "-")}</td><td>${evidenceCount}</td><td class="mono">${esc(sourceRef || "-")}</td><td>${badge(node?.review_status || "draft")}</td></tr>`;
-      })), "", "与知识图谱页的疾病节点和关联关系使用同一数据源")}
-      ${panel(`诊断证据明细（${graph.evidences.length}）`, table(["证据 / 描述", "数据类型", "抽象概念", "编码", "指南出处"], graph.evidences.map((evidence) => {
-        const source = evidenceSource(evidence);
-        return `<tr><td><strong>${esc(evidence.description)}</strong><div class="mono muted">${esc(evidence.id)}</div></td><td>${esc(evidence.data_type)}</td><td>${evidenceConceptChip(evidence)}</td><td class="mono">${esc(evidence.lab_code || evidence.finding_code || evidence.symptom_code || "-")}</td><td>${source ? `<div class="mono">p${source.page_start}:l${source.line_start}-${source.line_end}</div><div class="quote">${esc(source.quote)}</div>` : "-"}</td></tr>`;
-      })), "", "字段与知识图谱页一致；图谱只保存抽象证据，不保存医院阈值")}
-      ${panel(`治疗方案明细（${planNodes.length}）`, table(["治疗方案 / 编码", "关联疾病", "包含药物", "治疗措施", "监测 / 禁忌", "指南出处", "审核状态"], planNodes.map((plan) => {
-        const planTargets = (code) => semanticRelations
-          .filter((relation) => relation.relation_code === code && relation.source_node_id === plan.id)
-          .map((relation) => semanticNodes.find((node) => node.id === relation.target_node_id))
-          .filter(Boolean);
-        const names = (nodes) => nodes.map((node) => node.name).join("、") || "-";
-        const planLink = planDiseaseLinks.find((relation) => relation.target_node_id === plan.id);
-        const disease = planLink && semanticNodes.find((node) => node.id === planLink.source_node_id);
-        const source = evidenceSource({ source_refs: plan.source_refs });
-        const contras = planTargets("TREATMENT_PLAN_HAS_CONTRAINDICATION");
-        return `<tr><td><strong>${esc(plan.name)}</strong><div class="mono muted">${esc(plan.code || "-")}</div></td><td>${disease ? `<strong>${esc(disease.name)}</strong>` : "-"}</td><td>${esc(names(planTargets("TREATMENT_PLAN_INCLUDES_MEDICATION")))}</td><td>${esc(names(planTargets("TREATMENT_PLAN_INCLUDES_INTERVENTION")))}</td><td>${esc(names(planTargets("TREATMENT_PLAN_HAS_MONITORING")))}${contras.length ? `<div class="muted">禁忌：${esc(names(contras))}</div>` : ""}</td><td>${source ? `<div class="mono">p${source.page_start}:l${source.line_start}-${source.line_end}</div><div class="quote">${esc(source.quote)}</div>` : "-"}</td><td>${badge(plan.review_status || "draft")}</td></tr>`;
-      })), "", "治疗方案与药物、措施、监测、禁忌均为图谱语义节点；审核状态与审核台一致")}
-      ${panel(`推理规则明细（${selectedRules.length}）`, table(["规则 / 结论", "目标诊断", "条件逻辑", "关联概念", "图谱语义", "所属图谱", "优先级", "状态"], selectedRules.map((rule) => {
-        const disease = graph.diseases.find((item) => item.code === rule.disease_code);
-        return `<tr><td><strong>${esc(rule.name)}</strong><div class="mono muted">${esc(rule.rule_id)} v${rule.version}</div></td><td>${esc(disease ? disease.name_cn : rule.disease_name || rule.disease_code)}</td><td><div class="quote">${esc(conditionText(rule.conditions))}</div></td><td>${ruleConceptChips(rule)}</td><td>${ruleSyncBadge(rule.rule_id)}</td><td class="mono muted">${esc(rule.graph_filename || "stemi_graph.json")}</td><td>${rule.priority}</td><td>${badge(rule.status)}</td></tr>`;
-      })), "", "条件、概念、同步状态和规则管理页一致；编辑操作请进入规则管理")}
-      ${panel(`医院标准明细（${allStandards.length}）`, table(["医院", "检验", "抽象概念", "判定标准", "上下文", "版本", "状态"], allStandards.map((standard) => `<tr><td class="mono">${esc(standard.hospital_id)}</td><td><strong>${esc(standard.lab_name || standard.lab_code)}</strong><div class="mono">${esc(standard.lab_code)}</div></td><td>${conceptChip(standard.concept_code)}</td><td class="mono">${standard.threshold_value != null ? `${esc(standard.operator)}${standard.threshold_value} ${esc(standard.threshold_unit)}` : "-"}${standard.uln_multiplier ? `<div>ULN×${standard.uln_multiplier}</div>` : ""}</td><td>${standard.context_gender || "不限"} ${standard.context_age_min || standard.context_age_max ? `${standard.context_age_min || "-"}~${standard.context_age_max || "-"}` : ""}</td><td>v${standard.version}</td><td>${badge(standard.status)}</td></tr>`)), "", "与标准管理页同一存储明细；阈值只在标准层维护")}
     `;
     $("#dashboardGraph").onchange = (event) => {
       state.graphFilename = event.target.value;
@@ -2671,6 +2641,408 @@
     return record;
   }
 
+  // ==== 审核台：专业化条目显示 + 主从详情面板 ====
+  const REVIEW_TYPE_LABELS = { graph_node: "节点", graph_relation: "关系", rule: "规则", package: "知识包" };
+  const REJECT_REASONS = ["编码错误", "证据不足", "关系方向错误", "重复条目", "超出指南范围", "内容过期", "其他"];
+  const RELATION_LABELS = {
+    DISEASE_HAS_LAB: "需开展检验", LAB_HAS_DIAGNOSTIC_EVIDENCE: "检验形成证据",
+    DISEASE_HAS_DIAGNOSTIC_EVIDENCE: "构成诊断依据", DISEASE_HAS_EXAM: "需开展检查",
+    EXAM_HAS_DIAGNOSTIC_EVIDENCE: "检查形成证据", DISEASE_HAS_SYMPTOM: "症见",
+    SYNDROME_HAS_SYMPTOM: "症见", SYNDROME_HAS_TONGUE: "舌象", SYNDROME_HAS_PULSE: "脉象",
+    SYNDROME_HAS_SIGN: "体征", SYNDROME_HAS_PATHOGENESIS: "病机",
+    SYNDROME_TREATED_BY_METHOD: "治以", METHOD_HAS_FORMULA: "选方", FORMULA_CONTAINS_HERB: "组成",
+  };
+  const FIELD_LABELS = {
+    node_type: "类型", code: "编码", name: "名称", review_status: "审核状态",
+    source_node_id: "源节点", relation_code: "关系编码", relation_name: "关系名称",
+    target_node_id: "目标节点", source_refs: "指南溯源",
+  };
+  const ACTION_DONE_LABELS = { approve: "已通过", reject: "已拒绝", retire: "已失效", restore: "已恢复" };
+
+  function reviewItemKey(item) {
+    return `${item.item_type}:${item.graph_filename || ""}:${item.node_id || item.item_id || item.rule_id || item.package_id || ""}`;
+  }
+  function relationLabel(item) {
+    return RELATION_LABELS[item.relation_code] || item.relation_name || item.name || item.relation_code;
+  }
+  function reviewItemTitle(item) {
+    if (item.item_type === "rule") return item.name || item.rule_id || "未命名规则";
+    if (item.item_type === "graph_relation") {
+      return `${item.source_name || item.source_node_id} ─${relationLabel(item)}→ ${item.target_name || item.target_node_id}`;
+    }
+    if (item.item_type === "package") return `${item.package_id} · ${item.doc_title || ""}`;
+    return `${item.name || item.node_id}（${item.code || "-"}）`;
+  }
+  function miniStatus(status) {
+    const value = status || "draft";
+    const label = value === "missing" ? "缺失" : (REVIEW_LABELS[value] || value);
+    return `<span class="mini-status ${esc(value)}">${esc(label)}</span>`;
+  }
+  function shortTime(value) {
+    const full = formatTime(value);
+    return full === "-" ? "-" : full.slice(5, 16);
+  }
+  function reviewReviewer() {
+    return (($("#reviewCenterReviewer")?.value || "") || localStorage.getItem("cdssReviewer") || "").trim() || "未署名";
+  }
+  function relationEndpointBlocked(item) {
+    if (item.item_type !== "graph_relation") return false;
+    return (item.source_status || "draft") !== "active" || (item.target_status || "draft") !== "active";
+  }
+  function itemPayload(item) {
+    return {
+      item_type: item.item_type,
+      graph_filename: item.graph_filename || "",
+      node_id: item.node_id || "",
+      source_node_id: item.source_node_id || "",
+      relation_code: item.relation_code || "",
+      target_node_id: item.target_node_id || "",
+      rule_id: item.rule_id || "",
+    };
+  }
+  function relationSemHtml(item) {
+    return `<span class="relation-sem">
+      <span class="sem-endpoint">${esc(item.source_name || item.source_node_id)}${miniStatus(item.source_status)}</span>
+      <span class="sem-arrow">${esc(relationLabel(item))}<span class="arrow-glyph">→</span></span>
+      <span class="sem-endpoint">${esc(item.target_name || item.target_node_id)}${miniStatus(item.target_status)}</span>
+    </span>`;
+  }
+  function reviewProgressHtml(summary) {
+    if (!summary) return "";
+    const sections = [["graph_nodes", "图谱节点"], ["graph_relations", "图谱关系"], ["rules", "规则"]];
+    const blocks = sections.map(([key, label]) => {
+      const counts = summary[key] || {};
+      const total = Object.values(counts).reduce((sum, value) => sum + Number(value || 0), 0);
+      const done = Number(counts.active || 0) + Number(counts.rejected || 0) + Number(counts.retired || 0);
+      const pct = total ? Math.round((done / total) * 100) : 0;
+      const pending = total - done;
+      return `<div class="progress-block">
+        <div class="progress-label"><span>${esc(label)}</span><span class="muted">${done}/${total} 已处理${pending ? ` · 待处理 ${pending}` : " · 全部处理完毕"}</span></div>
+        <div class="review-progress-track"><div class="review-progress-fill" style="width:${pct}%"></div></div>
+      </div>`;
+    });
+    return `<div class="review-progress">${blocks.join("")}</div>`;
+  }
+
+  async function submitReviewAction(item, action, note) {
+    const reviewer = reviewReviewer();
+    if (item.item_type === "graph_node") {
+      await api(`/api/kg/nodes/${encodeURIComponent(item.node_id)}/review?graph_filename=${encodeURIComponent(item.graph_filename)}`, {
+        json: { action, reviewer, note },
+      });
+    } else if (item.item_type === "graph_relation") {
+      await api(`/api/kg/relations/review?graph_filename=${encodeURIComponent(item.graph_filename)}`, {
+        json: {
+          action, reviewer, note,
+          source_node_id: item.source_node_id,
+          relation_code: item.relation_code,
+          target_node_id: item.target_node_id,
+        },
+      });
+    } else if (item.item_type === "rule") {
+      await api(`/api/rules/${encodeURIComponent(item.rule_id)}/review`, { json: { action, reviewer, note } });
+    } else {
+      throw new Error("该条目类型暂不支持单条审核操作");
+    }
+  }
+
+  async function quickReview(item, action) {
+    try {
+      if (action === "approve" && relationEndpointBlocked(item)) {
+        toast("该关系的端点节点尚未全部「已通过」，请先审核两端节点", true);
+        return;
+      }
+      await submitReviewAction(item, action, "");
+      toast(`${ACTION_DONE_LABELS[action] || "已处理"}：${reviewItemTitle(item)}`);
+      renderReviewCenter();
+    } catch (error) { toast(error.message, true); }
+  }
+
+  function openReasonDialog(target, action) {
+    const items = target.multi || [target];
+    const dialog = $("#editorDialog");
+    const save = $("#editorSave");
+    const verb = action === "reject" ? "拒绝" : "失效";
+    save.hidden = false;
+    save.textContent = `确认${verb}`;
+    $("#editorBody").innerHTML = `
+      <h3>${verb}${items.length > 1 ? ` ${items.length} 条条目` : ""}：${esc(items.length > 1 ? "批量操作" : reviewItemTitle(items[0]))}</h3>
+      <p class="muted">原因码会写入审核意见和审计记录，便于后续统计高频退回原因。</p>
+      <div class="reason-chips" id="reasonChips">
+        ${REJECT_REASONS.map((reason) => `<button type="button" class="reason-chip" data-reason="${esc(reason)}">${esc(reason)}</button>`).join("")}
+      </div>
+      <div class="field"><label>补充说明（可选）</label><textarea id="rejectNote" rows="3" placeholder="例如：证据等级仅 C 级，且新版指南已删除该推荐"></textarea></div>
+    `;
+    let reason = "";
+    $("#reasonChips").onclick = (event) => {
+      const chip = event.target.closest(".reason-chip");
+      if (!chip) return;
+      $("#reasonChips").querySelectorAll(".reason-chip").forEach((item) => item.classList.remove("selected"));
+      chip.classList.add("selected");
+      reason = chip.dataset.reason;
+    };
+    $("#editorCancel").onclick = () => dialog.close();
+    save.onclick = async () => {
+      if (!reason) { toast("请选择一个原因码", true); return; }
+      const extra = $("#rejectNote").value.trim();
+      const note = extra ? `[${reason}] ${extra}` : `[${reason}]`;
+      try {
+        if (target.multi) {
+          const result = await api("/api/review/bulk", { json: {
+            items: target.multi.map(itemPayload),
+            action,
+            reviewer: reviewReviewer(),
+            note,
+            reason,
+          }});
+          toast(`批量${verb}完成：成功 ${result.succeeded}，失败 ${result.failed}`, result.failed > 0);
+        } else {
+          await submitReviewAction(target, action, note);
+          toast(`${ACTION_DONE_LABELS[action] || "已处理"}：${reviewItemTitle(target)}`);
+        }
+        dialog.close();
+        renderReviewCenter();
+      } catch (error) { toast(error.message, true); }
+    };
+    dialog.onclose = () => { save.hidden = false; save.textContent = "保存"; dialog.onclose = null; };
+    dialog.showModal();
+  }
+
+  function fieldLabel(key) {
+    if (key.startsWith("attributes.")) return `属性·${key.slice("attributes.".length)}`;
+    return FIELD_LABELS[key] || key;
+  }
+  function flattenContent(contentValue) {
+    const flat = {};
+    Object.entries(contentValue || {}).forEach(([key, value]) => {
+      if (key === "attributes" && value && typeof value === "object") {
+        Object.entries(value).forEach(([attrKey, attrValue]) => { flat[`attributes.${attrKey}`] = String(attrValue ?? ""); });
+      } else if (Array.isArray(value)) {
+        flat[key] = value.map((entry) => String(entry)).join("；");
+      } else if (value === null || value === undefined || typeof value !== "object") {
+        flat[key] = String(value ?? "");
+      }
+    });
+    return flat;
+  }
+  function diffTableHtml(oldContent, newContent) {
+    const before = flattenContent(oldContent);
+    const after = flattenContent(newContent);
+    const skipKeys = ["id", "reviewed_at", "reviewed_by", "review_note", "orphaned_from", "content_hash", "open_import"];
+    const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])]
+      .filter((key) => !skipKeys.includes(key));
+    if (!keys.length) return "";
+    const rows = keys.map((key) => {
+      const oldValue = before[key] ?? "";
+      const newValue = after[key] ?? "";
+      const changed = oldValue !== newValue;
+      return `<tr class="${changed ? "diff-changed" : ""}">
+        <td class="mono">${esc(fieldLabel(key))}</td>
+        <td class="${changed ? "diff-old" : "muted"}">${esc(oldValue || "-")}</td>
+        <td class="${changed ? "diff-new" : "muted"}">${esc(newValue || "-")}</td>
+      </tr>`;
+    });
+    const changedCount = keys.filter((key) => (before[key] ?? "") !== (after[key] ?? "")).length;
+    return `<p class="muted">${changedCount ? `${changedCount} 个字段发生变化（高亮行）` : "字段内容一致，仅审核状态需要复核"}</p>
+      ${table(["字段", "上一版本", "当前版本"], rows)}`;
+  }
+  async function entityHistoryHtml(item, entityType, entityId, currentContent) {
+    const params = new URLSearchParams({ graph_filename: item.graph_filename || "", entity_type: entityType, limit: "10" });
+    const data = await api(`/api/kg/entities/${encodeURIComponent(entityId)}/history?${params}`);
+    const rows = data.items || [];
+    if (!rows.length) return "";
+    const versions = table(["版本", "归档时间", "原因"], rows.map((row) => `<tr><td>#${esc(row.seq)}</td><td class="nowrap muted">${esc(formatTime(row.timestamp))}</td><td>${esc(row.reason || "-")}</td></tr>`));
+    return `<div class="detail-section"><h4>变更对比（导入覆盖前 → 当前）</h4>${diffTableHtml(rows[0].content, currentContent)}</div>
+      <div class="detail-section"><h4>历史版本（${rows.length}）</h4>${versions}</div>`;
+  }
+  function attrTableHtml(attributes) {
+    const entries = Object.entries(attributes || {});
+    if (!entries.length) return '<div class="muted">无属性</div>';
+    return table(["属性", "值"], entries.map(([key, value]) => `<tr><td class="mono">${esc(key)}</td><td>${esc(String(value))}</td></tr>`));
+  }
+  function auditListHtml(records, limit = 5) {
+    const rows = (records || []).slice(0, limit).map((row) => `<tr>
+      <td class="nowrap muted">${esc(formatTime(row.ts))}</td>
+      <td>${esc(row.action || "-")}${row.before_status ? ` <span class="mono muted">(${esc(row.before_status)}→${esc(row.after_status)})</span>` : ""}</td>
+      <td>${esc(row.reviewer || "-")}</td>
+      <td>${esc(row.note || "-")}</td>
+    </tr>`);
+    if (!rows.length) return '<div class="muted">暂无审核记录</div>';
+    return table(["时间", "动作", "审核人", "意见"], rows);
+  }
+  function dependentRuleTable(rules) {
+    return rules.length
+      ? table(["规则", "状态", "依赖状态"], rules.map((rule) => `<tr><td><strong>${esc(rule.name || rule.rule_id)}</strong><div class="mono muted">${esc(rule.rule_id)}</div></td><td>${reviewBadge(rule.status)}</td><td>${esc(rule.dependency_status || "-")}</td></tr>`))
+      : '<div class="muted">没有规则引用该条目</div>';
+  }
+
+  function detailHeadHtml(item) {
+    return `<div class="detail-head">
+      <div class="detail-title"><span class="type-chip">${esc(REVIEW_TYPE_LABELS[item.item_type] || item.item_type)}</span>
+        <strong>${esc(reviewItemTitle(item))}</strong> ${reviewBadge(item.status)}
+        ${item.orphaned_from?.length ? `<span class="badge danger" title="${esc(item.orphaned_from.join("、"))}">孤儿</span>` : ""}</div>
+      <div class="detail-sub mono">${esc(item.graph_filename || "")}${item.updated_at ? ` · 最近审核 ${esc(formatTime(item.updated_at))}` : ""}</div>
+    </div>`;
+  }
+  function detailActionsHtml(item) {
+    const status = item.status || "draft";
+    const buttons = [];
+    if (["draft", "stale", "testing", "blocked"].includes(status)) buttons.push('<button class="btn sm primary" data-detail-action="approve">通过</button>');
+    if (!["active", "rejected", "retired"].includes(status)) buttons.push('<button class="btn sm danger" data-detail-action="reject">拒绝</button>');
+    if (status === "active") buttons.push('<button class="btn sm" data-detail-action="retire">失效</button>');
+    if (["rejected", "retired"].includes(status)) buttons.push('<button class="btn sm" data-detail-action="restore">恢复</button>');
+    return buttons.length ? `<div class="actions detail-actions">${buttons.join("")}</div>` : "";
+  }
+
+  async function nodeDetailHtml(item) {
+    const detail = await api(`/api/kg/nodes/${encodeURIComponent(item.node_id)}?graph_filename=${encodeURIComponent(item.graph_filename)}`);
+    const node = detail.node || {};
+    const rules = detail.dependents?.rules || [];
+    let historyHtml = "";
+    if (item.status === "stale") {
+      try { historyHtml = await entityHistoryHtml(item, "node", item.node_id, node); } catch (_) { historyHtml = ""; }
+    }
+    return `
+      <div class="detail-section endpoint-meta">
+        <div><span class="muted">类型</span><strong>${esc(typeName[node.node_type] || node.node_type || "-")}</strong></div>
+        <div><span class="muted">编码</span><span class="mono">${esc(node.code || "-")}</span></div>
+        ${(node.source_refs || []).length ? `<div><span class="muted">溯源</span><span class="mono">${esc((node.source_refs || []).join("；"))}</span></div>` : ""}
+      </div>
+      <div class="detail-section"><h4>属性</h4>${attrTableHtml(node.attributes)}</div>
+      ${historyHtml}
+      <div class="detail-section"><h4>依赖规则（${rules.length}）</h4>${dependentRuleTable(rules)}</div>
+      <div class="detail-section"><h4>审核记录</h4>${auditListHtml(detail.audit)}</div>`;
+  }
+
+  async function relationDetailHtml(item) {
+    const detail = await api(`/api/kg/relations/${encodeURIComponent(item.item_id)}?graph_filename=${encodeURIComponent(item.graph_filename)}`);
+    const relation = detail.relation || {};
+    const endpointCard = (endpoint, role) => `
+      <div class="endpoint-card">
+        <div class="muted endpoint-role">${esc(role)}</div>
+        <strong>${esc(endpoint.name)}</strong>
+        <div class="mono muted">${esc(endpoint.code || endpoint.node_id)}</div>
+        <div>${miniStatus(endpoint.status)}</div>
+      </div>`;
+    let historyHtml = "";
+    if (item.status === "stale") {
+      try { historyHtml = await entityHistoryHtml(item, "relation", item.item_id, relation); } catch (_) { historyHtml = ""; }
+    }
+    const rulesInfo = detail.rules || { total: 0, items: [] };
+    return `
+      <div class="detail-section">
+        <div class="relation-flow">
+          ${endpointCard(detail.source, "源节点")}
+          <div class="relation-arrow"><span class="rel-name">${esc(relationLabel(item))}</span><span class="mono muted">${esc(item.relation_code)}</span></div>
+          ${endpointCard(detail.target, "目标节点")}
+        </div>
+      </div>
+      <div class="detail-section"><h4>关系属性</h4>${attrTableHtml(relation.attributes)}</div>
+      ${(relation.source_refs || []).length ? `<div class="detail-section"><h4>指南溯源</h4><div class="quote">${esc((relation.source_refs || []).join("；"))}</div></div>` : ""}
+      ${historyHtml}
+      <div class="detail-section"><h4>依赖规则（${rulesInfo.total}）</h4>${dependentRuleTable(rulesInfo.items)}</div>
+      <div class="detail-section"><h4>审核记录</h4>${auditListHtml(detail.audit)}</div>`;
+  }
+
+  async function ruleDetailHtml(item) {
+    const [rule, deps, history] = await Promise.all([
+      api(`/api/rules/${encodeURIComponent(item.rule_id)}`),
+      api(`/api/rules/${encodeURIComponent(item.rule_id)}/graph-dependencies`),
+      api(`/api/rules/${encodeURIComponent(item.rule_id)}/history`),
+    ]);
+    const refs = deps.references || [];
+    const issues = deps.issues || [];
+    const historyRows = (history || []).slice(0, 8);
+    return `
+      <div class="detail-section endpoint-meta">
+        <div><span class="muted">类型</span><strong>${esc(rule.rule_type || "-")}</strong> ${badge(normalizeDomainClient(rule.domain))}</div>
+        <div><span class="muted">版本</span>v${esc(rule.version ?? "-")} · 优先级 ${esc(rule.priority ?? "-")}</div>
+        <div><span class="muted">目标</span>${esc(rule.disease_name || rule.disease_code || "-")}${rule.disease_code ? ` <span class="mono muted">(${esc(rule.disease_code)})</span>` : ""}</div>
+        <div><span class="muted">所属图谱</span><span class="mono">${esc(rule.graph_filename || "-")}</span></div>
+      </div>
+      <div class="detail-section"><h4>触发条件</h4><div class="quote">${esc(rule.condition_text || "-")}</div><div class="concept-chips">${ruleConceptChips(rule)}</div></div>
+      ${issues.length
+        ? `<div class="detail-section"><h4>图谱校验问题</h4><ul class="issue-list">${issues.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul></div>`
+        : '<div class="detail-section"><h4>图谱校验</h4><span class="badge active">语义一致</span></div>'}
+      <div class="detail-section"><h4>图谱依赖（${refs.length}）</h4>${refs.length ? table(["类型", "条目", "状态"], refs.map((ref) => `<tr><td>${ref.kind === "node" ? "节点" : "关系"}</td><td class="mono">${esc(ref.kind === "node" ? ref.node_id : `${ref.source_node_id} ─${ref.relation_code}→ ${ref.target_node_id}`)}</td><td>${ref.status === "active" ? '<span class="badge active">已通过</span>' : miniStatus(ref.status)}</td></tr>`)) : '<div class="muted">无图谱依赖</div>'}</div>
+      <div class="detail-section"><h4>版本历史${(history || []).length ? `（${history.length}）` : ""}</h4>${historyRows.length ? table(["版本", "时间", "操作", "操作人"], historyRows.map((row) => `<tr><td>#${esc(row.seq)}</td><td class="nowrap muted">${esc(formatTime(row.timestamp))}</td><td>${esc(row.action || "-")}</td><td>${esc(row.actor || "-")}</td></tr>`)) : '<div class="muted">暂无版本历史</div>'}</div>`;
+  }
+
+  let reviewDetailToken = 0;
+  function markSelectedRow() {
+    content.querySelectorAll(".review-row").forEach((row) => {
+      row.classList.toggle("selected", row.dataset.reviewKey === state.reviewSelectedKey);
+    });
+    const row = content.querySelector(`.review-row[data-review-key="${CSS.escape(state.reviewSelectedKey)}"]`);
+    row?.scrollIntoView({ block: "nearest" });
+  }
+  async function loadReviewDetail(item) {
+    const mount = $("#reviewDetail");
+    if (!mount) return;
+    state.reviewSelectedKey = reviewItemKey(item);
+    markSelectedRow();
+    const token = ++reviewDetailToken;
+    mount.innerHTML = '<div class="empty">加载详情…</div>';
+    try {
+      let body = "";
+      if (item.item_type === "graph_node") body = await nodeDetailHtml(item);
+      else if (item.item_type === "graph_relation") body = await relationDetailHtml(item);
+      else if (item.item_type === "rule") body = await ruleDetailHtml(item);
+      else body = '<div class="empty">该条目类型暂不支持详情展示</div>';
+      if (token !== reviewDetailToken) return;
+      mount.innerHTML = `${detailHeadHtml(item)}${detailActionsHtml(item)}<div class="detail-body">${body}</div>`;
+    } catch (error) {
+      if (token !== reviewDetailToken) return;
+      mount.innerHTML = `<div class="empty">详情加载失败：${esc(error.message)}</div>`;
+    }
+  }
+
+  async function bulkReview(action) {
+    let selected = [...content.querySelectorAll("[data-review-select]:checked")]
+      .map((input) => state.reviewItems.find((item) => reviewItemKey(item) === input.dataset.reviewSelect))
+      .filter(Boolean);
+    if (!selected.length) { toast("请先勾选条目", true); return; }
+    if (action === "approve") {
+      const blockedCount = selected.filter(relationEndpointBlocked).length;
+      if (blockedCount) {
+        const rest = selected.length - blockedCount;
+        const proceed = confirm(
+          `${blockedCount} 条关系的端点节点还不是「已通过」，关系审核要求两端节点先通过，直接提交会被拒绝。` +
+          (rest ? `\n\n确定后仅提交其余 ${rest} 条；` : "\n\n当前没有可提交条目；") + "取消则不做操作。"
+        );
+        if (!proceed) return;
+        selected = selected.filter((item) => !relationEndpointBlocked(item));
+        if (!selected.length) { toast("没有可提交的条目，请先审核相关端点节点", true); return; }
+      }
+    }
+    if (action === "reject" || action === "retire") {
+      openReasonDialog({ multi: selected }, action);
+      return;
+    }
+    try {
+      const result = await api("/api/review/bulk", { json: {
+        items: selected.map(itemPayload),
+        action,
+        reviewer: reviewReviewer(),
+        note: "",
+      }});
+      const firstError = (result.results || []).find((entry) => !entry.ok);
+      const detail = firstError
+        ? `；首个失败：${typeof firstError.error === "string" ? firstError.error : JSON.stringify(firstError.error)}`
+        : "";
+      toast(`批量完成：成功 ${result.succeeded}，失败 ${result.failed}${detail}`, result.failed > 0);
+      renderReviewCenter();
+    } catch (error) { toast(error.message, true); }
+  }
+
+  function bindReviewTabs() {
+    content.querySelectorAll("[data-review-tab]").forEach((button) => button.onclick = () => {
+      state.reviewTab = button.dataset.reviewTab;
+      state.reviewSelectedKey = "";
+      renderReviewCenter();
+    });
+  }
+
   async function renderReviewCenter() {
     const tab = state.reviewTab || "graph";
     const reviewer = localStorage.getItem("cdssReviewer") || "";
@@ -2684,13 +3056,6 @@
       tab === "audit" ? api("/api/review/audit?limit=100") : Promise.resolve({ items: [] }),
     ]);
     const allItems = queue.items || [];
-    const typeLabel = { graph_node: "节点", graph_relation: "关系", rule: "规则", package: "知识包" };
-    const itemLabel = (item) => {
-      if (item.item_type === "rule") return `${item.rule_id} · ${item.name || ""}`;
-      if (item.item_type === "graph_relation") return `${item.source_node_id} -${item.relation_code}-> ${item.target_node_id}`;
-      if (item.item_type === "package") return `${item.package_id} · ${item.doc_title || ""}`;
-      return `${item.name || ""}（${item.code || item.node_id}）`;
-    };
     const items = allItems.filter((item) => {
       if (tab === "graph") return ["graph_node", "graph_relation"].includes(item.item_type) && ["draft", "stale"].includes(item.status);
       if (tab === "rules") return item.item_type === "rule" && ["draft", "testing"].includes(item.status);
@@ -2699,62 +3064,102 @@
       if (tab === "active") return item.status === "active" && ["graph_node", "graph_relation", "rule"].includes(item.item_type);
       if (tab === "orphan") return Boolean(item.orphaned_from && item.orphaned_from.length);
       return false;
-    }).filter((item) => (
-      !query || `${itemLabel(item)} ${item.graph_filename || ""}`.toLowerCase().includes(query.toLowerCase())
-    ));
+    }).filter((item) => {
+      if (!query) return true;
+      const haystack = `${reviewItemTitle(item)} ${item.code || ""} ${item.rule_id || ""} ${item.graph_filename || ""}`.toLowerCase();
+      return haystack.includes(query.toLowerCase());
+    });
+    state.reviewItems = items;
+    if (state.reviewSelectedKey && !items.some((item) => reviewItemKey(item) === state.reviewSelectedKey)) {
+      state.reviewSelectedKey = "";
+    }
     const tabs = [
       ["graph", "待审图谱"], ["rules", "待审规则"], ["blocked", "被阻断"],
       ["stale", "待复核"], ["active", "已通过"], ["orphan", "孤儿条目"],
       ["audit", "审核记录"],
     ];
     const tabHtml = tabs.map(([key, label]) => `<button class="review-tab ${tab === key ? "active" : ""}" data-review-tab="${key}">${label}</button>`).join("");
-    const dependencyCount = (item) => item.dependent_rule_count ?? item.dependency_summary?.total ?? "-";
-    const rows = items.map((item, index) => `<tr>
-      <td><input type="checkbox" data-review-select="${index}"></td>
-      <td>${esc(typeLabel[item.item_type] || item.item_type)}</td>
-      <td><strong>${esc(itemLabel(item))}</strong>${item.orphaned_from?.length ? `<div class="muted">孤儿来源：${esc(item.orphaned_from.join("、"))}</div>` : ""}</td>
-      <td>${reviewBadge(item.status)}</td>
-      <td class="mono muted">${esc(item.graph_filename || "-")}</td>
-      <td>${esc(String(dependencyCount(item)))}</td>
-    </tr>`);
-    const statusBadge = (value) => value ? reviewBadge(value) : '<span class="muted">-</span>';
-    const auditRows = (audit.items || []).map((row) => `<tr>
-      <td class="nowrap">${esc(formatTime(row.ts))}</td>
-      <td>${esc(row.entity_type || "-")}</td>
-      <td class="mono">${esc(row.entity_id || "-")}</td>
-      <td>${esc(row.action || "-")}</td>
-      <td>${statusBadge(row.before_status)} → ${statusBadge(row.after_status)}</td>
-      <td>${esc(row.reviewer || "-")}</td>
-      <td>${esc(row.note || "-")}</td>
-    </tr>`);
     const trunc = queue.truncated || {};
     const truncParts = [];
     if (trunc.graph_nodes || trunc.graph_relations) truncParts.push("图谱条目");
     if (trunc.rules) truncParts.push("规则");
     if (trunc.packages) truncParts.push("知识包");
     const truncated = truncParts.length
-      ? `<span class="muted">${esc(truncParts.join("、"))}超出展示上限，请用搜索缩小范围。</span>`
+      ? `<div class="muted trunc-note">${esc(truncParts.join("、"))}超出展示上限，请用搜索缩小范围。</div>`
       : "";
+
+    if (tab === "audit") {
+      const statusBadge = (value) => value ? reviewBadge(value) : '<span class="muted">-</span>';
+      const auditRows = (audit.items || []).map((row) => `<tr>
+        <td class="nowrap">${esc(formatTime(row.ts))}</td>
+        <td>${esc(row.entity_type || "-")}</td>
+        <td class="mono">${esc(row.entity_id || "-")}</td>
+        <td>${esc(row.action || "-")}</td>
+        <td>${statusBadge(row.before_status)} → ${statusBadge(row.after_status)}</td>
+        <td>${esc(row.reviewer || "-")}</td>
+        <td>${esc(row.note || "-")}</td>
+      </tr>`);
+      content.innerHTML = `<div class="review-tabs">${tabHtml}</div>
+        ${panel("审核记录", table(["时间", "类型", "条目", "动作", "状态变化", "审核人", "意见"], auditRows), "", "全量审核动作的追加式日志；拒绝原因码会记录在意见前缀 [原因码] 中")}`;
+      bindReviewTabs();
+      return;
+    }
+
+    const dependencyCount = (item) => item.dependent_rule_count ?? item.dependency_summary?.total ?? "-";
+    const rows = items.map((item) => {
+      const key = reviewItemKey(item);
+      const subParts = item.item_type === "rule"
+        ? [item.rule_id, item.graph_filename || ""]
+        : item.item_type === "graph_relation"
+          ? [item.relation_code, item.graph_filename || ""]
+          : [item.code || item.node_id, typeName[item.node_type] || item.node_type || "", item.graph_filename || ""];
+      const issues = item.item_type === "rule" ? (item.issues || []) : [];
+      return `<tr class="review-row ${key === state.reviewSelectedKey ? "selected" : ""}" data-review-key="${esc(key)}">
+        <td class="col-check"><input type="checkbox" data-review-select="${esc(key)}"></td>
+        <td class="review-item-cell">
+          <div class="review-item-title"><span class="type-chip">${esc(REVIEW_TYPE_LABELS[item.item_type] || item.item_type)}</span>
+            ${item.item_type === "graph_relation" ? relationSemHtml(item) : `<strong>${esc(reviewItemTitle(item))}</strong>`}
+          </div>
+          <div class="review-item-sub mono">${esc(subParts.filter(Boolean).join(" · "))}</div>
+          ${item.orphaned_from?.length ? `<div class="muted">孤儿来源：${esc(item.orphaned_from.join("、"))}</div>` : ""}
+          ${issues.length ? `<div class="issue-inline" title="${esc(issues.join("\n"))}">${esc(issues[0])}</div>` : ""}
+        </td>
+        <td>${reviewBadge(item.status)}</td>
+        <td class="nowrap">${esc(String(dependencyCount(item)))}</td>
+        <td class="nowrap muted">${esc(shortTime(item.updated_at))}</td>
+      </tr>`;
+    });
     content.innerHTML = `
       <div class="review-tabs">${tabHtml}</div>
-      ${panel(tab === "audit" ? "审核记录" : "待办列表", tab === "audit"
-        ? table(["时间", "类型", "条目", "动作", "状态变化", "审核人", "意见"], auditRows)
-        : `
-          <div class="review-toolbar">
-            <div class="field"><label>审核人</label><input id="reviewCenterReviewer" value="${esc(reviewer)}" placeholder="姓名"></div>
-            <div class="field"><label>搜索</label><input id="reviewSearch" type="search" value="${esc(state.reviewQuery || "")}" placeholder="名称 / 编码 / 规则 ID…"></div>
-            <span class="muted">当前 ${items.length} 条；批量操作逐条执行并写审计。</span>
-            ${truncated}
-            <div class="actions">
-              <button class="btn sm primary" data-review-bulk="approve">批量通过</button>
-              <button class="btn sm danger" data-review-bulk="reject">批量拒绝</button>
-              <button class="btn sm" data-review-bulk="retire">批量失效</button>
-              <button class="btn sm" data-review-bulk="restore">批量恢复</button>
-            </div>
+      ${reviewProgressHtml(queue.summary)}
+      ${truncated}
+      <div class="review-layout">
+        <div class="review-list">
+          <div class="review-toolbar compact">
+            <input id="reviewCenterReviewer" value="${esc(reviewer)}" placeholder="审核人（可署名）" title="审核人署名，写入审计记录">
+            <input id="reviewSearch" type="search" value="${esc(state.reviewQuery || "")}" placeholder="搜索名称 / 编码 / 规则 ID…">
           </div>
-          ${table(['<input type="checkbox" id="reviewSelectAll">', "类型", "条目", "状态", "图谱", "依赖规则数"], rows)}
-        `, "", "审核台汇总图谱与规则的待办；批量动作按条目状态逐条校验，失败项会返回原因")}
-    `;
+          <div class="review-bulkbar">
+            <label class="nowrap"><input type="checkbox" id="reviewSelectAll"> 全选</label>
+            <span class="muted" id="reviewSelectionCount">已选 0 条</span>
+            <div class="actions">
+              <button class="btn sm primary" data-review-bulk="approve">通过</button>
+              <button class="btn sm danger" data-review-bulk="reject">拒绝</button>
+              <button class="btn sm" data-review-bulk="retire">失效</button>
+              <button class="btn sm" data-review-bulk="restore">恢复</button>
+            </div>
+            <span class="kbd-hint">J/K 切换 · X 勾选 · A 通过 · R 拒绝</span>
+          </div>
+          <div class="review-table-wrap"><table>
+            <thead><tr><th class="col-check"></th><th>条目</th><th>状态</th><th>依赖</th><th>更新</th></tr></thead>
+            <tbody>${rows.join("") || '<tr><td colspan="5"><div class="empty">当前页签没有待办条目</div></td></tr>'}</tbody>
+          </table></div>
+        </div>
+        <div class="review-detail" id="reviewDetail">
+          <div class="empty">在左侧选择条目查看详情<br><span class="muted">类型、属性、依赖规则与审核记录会在这里展示</span></div>
+        </div>
+      </div>`;
+
     const reviewerInput = $("#reviewCenterReviewer");
     if (reviewerInput) {
       reviewerInput.onchange = (event) => localStorage.setItem("cdssReviewer", event.target.value.trim());
@@ -2764,57 +3169,43 @@
     if (searchInput) {
       searchInput.oninput = (event) => {
         clearTimeout(reviewSearchTimer);
-        const value = event.target.value;
         reviewSearchTimer = setTimeout(() => {
-          state.reviewQuery = value;
+          state.reviewQuery = event.target.value;
           renderReviewCenter();
         }, 250);
       };
     }
+    const selectionCount = () => {
+      const count = content.querySelectorAll("[data-review-select]:checked").length;
+      const el = $("#reviewSelectionCount");
+      if (el) el.textContent = `已选 ${count} 条`;
+    };
     $("#reviewSelectAll")?.addEventListener("change", (event) => {
       content.querySelectorAll("[data-review-select]").forEach((input) => { input.checked = event.target.checked; });
+      selectionCount();
     });
-    content.querySelectorAll("[data-review-tab]").forEach((button) => button.onclick = () => {
-      state.reviewTab = button.dataset.reviewTab;
-      renderReviewCenter();
-    });
-    content.querySelectorAll("[data-review-bulk]").forEach((button) => button.onclick = async () => {
-      const selected = [...content.querySelectorAll("[data-review-select]:checked")]
-        .map((input) => items[Number(input.dataset.reviewSelect)])
-        .filter(Boolean);
-      if (!selected.length) { toast("请先勾选条目", true); return; }
-      const action = button.dataset.reviewBulk;
-      if (action === "reject" || action === "retire") {
-        const affected = selected.reduce((sum, item) => (
-          sum + (item.item_type === "rule" ? 1 : (item.dependent_rule_count || 0))
-        ), 0);
-        if (!confirm(`将处理 ${selected.length} 条，涉及 ${affected} 条规则/依赖。确认继续？`)) return;
+    content.querySelectorAll("[data-review-select]").forEach((input) => input.addEventListener("change", selectionCount));
+    content.onclick = (event) => {
+      const actionButton = event.target.closest("[data-detail-action]");
+      if (actionButton) {
+        const item = state.reviewItems.find((entry) => reviewItemKey(entry) === state.reviewSelectedKey);
+        if (!item) return;
+        const action = actionButton.dataset.detailAction;
+        if (action === "reject" || action === "retire") openReasonDialog(item, action);
+        else quickReview(item, action);
+        return;
       }
-      const note = prompt("审核意见（可选）") || "";
-      const payload = selected.map((item) => ({
-        item_type: item.item_type,
-        graph_filename: item.graph_filename || "",
-        node_id: item.node_id || "",
-        source_node_id: item.source_node_id || "",
-        relation_code: item.relation_code || "",
-        target_node_id: item.target_node_id || "",
-        rule_id: item.rule_id || "",
-      }));
-      try {
-        const result = await api("/api/review/bulk", { json: {
-          items: payload,
-          action,
-          reviewer: (($("#reviewCenterReviewer")?.value || "").trim()) || "未署名",
-          note,
-        }});
-        const firstError = (result.results || []).find((entry) => !entry.ok);
-        const detail = firstError
-          ? `；首个失败：${typeof firstError.error === "string" ? firstError.error : JSON.stringify(firstError.error)}`
-          : "";
-        toast(`批量完成：成功 ${result.succeeded}，失败 ${result.failed}${detail}`, result.failed > 0);
-        renderReviewCenter();
-      } catch (error) { toast(error.message, true); }
-    });
+      if (event.target.closest("input[type=checkbox]")) return;
+      const row = event.target.closest(".review-row");
+      if (row) {
+        const item = state.reviewItems.find((entry) => reviewItemKey(entry) === row.dataset.reviewKey);
+        if (item) loadReviewDetail(item);
+      }
+    };
+    content.querySelectorAll("[data-review-bulk]").forEach((button) => button.onclick = () => bulkReview(button.dataset.reviewBulk));
+    bindReviewTabs();
+    const selected = items.find((item) => reviewItemKey(item) === state.reviewSelectedKey);
+    if (selected) loadReviewDetail(selected);
   }
 
   async function renderRules() {
@@ -3772,6 +4163,36 @@
     navigate(quick.dataset.quick);
   });
   content.addEventListener("click", handleCaseClick);
+  // 审核台键盘导航：J/K 上下选择，X 勾选，A 通过，R 拒绝（输入框和弹窗打开时忽略）
+  document.addEventListener("keydown", (event) => {
+    if (state.route !== "review") return;
+    if ($("#editorDialog")?.open) return;
+    const tag = (event.target.tagName || "").toLowerCase();
+    if (["input", "textarea", "select"].includes(tag) || event.target.isContentEditable) return;
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    const items = state.reviewItems || [];
+    if (!items.length) return;
+    const currentIndex = items.findIndex((item) => reviewItemKey(item) === state.reviewSelectedKey);
+    if (event.key === "j" || event.key === "J" || event.key === "ArrowDown") {
+      event.preventDefault();
+      loadReviewDetail(items[Math.min(items.length - 1, (currentIndex < 0 ? -1 : currentIndex) + 1)]);
+    } else if (event.key === "k" || event.key === "K" || event.key === "ArrowUp") {
+      event.preventDefault();
+      loadReviewDetail(items[Math.max(0, (currentIndex < 0 ? 1 : currentIndex) - 1)]);
+    } else if (currentIndex < 0) {
+      return;
+    } else if (event.key === "x" || event.key === "X") {
+      const input = content.querySelector(`[data-review-select="${CSS.escape(reviewItemKey(items[currentIndex]))}"]`);
+      if (input) {
+        input.checked = !input.checked;
+        input.dispatchEvent(new Event("change"));
+      }
+    } else if (event.key === "a" || event.key === "A") {
+      quickReview(items[currentIndex], "approve");
+    } else if (event.key === "r" || event.key === "R") {
+      openReasonDialog(items[currentIndex], "reject");
+    }
+  });
   (async function init() {
     try { await api("/api/health"); $("#apiStatus").textContent = "服务已连接"; $(".status-dot").classList.add("online"); }
     catch (_) { $("#apiStatus").textContent = "服务不可用"; $(".status-dot").classList.add("offline"); }
