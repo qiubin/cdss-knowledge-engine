@@ -3211,20 +3211,22 @@
   async function renderEngineChip(container) {
     if (!container) return;
     try {
-      const status = await api("/api/engine/status");
-      const config = await api("/api/engine/config");
-      const reachable = status.active === "native" ? true : Boolean(status.drools?.reachable);
-      const badge = reachable ? '<span class="badge active">在线</span>' : '<span class="badge danger">不可达</span>';
-      container.innerHTML = `
-        <label class="muted">引擎</label>
-        <select id="engineSwitch">
-          <option value="native" ${config.active === "native" ? "selected" : ""}>原生引擎</option>
-          <option value="drools" ${config.active === "drools" ? "selected" : ""}>Drools（需 sidecar）</option>
-        </select>${badge}`;
-      $("#engineSwitch").onchange = async (event) => {
+      const [status, config] = await Promise.all([
+        api("/api/engine/status"),
+        api("/api/engine/config"),
+      ]);
+      const active = config.active === "drools" ? "drools" : "native";
+      const next = active === "native" ? "drools" : "native";
+      const unreachable = active === "drools" && !Boolean(status.drools?.reachable);
+      const label = `引擎：${active === "drools" ? "Drools" : "原生"}${unreachable ? "（不可达，已自动回退原生）" : ""}`;
+      const title = unreachable
+        ? `sidecar 探测：${String(status.drools?.detail || "不可达")}；点击切回原生引擎`
+        : `点击切换为 ${next === "drools" ? "Drools（sidecar 不可达时自动回退原生）" : "原生引擎"}`;
+      container.innerHTML = `<button id="engineSwitch" class="btn ${active === "drools" ? "primary" : ""}" title="${esc(title)}">${esc(label)}</button>`;
+      $("#engineSwitch").onclick = async () => {
         try {
-          await api("/api/engine/config", { method: "PUT", json: { config: { active: event.target.value } } });
-          toast(`推理引擎已切换为 ${event.target.value === "drools" ? "Drools（sidecar 不可达时自动回退原生）" : "原生引擎"}`);
+          await api("/api/engine/config", { method: "PUT", json: { config: { active: next } } });
+          toast(`推理引擎已切换为 ${next === "drools" ? "Drools（sidecar 不可达时自动回退原生）" : "原生引擎"}`);
           renderEngineChip(container);
         } catch (error) {
           toast(error.message, true);
