@@ -62,6 +62,9 @@ def _leaf_key(condition: RuleCondition) -> Optional[str]:
     if ctype in {"past_history", "medication"} and condition.code:
         return f"{ctype}:{condition.code}"
     if ctype == "observation" and condition.code:
+        if str(condition.concept_code or "").upper() == "ABSENT":
+            # ABSENT 期望：数据缺失本身即匹配（matched = not observed），不可剪
+            return None
         return f"observation:{condition.observation_type or 'symptom'}:{condition.code}"
     if ctype == "attribute" and condition.attribute_code:
         return f"attribute:{condition.attribute_code}"
@@ -75,9 +78,10 @@ def satisfiable(condition: RuleCondition, keys: Set[str]) -> bool:
         op = (condition.operator or "AND").upper()
         children = list(condition.children or [])
         if condition.type == "weighted_group":
-            hard = list(condition.required_children or []) + [
-                child for child in children if child.required
-            ]
+            # 评估器只以 required_children 作为硬条件：children 中带
+            # required=True 的子项既不进 required_specs 也不进 main_children，
+            # 完全不参与求值，故不可据此剪枝。
+            hard = list(condition.required_children or [])
             return all(satisfiable(child, keys) for child in hard)
         if op == "AND":
             return all(satisfiable(child, keys) for child in children)

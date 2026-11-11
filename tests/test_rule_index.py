@@ -153,3 +153,38 @@ def test_symptom_channel_satisfies_symptom_typed_observation_leaf():
     resolved_keys = patient_keys(resolved_patient)
     assert "observation:symptom:SYM_CHEST_TIGHTNESS" not in resolved_keys
     assert not satisfiable(rule.conditions, resolved_keys)
+
+
+def test_weighted_group_required_flag_child_is_not_hard():
+    # children 中 required=True 但不在 required_children 的子项：评估器根本不
+    # 评估它（既非 required_specs 也非 main_children），因此不是硬条件，
+    # 不可据此剪枝。
+    keys = patient_keys(_patient())
+    rule = _rule({
+        "type": "weighted_group", "operator": "AND", "threshold": 0.4,
+        "children": [
+            {
+                "type": "lab_concept", "lab_code": "BNP",
+                "concept_code": "ELEVATED", "required": True,
+            },
+        ],
+        "required_children": [
+            {"type": "symptom", "symptom_code": "SYM_PAIN"},
+        ],
+    })
+    assert satisfiable(rule.conditions, keys)
+
+
+def test_observation_absent_expectation_never_pruned():
+    # concept_code="ABSENT" 的观察叶子在数据缺失时反而成立
+    # （ObservationPresentEvaluator: matched = not observed），不可剪。
+    keys = patient_keys(_patient())
+    rule = _rule({
+        "type": "group", "operator": "AND", "children": [
+            {
+                "type": "observation", "observation_type": "tongue",
+                "code": "T_NEVER_SEEN", "concept_code": "ABSENT",
+            },
+        ],
+    })
+    assert satisfiable(rule.conditions, keys)
