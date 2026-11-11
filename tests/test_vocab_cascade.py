@@ -86,6 +86,47 @@ def test_apply_code_remap(tmp_path):
     assert leaf["lab_code"] == "CTNI"
 
 
+def _fact_med_rule():
+    return {
+        "rule_id": "CAS-2",
+        "disease_code": "I21.0",
+        "anchor_type": "disease",
+        "status": "draft",
+        "conditions": {
+            "type": "group", "operator": "AND", "children": [
+                {"type": "fact", "fact_type": "syndrome", "code": "TCM_SYN_QI_YIN"},
+                {"type": "medication", "code": "ASP"},
+            ],
+        },
+        "conclusion": {"diagnosis": "I21.0", "message": ""},
+    }
+
+
+def test_collect_rule_codes_fact_and_medication():
+    pairs = collect_rule_codes(_fact_med_rule())
+    assert ("syndrome", "TCM_SYN_QI_YIN") in pairs
+    assert ("medication", "ASP") in pairs
+
+
+def test_apply_code_remap_fact_node(tmp_path):
+    path = _rules_file(tmp_path, [_fact_med_rule()])
+    labels = _labels(tmp_path)
+    result = apply_code_remap("syndrome", "TCM_SYN_QI_YIN", "TCM_SYN_QI_STAG", path, labels=labels)
+    assert result["updated"] == ["CAS-2"]
+    saved = json.loads(path.read_text(encoding="utf-8"))[0]
+    assert saved["conditions"]["children"][0]["code"] == "TCM_SYN_QI_STAG"
+    assert saved["disease_code"] == "I21.0"
+
+
+def test_apply_code_remap_medication_node(tmp_path):
+    path = _rules_file(tmp_path, [_fact_med_rule()])
+    labels = _labels(tmp_path)
+    result = apply_code_remap("medication", "ASP", "ASPIRIN", path, labels=labels)
+    assert result["updated"] == ["CAS-2"]
+    saved = json.loads(path.read_text(encoding="utf-8"))[0]
+    assert saved["conditions"]["children"][1]["code"] == "ASPIRIN"
+
+
 def test_usage_in_graphs(tmp_path):
     kg_dir = tmp_path / "kg"
     kg_dir.mkdir()

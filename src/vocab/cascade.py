@@ -20,22 +20,21 @@ ROOT = Path(__file__).resolve().parents[2]
 RULES_PATH = ROOT / "data" / "rules" / "managed_rules.json"
 KG_DIR = ROOT / "data" / "kg"
 
-# rule condition field -> entity dictionary types that field may reference
+# rule condition field -> entity dictionary types that field may reference.
+# `fact` / `medication` / `observation` 节点通过 `code` 字段引用实体字典，
+# 在遍历逻辑里单独处理，不在此表。
 CONDITION_FIELDS: Dict[str, Tuple[str, ...]] = {
     "lab_code": ("lab",),
     "symptom_code": ("symptom",),
     "exam_code": ("exam",),
     "finding_code": ("exam_finding",),
-    "medication": (),  # conclusion 字段，不在此处理
 }
 OBSERVATION_TYPE_TO_ENTITY = {
     "symptom": "symptom", "tongue": "tongue", "pulse": "pulse",
     "sign": "sign", "constitution": "constitution",
 }
-# conclusion 内引用实体编码的字段
-CONCLUSION_LIST_FIELDS = {
-    "treatment_items": "entity_type",  # 每项 {code, name, entity_type}
-}
+# fact 节点 fact_type -> 实体字典类型；未列出的 fact_type 直接充当实体类型
+FACT_TYPE_TO_ENTITY = {"treatment": "treatment_method"}
 
 
 def _anchor_entity_type(rule: Dict[str, Any]) -> str:
@@ -60,6 +59,11 @@ def collect_rule_codes(rule: Dict[str, Any]) -> List[Tuple[str, str]]:
                 OBSERVATION_TYPE_TO_ENTITY.get(str(node.get("observation_type") or "symptom"), ""),
                 str(node.get("code") or ""),
             )
+        elif str(node.get("type")) == "fact":
+            fact_type = str(node.get("fact_type") or "")
+            add(FACT_TYPE_TO_ENTITY.get(fact_type, fact_type), str(node.get("code") or ""))
+        elif str(node.get("type")) == "medication":
+            add("medication", str(node.get("code") or ""))
         for field, types in CONDITION_FIELDS.items():
             value = str(node.get(field) or "")
             if value and types:
@@ -183,6 +187,18 @@ def apply_code_remap(
             ):
                 node["code"] = new_code
                 changed = True
+            elif str(node.get("type")) == "fact":
+                fact_type = str(node.get("fact_type") or "")
+                if (
+                    FACT_TYPE_TO_ENTITY.get(fact_type, fact_type) == entity_type
+                    and str(node.get("code") or "") == str(old_code)
+                ):
+                    node["code"] = new_code
+                    changed = True
+            elif str(node.get("type")) == "medication":
+                if entity_type == "medication" and str(node.get("code") or "") == str(old_code):
+                    node["code"] = new_code
+                    changed = True
             for field, types in CONDITION_FIELDS.items():
                 if entity_type in types and str(node.get(field) or "") == str(old_code):
                     node[field] = new_code
