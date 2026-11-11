@@ -123,3 +123,33 @@ def test_index_filter():
     kept = index.satisfiable_rule(hit, keys)
     assert kept is True
     assert index.satisfiable_rule(miss, keys) is False
+
+
+def test_symptom_channel_satisfies_symptom_typed_observation_leaf():
+    # 症状仅经 patient.symptoms 送达：observation 叶子（type=symptom）也须可满足，
+    # 因为评估器会回退到 patient.get_symptom 查找该编码。
+    patient = PatientSnapshot(
+        patient_id="P-IDX-SYM", hospital_id="H1",
+        symptoms=[SymptomObservation(symptom_code="SYM_CHEST_TIGHTNESS", present=True)],
+    )
+    keys = patient_keys(patient)
+    assert "symptom:SYM_CHEST_TIGHTNESS" in keys
+    assert "observation:symptom:SYM_CHEST_TIGHTNESS" in keys
+    rule = _rule({
+        "type": "weighted_group", "operator": "AND", "threshold": 0.6,
+        "children": [
+            {"type": "observation", "observation_type": "tongue", "code": "T_PALE"},
+        ],
+        "required_children": [
+            {"type": "observation", "observation_type": "symptom", "code": "SYM_CHEST_TIGHTNESS"},
+        ],
+    })
+    assert satisfiable(rule.conditions, keys)
+    # present=False 的症状不算任何键：必需项不可满足 → 可剪（保持保守方向的另一半）
+    resolved_patient = PatientSnapshot(
+        patient_id="P-IDX-SYM2", hospital_id="H1",
+        symptoms=[SymptomObservation(symptom_code="SYM_CHEST_TIGHTNESS", present=False)],
+    )
+    resolved_keys = patient_keys(resolved_patient)
+    assert "observation:symptom:SYM_CHEST_TIGHTNESS" not in resolved_keys
+    assert not satisfiable(rule.conditions, resolved_keys)

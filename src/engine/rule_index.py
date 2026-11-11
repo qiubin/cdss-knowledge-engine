@@ -24,6 +24,11 @@ def patient_keys(patient: PatientSnapshot) -> Set[str]:
     for symptom in patient.symptoms:
         if symptom.present and symptom.symptom_code:
             keys.add(f"symptom:{symptom.symptom_code}")
+            # The observation evaluators fall back to patient.get_symptom for
+            # observation leaves whose type is "symptom", so a present symptom
+            # must satisfy that key shape too (adding keys is strictly
+            # conservative — it can only keep more rules).
+            keys.add(f"observation:symptom:{symptom.symptom_code}")
     for finding in patient.exam_findings:
         if finding.present and finding.exam_code and finding.finding_code:
             keys.add(f"finding:{finding.exam_code}:{finding.finding_code}")
