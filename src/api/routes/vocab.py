@@ -9,9 +9,19 @@ from typing import Any, Dict, List
 from fastapi import APIRouter, HTTPException
 from pydantic import ValidationError
 
+from src.api.routes.rules import _load_all_rules
 from src.domains import normalize_domain
 from src.extraction.models import TemplateEntityEntry
 from src.kg.schema import ConceptDefinition
+from src.terminology.labels import default_labels
+from src.vocab import cascade as vocab_cascade
+from src.vocab import entity_vocabulary
+from src.vocab.cascade import (
+    affected_rule_ids,
+    apply_code_remap,
+    apply_name_cascade,
+    usage_in_graphs,
+)
 from src.vocab.entity_classification import classify_entries
 from src.vocab.entity_vocabulary import EntityVocabularyRepository, graph_usage
 from src.vocab.reference_vocabulary import ReferenceVocabularyRepository
@@ -217,7 +227,13 @@ async def create_entity_entry(entity_type: str, entry: Dict):
 async def update_entity_entry(entity_type: str, code: str, entry: Dict):
     parsed = _validate_entry(entity_type, _parse_entry(entry, code))
     _check_concept_entry(entity_type, parsed.code)
-    saved = EntityVocabularyRepository(entity_type).save(parsed)
+    repository = EntityVocabularyRepository(entity_type)
+    previous = repository.find(code)
+    saved = repository.save(parsed)
+    default_labels.cache_clear()
+    if previous is not None and previous.name != saved.name:
+        # 字典已保存新名，标签级联基于现名重生成
+        apply_name_cascade(entity_type, code, saved.name, rules_path=vocab_cascade.RULES_PATH)
     return classify_entries(entity_type, [saved.model_dump()])[0]
 
 
@@ -226,15 +242,48 @@ async def delete_entity_entry(entity_type: str, code: str):
     repository = EntityVocabularyRepository(entity_type)
     if repository.find(code) is None:
         raise HTTPException(404, f"共享词表 {entity_type} 中不存在编码 {code}")
-    referencing = graph_usage(entity_type, code)
+    referencing = graph_usage(entity_type, code, kg_dir=entity_vocabulary.KG_DIR)
     if referencing:
         raise HTTPException(409, f"共享实体 {code} 已被图谱 {'、'.join(referencing)} 引用，不能删除")
+    referenced_rules = affected_rule_ids(entity_type, code, _load_all_rules(vocab_cascade.RULES_PATH))
+    if referenced_rules:
+        raise HTTPException(
+            409,
+            f"共享实体 {code} 仍被 {len(referenced_rules)} 条规则引用（如 {'、'.join(referenced_rules[:5])}），不能删除",
+        )
     if TEMPLATES_PATH.exists():
         for template in json.loads(TEMPLATES_PATH.read_text(encoding="utf-8")):
             for relation in template.get("relations", []):
                 if code in (relation.get("source_code"), relation.get("target_code")):
                     raise HTTPException(409, f"共享实体 {code} 仍被模板 {template.get('name')} 的关系限定引用")
     return repository.delete(code)
+
+
+@router.post("/entities/{entity_type}/{code}/remap")
+async def remap_entity_code(entity_type: str, code: str, payload: Dict):
+    new_code = str((payload or {}).get("new_code") or "").strip()
+    if not new_code or new_code == code:
+        raise HTTPException(422, "new_code 必须是与原码不同的非空编码")
+    repository = EntityVocabularyRepository(entity_type)
+    if repository.find(code) is None:
+        raise HTTPException(404, f"共享词表 {entity_type} 中不存在编码 {code}")
+    if repository.find(new_code) is not None:
+        raise HTTPException(409, f"目标编码 {new_code} 已存在")
+    graph_hits = usage_in_graphs(entity_type, code, kg_dir=vocab_cascade.KG_DIR)
+    if graph_hits:
+        raise HTTPException(
+            409,
+            f"编码 {code} 仍被图谱 {'、'.join(graph_hits)} 引用；请先在知识审核工作流迁移图谱节点，再改码",
+        )
+    repository.remap_code(code, new_code)
+    default_labels.cache_clear()
+    cascade_result = apply_code_remap(entity_type, code, new_code, rules_path=vocab_cascade.RULES_PATH)
+    return {
+        "entity_type": entity_type,
+        "old_code": code,
+        "new_code": new_code,
+        "rules_updated": cascade_result["updated"],
+    }
 
 
 def _parse_concept(raw: Dict, code: str = "", is_new: bool = False) -> ConceptDefinition:

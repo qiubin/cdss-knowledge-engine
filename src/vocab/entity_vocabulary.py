@@ -19,6 +19,7 @@ from src.extraction.models import ExtractionTemplate, TemplateEntityEntry, Templ
 
 ROOT = Path(__file__).parent.parent.parent
 ENTITY_VOCAB_DIR = ROOT / "data" / "vocab" / "entities"
+KG_DIR = ROOT / "data" / "kg"
 
 
 class EntityVocabularyRepository:
@@ -71,6 +72,20 @@ class EntityVocabularyRepository:
             raise HTTPException(404, f"共享词表 {self.entity_type} 中不存在编码 {code}")
         self._write(remaining)
         return {"deleted": code}
+
+    def remap_code(self, old_code: str, new_code: str) -> dict:
+        items = self._read()
+        if not any(item.get("code") == old_code for item in items):
+            raise HTTPException(404, f"共享词表 {self.entity_type} 中不存在编码 {old_code}")
+        if any(item.get("code") == new_code for item in items):
+            raise HTTPException(409, f"共享词表 {self.entity_type} 中编码 {new_code} 已存在")
+        for item in items:
+            if item.get("code") == old_code:
+                item["code"] = new_code
+                if item.get("standard_code") == old_code:
+                    item["standard_code"] = new_code
+        self._write(items)
+        return {"old_code": old_code, "new_code": new_code}
 
 
 def merged_entries(
@@ -152,7 +167,7 @@ def find_shared_entry(
     return EntityVocabularyRepository(entity_type, directory).find(code)
 
 
-def graph_usage(entity_type: str, code: str, kg_dir: Path = ROOT / "data" / "kg") -> List[str]:
+def graph_usage(entity_type: str, code: str, kg_dir: Path = KG_DIR) -> List[str]:
     """Graph node ids currently referencing this shared entry, if any."""
     node_id = f"ENTITY:{entity_type}:{code}"
     references: List[str] = []
