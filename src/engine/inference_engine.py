@@ -34,6 +34,20 @@ class InferenceEngine:
     - Add new knowledge via KnowledgeGraphClient
     """
 
+    name = "native"
+    last_fallback_reason = ""
+
+    @property
+    def effective_name(self) -> str:
+        return self.name
+
+    def describe(self) -> dict:
+        return {
+            "requested": self.name,
+            "used": self.effective_name,
+            "fallback_reason": self.last_fallback_reason,
+        }
+
     def __init__(
         self,
         rule_repo: RuleRepository,
