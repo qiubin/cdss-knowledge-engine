@@ -18,6 +18,7 @@ from src.extraction.repository import ExtractionTemplateRepository
 from src.review.audit import AUDIT_PATH as REVIEW_AUDIT_PATH, append_audit
 from src.review.condition_completion import complete_rule_conditions
 from src.review.status import StatusTransitionError, next_rule_status
+from src.rules.history import get_snapshot, list_snapshots, record_snapshot
 from src.terminology.labels import default_labels
 from src.vocab.repository import ConceptVocabularyRepository, collect_concept_codes
 from .kg import _load_graph, normalize_graph_filename
@@ -705,6 +706,11 @@ class RuleApproveDependenciesRequest(BaseModel):
     note: str = ""
 
 
+class RuleRestoreRequest(BaseModel):
+    reviewer: str = "未署名"
+    note: str = ""
+
+
 @router.post("/{rule_id}/approve-dependencies")
 async def approve_rule_dependencies(rule_id: str, request: RuleApproveDependenciesRequest):
     """Approve all reviewable graph dependencies of one rule, then unblock it.
@@ -927,6 +933,7 @@ async def update_rule(rule_id: str, rule: Dict[str, Any]):
             _ensure_active_rule_dependencies(rule)
             rules[i] = rule
             _save_all_rules(rules)
+            record_snapshot(rule, "update")
             return rule
     raise HTTPException(404, "规则未找到")
 
@@ -942,6 +949,7 @@ async def create_rule(rule: Dict[str, Any]):
     _ensure_active_rule_dependencies(rule)
     rules.append(rule)
     _save_all_rules(rules)
+    record_snapshot(rule, "create", actor=str(rule.get("created_by") or ""))
     return rule
 
 
@@ -1003,6 +1011,7 @@ async def import_rules(request: RuleImportRequest):
                 continue
             if item["rule_id"] in existing:
                 rules[existing[item["rule_id"]]] = item
+                record_snapshot(item, "import")
                 replaced += 1
             else:
                 rules.append(item)
@@ -1018,8 +1027,11 @@ async def import_rules(request: RuleImportRequest):
 @router.delete("/{rule_id}")
 async def delete_rule(rule_id: str):
     rules = _load_all_rules()
+    removed = next((r for r in rules if r.get("rule_id") == rule_id), None)
     rules = [r for r in rules if r.get("rule_id") != rule_id]
     _save_all_rules(rules)
+    if removed is not None:
+        record_snapshot(removed, "delete")
     return {"deleted": rule_id}
 
 
@@ -1050,6 +1062,42 @@ async def graph_dependencies(rule_id: str):
     for rule in _load_all_rules():
         if rule.get("rule_id") == rule_id:
             return _dependency_result(rule)
+    raise HTTPException(404, "规则未找到")
+
+
+@router.get("/{rule_id}/history")
+async def rule_history(rule_id: str):
+    return list_snapshots(rule_id)
+
+
+@router.post("/{rule_id}/history/{seq}/restore")
+async def restore_rule_snapshot(rule_id: str, seq: int, request: RuleRestoreRequest):
+    entry = get_snapshot(rule_id, seq)
+    if entry is None:
+        raise HTTPException(404, "历史版本不存在")
+    restored = entry.get("rule") or {}
+    if str(restored.get("status") or "draft") == "active":
+        _ensure_active_rule_dependencies(restored)
+    rules = _load_all_rules()
+    for i, r in enumerate(rules):
+        if r.get("rule_id") == rule_id:
+            restored["updated_at"] = datetime.now(timezone.utc).isoformat()
+            restored["restored_from"] = seq
+            rules[i] = restored
+            _save_all_rules(rules)
+            record_snapshot(restored, "rollback", actor=request.reviewer)
+            append_audit({
+                "action": "rollback",
+                "entity_type": "rule",
+                "entity_id": rule_id,
+                "graph_filename": restored.get("graph_filename", ""),
+                "before_status": r.get("status"),
+                "after_status": restored.get("status"),
+                "reviewer": request.reviewer or "未署名",
+                "note": request.note or f"恢复到 v{seq}",
+                "affected_rules": [],
+            }, REVIEW_AUDIT_PATH)
+            return restored
     raise HTTPException(404, "规则未找到")
 
 
