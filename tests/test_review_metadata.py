@@ -4,7 +4,10 @@ import unittest
 from pathlib import Path
 
 from src.review.metadata import (
+    HISTORY_DIR,
     apply_import_review_metadata,
+    capture_previous_contents,
+    read_entity_history,
     snapshot_hashes,
 )
 from tools.migrate_review_status import migrate
@@ -58,6 +61,62 @@ class MetadataTest(unittest.TestCase):
         graph["nodes"][1]["name"] = "新名"
         apply_import_review_metadata(graph, previous, "DOC-1")
         self.assertEqual(graph["relations"][0]["review_status"], "stale")
+
+
+class EntityHistoryTest(unittest.TestCase):
+    """内容变化必须归档旧版本，供审核台 stale diff 展示。"""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        original_dir = HISTORY_DIR
+        import src.review.metadata as metadata
+        metadata.HISTORY_DIR = Path(self.tmp.name)
+        self.addCleanup(setattr, metadata, "HISTORY_DIR", original_dir)
+
+    def test_changed_node_writes_snapshot(self):
+        node = {"id": "N1", "node_type": "symptom", "code": "S1", "name": "旧名", "review_status": "active"}
+        graph = {"nodes": [node], "relations": []}
+        previous = snapshot_hashes(graph)
+        contents = capture_previous_contents(graph)
+        graph["nodes"][0]["name"] = "新名"
+        apply_import_review_metadata(
+            graph, previous, "DOC-1", previous_contents=contents, graph_filename="HIST.json"
+        )
+        rows = read_entity_history("HIST.json", "node", "N1")
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["content"]["name"], "旧名")
+        self.assertEqual(rows[0]["entity_type"], "node")
+        self.assertEqual(rows[0]["seq"], 1)
+        self.assertEqual(graph["nodes"][0]["review_status"], "stale")
+
+    def test_unchanged_node_writes_no_snapshot(self):
+        node = {
+            "id": "N1", "node_type": "symptom", "code": "S1", "name": "同名",
+            "review_status": "active", "source_refs": ["DOC-1_p1_l1-5"],
+        }
+        graph = {"nodes": [node], "relations": []}
+        previous = snapshot_hashes(graph)
+        contents = capture_previous_contents(graph)
+        graph["nodes"][0]["source_refs"].append("DOC-2_p2_l1-3")
+        apply_import_review_metadata(
+            graph, previous, "DOC-2", previous_contents=contents, graph_filename="UNCHANGED.json"
+        )
+        self.assertEqual(read_entity_history("UNCHANGED.json", "node", "N1"), [])
+
+    def test_changed_relation_writes_snapshot(self):
+        relation = {"source_node_id": "A", "relation_code": "REL", "target_node_id": "B", "review_status": "active"}
+        graph = {"nodes": [], "relations": [relation]}
+        previous = snapshot_hashes(graph)
+        contents = capture_previous_contents(graph)
+        graph["relations"][0]["attributes"] = {"strength": "强"}
+        apply_import_review_metadata(
+            graph, previous, "DOC-1", previous_contents=contents, graph_filename="RELHIST.json"
+        )
+        rows = read_entity_history("RELHIST.json", "relation", "A|REL|B")
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["content"]["source_node_id"], "A")
+        self.assertNotIn("strength", rows[0]["content"].get("attributes") or {})
 
 
 class MigrationTest(unittest.TestCase):

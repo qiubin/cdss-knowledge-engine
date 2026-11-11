@@ -5,9 +5,12 @@ import hashlib
 import json
 import re
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 _DOC_RE = re.compile(r"^(DOC-[A-Za-z0-9]+)")
+
+HISTORY_DIR = Path(__file__).resolve().parents[2] / "data" / "review" / "entity_history"
 
 
 def derive_doc_ids(source_refs) -> List[str]:
@@ -51,6 +54,108 @@ def relation_content_hash(relation: Dict[str, Any]) -> str:
         "target_node_id": relation.get("target_node_id"),
         "attributes": relation.get("attributes") or {},
     })
+
+
+def node_snapshot_content(node: Dict[str, Any]) -> Dict[str, Any]:
+    """Diff-relevant content fields of a node (mirrors ``node_content_hash``)."""
+    return {
+        "node_type": node.get("node_type"),
+        "code": node.get("code"),
+        "name": node.get("name"),
+        "attributes": node.get("attributes") or {},
+    }
+
+
+def relation_snapshot_content(relation: Dict[str, Any]) -> Dict[str, Any]:
+    """Diff-relevant content fields of a relation (mirrors ``relation_content_hash``)."""
+    return {
+        "source_node_id": relation.get("source_node_id"),
+        "relation_code": relation.get("relation_code"),
+        "relation_name": relation.get("relation_name"),
+        "target_node_id": relation.get("target_node_id"),
+        "attributes": relation.get("attributes") or {},
+    }
+
+
+def capture_previous_contents(graph: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    """Capture per-entity content snapshots of a graph BEFORE it is mutated by an import.
+
+    Callers take this alongside ``snapshot_hashes`` so that
+    ``apply_import_review_metadata`` can archive the old version when content changes.
+    """
+    nodes = {
+        str(node.get("id")): node_snapshot_content(node)
+        for node in _node_items(graph)
+    }
+    relations = {
+        "|".join(str(part) for part in key): relation_snapshot_content(item)
+        for key, item in _relation_items(graph)
+    }
+    return {"nodes": nodes, "relations": relations}
+
+
+def _history_slug(value: str) -> str:
+    return re.sub(r"[^A-Za-z0-9_.\-]", "_", str(value))
+
+
+def history_path(graph_filename: str, entity_type: str, entity_id: str) -> Path:
+    return (
+        HISTORY_DIR
+        / _history_slug(graph_filename)
+        / f"{_history_slug(entity_type)}-{_history_slug(entity_id)}.jsonl"
+    )
+
+
+def append_entity_snapshot(
+    graph_filename: str,
+    entity_type: str,
+    entity_id: str,
+    content: Dict[str, Any],
+    reason: str = "import_change",
+    now: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Archive one historical content version for an entity (append-only JSONL)."""
+    target = history_path(graph_filename, entity_type, entity_id)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    seq = 0
+    if target.exists():
+        with target.open(encoding="utf-8") as handle:
+            for line in handle:
+                if line.strip():
+                    seq += 1
+    record = {
+        "seq": seq + 1,
+        "timestamp": now or _now(),
+        "reason": reason,
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "content": content,
+    }
+    with target.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
+    return record
+
+
+def read_entity_history(
+    graph_filename: str,
+    entity_type: str,
+    entity_id: str,
+    limit: int = 50,
+) -> List[Dict[str, Any]]:
+    target = history_path(graph_filename, entity_type, entity_id)
+    if not target.exists():
+        return []
+    rows: List[Dict[str, Any]] = []
+    with target.open(encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rows.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    return rows[-max(1, int(limit)):][::-1]
 
 
 def _node_items(graph: Dict[str, Any]):
@@ -130,6 +235,8 @@ def apply_import_review_metadata(
     doc_id: str,
     now: Optional[str] = None,
     current_chunk_ids: Optional[Set[str]] = None,
+    previous_contents: Optional[Dict[str, Dict[str, Any]]] = None,
+    graph_filename: str = "",
 ) -> None:
     now = now or _now()
     for node in _node_items(graph):
@@ -143,6 +250,12 @@ def apply_import_review_metadata(
             node["version"] = int(node.get("version") or 1)
         elif old != new:
             node["version"] = int(node.get("version") or 1) + 1
+            if graph_filename and previous_contents:
+                archived = previous_contents.get("nodes", {}).get(node_id)
+                if archived is not None:
+                    append_entity_snapshot(
+                        graph_filename, "node", node_id, archived, now=now
+                    )
         node["content_hash"] = new
         if old is None or old != new:
             node["last_imported_at"] = now
@@ -168,6 +281,12 @@ def apply_import_review_metadata(
             relation["version"] = int(relation.get("version") or 1)
         elif old != new:
             relation["version"] = int(relation.get("version") or 1) + 1
+            if graph_filename and previous_contents:
+                archived = previous_contents.get("relations", {}).get(key_text)
+                if archived is not None:
+                    append_entity_snapshot(
+                        graph_filename, "relation", key_text, archived, now=now
+                    )
         relation["content_hash"] = new
         if old is None or old != new:
             relation["last_imported_at"] = now

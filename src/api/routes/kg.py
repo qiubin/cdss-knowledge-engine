@@ -731,8 +731,9 @@ async def import_graph(request: GraphImportRequest):
         ).graph.legacy_graph_filename
     graph_filename = normalize_graph_filename(requested_graph)
     graph = _load_graph(graph_filename)
-    from src.review.metadata import apply_import_review_metadata, snapshot_hashes
+    from src.review.metadata import apply_import_review_metadata, capture_previous_contents, snapshot_hashes
     previous_hashes = snapshot_hashes(graph)
+    previous_contents = capture_previous_contents(graph)
     graph.setdefault("diseases", [])
     graph.setdefault("evidences", [])
     graph.setdefault("disease_evidence", [])
@@ -959,6 +960,8 @@ async def import_graph(request: GraphImportRequest):
         apply_import_review_metadata(
             graph, previous_hashes, request.doc_id,
             current_chunk_ids={chunk.get("chunk_id") for chunk in request.chunks},
+            previous_contents=previous_contents,
+            graph_filename=graph_filename,
         )
         _save_graph(graph, graph_filename)
         try:
@@ -1174,6 +1177,8 @@ async def import_graph(request: GraphImportRequest):
     apply_import_review_metadata(
         graph, previous_hashes, request.doc_id,
         current_chunk_ids={chunk.get("chunk_id") for chunk in request.chunks},
+        previous_contents=previous_contents,
+        graph_filename=graph_filename,
     )
     _save_graph(graph, graph_filename)
     try:

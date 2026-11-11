@@ -178,7 +178,10 @@ class ReviewService:
                     "orphaned": bool(node.get("orphaned_from")),
                 })
         if item_type in (None, "", "relation"):
+            nodes_index = graph["nodes"]
             for key, relation in graph["relations"].items():
+                source_node = nodes_index.get(key[0]) or {}
+                target_node = nodes_index.get(key[2]) or {}
                 items.append({
                     "item_type": "relation",
                     "item_id": _relation_id(key),
@@ -188,6 +191,12 @@ class ReviewService:
                     "node_type": "relation",
                     "name": str(relation.get("relation_name") or key[1]),
                     "status": _status(relation),
+                    "source_name": str(source_node.get("name") or key[0]),
+                    "source_code": str(source_node.get("code") or source_node.get("concept_code") or ""),
+                    "source_status": _status(source_node) if source_node else "missing",
+                    "target_name": str(target_node.get("name") or key[2]),
+                    "target_code": str(target_node.get("code") or target_node.get("concept_code") or ""),
+                    "target_status": _status(target_node) if target_node else "missing",
                     "source_refs": list(relation.get("source_refs") or []),
                     "dependent_rule_count": int(relation_counts.get(_relation_id(key), 0)),
                     "updated_at": str(relation.get("reviewed_at") or ""),
@@ -234,6 +243,45 @@ class ReviewService:
             "relations": relations,
             "dependents": self.node_dependents(filename, node_id),
             "audit": self.audit_records(entity_id=node_id),
+        }
+
+    def relation_detail(self, graph_filename: str, relation_id: str) -> Dict[str, Any]:
+        filename = normalize_graph_filename(graph_filename)
+        graph = self._load_graph(filename)
+        parts = relation_id.split("|")
+        if len(parts) != 3:
+            raise ReviewError("关系标识不合法", 422)
+        key = (parts[0], parts[1], parts[2])
+        relation = graph["relations"].get(key)
+        if relation is None:
+            raise ReviewError("关系不存在", 404)
+
+        def endpoint_summary(node_id: str) -> Dict[str, Any]:
+            node = graph["nodes"].get(node_id)
+            if node is None:
+                return {"node_id": node_id, "name": node_id, "code": "", "status": "missing"}
+            return {
+                "node_id": node_id,
+                "name": str(node.get("name") or node_id),
+                "code": str(node.get("code") or node.get("concept_code") or ""),
+                "status": _status(node),
+            }
+
+        return {
+            "relation": relation,
+            "relation_id": _relation_id(key),
+            "source": endpoint_summary(key[0]),
+            "target": endpoint_summary(key[2]),
+            "rules": self._rule_items_for_reference(
+                filename,
+                lambda ref: (
+                    ref.get("kind") == "relation"
+                    and ref.get("source_node_id") == key[0]
+                    and ref.get("relation_code") == key[1]
+                    and ref.get("target_node_id") == key[2]
+                ),
+            ),
+            "audit": self.audit_records(entity_id=_relation_id(key)),
         }
 
     # ---- impact ----

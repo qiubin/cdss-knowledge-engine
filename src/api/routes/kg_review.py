@@ -20,6 +20,7 @@ class ReviewActionRequest(BaseModel):
     action: str
     reviewer: str = "未署名"
     note: str = ""
+    reason: str = ""
 
 
 class RelationReviewRequest(ReviewActionRequest):
@@ -48,6 +49,16 @@ class UnifiedBulkRequest(BaseModel):
     action: str
     reviewer: str = "未署名"
     note: str = ""
+    reason: str = ""
+
+
+def _compose_note(note: str, reason: str) -> str:
+    """Prefix a structured reject/retire reason code so audit notes stay analyzable."""
+    reason = (reason or "").strip()
+    note = note or ""
+    if reason and f"[{reason}]" not in note:
+        return f"[{reason}] {note}".strip()
+    return note
 
 
 @router.get("/review/summary")
@@ -84,7 +95,11 @@ async def node_detail(node_id: str, graph_filename: str):
 @router.post("/nodes/{node_id}/review")
 async def review_node(node_id: str, request: ReviewActionRequest, graph_filename: str):
     return service.review_node(
-        graph_filename, node_id, request.action, request.reviewer, request.note
+        graph_filename,
+        node_id,
+        request.action,
+        request.reviewer,
+        _compose_note(request.note, request.reason),
     )
 
 
@@ -97,7 +112,7 @@ async def review_relation(request: RelationReviewRequest, graph_filename: str):
         request.target_node_id,
         request.action,
         request.reviewer,
-        request.note,
+        _compose_note(request.note, request.reason),
     )
 
 
@@ -108,7 +123,7 @@ async def review_bulk(request: BulkReviewRequest):
         request.items,
         request.action,
         request.reviewer,
-        request.note,
+        _compose_note(request.note, request.reason),
     )
 
 
@@ -132,6 +147,26 @@ async def relation_impact(
     return service.impact_for_relation(
         graph_filename, source_node_id, relation_code, target_node_id
     )
+
+
+@router.get("/relations/{relation_id}")
+async def relation_detail(relation_id: str, graph_filename: str):
+    return service.relation_detail(graph_filename, relation_id)
+
+
+@router.get("/entities/{entity_id}/history")
+async def entity_history(
+    entity_id: str,
+    graph_filename: str,
+    entity_type: str = "node",
+    limit: int = 50,
+):
+    from src.review.metadata import read_entity_history
+
+    entity_type = "relation" if entity_type == "relation" else "node"
+    return {
+        "items": read_entity_history(graph_filename, entity_type, entity_id, limit=limit)
+    }
 
 
 @audit_router.get("/audit")
@@ -190,13 +225,20 @@ async def review_bulk_unified(request: UnifiedBulkRequest):
             for item in items
         ]
         result = service.bulk_review(
-            filename, payload, request.action, request.reviewer, request.note
+            filename,
+            payload,
+            request.action,
+            request.reviewer,
+            _compose_note(request.note, request.reason),
         )
         results.extend(result["results"])
     for item in rule_items:
         try:
             result = rules_route.apply_rule_review(
-                item.rule_id, request.action, request.reviewer, request.note
+                item.rule_id,
+                request.action,
+                request.reviewer,
+                _compose_note(request.note, request.reason),
             )
             results.append({"item": item.model_dump(), "ok": True, "result": result})
         except Exception as exc:
