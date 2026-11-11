@@ -1,4 +1,5 @@
 # tests/test_matcher_refactor.py
+import json
 import sys
 from pathlib import Path
 
@@ -8,6 +9,7 @@ sys.path.insert(0, str(project_root))
 from src.engine import InferenceEngine
 from src.engine.evaluators import EvaluatorFactory
 from src.engine.evaluators.base import BaseEvaluator, EvaluationResult
+from src.kg.client import JsonGraphClient
 from src.kg.schema import ConceptVocabulary
 from src.models.patient import Gender, LabResult, PatientSnapshot
 from src.models.rule import Rule, RuleCondition, RuleConclusion
@@ -105,3 +107,36 @@ def test_default_run_matches_previous_behavior(monkeypatch):
     conclusions = engine.run(_patient())
     assert [c.rule_id for c in conclusions] == ["M-R1"]
     assert conclusions[0].matched_conditions >= 1
+
+
+def test_conclusion_build_rebinds_rule_graph(monkeypatch, tmp_path):
+    """anchor_name must come from the rule's own graph, not the default one."""
+    monkeypatch.setitem(EvaluatorFactory._registry, "counting_matcher", _Counting)
+    default_graph = tmp_path / "default_graph.json"
+    rule_graph = tmp_path / "rule_graph.json"
+    default_graph.write_text(
+        json.dumps({"diseases": [{"code": "I21.0", "name_cn": "默认名"}]}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    rule_graph.write_text(
+        json.dumps({"diseases": [{"code": "I21.0", "name_cn": "规则图谱长名称"}]}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    repo = _Repo()
+    for rule in repo.rules:
+        # 让工厂在求值与结论构建时都拿到 rule_graph.json（不触碰默认图谱）
+        rule.graph_filename = "rule_graph.json"
+
+    engine = InferenceEngine(
+        repo,
+        JsonGraphClient(str(default_graph)),
+        JsonStandardRepository(str(project_root / "data" / "standards")),
+        _Vocab(),
+        graph_client_factory=lambda filename: JsonGraphClient(str(tmp_path / filename)),
+    )
+    conclusions = engine.run(_patient())
+    assert [c.rule_id for c in conclusions] == ["M-R1"]
+    # 规则图谱名（7字）在 len() 决胜中压过 rule.disease_name "A"；默认图谱名则不会
+    assert conclusions[0].anchor_name == "规则图谱长名称"
+    assert conclusions[0].disease_name == "规则图谱长名称"

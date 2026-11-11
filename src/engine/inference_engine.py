@@ -198,6 +198,14 @@ class InferenceEngine:
                     continue
                 traces, weighted = entry
                 self._last_weighted_detail = weighted or {}
+                # Rebind the rule's own graph for conclusion building so
+                # _resolve_anchor_name sees the rule's per-guideline names.
+                # A factory miss (e.g. missing graph file) propagates by design.
+                self._current_kg = (
+                    self.graph_client_factory(str(rule.graph_filename or profile.graph.legacy_graph_filename))
+                    if self.graph_client_factory
+                    else self.kg
+                )
                 try:
                     trigger_ids = [
                         c.rule_id for c in conclusions
@@ -214,6 +222,7 @@ class InferenceEngine:
                 except Exception as e:
                     logger.warning(f"Rule {rule.rule_id} conclusion build failed: {e}")
                 finally:
+                    self._current_kg = self.kg
                     self._last_weighted_detail = {}
 
             conclusions.extend(stage_conclusions)
