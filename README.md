@@ -117,6 +117,38 @@ EvaluatorFactory.register("my_custom", MyCustomEvaluator)
 1. 在 `data/standards/` 中新建 `{hospital_id}.json`，配置该医院的检验参考范围
 2. 在术语映射表中配置该医院的本地码到标准码映射
 
+## 双规则引擎（可切换）
+
+推理层支持两种可切换的实现，输出（结论+证据链+评分）完全一致：
+
+- **原生引擎**（默认）：Python 递归条件树求值 + 原子条件缓存 + 保守剪枝索引。
+- **Drools 引擎**（可选）：规则条件树编译为 DRL，由 sidecar（`drools-sidecar/`，
+  Java 17 + Maven）做 RETE 批量匹配，结论仍由 Python 原生层重建，保证溯源一致。
+  加权评分规则、跨阶段 fact、按规则图谱解析的 evidence 条件不参与编译，始终走原生。
+
+配置在 `data/engine.json`（不存在时默认原生）：
+
+    { "active": "native", "drools": { "base_url": "http://127.0.0.1:8090",
+      "timeout_seconds": 5, "fail_over_native": true } }
+
+规则管理页可切换引擎并查看状态；sidecar 不可达且 `fail_over_native: true`
+时自动回退原生，推理响应 `engine.fallback_reason` 记录原因。规则 JSON
+（`data/rules/managed_rules.json`）始终是唯一事实源，DRL 只是编译产物。
+
+## 规则版本历史与回滚
+
+规则每次创建/修改/导入/删除都会在 `data/rules/history/<rule_id>.jsonl` 留内容快照；
+规则管理页「历史」可查看时间线并一键恢复任意版本（恢复动作本身也入历史）。
+
+## 业务字典联动
+
+共享实体字典（`data/vocab/entities/`）的变更自动联动规则：
+
+- 改名：受影响规则的 `label`/`condition_text`/`disease_name` 自动按新名重建；
+- 改码：`POST /api/vocab/entities/{type}/{code}/remap`，规则内引用全部替换；
+  图谱仍引用该码时拒绝并提示先走知识审核工作流迁移图谱；
+- 删除：规则仍引用的编码禁止删除。
+
 ## 项目结构
 
 ```
