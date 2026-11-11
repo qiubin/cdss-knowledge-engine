@@ -3445,6 +3445,7 @@
     let treeMode = true;
     let editorDict = null;
     let drlTimer = null;
+    let canvasSelectedPath = [];
 
     const fieldWidgetHtml = (node, field, path, readonly) => {
       const key = ctree.pathKey(path);
@@ -3480,24 +3481,25 @@
       return `<button type="button" class="btn sm" data-ct-act="add-sibling" data-path="${key}">+同级</button>${moveBtns}<button type="button" class="btn sm danger" data-ct-act="remove" data-path="${key}">删除</button>`;
     };
 
-    const leafHtml = (node, path, readonly) => {
+    const kindSelectHtml = (node, path, readonly) => {
       const key = ctree.pathKey(path);
-      const kindSelect = `<select data-ct-kind data-path="${key}" ${readonly ? "disabled" : ""}>${ctree.SUPPORTED_LEAF_TYPES.map((kind) =>
+      return `<select data-ct-kind data-path="${key}" ${readonly ? "disabled" : ""}>${ctree.SUPPORTED_LEAF_TYPES.map((kind) =>
         `<option value="${kind}" ${node.type === kind ? "selected" : ""}>${CT_LEAF_LABELS[kind] || kind}</option>`).join("")}</select>`;
-      const fields = (ctree.LEAF_FIELDS[node.type] || []).map((field) =>
-        `<span class="ct-f"><em>${esc(field.label)}</em>${fieldWidgetHtml(node, field, path, readonly)}</span>`).join("");
-      const badge = readonly ? '<span class="badge noncompilable">仅原生引擎</span>' : "";
-      return `<div class="ct-node ct-leaf ${readonly ? "ct-readonly" : ""}"><div class="ct-head">${kindSelect}${badge}<span class="ct-tools">${leafToolsHtml(node, path, readonly)}</span></div><div class="ct-fields">${fields}</div></div>`;
     };
 
-    const groupHtml = (node, path, readonly) => {
+    const opSelectHtml = (node, path, readonly) => {
       const key = ctree.pathKey(path);
       const op = String(node.operator || "AND").toUpperCase();
-      const opSelect = `<select data-ct-op data-path="${key}" ${readonly ? "disabled" : ""}>${ctree.GROUP_OPERATORS.map((candidate) => {
+      return `<select data-ct-op data-path="${key}" ${readonly ? "disabled" : ""}>${ctree.GROUP_OPERATORS.map((candidate) => {
         const label = candidate === "AND" ? "且（AND）" : candidate === "OR" ? "或（OR）" : "非（NOT）";
         return `<option value="${candidate}" ${op === candidate ? "selected" : ""}>${label}</option>`;
       }).join("")}</select>`;
-      const tools = readonly ? "" : [
+    };
+
+    const groupToolsHtml = (node, path, readonly) => {
+      if (readonly) return "";
+      const key = ctree.pathKey(path);
+      return [
         `<button type="button" class="btn sm" data-ct-act="add-leaf" data-path="${key}">+条件</button>`,
         `<button type="button" class="btn sm" data-ct-act="add-group" data-path="${key}">+子组</button>`,
         ...(path.length ? [
@@ -3506,28 +3508,48 @@
           `<button type="button" class="btn sm danger" data-ct-act="remove" data-path="${key}">删除</button>`,
         ] : []),
       ].join("");
-      const children = (node.children || []).map((child, index) =>
-        `<div class="ct-child">${nodeHtml(child, [...path, index], readonly)}</div>`).join("");
-      return `<div class="ct-node ct-group ${readonly ? "ct-readonly" : ""}"><div class="ct-head">${opSelect}<span class="ct-tools">${tools}</span></div><div class="ct-children">${children || '<div class="ct-empty">空条件组 — 用「+条件 / +子组」开始编辑</div>'}</div></div>`;
     };
 
-    const weightedHtml = (node, path) => {
-      const children = (node.children || []).map((child, index) =>
-        `<div class="ct-child">${nodeHtml(child, [...path, index], true)}</div>`).join("");
-      return `<div class="ct-node ct-group ct-readonly"><div class="ct-head"><span class="ct-kind">加权评分组</span><span class="badge noncompilable">仅原生引擎</span></div><div class="ct-sub">scoring=${esc(node.scoring || "weighted_sum")} · threshold=${esc(node.threshold ?? "-")} · 必要子项 ${((node.required_children || []).length)} 个</div><div class="ct-children">${children}</div></div>`;
+    // 详情面板：画布负责结构，这里负责选中节点的字段编辑与增删
+    const detailHtml = (node, path) => {
+      if (!node) {
+        return '<div class="ct-detail-title">条件详情</div><div class="ct-detail-hint">点击画布卡片查看并编辑条件字段；直接拖拽卡片可排序或在分组间移动。</div>';
+      }
+      // 祖先链上出现只读节点则整条子树只读
+      let readonly = false;
+      let walker = editorTree;
+      for (let i = 0; i <= path.length; i += 1) {
+        if (i > 0) walker = (walker.children || [])[path[i - 1]];
+        if (!walker) break;
+        if (ctree.READONLY_TYPES.includes(walker.type)) { readonly = true; break; }
+      }
+      if (node.type === "group") {
+        return `<div class="ct-detail-title">条件组${path.length ? ` #${path.join(".")}` : "（根）"}</div>
+          <div class="ct-detail-row"><em>组合方式</em>${opSelectHtml(node, path, readonly)}</div>
+          <div class="ct-detail-tools">${groupToolsHtml(node, path, readonly)}</div>
+          <div class="ct-detail-hint">把画布上的卡片拖进该组即可加入子条件。</div>`;
+      }
+      if (readonly) {
+        const badge = '<span class="badge noncompilable">仅原生引擎</span>';
+        if (node.type === "weighted_group") {
+          const children = (node.children || []).map((child, i) =>
+            `<div class="ct-ro-row"><b>${i + 1}.</b> ${esc(ctree.describeNode(child) || child.type)}</div>`).join("");
+          return `<div class="ct-detail-title">加权评分组 ${badge}</div><div class="ct-detail-sub">scoring=${esc(node.scoring || "weighted_sum")} · threshold=${esc(node.threshold ?? "-")} · 必要子项 ${(node.required_children || []).length} 个</div>${children ? `<div class="ct-ro-list">${children}</div>` : ""}`;
+        }
+        return `<div class="ct-detail-title">${esc(CT_LEAF_LABELS[node.type] || node.type)} ${badge}</div><div class="ct-detail-sub">${esc(node.label || ctree.treeToText(node))}</div>`;
+      }
+      const fields = (ctree.LEAF_FIELDS[node.type] || []).map((field) =>
+        `<div class="ct-detail-row"><em>${esc(field.label)}</em>${fieldWidgetHtml(node, field, path, false)}</div>`).join("");
+      return `<div class="ct-detail-title">条件详情</div>
+        <div class="ct-detail-row"><em>条件类型</em>${kindSelectHtml(node, path, false)}</div>
+        ${fields}
+        <div class="ct-detail-tools">${leafToolsHtml(node, path, false)}</div>`;
     };
 
-    const readonlyLeafHtml = (node) => {
-      const label = node.label || ctree.treeToText(node);
-      return `<div class="ct-node ct-leaf ct-readonly"><div class="ct-head"><span class="ct-kind">${esc(CT_LEAF_LABELS[node.type] || node.type)}</span><span class="badge noncompilable">仅原生引擎</span></div><div class="ct-summary">${esc(label)}</div></div>`;
-    };
-
-    const nodeHtml = (node, path, readonly = false) => {
-      const isReadonly = readonly || ctree.READONLY_TYPES.includes(node.type);
-      if (node.type === "group") return groupHtml(node, path, isReadonly);
-      if (node.type === "weighted_group") return weightedHtml(node, path);
-      if (isReadonly) return readonlyLeafHtml(node);
-      return leafHtml(node, path, false);
+    const renderDetail = () => {
+      const panel = $("#ctDetail");
+      if (!panel) return;
+      panel.innerHTML = detailHtml(ctree.getNode(editorTree, canvasSelectedPath), canvasSelectedPath);
     };
 
     const renderBadge = (reason, result) => {
@@ -3583,9 +3605,30 @@
       }
       conditionsField.hidden = true;
       host.hidden = false;
-      host.innerHTML = editorDict
-        ? nodeHtml(editorTree, [])
-        : '<div class="ct-empty">字典加载中…</div>';
+      const canvasApi = window.CdssTreeCanvas;
+      if (!canvasApi || !editorDict) {
+        host.innerHTML = '<div class="ct-empty">字典加载中…</div>';
+        return;
+      }
+      host.innerHTML = '<div class="ctc-layout"><div class="ctc-mount"></div><div class="ct-detail" id="ctDetail"></div></div>';
+      canvasApi.render(host.querySelector(".ctc-mount"), editorTree, {
+        selectedPath: canvasSelectedPath,
+        labels: CT_LEAF_LABELS,
+        esc,
+        onSelect: (pathKey) => {
+          canvasSelectedPath = ctree.parsePathKey(pathKey);
+          renderDetail();
+        },
+        onMove: (srcKey, targetKey, index) => {
+          const next = ctree.moveSubtree(
+            editorTree, ctree.parsePathKey(srcKey), ctree.parsePathKey(targetKey), index,
+          );
+          if (!next) { toast("无法移动到该位置", true); return; }
+          canvasSelectedPath = [];
+          mutate(() => next);
+        },
+      });
+      renderDetail();
     };
 
     const mutate = (fn) => {
@@ -3629,6 +3672,7 @@
       } else if (action === "remove") {
         const node = ctree.getNode(editorTree, path);
         if (ctree.countLeaves(node) > 1 && !confirm("删除该条件（含其全部子条件）？")) return;
+        if (canvasSelectedPath.join("-") === path.join("-")) canvasSelectedPath = [];
         mutate(() => ctree.removeNode(editorTree, path));
       } else if (action === "move") {
         mutate(() => ctree.moveNode(editorTree, path, Number(button.dataset.delta)));
@@ -3650,6 +3694,7 @@
         return;
       }
       treeMode = true;
+      canvasSelectedPath = [];
       toggle.textContent = "JSON 模式";
       renderTree();
       scheduleDrlPreview();

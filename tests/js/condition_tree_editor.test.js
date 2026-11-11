@@ -161,6 +161,101 @@ test("moveNode swaps and ignores out-of-range", () => {
   assert.equal(ctree.moveNode(LAB_SYMPTOM, [], 1), LAB_SYMPTOM);
 });
 
+// ------------------------------------------------------------- moveSubtree
+
+const NESTED = {
+  type: "group", operator: "AND",
+  children: [
+    { type: "symptom", symptom_code: "SYM_PAIN" },
+    {
+      type: "group", operator: "OR",
+      children: [
+        { type: "lab_concept", lab_code: "CTN", concept_code: "ELEVATED" },
+        { type: "vital", vital_code: "SBP", operator: ">", threshold_value: 180 },
+      ],
+    },
+  ],
+};
+
+test("moveSubtree moves a leaf across groups", () => {
+  const ctree = loadModule();
+  // 根下 symptom 移入 OR 组末尾；根 AND 只剩 1 子被折叠 → OR 组升级为根
+  const moved = ctree.moveSubtree(NESTED, [0], [1], 2);
+  assert.equal(moved.operator, "OR");
+  assert.equal(ctree.getNode(moved, [2]).symptom_code, "SYM_PAIN");
+  assert.equal(ctree.isCompilable(moved), true);
+  // 原树不被修改
+  assert.equal(ctree.getNode(NESTED, [0]).type, "symptom");
+});
+
+test("moveSubtree reorders within the same group using original index", () => {
+  const ctree = loadModule();
+  // [pain, OR] 中 OR 组移到最前：index=0
+  const moved = ctree.moveSubtree(NESTED, [1], [], 0);
+  assert.equal(moved.children[0].operator, "OR");
+  assert.equal(moved.children[1].symptom_code, "SYM_PAIN");
+  // 同组 symptom：插到原 index=1（也就是自己位置）应是无操作
+  const noop = ctree.moveSubtree(NESTED, [0], [], 1);
+  assert.deepEqual(plain(noop), plain(NESTED));
+  // 往后挪一位：index=2
+  const back = ctree.moveSubtree(NESTED, [0], [], 2);
+  assert.equal(back.children[0].operator, "OR");
+  assert.equal(back.children[1].symptom_code, "SYM_PAIN");
+});
+
+test("moveSubtree rejects root, own descendant, readonly and non-group targets", () => {
+  const ctree = loadModule();
+  assert.equal(ctree.moveSubtree(NESTED, [], [1], 0), null); // 根不可移动
+  assert.equal(ctree.moveSubtree(NESTED, [1], [1, 0], 0), null); // 移入自身后代
+  assert.equal(ctree.moveSubtree(NESTED, [1], [1], 0), null); // 移到原位（前缀=自身）
+  assert.equal(ctree.moveSubtree(NESTED, [9], [], 0), null); // 路径不存在
+  const readonlyTree = {
+    type: "group", operator: "AND",
+    children: [
+      { type: "evidence", evidence_id: "E1" },
+      { type: "weighted_group", scoring: "weighted_sum", children: [{ type: "symptom", symptom_code: "S1" }] },
+    ],
+  };
+  // src 只读
+  assert.equal(ctree.moveSubtree(readonlyTree, [0], [1], 0), null);
+  // 目标父是 weighted_group（只读）
+  assert.equal(ctree.moveSubtree(readonlyTree, [0], [1], 0), null);
+  // 目标父不存在
+  assert.equal(ctree.moveSubtree(readonlyTree, [0], [5], 0), null);
+});
+
+test("moveSubtree folds single-child AND group left behind", () => {
+  const ctree = loadModule();
+  const tree = {
+    type: "group", operator: "AND",
+    children: [
+      { type: "group", operator: "AND", children: [
+        { type: "lab_concept", lab_code: "CTN", concept_code: "ELEVATED" },
+        { type: "symptom", symptom_code: "SYM_PAIN" },
+      ] },
+      { type: "symptom", symptom_code: "SYM_FEVER" },
+    ],
+  };
+  // 把 lab 从嵌套 AND 移到根末尾；嵌套 AND 只剩 1 子 → 折叠
+  const moved = ctree.moveSubtree(tree, [0, 0], [], 2);
+  assert.deepEqual(plain(moved), {
+    type: "group", operator: "AND",
+    children: [
+      { type: "symptom", symptom_code: "SYM_PAIN" },
+      { type: "symptom", symptom_code: "SYM_FEVER" },
+      { type: "lab_concept", lab_code: "CTN", concept_code: "ELEVATED" },
+    ],
+  });
+});
+
+test("moveSubtree clamps index into target range", () => {
+  const ctree = loadModule();
+  const moved = ctree.moveSubtree(NESTED, [0], [1], 99);
+  assert.equal(ctree.getNode(moved, [2]).symptom_code, "SYM_PAIN");
+  const movedNeg = ctree.moveSubtree(NESTED, [0], [1], -3);
+  assert.equal(ctree.getNode(movedNeg, [0]).symptom_code, "SYM_PAIN");
+});
+
 test("readonly nodes reject mutation via assertMutable", () => {
   const ctree = loadModule();
   const tree = {

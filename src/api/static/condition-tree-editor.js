@@ -263,6 +263,62 @@
     });
   }
 
+  // 跨组拖拽：把 srcPath 子树摘除，插入 targetParentPath（必须是可编辑 group）
+  // 的第 index 个子位置。index 按拖拽时的原始 children 坐标解释（插到原第
+  // index 个孩子之前）；同组内 insertAt > srcIndex 时先减 1 抵消摘除位移。
+  // 返回新树；路径不存在 / 根节点 / 移入自身后代 / 只读 / 目标非 group 时
+  // 返回 null（拖拽场景用 null 而不是 throw 更好消费）。
+  function moveSubtree(tree, srcPath, targetParentPath, index) {
+    const src = srcPath || [];
+    const target = targetParentPath || [];
+    const isPrefix = (prefix, path) =>
+      prefix.length <= path.length && prefix.every((v, i) => v === path[i]);
+    if (!src.length) return null; // 根不可移动
+    if (isPrefix(src, target)) return null; // 不能移入自身或自己的后代
+    try {
+      assertMutable(tree, src);
+      assertMutable(tree, target);
+    } catch (_) {
+      return null;
+    }
+    const srcParentPath = src.slice(0, -1);
+    const srcParent = getNode(tree, srcParentPath);
+    const targetParent = getNode(tree, target);
+    if (!srcParent || !targetParent || targetParent.type !== "group") return null;
+    const srcIndex = src[src.length - 1];
+    const srcChildren = srcParent.children || [];
+    if (srcIndex < 0 || srcIndex >= srcChildren.length) return null;
+    const moved = srcChildren[srcIndex];
+    // 同一个父节点 = 路径完全相等（target=[] 是根，不是 [0] 的父）
+    const sameParent = target.length === srcParentPath.length && isPrefix(srcParentPath, target);
+    let insertAt = Math.max(0, Math.min(Number(index) || 0, (targetParent.children || []).length));
+    if (sameParent && insertAt > srcIndex) insertAt -= 1;
+    // 摘除 src 后，target 若位于 src 右侧兄弟（或其子树）内，其路径要左移 1
+    const adjustAfterDetach = (path) => {
+      const depth = Math.min(path.length, srcParentPath.length);
+      for (let i = 0; i < depth; i += 1) {
+        if (path[i] !== srcParentPath[i]) return path;
+      }
+      const level = srcParentPath.length;
+      if (path.length > level && path[level] > srcIndex) {
+        const next = path.slice();
+        next[level] -= 1;
+        return next;
+      }
+      return path;
+    };
+    const detached = mapAtPath(tree, srcParentPath, (node) => ({
+      ...node,
+      children: (node.children || []).filter((_, i) => i !== srcIndex),
+    }));
+    const next = mapAtPath(detached, adjustAfterDetach(target), (node) => {
+      const children = [...(node.children || [])];
+      children.splice(insertAt, 0, moved);
+      return { ...node, children };
+    });
+    return foldSingleChildGroups(next);
+  }
+
   // ------------------------------------------------------------ new leaves
 
   function newLeaf(kind) {
@@ -365,9 +421,11 @@
     addSibling,
     removeNode,
     moveNode,
+    moveSubtree,
     newLeaf,
     jsonToTree,
     treeToJson,
     treeToText,
+    describeNode,
   };
 }());
