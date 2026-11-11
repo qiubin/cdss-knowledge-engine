@@ -17,6 +17,7 @@ from ..rules.repository import RuleRepository
 from ..standards.repository import StandardRepository
 from .evaluators.base import EvaluationResult
 from .evaluators.factory import EvaluatorFactory
+from .rule_index import patient_keys, satisfiable
 from .terminology import Terminology
 
 logger = logging.getLogger(__name__)
@@ -101,6 +102,7 @@ class InferenceEngine:
 
         self._atom_cache = {}
         conclusions: List[Conclusion] = []
+        patient_key_set = patient_keys(patient)
         facts: Dict[str, Dict[str, Conclusion]] = {}
 
         for stage in profile.stages:
@@ -127,6 +129,10 @@ class InferenceEngine:
                 and (department is None or rule.department is None or rule.department == department)
             ]
             stage_rules.sort(key=lambda rule: -rule.priority)
+            stage_rules = [
+                rule for rule in stage_rules
+                if satisfiable(rule.conditions, patient_key_set)
+            ]
 
             if stage.draft_allowed:
                 prior_codes = set().union(*(set(items) for items in facts.values())) if facts else set()
