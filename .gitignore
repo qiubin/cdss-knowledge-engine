@@ -42,3 +42,7 @@ _patch_service*.py
 
 # runtime import history
 data/imports/
+
+# Drools sidecar build artifacts
+drools-sidecar/target/
+drools-sidecar/dependency-reduced-pom.xml
