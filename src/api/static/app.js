@@ -2866,9 +2866,11 @@
       const approveDepsButton = dependency.blocked
         ? `<button class="btn sm primary" data-rule-approve-deps="${esc(r.rule_id)}">补审依赖</button>`
         : "";
-      return `<tr><td><strong>${esc(r.name)}</strong><div class="mono muted">${esc(r.rule_id)} v${r.version}</div><div>${badge(r.rule_type || "diagnosis")} ${badge(normalizeDomainClient(r.domain))}</div></td><td>${esc(disease ? disease.name_cn : r.disease_name || r.disease_code)}</td><td><div class="quote">${esc(conditionText(r.conditions))}</div></td><td>${ruleConceptChips(r)}</td><td>${ruleSyncBadge(r.rule_id)}</td><td>${dependencyCell}</td><td class="mono muted">${esc(r.graph_filename || "stemi_graph.json")}</td><td>${r.priority}</td><td>${reviewBadge(r.status)}</td><td><div class="actions">${completeButton}${approveDepsButton}<button class="btn sm" data-rule-edit="${esc(r.rule_id)}">编辑</button><button class="btn sm" data-rule-status="${esc(r.rule_id)}" data-rule-action="${ruleAction.action}">${ruleAction.label}</button><button class="btn sm danger" data-rule-delete="${esc(r.rule_id)}">删除</button></div></td></tr>`;
-    })), `<span class="nowrap">${domainFilter}${diseaseFilter}${syncStatus}<button id="completeConditions" class="btn">批量补全条件</button><button id="activateConsistent" class="btn">批量启用一致规则</button><button id="newRule" class="btn primary">新建规则</button></span>`, "条件引用概念词汇，执行时按患者所属医院解析标准；启用前检查疾病、实体、概念链路和图谱审核状态");
+      return `<tr><td><strong>${esc(r.name)}</strong><div class="mono muted">${esc(r.rule_id)} v${r.version}</div><div>${badge(r.rule_type || "diagnosis")} ${badge(normalizeDomainClient(r.domain))}</div></td><td>${esc(disease ? disease.name_cn : r.disease_name || r.disease_code)}</td><td><div class="quote">${esc(conditionText(r.conditions))}</div></td><td>${ruleConceptChips(r)}</td><td>${ruleSyncBadge(r.rule_id)}</td><td>${dependencyCell}</td><td class="mono muted">${esc(r.graph_filename || "stemi_graph.json")}</td><td>${r.priority}</td><td>${reviewBadge(r.status)}</td><td><div class="actions">${completeButton}${approveDepsButton}<button class="btn sm" data-rule-edit="${esc(r.rule_id)}">编辑</button><button class="btn sm" data-rule-history="${esc(r.rule_id)}">历史</button><button class="btn sm" data-rule-status="${esc(r.rule_id)}" data-rule-action="${ruleAction.action}">${ruleAction.label}</button><button class="btn sm danger" data-rule-delete="${esc(r.rule_id)}">删除</button></div></td></tr>`;
+    })), `<span class="nowrap">${domainFilter}${diseaseFilter}${syncStatus}<span id="engineChip" class="nowrap"></span><button id="ruleWizard" class="btn primary">规则向导</button><button id="completeConditions" class="btn">批量补全条件</button><button id="activateConsistent" class="btn">批量启用一致规则</button><button id="newRule" class="btn primary">新建规则</button></span>`, "条件引用概念词汇，执行时按患者所属医院解析标准；启用前检查疾病、实体、概念链路和图谱审核状态");
     $("#newRule").onclick = () => openRuleEditor(null);
+    $("#ruleWizard").onclick = () => openRuleWizard();
+    renderEngineChip(content.querySelector("#engineChip"));
     $("#activateConsistent").onclick = async () => {
       if (!confirm("将启用当前筛选范围内图谱语义一致且通过质量检查的草稿规则，确认继续？")) return;
       try {
@@ -2984,6 +2986,9 @@
       if (!confirm("确认删除该规则？")) return;
       await api(`/api/rules/${b.dataset.ruleDelete}`, { method: "DELETE" }); toast("规则已删除"); render();
     });
+    content.querySelectorAll("[data-rule-history]").forEach((button) => {
+      button.onclick = () => openRuleHistory(button.dataset.ruleHistory);
+    });
   }
 
   function openRuleEditor(rule) {
@@ -3048,6 +3053,222 @@
       } catch (error) { toast(error.message, true); }
     };
     $("#editorCancel").onclick = () => dialog.close();
+  }
+
+  async function openRuleWizard() {
+    await loadBase();
+    const [diseases, syndromes, labs, symptoms, exams, findings] = await Promise.all([
+      api("/api/vocab/entities/disease").catch(() => []),
+      api("/api/vocab/entities/syndrome").catch(() => []),
+      api("/api/vocab/entities/lab").catch(() => []),
+      api("/api/vocab/entities/symptom").catch(() => []),
+      api("/api/vocab/entities/exam").catch(() => []),
+      api("/api/vocab/entities/exam_finding").catch(() => []),
+    ]);
+    const dict = { disease: diseases, syndrome: syndromes, lab: labs, symptom: symptoms, exam: exams, exam_finding: findings };
+    const labConcepts = state.vocab.filter((v) => v.category === "lab_concept");
+    const rows = [];
+
+    const dictOptions = (items, selected = "") => ["", ...items.map((item) => item.code)]
+      .map((code) => `<option value="${esc(code)}" ${code === selected ? "selected" : ""}>${esc(code ? `${nameOf(items, code)}（${code}）` : "请选择")}</option>`).join("");
+    const nameOf = (items, code) => (items.find((item) => item.code === code) || {}).name || code;
+    const conceptOptions = (selected = []) => labConcepts
+      .map((v) => `<option value="${esc(v.code)}" ${selected.includes(v.code) ? "selected" : ""}>${esc(v.name_cn)}（${esc(v.code)}）</option>`).join("");
+
+    function rowHtml(row, index) {
+      const kindSelect = `<select data-row="${index}" data-field="kind">${(window.CdssRuleWizard.CONDITION_KINDS).map((k) => `<option value="${k.value}" ${row.kind === k.value ? "selected" : ""}>${k.label}</option>`).join("")}</select>`;
+      let fields = "";
+      if (row.kind === "lab_concept") {
+        fields = `
+          <div class="field"><label>检验</label><select data-row="${index}" data-field="lab_code">${dictOptions(dict.lab, row.lab_code || "")}</select></div>
+          <div class="field"><label>概念（可多选=OR）</label><select data-row="${index}" data-field="concept_codes" multiple size="3">${conceptOptions(row.concept_codes || [])}</select></div>`;
+      } else if (row.kind === "symptom") {
+        fields = `<div class="field"><label>症状</label><select data-row="${index}" data-field="symptom_code">${dictOptions(dict.symptom, row.symptom_code || "")}</select></div>`;
+      } else if (row.kind === "exam_finding") {
+        fields = `
+          <div class="field"><label>检查</label><select data-row="${index}" data-field="exam_code">${dictOptions(dict.exam, row.exam_code || "")}</select></div>
+          <div class="field"><label>发现</label><select data-row="${index}" data-field="finding_code">${dictOptions(dict.exam_finding, row.finding_code || "")}</select></div>`;
+      } else {
+        fields = `
+          <div class="field"><label>观察类型</label><select data-row="${index}" data-field="observation_type">${["symptom", "tongue", "pulse", "sign"].map((t) => `<option value="${t}" ${row.observation_type === t ? "selected" : ""}>${t}</option>`).join("")}</select></div>
+          <div class="field"><label>编码</label><input data-row="${index}" data-field="code" value="${esc(row.code || "")}" placeholder="选择类型后输入编码或从图谱页复制"></div>`;
+      }
+      return `<div class="inline-controls" data-row-wrap="${index}">${kindSelect}${fields}<button class="btn sm danger" data-row-remove="${index}">删除行</button></div>`;
+    }
+
+    function renderRows() {
+      $("#wizardRows").innerHTML = rows.map((row, index) => rowHtml(row, index)).join("") || '<div class="empty">尚未添加条件行</div>';
+      $("#wizardPreview").textContent = window.CdssRuleWizard.describeTree(window.CdssRuleWizard.buildConditionTree(collectRows())) || "（空条件：治疗类规则的合法写法）";
+      bindRowEvents();
+    }
+
+    function collectRows() {
+      return rows.map((row, index) => {
+        const collected = { kind: row.kind };
+        document.querySelectorAll(`[data-row-wrap="${index}"] [data-row="${index}"]`).forEach((input) => {
+          const field = input.dataset.field;
+          if (field === "concept_codes") {
+            collected[field] = [...input.selectedOptions].map((option) => option.value);
+          } else {
+            collected[field] = input.value;
+          }
+        });
+        if (collected.kind === "lab_concept" && collected.concept_codes == null) collected.concept_codes = [];
+        return collected;
+      });
+    }
+
+    function bindRowEvents() {
+      document.querySelectorAll("[data-row-wrap]").forEach((wrap) => {
+        const index = Number(wrap.dataset.rowWrap);
+        wrap.querySelectorAll("select[data-field], input[data-field]").forEach((input) => {
+          input.onchange = () => {
+            if (input.dataset.field === "kind") {
+              rows[index] = { kind: input.value };
+            } else {
+              rows[index][input.dataset.field] = input.dataset.field === "concept_codes"
+                ? [...input.selectedOptions].map((option) => option.value)
+                : input.value;
+            }
+            renderRows();
+          };
+        });
+        wrap.querySelector("[data-row-remove]").onclick = () => {
+          rows.splice(index, 1);
+          renderRows();
+        };
+      });
+      $("#wizardAddRow").onclick = () => {
+        rows.push({ kind: "lab_concept" });
+        renderRows();
+      };
+    }
+
+    $("#editorBody").innerHTML = `
+      <h3>规则向导（按字典选择，无需写 JSON）</h3>
+      <div class="form-grid">
+        <div class="field"><label>领域</label><select id="wizardDomain"><option value="western">西医</option><option value="tcm">中医</option></select></div>
+        <div class="field"><label>规则类型</label><select id="wizardRuleType"><option value="diagnosis">诊断</option><option value="treatment">治疗</option></select></div>
+        <div class="field"><label>目标（疾病/证候）</label><select id="wizardAnchor">${dictOptions(diseases)}${dictOptions(syndromes).replace('<option value="">请选择</option>', "")}</select></div>
+        <div class="field"><label>规则名称</label><input id="wizardName" placeholder="例如：STEMI 肌钙蛋白诊断"></div>
+        <div class="field"><label>科室（可空）</label><input id="wizardDepartment"></div>
+        <div class="field"><label>优先级</label><input id="wizardPriority" type="number" value="50"></div>
+        <div class="field half"><label>结论提示</label><input id="wizardMessage"></div>
+        <div class="field half"><label>建议动作</label><input id="wizardAction"></div>
+      </div>
+      <h4>条件行（行间 AND；同一检验选多个概念 = OR）</h4>
+      <div id="wizardRows"></div>
+      <div class="actions"><button id="wizardAddRow" class="btn">添加条件行</button></div>
+      <h4>条件预览</h4>
+      <div id="wizardPreview" class="mono muted"></div>`;
+    rows.push({ kind: "lab_concept" });
+    renderRows();
+    const dialog = $("#editorDialog");
+    dialog.showModal();
+    $("#editorSave").onclick = async () => {
+      try {
+        const domain = $("#wizardDomain").value;
+        const anchorCode = $("#wizardAnchor").value;
+        const anchorType = domain === "tcm" ? "syndrome" : "disease";
+        if (!anchorCode) throw new Error("请选择目标疾病/证候");
+        const conditions = window.CdssRuleWizard.buildConditionTree(collectRows());
+        const entry = (dict[anchorType] || []).find((item) => item.code === anchorCode) || {};
+        const payload = {
+          rule_id: `CUSTOM-${Date.now()}`,
+          version: 1,
+          domain,
+          anchor_type: anchorType,
+          rule_type: domain === "tcm" ? "tcm_pattern" : $("#wizardRuleType").value,
+          name: $("#wizardName").value || `向导创建: ${entry.name || anchorCode}`,
+          disease_code: anchorCode,
+          disease_name: entry.name || anchorCode,
+          priority: Number($("#wizardPriority").value || 50),
+          status: "draft",
+          department: $("#wizardDepartment").value || null,
+          conditions,
+          conclusion: {
+            diagnosis: anchorCode,
+            confidence: "medium",
+            message: $("#wizardMessage").value || "",
+            action: $("#wizardAction").value || "",
+          },
+          source: {},
+          exclusions: [],
+          tags: ["wizard"],
+          created_by: localStorage.getItem("cdssReviewer") || "未署名",
+        };
+        await api("/api/rules", { json: payload });
+        dialog.close();
+        toast("规则已保存为草稿，可在列表中审核启用");
+        renderRules();
+      } catch (error) {
+        toast(error.message, true);
+      }
+    };
+    $("#editorCancel").onclick = () => dialog.close();
+  }
+
+  async function renderEngineChip(container) {
+    if (!container) return;
+    try {
+      const status = await api("/api/engine/status");
+      const config = await api("/api/engine/config");
+      const reachable = status.active === "native" ? true : Boolean(status.drools?.reachable);
+      const badge = reachable ? '<span class="badge active">在线</span>' : '<span class="badge danger">不可达</span>';
+      container.innerHTML = `
+        <label class="muted">引擎</label>
+        <select id="engineSwitch">
+          <option value="native" ${config.active === "native" ? "selected" : ""}>原生引擎</option>
+          <option value="drools" ${config.active === "drools" ? "selected" : ""}>Drools（需 sidecar）</option>
+        </select>${badge}`;
+      $("#engineSwitch").onchange = async (event) => {
+        try {
+          await api("/api/engine/config", { method: "PUT", json: { config: { active: event.target.value } } });
+          toast(`推理引擎已切换为 ${event.target.value === "drools" ? "Drools（sidecar 不可达时自动回退原生）" : "原生引擎"}`);
+          renderEngineChip(container);
+        } catch (error) {
+          toast(error.message, true);
+        }
+      };
+    } catch (error) {
+      container.innerHTML = '<span class="muted">引擎状态不可用</span>';
+    }
+  }
+
+  async function openRuleHistory(ruleId) {
+    const items = await api(`/api/rules/${encodeURIComponent(ruleId)}/history`);
+    $("#editorBody").innerHTML = `
+      <h3>规则历史 <span class="mono muted">${esc(ruleId)}</span></h3>
+      ${items.length ? table(["版本", "时间", "动作", "操作人", "名称", "操作"], items.map((item) => `<tr>
+        <td>v${item.seq}</td>
+        <td class="mono">${esc((item.timestamp || "").replace("T", " ").slice(0, 19))}</td>
+        <td>${esc(item.action)}</td>
+        <td>${esc(item.actor)}</td>
+        <td>${esc((item.rule || {}).name || "")}</td>
+        <td><button class="btn sm" data-history-restore="${item.seq}">恢复此版本</button></td>
+      </tr>`)) : '<div class="empty">暂无历史（保存规则后自动记录）</div>'}`;
+    const dialog = $("#editorDialog");
+    const save = $("#editorSave");
+    save.hidden = true;
+    dialog.onclose = () => { save.hidden = false; dialog.onclose = null; };
+    dialog.showModal();
+    $("#editorCancel").onclick = () => dialog.close();
+    $("#editorBody").querySelectorAll("[data-history-restore]").forEach((button) => {
+      button.onclick = async () => {
+        if (!confirm(`恢复到 v${button.dataset.historyRestore}？当前内容会另存为新版本，可再次回滚。`)) return;
+        try {
+          await api(`/api/rules/${encodeURIComponent(ruleId)}/history/${button.dataset.historyRestore}/restore`, {
+            method: "POST",
+            json: { reviewer: localStorage.getItem("cdssReviewer") || "未署名" },
+          });
+          dialog.close();
+          toast("已恢复历史版本");
+          renderRules();
+        } catch (error) {
+          toast(error.message, true);
+        }
+      };
+    });
   }
 
   async function renderStandards() {
