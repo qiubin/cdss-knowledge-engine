@@ -627,3 +627,140 @@ tr:last-child td { border-bottom: 0; }
 .tcm-option:hover { border-color: #d69e2e; background: #fffaf0; }
 .tcm-option input { accent-color: #d69e2e; }
 .tcm-option small { margin-left: auto; color: #94a3b8; font-size: 11px; }
+
+/* ==== 审核台：主从布局与专业化条目显示 ==== */
+.review-layout { display: grid; grid-template-columns: minmax(480px, 7fr) minmax(360px, 5fr); gap: 14px; align-items: start; }
+@media (max-width: 1100px) { .review-layout { grid-template-columns: 1fr; } }
+.review-list { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.review-toolbar.compact { display: flex; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.review-toolbar.compact input { flex: 1; min-width: 0; }
+.review-toolbar.compact input:first-child { flex: 0 1 160px; }
+.review-bulkbar {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 8px 12px; border-bottom: 1px solid var(--line); background: #f8faf9;
+}
+.review-bulkbar label { display: flex; align-items: center; gap: 5px; font-size: 13px; }
+.kbd-hint { margin-left: auto; font-size: 12px; color: var(--muted); }
+.review-table-wrap { max-height: calc(100vh - 300px); overflow: auto; }
+.review-table-wrap table { width: 100%; }
+.review-row { cursor: pointer; }
+.review-row:hover { background: #f4f8f6; }
+.review-row.selected { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.col-check { width: 34px; text-align: center; }
+.review-item-cell { min-width: 260px; }
+.review-item-title { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+.review-item-sub { margin-top: 3px; font-size: 11px; color: var(--muted); }
+.type-chip {
+  display: inline-block; flex-shrink: 0; font-size: 11px; line-height: 1;
+  padding: 3px 7px; border-radius: 4px; background: #eef2f1; color: #44514c;
+}
+.review-row.selected .type-chip { background: #d3e7dd; color: var(--accent-dark); }
+.issue-inline { margin-top: 3px; font-size: 12px; color: var(--danger); }
+.trunc-note { margin: 0 0 8px 4px; font-size: 12px; }
+
+/* 关系条目的语义式显示：源节点 -关系-> 目标节点 */
+.relation-sem { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.relation-sem .sem-endpoint { font-weight: 600; display: inline-flex; align-items: center; }
+.relation-sem .sem-arrow { color: var(--accent-dark); font-size: 12px; display: inline-flex; align-items: center; gap: 3px; }
+.arrow-glyph { font-weight: 400; }
+.mini-status {
+  display: inline-block; font-size: 10px; line-height: 1; padding: 2px 5px;
+  border-radius: 999px; margin-left: 5px; background: #eef2f0; color: #5a6b64;
+  vertical-align: 1px;
+}
+.mini-status.active { background: var(--accent-soft); color: var(--accent-dark); }
+.mini-status.draft { background: var(--warn-soft); color: var(--warn); }
+.mini-status.stale { background: #fff4e5; color: #b25e09; }
+.mini-status.rejected, .mini-status.retired, .mini-status.blocked, .mini-status.missing { background: var(--danger-soft); color: var(--danger); }
+.mini-status.testing { background: #e6eef8; color: #31536e; }
+
+/* 审核进度 */
+.review-progress {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 12px 14px; margin-bottom: 12px;
+}
+@media (max-width: 900px) { .review-progress { grid-template-columns: 1fr; } }
+.progress-block { min-width: 0; }
+.progress-label { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; margin-bottom: 5px; }
+.review-progress-track { height: 8px; border-radius: 999px; background: #e8eeeb; overflow: hidden; }
+.review-progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), #2f9d6f); transition: width 0.3s; }
+
+/* 右侧详情面板 */
+.review-detail {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 14px 16px; position: sticky; top: 12px; max-height: calc(100vh - 90px); overflow: auto;
+}
+.detail-head { border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 10px; }
+.detail-title { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 14px; }
+.detail-sub { margin-top: 4px; font-size: 11px; color: var(--muted); }
+.detail-actions { margin-bottom: 12px; }
+.detail-section { margin-bottom: 14px; }
+.detail-section h4 { margin: 0 0 6px; font-size: 12px; color: var(--muted); font-weight: 600; }
+.endpoint-meta { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; }
+.endpoint-meta > div { display: flex; align-items: baseline; gap: 6px; }
+
+/* 关系详情的端点卡片流 */
+.relation-flow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: stretch; }
+.endpoint-card {
+  border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+  background: #f8faf9; display: flex; flex-direction: column; gap: 3px; font-size: 13px;
+}
+.endpoint-role { font-size: 11px; }
+.relation-arrow {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; padding: 0 6px; text-align: center;
+}
+.relation-arrow .rel-name { font-size: 12px; color: var(--accent-dark); font-weight: 600; white-space: nowrap; }
+.relation-arrow::after { content: "\2192"; font-size: 18px; color: var(--accent); }
+
+/* 拒绝原因码 chips */
+.reason-chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 14px; }
+.reason-chip {
+  border: 1px solid var(--line); background: #fff; border-radius: 999px;
+  padding: 6px 13px; font-size: 13px; cursor: pointer; color: var(--ink);
+}
+.reason-chip:hover { border-color: var(--accent); color: var(--accent-dark); }
+.reason-chip.selected { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-dark); font-weight: 600; }
+
+/* stale 条目的字段级 diff */
+.diff-changed td { background: #fffdf3; }
+.diff-old { background: var(--danger-soft); color: var(--danger); text-decoration: line-through; }
+.diff-new { background: var(--accent-soft); color: var(--accent-dark); font-weight: 600; }
+.concept-chips { margin-top: 6px; }
+
+/* ---- 规则编辑器：可视化条件树 ---- */
+.condition-tree { display: flex; flex-direction: column; gap: 8px; max-height: 380px; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; background: #fafcfb; }
+.ct-node {
+  border: 1px solid var(--line); border-radius: var(--radius); background: #fff;
+  padding: 8px 10px; font-size: 13px;
+}
+.ct-node.ct-group { background: #f6faf8; }
+.ct-node.ct-readonly { background: #f5f6f5; }
+.ct-children { margin: 8px 0 2px 16px; border-left: 2px solid var(--line); padding-left: 10px; display: flex; flex-direction: column; gap: 8px; }
+.ct-child { min-width: 0; }
+.ct-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ct-head select[data-ct-kind], .ct-head select[data-ct-op] { min-width: 128px; }
+.ct-tools { margin-left: auto; display: flex; gap: 4px; }
+.ct-fields { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.ct-f { display: inline-flex; align-items: center; gap: 5px; }
+.ct-f em { font-style: normal; color: var(--muted); font-size: 12px; white-space: nowrap; }
+.ct-f input[type="text"], .ct-f input[type="number"], .ct-f select { max-width: 220px; }
+.ct-fixed {
+  display: inline-block; border: 1px dashed var(--line); border-radius: 4px;
+  padding: 2px 8px; background: #f1f4f2; color: var(--muted); font-size: 12px;
+}
+.ct-kind { font-weight: 600; color: var(--accent-dark); }
+.ct-summary { margin-top: 4px; color: var(--muted); line-height: 1.5; }
+.ct-sub { margin-top: 4px; color: var(--warn); font-size: 12px; }
+.ct-empty { color: var(--muted); font-size: 12px; padding: 8px 4px; }
+.ct-toggle { margin-left: 8px; }
+.drl-preview { margin-top: 8px; }
+.drl-preview pre {
+  margin: 0; padding: 10px 12px; background: #10201a; color: #d7e7df;
+  border-radius: var(--radius); font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px; line-height: 1.55; max-height: 200px; overflow: auto; white-space: pre;
+}
+.badge.compilable { background: var(--accent-soft); color: var(--accent-dark); border: 1px solid var(--accent); }
+.badge.noncompilable { background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); }
+

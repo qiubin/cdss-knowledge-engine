@@ -3382,6 +3382,36 @@
     });
   }
 
+  // 条件树编辑器的字典（跨弹窗缓存一次）
+  let editorDictPromise = null;
+  function loadEditorDict() {
+    if (!editorDictPromise) {
+      editorDictPromise = Promise.all([
+        api("/api/vocab/entities/disease").catch(() => []),
+        api("/api/vocab/entities/syndrome").catch(() => []),
+        api("/api/vocab/entities/lab").catch(() => []),
+        api("/api/vocab/entities/symptom").catch(() => []),
+        api("/api/vocab/entities/exam").catch(() => []),
+        api("/api/vocab/entities/exam_finding").catch(() => []),
+      ]).then(([diseases, syndromes, labs, symptoms, exams, findings]) => ({
+        disease: diseases || [],
+        syndrome: syndromes || [],
+        lab: labs || [],
+        symptom: symptoms || [],
+        exam: exams || [],
+        exam_finding: findings || [],
+        lab_concept: (state.vocab || []).filter((item) => item.category === "lab_concept"),
+      }));
+    }
+    return editorDictPromise;
+  }
+
+  const CT_LEAF_LABELS = {
+    lab_concept: "检验概念", exam_finding: "检查发现", symptom: "症状", vital: "生命体征",
+    demographic: "人口学", past_history: "既往史", medication: "用药", observation: "观察（舌/脉/征）",
+    attribute: "属性",
+  };
+
   function openRuleEditor(rule) {
     const base = rule || { rule_id: `CUSTOM-${Date.now()}`, version: 1, domain: "western", anchor_type: "disease", rule_type: "diagnosis", name: "", disease_code: "", disease_name: "", priority: 50, status: "draft", department: "心血管内科", conditions: { type: "group", operator: "AND", children: [] }, conclusion: { diagnosis: "", confidence: "medium", message: "", action: "" }, source: {}, exclusions: [], tags: [] };
     const ruleTypes = ["diagnosis", "treatment", "tcm_pattern", "tcm_treatment", "tcm_prescription", "tcm_contraindication"];
@@ -3401,12 +3431,239 @@
         <div class="field"><label>置信度</label><select name="confidence">${["high", "medium", "low"].map((s) => `<option value="${s}" ${base.conclusion.confidence === s ? "selected" : ""}>${s}</option>`).join("")}</select></div>
         <div class="field half"><label>提示</label><input name="message" value="${esc(base.conclusion.message)}"></div>
         <div class="field half"><label>动作</label><input name="action" value="${esc(base.conclusion.action || "")}"></div>
-        <div class="field wide"><label>条件 JSON</label><textarea name="conditions" class="code">${esc(JSON.stringify(base.conditions, null, 2))}</textarea></div>
+        <div class="field wide"><label>条件树 <span id="drlBadge"></span><button type="button" id="treeModeToggle" class="btn sm ct-toggle">JSON 模式</button></label><div id="conditionTreeHost" class="condition-tree"></div><textarea name="conditions" class="code" hidden>${esc(JSON.stringify(base.conditions, null, 2))}</textarea><div id="drlPreview" class="drl-preview" hidden><pre></pre></div></div>
         <div class="field wide"><label>条件引用概念</label><div id="ruleConceptCheck" class="actions">${ruleConceptChips(base)}</div></div>
         <div class="field wide"><label>结论扩展 JSON（中医治法/方剂/中药）</label><textarea name="conclusion_extra" class="code">${esc(JSON.stringify({ ...base.conclusion, diagnosis: undefined, confidence: undefined, message: undefined, action: undefined }, null, 2))}</textarea></div>
         <div class="field wide"><label>溯源 JSON</label><textarea name="source" class="code">${esc(JSON.stringify(base.source || {}, null, 2))}</textarea></div>
       </div>`;
     const dialog = $("#editorDialog"); dialog.showModal();
+    // ---- 可视化条件树（隐藏 textarea 始终与树同步，保存路径零改动）----
+    const ctree = window.CdssConditionTree;
+    const editorForm = $("#editorBody");
+    const conditionsField = editorForm.querySelector("[name=conditions]");
+    let editorTree = ctree.sanitizeTree(base.conditions);
+    let treeMode = true;
+    let editorDict = null;
+    let drlTimer = null;
+
+    const fieldWidgetHtml = (node, field, path, readonly) => {
+      const key = ctree.pathKey(path);
+      const value = node[field.key];
+      if (field.widget === "enum" && field.readonly) {
+        return `<span class="ct-fixed">${esc(value || "")}</span>`;
+      }
+      const common = `data-ct-field="${field.key}" data-path="${key}" data-widget="${field.widget}"`;
+      if (field.widget === "dict") {
+        const items = (editorDict && editorDict[field.dict]) || [];
+        const options = ['<option value="">请选择…</option>'].concat(items.map((item) => {
+          const name = item.name || item.name_cn || item.code;
+          return `<option value="${esc(item.code)}" ${value === item.code ? "selected" : ""}>${esc(name)}（${esc(item.code)}）</option>`;
+        }));
+        return `<select ${common}>${options.join("")}</select>`;
+      }
+      if (field.widget === "enum") {
+        const options = ['<option value="">--</option>'].concat((field.options || []).map((opt) =>
+          `<option value="${esc(opt)}" ${value === opt ? "selected" : ""}>${esc(opt)}</option>`));
+        return `<select ${common}>${options.join("")}</select>`;
+      }
+      if (field.widget === "number") return `<input type="number" step="any" ${common} value="${value ?? ""}">`;
+      if (field.widget === "bool") return `<input type="checkbox" ${common} ${value ? "checked" : ""}>`;
+      return `<input type="text" ${common} value="${esc(value ?? "")}">`;
+    };
+
+    const leafToolsHtml = (node, path, readonly) => {
+      if (readonly) return "";
+      const key = ctree.pathKey(path);
+      const moveBtns = path.length
+        ? `<button type="button" class="btn sm" data-ct-act="move" data-delta="-1" data-path="${key}" title="上移">↑</button><button type="button" class="btn sm" data-ct-act="move" data-delta="1" data-path="${key}" title="下移">↓</button>`
+        : "";
+      return `<button type="button" class="btn sm" data-ct-act="add-sibling" data-path="${key}">+同级</button>${moveBtns}<button type="button" class="btn sm danger" data-ct-act="remove" data-path="${key}">删除</button>`;
+    };
+
+    const leafHtml = (node, path, readonly) => {
+      const key = ctree.pathKey(path);
+      const kindSelect = `<select data-ct-kind data-path="${key}" ${readonly ? "disabled" : ""}>${ctree.SUPPORTED_LEAF_TYPES.map((kind) =>
+        `<option value="${kind}" ${node.type === kind ? "selected" : ""}>${CT_LEAF_LABELS[kind] || kind}</option>`).join("")}</select>`;
+      const fields = (ctree.LEAF_FIELDS[node.type] || []).map((field) =>
+        `<span class="ct-f"><em>${esc(field.label)}</em>${fieldWidgetHtml(node, field, path, readonly)}</span>`).join("");
+      const badge = readonly ? '<span class="badge noncompilable">仅原生引擎</span>' : "";
+      return `<div class="ct-node ct-leaf ${readonly ? "ct-readonly" : ""}"><div class="ct-head">${kindSelect}${badge}<span class="ct-tools">${leafToolsHtml(node, path, readonly)}</span></div><div class="ct-fields">${fields}</div></div>`;
+    };
+
+    const groupHtml = (node, path, readonly) => {
+      const key = ctree.pathKey(path);
+      const op = String(node.operator || "AND").toUpperCase();
+      const opSelect = `<select data-ct-op data-path="${key}" ${readonly ? "disabled" : ""}>${ctree.GROUP_OPERATORS.map((candidate) => {
+        const label = candidate === "AND" ? "且（AND）" : candidate === "OR" ? "或（OR）" : "非（NOT）";
+        return `<option value="${candidate}" ${op === candidate ? "selected" : ""}>${label}</option>`;
+      }).join("")}</select>`;
+      const tools = readonly ? "" : [
+        `<button type="button" class="btn sm" data-ct-act="add-leaf" data-path="${key}">+条件</button>`,
+        `<button type="button" class="btn sm" data-ct-act="add-group" data-path="${key}">+子组</button>`,
+        ...(path.length ? [
+          `<button type="button" class="btn sm" data-ct-act="move" data-delta="-1" data-path="${key}" title="上移">↑</button>`,
+          `<button type="button" class="btn sm" data-ct-act="move" data-delta="1" data-path="${key}" title="下移">↓</button>`,
+          `<button type="button" class="btn sm danger" data-ct-act="remove" data-path="${key}">删除</button>`,
+        ] : []),
+      ].join("");
+      const children = (node.children || []).map((child, index) =>
+        `<div class="ct-child">${nodeHtml(child, [...path, index], readonly)}</div>`).join("");
+      return `<div class="ct-node ct-group ${readonly ? "ct-readonly" : ""}"><div class="ct-head">${opSelect}<span class="ct-tools">${tools}</span></div><div class="ct-children">${children || '<div class="ct-empty">空条件组 — 用「+条件 / +子组」开始编辑</div>'}</div></div>`;
+    };
+
+    const weightedHtml = (node, path) => {
+      const children = (node.children || []).map((child, index) =>
+        `<div class="ct-child">${nodeHtml(child, [...path, index], true)}</div>`).join("");
+      return `<div class="ct-node ct-group ct-readonly"><div class="ct-head"><span class="ct-kind">加权评分组</span><span class="badge noncompilable">仅原生引擎</span></div><div class="ct-sub">scoring=${esc(node.scoring || "weighted_sum")} · threshold=${esc(node.threshold ?? "-")} · 必要子项 ${((node.required_children || []).length)} 个</div><div class="ct-children">${children}</div></div>`;
+    };
+
+    const readonlyLeafHtml = (node) => {
+      const label = node.label || ctree.treeToText(node);
+      return `<div class="ct-node ct-leaf ct-readonly"><div class="ct-head"><span class="ct-kind">${esc(CT_LEAF_LABELS[node.type] || node.type)}</span><span class="badge noncompilable">仅原生引擎</span></div><div class="ct-summary">${esc(label)}</div></div>`;
+    };
+
+    const nodeHtml = (node, path, readonly = false) => {
+      const isReadonly = readonly || ctree.READONLY_TYPES.includes(node.type);
+      if (node.type === "group") return groupHtml(node, path, isReadonly);
+      if (node.type === "weighted_group") return weightedHtml(node, path);
+      if (isReadonly) return readonlyLeafHtml(node);
+      return leafHtml(node, path, false);
+    };
+
+    const renderBadge = (reason, result) => {
+      const badge = $("#drlBadge");
+      const preview = $("#drlPreview");
+      if (!badge || !preview) return;
+      if (!treeMode) { badge.innerHTML = ""; preview.hidden = true; return; }
+      if (reason) {
+        badge.innerHTML = `<span class="badge noncompilable" title="${esc(reason)}">不可编译</span>`;
+        preview.hidden = false;
+        preview.querySelector("pre").textContent = `// ${reason}`;
+        return;
+      }
+      badge.innerHTML = '<span class="badge compilable">Drools 可编译</span>';
+      preview.hidden = false;
+      preview.querySelector("pre").textContent = result
+        ? `// ${result.leaf_count} 个原子条件\n${result.drl || ""}`
+        : "// 编译中…";
+    };
+
+    const scheduleDrlPreview = () => {
+      const activeDialog = $("#editorDialog");
+      if (!activeDialog || !activeDialog.open) return;
+      if (drlTimer) clearTimeout(drlTimer);
+      const reason = ctree.compilabilityReason(editorTree);
+      renderBadge(reason, null);
+      if (reason) return; // 本地已判定不可编译，无需请求
+      drlTimer = setTimeout(async () => {
+        drlTimer = null;
+        const live = $("#editorDialog");
+        if (!live || !live.open || !treeMode) return;
+        const pendingReason = ctree.compilabilityReason(editorTree);
+        if (pendingReason) { renderBadge(pendingReason, null); return; }
+        try {
+          const result = await api("/api/engine/drl-preview", { json: { conditions: editorTree } });
+          if (!treeMode || !live.open) return;
+          renderBadge(ctree.compilabilityReason(editorTree), result);
+        } catch (error) {
+          const badge = $("#drlBadge");
+          if (badge && treeMode) badge.innerHTML = `<span class="badge noncompilable" title="${esc(error.message)}">预览失败</span>`;
+        }
+      }, 400);
+    };
+
+    const renderTree = () => {
+      const host = $("#conditionTreeHost");
+      if (!host) return;
+      if (!treeMode) {
+        host.hidden = true;
+        conditionsField.hidden = false;
+        $("#drlPreview").hidden = true;
+        return;
+      }
+      conditionsField.hidden = true;
+      host.hidden = false;
+      host.innerHTML = editorDict
+        ? nodeHtml(editorTree, [])
+        : '<div class="ct-empty">字典加载中…</div>';
+    };
+
+    const mutate = (fn) => {
+      try {
+        editorTree = fn();
+      } catch (error) { toast(error.message, true); return; }
+      conditionsField.value = ctree.treeToJson(editorTree);
+      renderTree();
+      scheduleDrlPreview();
+    };
+
+    const host = $("#conditionTreeHost");
+    host.onchange = (event) => {
+      const target = event.target;
+      const path = ctree.parsePathKey(target.dataset.path);
+      if (target.matches("[data-ct-op]")) {
+        mutate(() => ctree.updateNode(editorTree, path, { operator: target.value, label: null }));
+      } else if (target.matches("[data-ct-kind]")) {
+        mutate(() => ctree.replaceNode(editorTree, path, ctree.newLeaf(target.value)));
+      } else if (target.matches("[data-ct-field]")) {
+        const widget = target.dataset.widget;
+        let value = target.value;
+        if (widget === "number") value = target.value === "" ? null : Number(target.value);
+        else if (widget === "bool") value = target.checked;
+        mutate(() => ctree.updateNode(editorTree, path, { [target.dataset.ctField]: value, label: null }));
+      }
+    };
+    host.onclick = (event) => {
+      const button = event.target.closest("[data-ct-act]");
+      if (!button) return;
+      const action = button.dataset.ctAct;
+      const path = ctree.parsePathKey(button.dataset.path);
+      if (action === "add-leaf") {
+        mutate(() => ctree.addChild(editorTree, path, ctree.newLeaf("lab_concept")));
+      } else if (action === "add-group") {
+        mutate(() => ctree.addGroup(editorTree, path));
+      } else if (action === "add-sibling") {
+        const node = ctree.getNode(editorTree, path);
+        const kind = node && ctree.SUPPORTED_LEAF_TYPES.includes(node.type) ? node.type : "lab_concept";
+        mutate(() => ctree.addSibling(editorTree, path, ctree.newLeaf(kind)));
+      } else if (action === "remove") {
+        const node = ctree.getNode(editorTree, path);
+        if (ctree.countLeaves(node) > 1 && !confirm("删除该条件（含其全部子条件）？")) return;
+        mutate(() => ctree.removeNode(editorTree, path));
+      } else if (action === "move") {
+        mutate(() => ctree.moveNode(editorTree, path, Number(button.dataset.delta)));
+      }
+    };
+    $("#treeModeToggle").onclick = () => {
+      const toggle = $("#treeModeToggle");
+      if (treeMode) {
+        conditionsField.value = ctree.treeToJson(editorTree);
+        treeMode = false;
+        toggle.textContent = "树模式";
+        renderTree();
+        return;
+      }
+      try {
+        editorTree = ctree.jsonToTree(conditionsField.value);
+      } catch (error) {
+        toast(`JSON 不合法，已停留 JSON 模式：${error.message}`, true);
+        return;
+      }
+      treeMode = true;
+      toggle.textContent = "JSON 模式";
+      renderTree();
+      scheduleDrlPreview();
+    };
+
+    conditionsField.value = ctree.treeToJson(editorTree);
+    renderTree();
+    loadEditorDict().then((dict) => {
+      editorDict = dict;
+      if ($("#editorDialog").open && treeMode) { renderTree(); scheduleDrlPreview(); }
+    }).catch(() => {
+      editorDict = {};
+      if ($("#editorDialog").open && treeMode) renderTree();
+    });
     $("#editorSave").onclick = async () => {
       const form = $("#editorBody");
       try {

@@ -6,7 +6,9 @@ from typing import Any, Dict
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from src.engine.drools.compiler import compile_rule, describe_uncompilable, walk_leaves
 from src.engine.settings import load_settings, save_settings
+from src.models.rule import Rule, RuleCondition, RuleConclusion
 
 router = APIRouter(prefix="/api/engine", tags=["engine"])
 
@@ -60,4 +62,38 @@ def engine_status():
         "active": active,
         "available": ["native", "drools"],
         "drools": _probe_drools(drools),
+    }
+
+
+class DrlPreviewPayload(BaseModel):
+    rule_id: str = "PREVIEW"
+    priority: int = 50
+    conditions: Dict[str, Any]
+
+
+@router.post("/drl-preview")
+def drl_preview(payload: DrlPreviewPayload):
+    """Compile a condition tree to DRL without persisting anything.
+
+    Uses the exact same ``compile_rule`` path as Drools inference, so the
+    preview shown in the rule editor always matches runtime behavior.
+    """
+    try:
+        conditions = RuleCondition(**payload.conditions)
+    except Exception as exc:
+        raise HTTPException(422, f"条件树不合法: {exc}") from exc
+    rule = Rule(
+        rule_id=payload.rule_id or "PREVIEW",
+        disease_code="PREVIEW",
+        priority=payload.priority,
+        conditions=conditions,
+        conclusion=RuleConclusion(diagnosis="PREVIEW"),
+    )
+    compiled = compile_rule(rule)
+    leaves = walk_leaves(conditions)
+    return {
+        "compilable": compiled is not None,
+        "drl": compiled.drl if compiled else None,
+        "reason": describe_uncompilable(conditions),
+        "leaf_count": len(leaves or []),
     }

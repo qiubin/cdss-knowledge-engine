@@ -63,6 +63,31 @@ def walk_leaves(condition: RuleCondition) -> Optional[List[RuleCondition]]:
     return [condition]
 
 
+def describe_uncompilable(condition: RuleCondition, path: str = "root") -> Optional[str]:
+    """Human-readable reason the tree is not compilable; None when compilable.
+
+    Mirrors ``walk_leaves`` / ``_lhs`` semantics (including unsupported group
+    operators) so the drl-preview endpoint and frontend badges always agree
+    with what ``compile_rule`` will actually do.
+    """
+    ctype = condition.type
+    if ctype == "group":
+        children = list(condition.children or [])
+        if not children:
+            return f"{path}: group children 为空"
+        op = (condition.operator or "AND").upper()
+        if op not in {"AND", "OR", "NOT"}:
+            return f"{path}: operator={condition.operator} 不支持"
+        for index, child in enumerate(children):
+            reason = describe_uncompilable(child, f"{path}.children[{index}]")
+            if reason:
+                return reason
+        return None
+    if ctype not in SUPPORTED_LEAF_TYPES:
+        return f"{path}: type={ctype} 仅原生引擎可执行"
+    return None
+
+
 def _lhs(condition: RuleCondition, rule_id: str, counter: List[int]) -> Optional[str]:
     ctype = condition.type
     if ctype == "group":
