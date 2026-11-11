@@ -16,6 +16,7 @@ from src.models.patient import PatientSnapshot
 from src.rules.repository import JsonRuleRepository
 from src.standards.repository import JsonStandardRepository
 from src.engine import InferenceEngine
+from src.engine.factory import create_rule_engine
 from .kg import normalize_graph_filename
 
 router = APIRouter(prefix="/api/inference", tags=["inference"])
@@ -127,7 +128,7 @@ def _inference_result(
             graph_clients[filename] = JsonGraphClient(str(graph_path))
         return graph_clients[filename]
 
-    engine = InferenceEngine(
+    engine = create_rule_engine(
         rules, kg, standards, vocab, graph_factory,
         domain=domain,
     )
@@ -163,6 +164,7 @@ def _inference_result(
         "patient_id": patient.patient_id,
         "hospital_id": patient.hospital_id,
         "domain": domain,
+        "engine": engine.describe(),
         "conclusion_count": len(conclusions),
         "conclusions": all_conclusions,
         "diagnosis_conclusions": diagnosis_conclusions,
