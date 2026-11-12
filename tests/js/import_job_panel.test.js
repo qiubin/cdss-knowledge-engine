@@ -30,6 +30,23 @@ test("jobControlButtons 映射各状态按钮", () => {
   assert.deepStrictEqual(fn("failed"), { pause: false, resume: false, stop: false, start: true });
 });
 
+test("importLogStatusBadge 覆盖 paused/resumed 等全部状态", () => {
+  assert.ok(extract("importLogStatusBadge"), "缺少 importLogStatusBadge");
+  const fn = new Function("status", `
+    ${source.match(/function importLogStatusBadge[\s\S]*?\n  }/)[0]}
+    return importLogStatusBadge(status);
+  `);
+  assert.strictEqual(fn("success"), '<span class="badge active">成功</span>');
+  assert.strictEqual(fn("started"), "已开始");
+  assert.strictEqual(fn("paused"), '<span class="badge">已暂停</span>');
+  assert.strictEqual(fn("resumed"), '<span class="badge">已继续</span>');
+  assert.strictEqual(fn("stopped"), '<span class="badge">已停止</span>');
+  assert.ok(!fn("paused").includes("danger"), "paused 不应渲染为 danger 红色徽章");
+  assert.ok(!fn("resumed").includes("danger"), "resumed 不应渲染为 danger 红色徽章");
+  assert.strictEqual(fn("some_unknown"), '<span class="badge danger">失败</span>');
+  assert.strictEqual(fn(undefined), '<span class="badge danger">失败</span>');
+});
+
 test("jobProgressText 输出阶段与分组进度", () => {
   assert.ok(extract("jobProgressText"), "缺少 jobProgressText");
   const fn = new Function("job", `

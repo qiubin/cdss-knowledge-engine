@@ -449,6 +449,16 @@
     return total ? `${job.stage || "处理中"}（${done}/${total} 组）${suffix}` : `${job.stage || "处理中"}${suffix}`;
   }
 
+  // 导入历史表结果徽章：paused/resumed 为正常暂停/继续，中性样式；未知状态按失败兜底
+  function importLogStatusBadge(status) {
+    if (status === "success") return '<span class="badge active">成功</span>';
+    if (status === "started") return "已开始";
+    if (status === "paused") return '<span class="badge">已暂停</span>';
+    if (status === "resumed") return '<span class="badge">已继续</span>';
+    if (status === "stopped") return '<span class="badge">已停止</span>';
+    return '<span class="badge danger">失败</span>';
+  }
+
   const IMPORT_JOB_STATUS_LABELS = {
     queued: "排队中", running: "正在导入", pausing: "正在暂停", paused: "已暂停",
     succeeded: "导入完成", failed: "导入失败", stopped: "已停止",
@@ -561,7 +571,7 @@
         <td class="nowrap mono">${esc(formatTime(log.ts))}</td>
         <td><strong>${esc(log.doc_title || "-")}</strong><div class="mono muted">${esc(log.doc_id || "")}</div></td>
         <td>${log.mode === "auto" ? "一键自动" : log.mode === "llm" ? "大模型" : log.mode === "local" ? "本地模板" : esc(log.mode || "-")}</td>
-        <td>${log.status === "success" ? '<span class="badge active">成功</span>' : log.status === "started" ? "已开始" : log.status === "stopped" ? '<span class="badge">已停止</span>' : '<span class="badge danger">失败</span>'}</td>
+        <td>${importLogStatusBadge(log.status)}</td>
         <td class="muted">${log.status === "success" ? `${log.entity_count ?? "-"} 实体 / ${log.relation_count ?? "-"} 关系 / ${log.rule_count ?? "-"} 规则` : "-"}</td>
         <td class="mono muted">${log.duration_ms != null ? `${log.duration_ms} ms` : "-"}</td>
         <td>${esc(log.error || "-")}</td>
