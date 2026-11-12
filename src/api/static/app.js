@@ -503,7 +503,6 @@
     content.innerHTML = `
       <div id="pendingUploadPanel"></div>
       <div id="importJobPanel"></div>
-      ${panel("导入历史", '<div id="importHistoryBody" class="muted">加载中…</div>', "", "记录每次上传（含一键自动）的成功与失败；新文档使用新编号，不会覆盖历史记录")}
       ${panel("一键自动生成（LLM 推荐）", `
         <div class="inline-controls">
           <button id="autoUploadBtn" class="btn primary">选择指南 PDF 自动生成</button>
@@ -530,6 +529,7 @@
         <input id="pdfInput" type="file" accept=".pdf" hidden>
       `, "", "选择文件后先进入「待导入」卡片，点击「开始导入」才提交服务端；解析仅进入审核区，图谱和规则需人工确认后才入库；长篇指南建议使用大模型解析，本地解析容易产生噪声规则")}
       <div id="importResult"></div>
+      ${panel("导入历史", '<div id="importHistoryBody" class="muted">加载中…</div>', "", "记录每次上传（含一键自动）的成功与失败；新文档使用新编号，不会覆盖历史记录")}
     `;
     const drop = $("#dropzone"), input = $("#pdfInput");
     const autoInput = $("#autoPdfInput"), autoButton = $("#autoUploadBtn");
