@@ -48,7 +48,9 @@
     importJob: null,
     reviewSelectedKey: "",
     reviewItems: [],
-    reviewFilters: { graph: "", sourceDoc: "", nodeType: "" },
+    reviewFilters: { graph: "", sourceDoc: "", nodeType: "", relationCode: "" },
+    reviewRelationCodeOptions: [],
+    reviewSuspectOnly: false,
     reviewGraphOptions: null,
     reviewDocOptions: null,
     reviewNodeTypeOptions: [],
@@ -2898,6 +2900,11 @@
 
   // ==== 审核台：专业化条目显示 + 主从详情面板 ====
   const REVIEW_TYPE_LABELS = { graph_node: "节点", graph_relation: "关系", rule: "规则", package: "知识包" };
+  const REVIEW_TABS = [
+    ["graph", "待审图谱"], ["relations", "关系审核"], ["rules", "待审规则"], ["blocked", "被阻断"],
+    ["stale", "待复核"], ["active", "已通过"], ["orphan", "孤儿条目"],
+    ["audit", "审核记录"],
+  ];
   const REJECT_REASONS = ["编码错误", "证据不足", "关系方向错误", "重复条目", "超出指南范围", "内容过期", "其他"];
   const RELATION_LABELS = {
     DISEASE_HAS_LAB: "需开展检验", LAB_HAS_DIAGNOSTIC_EVIDENCE: "检验形成证据",
@@ -3371,14 +3378,19 @@
     const tab = state.reviewTab || "graph";
     const reviewer = localStorage.getItem("cdssReviewer") || "";
     const query = (state.reviewQuery || "").trim();
-    const filters = state.reviewFilters || { graph: "", sourceDoc: "", nodeType: "" };
+    const filters = state.reviewFilters || { graph: "", sourceDoc: "", nodeType: "", relationCode: "" };
     const queueItemType = tab === "rules" || tab === "blocked"
       ? "rule"
-      : (["graph", "stale", "orphan"].includes(tab) ? "graph" : "");
+      : tab === "relations"
+        ? "graph_relation"
+        : tab === "graph"
+          ? "graph_node"
+          : (["stale", "orphan"].includes(tab) ? "graph" : "");
     const filterParams = [
       filters.graph ? `&graph_filename=${encodeURIComponent(filters.graph)}` : "",
       filters.sourceDoc ? `&source_doc=${encodeURIComponent(filters.sourceDoc)}` : "",
       filters.nodeType ? `&node_type=${encodeURIComponent(filters.nodeType)}` : "",
+      filters.relationCode ? `&relation_code=${encodeURIComponent(filters.relationCode)}` : "",
     ].join("");
     const queueUrl = `/api/review/queue?limit=300${queueItemType ? `&item_type=${queueItemType}` : ""}${filterParams}${query ? `&q=${encodeURIComponent(query)}` : ""}`;
     const [queue, audit, graphs, docs] = await Promise.all([
@@ -3393,12 +3405,31 @@
     ]);
     const allItems = queue.items || [];
     if (!filters.nodeType) {
-      state.reviewNodeTypeOptions = [...new Set(
-        allItems.filter((item) => item.item_type === "graph_node").map((item) => item.node_type).filter(Boolean)
-      )].sort();
+      const types = new Set();
+      allItems.forEach((item) => {
+        if (item.item_type === "graph_relation") {
+          if (item.source_node_type) types.add(item.source_node_type);
+          if (item.target_node_type) types.add(item.target_node_type);
+        } else if (item.item_type === "graph_node" && item.node_type) {
+          types.add(item.node_type);
+        }
+      });
+      state.reviewNodeTypeOptions = [...types].sort();
+    }
+    if (!filters.relationCode) {
+      const counts = new Map();
+      allItems.filter((item) => item.item_type === "graph_relation").forEach((item) => {
+        const code = item.relation_code || "";
+        if (!code) return;
+        const entry = counts.get(code) || { value: code, label: RELATION_LABELS[code] || item.name || code, count: 0 };
+        entry.count += 1;
+        counts.set(code, entry);
+      });
+      state.reviewRelationCodeOptions = [...counts.values()].sort((a, b) => b.count - a.count);
     }
     const items = allItems.filter((item) => {
-      if (tab === "graph") return ["graph_node", "graph_relation"].includes(item.item_type) && ["draft", "stale"].includes(item.status);
+      if (tab === "graph") return item.item_type === "graph_node" && ["draft", "stale"].includes(item.status);
+      if (tab === "relations") return item.item_type === "graph_relation" && ["draft", "stale"].includes(item.status);
       if (tab === "rules") return item.item_type === "rule" && ["draft", "testing"].includes(item.status);
       if (tab === "blocked") return item.item_type === "rule" && item.status === "blocked";
       if (tab === "stale") return item.status === "stale";
@@ -3414,12 +3445,9 @@
     if (state.reviewSelectedKey && !items.some((item) => reviewItemKey(item) === state.reviewSelectedKey)) {
       state.reviewSelectedKey = "";
     }
-    const tabs = [
-      ["graph", "待审图谱"], ["rules", "待审规则"], ["blocked", "被阻断"],
-      ["stale", "待复核"], ["active", "已通过"], ["orphan", "孤儿条目"],
-      ["audit", "审核记录"],
-    ];
-    const tabHtml = tabs.map(([key, label]) => `<button class="review-tab ${tab === key ? "active" : ""}" data-review-tab="${key}">${label}</button>`).join("");
+    const relationPending = Number(queue.summary?.graph_relations?.draft || 0)
+      + Number(queue.summary?.graph_relations?.stale || 0);
+    const tabHtml = REVIEW_TABS.map(([key, label]) => `<button class="review-tab ${tab === key ? "active" : ""}" data-review-tab="${key}">${label}${key === "relations" && relationPending ? `（${relationPending}）` : ""}</button>`).join("");
     const trunc = queue.truncated || {};
     const truncParts = [];
     if (trunc.graph_nodes || trunc.graph_relations) truncParts.push("图谱条目");
@@ -3493,6 +3521,10 @@
               <option value="">全部类型</option>
               ${state.reviewNodeTypeOptions.map((t) => `<option value="${esc(t)}" ${filters.nodeType === t ? "selected" : ""}>${esc(typeName[t] || t)}</option>`).join("")}
             </select>
+            ${tab === "relations" ? `<select id="reviewFilterRelationCode" title="按关系语义类型筛选（配合全选可批量审核同一语义的关系）">
+              <option value="">全部关系类型</option>
+              ${(state.reviewRelationCodeOptions || []).map((option) => `<option value="${esc(option.value)}" ${filters.relationCode === option.value ? "selected" : ""}>${esc(option.label)}（${option.count}）</option>`).join("")}
+            </select>` : ""}
             ${filterParams ? '<button class="btn sm" id="reviewFilterClear">清除筛选</button>' : ""}
           </div>
           <div class="review-bulkbar">
@@ -3540,8 +3572,9 @@
     bindReviewFilter("#reviewFilterGraph", "graph");
     bindReviewFilter("#reviewFilterSourceDoc", "sourceDoc");
     bindReviewFilter("#reviewFilterNodeType", "nodeType");
+    bindReviewFilter("#reviewFilterRelationCode", "relationCode");
     $("#reviewFilterClear")?.addEventListener("click", () => {
-      state.reviewFilters = { graph: "", sourceDoc: "", nodeType: "" };
+      state.reviewFilters = { graph: "", sourceDoc: "", nodeType: "", relationCode: "" };
       renderReviewCenter();
     });
     const selectionCount = () => {
