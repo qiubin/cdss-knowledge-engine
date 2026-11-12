@@ -236,3 +236,53 @@ class QueueRelationCodeTest(unittest.TestCase):
         summary = queue["summary"]
         self.assertEqual(summary["graph_relations"].get("draft"), 6)
         self.assertEqual(summary["graph_relations"].get("active"), 2)
+
+
+class RelationGroupsTest(unittest.TestCase):
+    def setUp(self):
+        # 与 RelationListItemsTest 相同的 fixture 搭建
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        root = Path(self.tmp.name)
+        self.graph_dir = root / "kg"
+        self.graph_dir.mkdir()
+        self.rules_path = root / "rules" / "managed_rules.json"
+        self.rules_path.parent.mkdir()
+        self.audit_path = root / "review" / "review_log.jsonl"
+        (self.graph_dir / "REVIEW-TEST2.json").write_text(
+            json.dumps(GRAPH2, ensure_ascii=False), encoding="utf-8"
+        )
+        self.rules_path.write_text("[]", encoding="utf-8")
+        self.service = ReviewService(self.graph_dir, self.rules_path, self.audit_path)
+
+    def test_groups_default_subjects_are_disease_and_syndrome(self):
+        groups = self.service.relation_groups("REVIEW-TEST2.json")
+        self.assertEqual([s["node_id"] for s in groups["subjects"]], ["ENTITY:disease:D1"])
+        subject = groups["subjects"][0]
+        self.assertEqual(subject["out_relation_count"], 4)   # S1, S2, self-loop, TP1
+        self.assertEqual(subject["pending_count"], 2)        # S2 draft, self-loop draft
+        self.assertEqual(subject["suspect_count"], 2)        # S2 端点+无溯源, self-loop 自环+方向
+
+    def test_groups_subject_type_all_includes_lab(self):
+        groups = self.service.relation_groups("REVIEW-TEST2.json", subject_type="all")
+        ids = {s["node_id"] for s in groups["subjects"]}
+        self.assertIn("ENTITY:lab:L1", ids)
+
+    def test_group_detail_sections_and_container_nesting(self):
+        detail = self.service.relation_group_detail("REVIEW-TEST2.json", "ENTITY:disease:D1")
+        by_code = {section["relation_code"]: section for section in detail["sections"]}
+        self.assertEqual(by_code["DISEASE_HAS_SYMPTOM"]["total"], 2)
+        self.assertEqual(by_code["DISEASE_HAS_DIAGNOSTIC_EVIDENCE"]["total"], 1)
+        tp = by_code["DISEASE_HAS_TREATMENT_PLAN"]
+        self.assertEqual(tp["total"], 1)                       # 容器自身这条边保留
+        self.assertEqual(tp["containers"][0]["container_node_id"], "ENTITY:treatment_plan:TP1")
+        nested = tp["containers"][0]["sections"]
+        self.assertEqual([s["relation_code"] for s in nested], ["TREATMENT_PLAN_INCLUDES_MEDICATION"])
+        self.assertEqual(nested[0]["section_key"], "ENTITY:treatment_plan:TP1:TREATMENT_PLAN_INCLUDES_MEDICATION")
+        self.assertEqual(nested[0]["items"][0]["graph_filename"], "REVIEW-TEST2.json")
+        self.assertEqual(detail["totals"]["total"], 4)
+
+    def test_group_detail_unknown_subject_404(self):
+        with self.assertRaises(ReviewError) as ctx:
+            self.service.relation_group_detail("REVIEW-TEST2.json", "ENTITY:disease:NOPE")
+        self.assertEqual(ctx.exception.status_code, 404)

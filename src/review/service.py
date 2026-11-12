@@ -42,6 +42,10 @@ def _relation_key(relation: Dict[str, Any]) -> Tuple[str, str, str]:
     )
 
 
+# 按病分组视图中，目标端为这些类型时展开其出边作为嵌套小节（仅一层）。
+CONTAINER_NODE_TYPES: Tuple[str, ...] = ("treatment_plan", "care_pathway", "order_set", "lab", "exam")
+
+
 def _relation_id(key: Tuple[str, str, str]) -> str:
     return "|".join(key)
 
@@ -256,6 +260,159 @@ class ReviewService:
                 item["item_type"], item.get("node_type", ""), item.get("name", ""),
             ),
         )
+
+    def _section_summary(
+        self, section_key: str, relation_code: str, relation_name: str,
+        items: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        return {
+            "section_key": section_key,
+            "relation_code": relation_code,
+            "relation_name": relation_name,
+            "total": len(items),
+            "status_counts": dict(Counter(item["status"] for item in items)),
+            "items": items,
+        }
+
+    def relation_groups(self, graph_filename: str, subject_type: str = "disease") -> Dict[str, Any]:
+        filename = normalize_graph_filename(graph_filename)
+        graph = self._load_graph(filename)
+        if subject_type == "syndrome":
+            allowed: Optional[Tuple[str, ...]] = ("syndrome",)
+        elif subject_type == "all":
+            allowed = None
+        else:
+            allowed = ("disease", "syndrome")
+        endpoint_type_map = load_endpoint_type_map()
+        duplicate_pairs = duplicate_relation_pairs(graph["relations"].values())
+        stats: Dict[str, Counter] = {}
+        for key, relation in graph["relations"].items():
+            source = graph["nodes"].get(key[0])
+            if source is None:
+                continue
+            source_type = str(source.get("node_type") or "")
+            if allowed is not None and source_type not in allowed:
+                continue
+            entry = stats.setdefault(key[0], Counter())
+            entry["total"] += 1
+            flags = relation_flags(
+                relation, source, graph["nodes"].get(key[2]) or {},
+                endpoint_type_map, duplicate_pairs,
+            )
+            if _status(relation) in ("draft", "stale"):
+                entry["pending"] += 1
+            if flags:
+                entry["suspect"] += 1
+        subjects = []
+        for node_id, entry in stats.items():
+            node = graph["nodes"][node_id]
+            subjects.append({
+                "node_id": node_id,
+                "name": str(node.get("name") or node_id),
+                "display_name": str(node.get("display_name") or node.get("name") or node_id),
+                "code": str(node.get("code") or node.get("concept_code") or ""),
+                "node_type": str(node.get("node_type") or ""),
+                "review_status": _status(node),
+                "out_relation_count": int(entry["total"]),
+                "pending_count": int(entry["pending"]),
+                "suspect_count": int(entry["suspect"]),
+            })
+        subjects.sort(key=lambda item: (-item["pending_count"], item["name"]))
+        return {"graph_filename": filename, "subjects": subjects}
+
+    def relation_group_detail(self, graph_filename: str, subject_node_id: str) -> Dict[str, Any]:
+        filename = normalize_graph_filename(graph_filename)
+        graph = self._load_graph(filename)
+        subject = graph["nodes"].get(subject_node_id)
+        if subject is None:
+            raise ReviewError("节点不存在", 404)
+        endpoint_type_map = load_endpoint_type_map()
+        duplicate_pairs = duplicate_relation_pairs(graph["relations"].values())
+        _, relation_counts, _ = self._dependency_index(filename)
+
+        def item_for(key: Tuple[str, str, str], relation: Dict[str, Any]) -> Dict[str, Any]:
+            return {
+                **self._relation_item(
+                    graph, key, relation, relation_counts, endpoint_type_map, duplicate_pairs,
+                ),
+                "graph_filename": filename,
+            }
+
+        sections: Dict[str, Dict[str, Any]] = {}
+        container_ids_by_section: Dict[str, List[str]] = {}
+        container_items: Dict[Tuple[str, str], List[Dict[str, Any]]] = {}
+        for key, relation in graph["relations"].items():
+            if key[0] != subject_node_id:
+                continue
+            entry = item_for(key, relation)
+            section = sections.setdefault(
+                key[1], self._section_summary(key[1], key[1], entry["name"], []),
+            )
+            section["items"].append(entry)
+            target = graph["nodes"].get(key[2]) or {}
+            if str(target.get("node_type") or "") not in CONTAINER_NODE_TYPES:
+                continue
+            ids = container_ids_by_section.setdefault(key[1], [])
+            if key[2] not in ids:
+                ids.append(key[2])
+            for ckey, crelation in graph["relations"].items():
+                if ckey[0] != key[2]:
+                    continue
+                container_items.setdefault((key[2], ckey[1]), []).append(item_for(ckey, crelation))
+        # setdefault 时 items 为空，total/status_counts 需在收集完成后重算。
+        for section in sections.values():
+            section["total"] = len(section["items"])
+            section["status_counts"] = dict(
+                Counter(item["status"] for item in section["items"])
+            )
+        ordered_keys = sorted(sections, key=lambda c: (-len(sections[c]["items"]), c))
+        sections_out = []
+        for code in ordered_keys:
+            section = sections[code]
+            containers = []
+            for container_id in container_ids_by_section.get(code, []):
+                node = graph["nodes"].get(container_id) or {}
+                nested = []
+                for (cid, ccode), items in container_items.items():
+                    if cid != container_id:
+                        continue
+                    nested.append(self._section_summary(
+                        f"{cid}:{ccode}", ccode,
+                        items[0]["name"] if items else ccode, items,
+                    ))
+                nested.sort(key=lambda item: (-item["total"], item["relation_code"]))
+                containers.append({
+                    "container_node_id": container_id,
+                    "container_name": str(node.get("name") or container_id),
+                    "display_name": str(node.get("display_name") or node.get("name") or container_id),
+                    "node_type": str(node.get("node_type") or ""),
+                    "sections": nested,
+                })
+            section["containers"] = containers
+            sections_out.append(section)
+        totals: Counter = Counter()
+        for section in sections_out:
+            totals.update(section["status_counts"])
+        suspect = sum(
+            1 for section in sections_out for item in section["items"] if item["flags"]
+        )
+        return {
+            "graph_filename": filename,
+            "subject": {
+                "node_id": subject_node_id,
+                "name": str(subject.get("name") or subject_node_id),
+                "display_name": str(subject.get("display_name") or subject.get("name") or subject_node_id),
+                "code": str(subject.get("code") or subject.get("concept_code") or ""),
+                "node_type": str(subject.get("node_type") or ""),
+                "review_status": _status(subject),
+            },
+            "totals": {
+                "total": sum(totals.values()),
+                "pending": int(totals.get("draft", 0) + totals.get("stale", 0)),
+                "suspect": suspect,
+            },
+            "sections": sections_out,
+        }
 
     def node_detail(self, graph_filename: str, node_id: str) -> Dict[str, Any]:
         filename = normalize_graph_filename(graph_filename)

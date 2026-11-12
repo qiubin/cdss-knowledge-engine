@@ -151,6 +151,16 @@ async def relation_impact(
     )
 
 
+@router.get("/relations/groups")
+async def relation_groups(graph_filename: str, subject_type: str = "disease"):
+    return service.relation_groups(graph_filename, subject_type=subject_type)
+
+
+@router.get("/relations/groups/{subject_node_id}")
+async def relation_group_detail(subject_node_id: str, graph_filename: str):
+    return service.relation_group_detail(graph_filename, subject_node_id)
+
+
 @router.get("/relations/{relation_id}")
 async def relation_detail(relation_id: str, graph_filename: str):
     return service.relation_detail(graph_filename, relation_id)
