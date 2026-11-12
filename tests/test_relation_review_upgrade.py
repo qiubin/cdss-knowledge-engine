@@ -113,3 +113,91 @@ class RelationFlagsTest(unittest.TestCase):
     def test_missing_endpoint_node_counts_as_inactive(self):
         flags = relation_flags(_rel("D1", "GONE"), _node("disease"), None, self.map, set())
         self.assertEqual([f["code"] for f in flags], ["endpoint_inactive"])
+
+
+from src.review.errors import ReviewError
+from src.review.service import ReviewService
+
+
+GRAPH2 = {
+    "schema_version": 1, "domain": "western", "anchor_types": ["disease"],
+    "diseases": [{"code": "I42.2", "name_cn": "测试病"}],
+    "evidences": [], "disease_evidence": [], "sources": [],
+    "nodes": [
+        {"id": "ENTITY:disease:D1", "node_type": "disease", "code": "I42.2", "name": "测试病", "review_status": "active"},
+        {"id": "ENTITY:symptom:S1", "node_type": "symptom", "code": "SYM_1", "name": "症状一", "review_status": "active"},
+        {"id": "ENTITY:symptom:S2", "node_type": "symptom", "code": "SYM_2", "name": "症状二", "review_status": "draft"},
+        {"id": "ENTITY:lab:L1", "node_type": "lab", "code": "LAB_1", "name": "检验一", "review_status": "active"},
+        {"id": "ENTITY:diagnostic_evidence:E1", "node_type": "diagnostic_evidence", "code": "LAB_1:CON_1", "name": "证据一", "review_status": "active"},
+        {"id": "ENTITY:treatment_plan:TP1", "node_type": "treatment_plan", "code": "TP1", "name": "测试病治疗方案", "review_status": "active"},
+        {"id": "ENTITY:medication:M1", "node_type": "medication", "code": "MED_1", "name": "药品一", "review_status": "active"},
+    ],
+    "relations": [
+        {"source_node_id": "ENTITY:disease:D1", "relation_code": "DISEASE_HAS_SYMPTOM", "target_node_id": "ENTITY:symptom:S1", "relation_name": "疾病有症状", "review_status": "active", "source_refs": ["DOC-x_p1_l1-5"]},
+        {"source_node_id": "ENTITY:disease:D1", "relation_code": "DISEASE_HAS_SYMPTOM", "target_node_id": "ENTITY:symptom:S2", "relation_name": "疾病有症状", "review_status": "draft", "source_refs": []},
+        {"source_node_id": "ENTITY:symptom:S1", "relation_code": "DISEASE_HAS_SYMPTOM", "target_node_id": "ENTITY:disease:D1", "relation_name": "疾病有症状", "review_status": "draft", "source_refs": ["DOC-x_p1_l1-5"]},
+        {"source_node_id": "ENTITY:disease:D1", "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE", "target_node_id": "ENTITY:disease:D1", "relation_name": "构成诊断依据", "review_status": "draft", "source_refs": ["DOC-x_p1_l1-5"]},
+        {"source_node_id": "ENTITY:lab:L1", "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE", "target_node_id": "ENTITY:diagnostic_evidence:E1", "relation_name": "检验形成证据", "review_status": "draft", "source_refs": ["DOC-x_p1_l1-5"]},
+        {"source_node_id": "ENTITY:lab:L1", "relation_code": "EXAM_HAS_DIAGNOSTIC_EVIDENCE", "target_node_id": "ENTITY:diagnostic_evidence:E1", "relation_name": "检查形成证据", "review_status": "draft", "source_refs": ["DOC-x_p1_l1-5"]},
+        {"source_node_id": "ENTITY:disease:D1", "relation_code": "DISEASE_HAS_TREATMENT_PLAN", "target_node_id": "ENTITY:treatment_plan:TP1", "relation_name": "疾病有治疗方案", "review_status": "active", "source_refs": ["DOC-x_p1_l1-5"]},
+        {"source_node_id": "ENTITY:treatment_plan:TP1", "relation_code": "TREATMENT_PLAN_INCLUDES_MEDICATION", "target_node_id": "ENTITY:medication:M1", "relation_name": "方案含药品", "review_status": "draft", "source_refs": ["DOC-x_p1_l1-5"]},
+    ],
+}
+
+
+class RelationListItemsTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        root = Path(self.tmp.name)
+        self.graph_dir = root / "kg"
+        self.graph_dir.mkdir()
+        self.rules_path = root / "rules" / "managed_rules.json"
+        self.rules_path.parent.mkdir()
+        self.audit_path = root / "review" / "review_log.jsonl"
+        (self.graph_dir / "REVIEW-TEST2.json").write_text(
+            json.dumps(GRAPH2, ensure_ascii=False), encoding="utf-8"
+        )
+        self.rules_path.write_text("[]", encoding="utf-8")
+        self.service = ReviewService(self.graph_dir, self.rules_path, self.audit_path)
+
+    def _rel_items(self, **kwargs):
+        return self.service.list_items("REVIEW-TEST2.json", item_type="relation", **kwargs)
+
+    def test_relation_code_filter(self):
+        items = self._rel_items(relation_code="DISEASE_HAS_SYMPTOM")
+        self.assertEqual(len(items), 3)
+        self.assertTrue(all(item["relation_code"] == "DISEASE_HAS_SYMPTOM" for item in items))
+
+    def test_node_type_matches_relation_endpoints(self):
+        codes = {item["item_id"] for item in self._rel_items(node_type="symptom")}
+        self.assertEqual(codes, {
+            "ENTITY:disease:D1|DISEASE_HAS_SYMPTOM|ENTITY:symptom:S1",
+            "ENTITY:disease:D1|DISEASE_HAS_SYMPTOM|ENTITY:symptom:S2",
+            "ENTITY:symptom:S1|DISEASE_HAS_SYMPTOM|ENTITY:disease:D1",
+        })
+
+    def test_node_type_filter_for_nodes_unchanged(self):
+        items = self.service.list_items("REVIEW-TEST2.json", item_type="node", node_type="symptom")
+        self.assertEqual({item["node_id"] for item in items}, {"ENTITY:symptom:S1", "ENTITY:symptom:S2"})
+
+    def test_relation_items_carry_endpoint_types_and_flags(self):
+        items = {item["item_id"]: item for item in self._rel_items()}
+        suspect = items["ENTITY:symptom:S1|DISEASE_HAS_SYMPTOM|ENTITY:disease:D1"]
+        self.assertEqual(suspect["source_node_type"], "symptom")
+        self.assertEqual([f["code"] for f in suspect["flags"]], ["direction_suspect"])
+        dirty = items["ENTITY:disease:D1|DISEASE_HAS_SYMPTOM|ENTITY:symptom:S2"]
+        self.assertEqual(sorted(f["code"] for f in dirty["flags"]), ["endpoint_inactive", "no_source_refs"])
+        loop = items["ENTITY:disease:D1|DISEASE_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:disease:D1"]
+        self.assertIn("self_loop", [f["code"] for f in loop["flags"]])
+        pair_codes = [f["code"] for f in items["ENTITY:lab:L1|LAB_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:E1"]["flags"]]
+        self.assertIn("duplicate_pair", pair_codes)
+
+    def test_direction_flags_use_real_templates(self):
+        # 真实模板里 DISEASE_HAS_SYMPTOM 的端点是 disease→symptom；
+        # 本 fixture 的干净边不应被标记方向可疑。
+        clean = {item["item_id"]: item for item in self._rel_items()}
+        self.assertEqual(
+            [f["code"] for f in clean["ENTITY:disease:D1|DISEASE_HAS_SYMPTOM|ENTITY:symptom:S1"]["flags"]],
+            [],
+        )

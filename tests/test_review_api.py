@@ -104,7 +104,12 @@ class ReviewApiTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         items = response.json()["items"]
-        self.assertEqual([i["name"] for i in items], ["待审症状"])
+        # node_type 新语义：node 按自身类型命中；relation 按源/目标端点类型命中，
+        # 故 symptom 同时命中节点「待审症状」与以症状为端点的 DISEASE_HAS_SYMPTOM 关系。
+        self.assertEqual(
+            [(i["item_type"], i["name"]) for i in items],
+            [("graph_node", "待审症状"), ("graph_relation", "DISEASE_HAS_SYMPTOM")],
+        )
         # source_doc 对无 source_refs 的条目应过滤为空
         response = self.request(
             "GET", "/api/review/queue?graph_filename=API-TEST.json&source_doc=DOC-NONE"

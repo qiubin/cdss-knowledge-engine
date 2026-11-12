@@ -22,6 +22,11 @@ from src.api.routes.rules import (
 )
 from .audit import AUDIT_PATH, append_audit, load_audit
 from .errors import ReviewError
+from .precheck import (
+    duplicate_relation_pairs,
+    load_endpoint_type_map,
+    relation_flags,
+)
 from .status import StatusTransitionError, next_graph_status
 
 
@@ -146,6 +151,42 @@ class ReviewService:
                     ] += 1
         return node_counts, relation_counts, by_rule
 
+    def _relation_item(
+        self,
+        graph: Dict[str, Any],
+        key: Tuple[str, str, str],
+        relation: Dict[str, Any],
+        relation_counts: Counter,
+        endpoint_type_map: Dict[str, Dict[str, List[str]]],
+        duplicate_pairs: set,
+    ) -> Dict[str, Any]:
+        source_node = graph["nodes"].get(key[0]) or {}
+        target_node = graph["nodes"].get(key[2]) or {}
+        return {
+            "item_type": "relation",
+            "item_id": _relation_id(key),
+            "source_node_id": key[0],
+            "relation_code": key[1],
+            "target_node_id": key[2],
+            "node_type": "relation",
+            "name": str(relation.get("relation_name") or key[1]),
+            "status": _status(relation),
+            "source_name": str(source_node.get("name") or key[0]),
+            "source_code": str(source_node.get("code") or source_node.get("concept_code") or ""),
+            "source_status": _status(source_node) if source_node else "missing",
+            "source_node_type": str(source_node.get("node_type") or ""),
+            "target_name": str(target_node.get("name") or key[2]),
+            "target_code": str(target_node.get("code") or target_node.get("concept_code") or ""),
+            "target_status": _status(target_node) if target_node else "missing",
+            "target_node_type": str(target_node.get("node_type") or ""),
+            "source_refs": list(relation.get("source_refs") or []),
+            "dependent_rule_count": int(relation_counts.get(_relation_id(key), 0)),
+            "updated_at": str(relation.get("reviewed_at") or ""),
+            "orphaned_from": list(relation.get("orphaned_from") or []),
+            "orphaned": bool(relation.get("orphaned_from")),
+            "flags": relation_flags(relation, source_node, target_node, endpoint_type_map, duplicate_pairs),
+        }
+
     def list_items(
         self,
         graph_filename: str,
@@ -155,12 +196,18 @@ class ReviewService:
         source_doc: Optional[str] = None,
         referenced_by_rule: Optional[bool] = None,
         q: Optional[str] = None,
+        relation_code: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         filename = normalize_graph_filename(graph_filename)
         graph = self._load_graph(filename)
         node_counts, relation_counts, _ = self._dependency_index(filename)
         query = str(q or "").strip().lower()
         items: List[Dict[str, Any]] = []
+        endpoint_type_map: Dict[str, Dict[str, List[str]]] = {}
+        duplicate_pairs: set = set()
+        if item_type in (None, "", "relation"):
+            endpoint_type_map = load_endpoint_type_map()
+            duplicate_pairs = duplicate_relation_pairs(graph["relations"].values())
         if item_type in (None, "", "node"):
             for node_id, node in graph["nodes"].items():
                 items.append({
@@ -178,36 +225,19 @@ class ReviewService:
                     "orphaned": bool(node.get("orphaned_from")),
                 })
         if item_type in (None, "", "relation"):
-            nodes_index = graph["nodes"]
             for key, relation in graph["relations"].items():
-                source_node = nodes_index.get(key[0]) or {}
-                target_node = nodes_index.get(key[2]) or {}
-                items.append({
-                    "item_type": "relation",
-                    "item_id": _relation_id(key),
-                    "source_node_id": key[0],
-                    "relation_code": key[1],
-                    "target_node_id": key[2],
-                    "node_type": "relation",
-                    "name": str(relation.get("relation_name") or key[1]),
-                    "status": _status(relation),
-                    "source_name": str(source_node.get("name") or key[0]),
-                    "source_code": str(source_node.get("code") or source_node.get("concept_code") or ""),
-                    "source_status": _status(source_node) if source_node else "missing",
-                    "target_name": str(target_node.get("name") or key[2]),
-                    "target_code": str(target_node.get("code") or target_node.get("concept_code") or ""),
-                    "target_status": _status(target_node) if target_node else "missing",
-                    "source_refs": list(relation.get("source_refs") or []),
-                    "dependent_rule_count": int(relation_counts.get(_relation_id(key), 0)),
-                    "updated_at": str(relation.get("reviewed_at") or ""),
-                    "orphaned_from": list(relation.get("orphaned_from") or []),
-                    "orphaned": bool(relation.get("orphaned_from")),
-                })
+                items.append(self._relation_item(
+                    graph, key, relation, relation_counts, endpoint_type_map, duplicate_pairs,
+                ))
         filtered = []
         for item in items:
             if status and item["status"] != status:
                 continue
-            if node_type and item.get("node_type") != node_type:
+            if node_type:
+                endpoint_types = (item.get("source_node_type"), item.get("target_node_type"))
+                if item.get("node_type") != node_type and node_type not in endpoint_types:
+                    continue
+            if relation_code and item.get("relation_code") != relation_code:
                 continue
             if source_doc and not any(str(ref).startswith(source_doc) for ref in item["source_refs"]):
                 continue
