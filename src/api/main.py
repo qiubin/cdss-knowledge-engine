@@ -34,6 +34,8 @@ app.include_router(guide_packages.router)
 app.include_router(neo4j_graph.router)
 app.include_router(profiles.router)
 app.include_router(auto_import.router)
+from src.api.routes import import_jobs
+app.include_router(import_jobs.router)
 app.include_router(kg_review.router)
 app.include_router(kg_review.audit_router)
 
