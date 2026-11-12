@@ -2126,6 +2126,16 @@
           <div class="field"><label>审核人</label><input id="reviewerName" value="${esc(localStorage.getItem("cdssReviewer") || "")}" placeholder="姓名"></div>
         </div>
       `, "", "不同疾病指南可入不同图谱；规则、推理和同步检查按规则所属图谱执行")}
+      ${panel("危险操作（测试用）", `
+        <div class="inline-controls">
+          <div class="field"><label>目标图谱</label><select id="clearGraphSelect"><option value="">加载中…</option></select></div>
+          <label><input type="checkbox" id="clearGraphContent" checked> 图谱内容</label>
+          <label><input type="checkbox" id="clearGraphRules" checked> 关联规则</label>
+          <button id="clearPreviewBtn" class="btn">预览清除范围</button>
+          <button id="clearExecuteBtn" class="btn danger" hidden>确认清除</button>
+        </div>
+        <div id="clearPreviewBody" class="muted">先预览再执行；执行前自动备份（.bak-日期-manual-clear），被删规则保留历史快照。</div>
+      `, "", "清空所选图谱的内容和/或该图谱名下的规则，方便重新导入测试；引用该图谱的推理与审核数据会失效")}
       <div class="grid c4">
         <div class="kpi"><span>疾病</span><strong>${graph.diseases.length}</strong></div>
         <div class="kpi"><span>证据</span><strong>${graph.evidences.length}</strong></div>
@@ -2238,6 +2248,45 @@
     $("#graphSelector").onchange = (e) => { state.graphFilename = e.target.value; renderGraph(); };
     $("#reviewerName").onchange = (event) => {
       localStorage.setItem("cdssReviewer", event.target.value.trim());
+    };
+    api("/api/kg/graphs").then((graphs) => {
+      const sel = $("#clearGraphSelect");
+      if (!sel) return;
+      sel.innerHTML = graphs.map((item) => `<option value="${esc(item.graph_filename)}" ${item.graph_filename === state.graphFilename ? "selected" : ""}>${esc(item.graph_filename)}</option>`).join("");
+    });
+    $("#clearPreviewBtn").onclick = async () => {
+      try {
+        const payload = {
+          graph_filename: $("#clearGraphSelect").value,
+          clear_graph: $("#clearGraphContent").checked,
+          clear_rules: $("#clearGraphRules").checked,
+          dry_run: true,
+        };
+        if (!payload.clear_graph && !payload.clear_rules) return toast("至少勾选一项清除内容", true);
+        const preview = await api("/api/kg/clear", { json: payload });
+        const ruleList = preview.rule_ids.length
+          ? `（${preview.rule_ids.slice(0, 8).join("、")}${preview.rule_ids.length > 8 ? " 等" : ""}）`
+          : "";
+        $("#clearPreviewBody").innerHTML = `将清除 <strong>${esc(preview.graph_filename)}</strong>：节点 ${preview.node_count}、关系 ${preview.relation_count}、规则 ${preview.rule_ids.length} 条${ruleList}`;
+        $("#clearExecuteBtn").hidden = false;
+      } catch (error) { toast(error.message, true); }
+    };
+    $("#clearExecuteBtn").onclick = async () => {
+      const filename = $("#clearGraphSelect").value;
+      const typed = prompt(`此操作将清除 ${filename} 的勾选内容（执行前自动备份）。请输入图谱文件名确认：`);
+      if ((typed || "").trim() !== filename) return toast("文件名不匹配，已取消", true);
+      try {
+        const result = await api("/api/kg/clear", {
+          json: {
+            graph_filename: filename,
+            clear_graph: $("#clearGraphContent").checked,
+            clear_rules: $("#clearGraphRules").checked,
+            dry_run: false,
+          },
+        });
+        toast(`已清除：节点 ${result.node_count} / 关系 ${result.relation_count} / 规则 ${result.cleared_rules}；备份 ${result.backups.join("、") || "无"}`);
+        renderGraph();
+      } catch (error) { toast(error.message, true); }
     };
 
     const currentReviewer = () => {

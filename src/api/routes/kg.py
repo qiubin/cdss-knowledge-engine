@@ -1315,3 +1315,108 @@ async def get_stats(graph_filename: str = DEFAULT_GRAPH_FILENAME):
         "rules": rule_count,
     }
 
+
+
+class GraphClearRequest(BaseModel):
+    graph_filename: str
+    clear_graph: bool = True
+    clear_rules: bool = True
+    dry_run: bool = True
+
+
+def clear_graph_and_rules(
+    request: GraphClearRequest,
+    kg_dir: Optional[Path] = None,
+    rules_path: Optional[Path] = None,
+    snapshot_dir: Optional[Path] = None,
+) -> Dict[str, Any]:
+    """Danger-zone wipe for testing: clear a graph and/or the rules bound to it.
+
+    Every destructive run leaves ``.bak-YYYYMMDD-manual-clear`` backups and a
+    per-rule deletion snapshot; ``dry_run`` reports what would go away.
+    """
+    import shutil
+    import time
+
+    # Deferred: rules.py imports this module at load time.
+    from .rules import MANAGED_RULES_PATH, _load_all_rules, _save_all_rules
+    from src.rules.history import record_snapshot
+
+    if not request.clear_graph and not request.clear_rules:
+        raise HTTPException(422, "至少选择一项清除内容（图谱内容或关联规则）")
+    filename = normalize_graph_filename(request.graph_filename)
+    base = Path(kg_dir) if kg_dir is not None else KG_DIR
+    graph_path = base / filename
+    graph: Dict[str, Any] = {}
+    if graph_path.exists():
+        graph = json.loads(graph_path.read_text(encoding="utf-8"))
+
+    rules_file = Path(rules_path) if rules_path is not None else MANAGED_RULES_PATH
+    rules = _load_all_rules(rules_path)
+    matched = [
+        rule for rule in rules
+        if str(rule.get("graph_filename") or "").strip() == filename
+    ]
+    nodes = graph.get("nodes") or []
+    relations = graph.get("relations") or []
+    preview = {
+        "graph_filename": filename,
+        "node_count": len(nodes),
+        "relation_count": len(relations),
+        "rule_ids": [rule.get("rule_id", "") for rule in matched],
+        "dry_run": True,
+    }
+    if request.dry_run:
+        return preview
+
+    stamp = time.strftime("%Y%m%d")
+    backups: List[str] = []
+
+    if request.clear_graph:
+        base.mkdir(parents=True, exist_ok=True)
+        if graph_path.exists():
+            backup_path = base / f"{filename}.bak-{stamp}-manual-clear"
+            shutil.copy2(graph_path, backup_path)
+            backups.append(backup_path.name)
+        skeleton: Dict[str, Any] = {
+            "domain": graph.get("domain") or "western",
+            "schema_version": graph.get("schema_version", 1),
+            "nodes": [],
+            "relations": [],
+            "diseases": [],
+            "evidences": [],
+            "disease_evidence": [],
+            "sources": [],
+        }
+        if graph.get("anchor_types"):
+            skeleton["anchor_types"] = graph["anchor_types"]
+        graph_path.write_text(
+            json.dumps(skeleton, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+
+    cleared_rules = 0
+    if request.clear_rules and matched:
+        if rules_file.exists():
+            backup_path = rules_file.with_name(f"{rules_file.name}.bak-{stamp}-manual-clear")
+            shutil.copy2(rules_file, backup_path)
+            backups.append(backup_path.name)
+        matched_ids = {id(rule) for rule in matched}
+        _save_all_rules(
+            [rule for rule in rules if id(rule) not in matched_ids], rules_path
+        )
+        for rule in matched:
+            record_snapshot(rule, "delete", directory=snapshot_dir)
+        cleared_rules = len(matched)
+
+    return {
+        **{k: v for k, v in preview.items() if k != "dry_run"},
+        "cleared_rules": cleared_rules,
+        "backups": backups,
+        "dry_run": False,
+    }
+
+
+@router.post("/clear")
+async def clear_graph(request: GraphClearRequest):
+    """Danger zone: preview (dry_run) or wipe a graph and its bound rules."""
+    return clear_graph_and_rules(request)
