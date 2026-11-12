@@ -1,0 +1,8 @@
+{
+  "active": "drools",
+  "drools": {
+    "base_url": "http://127.0.0.1:8090",
+    "timeout_seconds": 5,
+    "fail_over_native": true
+  }
+}
