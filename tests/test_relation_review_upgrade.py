@@ -201,3 +201,38 @@ class RelationListItemsTest(unittest.TestCase):
             [f["code"] for f in clean["ENTITY:disease:D1|DISEASE_HAS_SYMPTOM|ENTITY:symptom:S1"]["flags"]],
             [],
         )
+
+
+from src.review.queue import build_queue
+
+
+class QueueRelationCodeTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        root = Path(self.tmp.name)
+        self.graph_dir = root / "kg"
+        self.graph_dir.mkdir()
+        self.rules_path = root / "rules" / "managed_rules.json"
+        self.rules_path.parent.mkdir()
+        self.audit_path = root / "review" / "review_log.jsonl"
+        (self.graph_dir / "REVIEW-TEST2.json").write_text(
+            json.dumps(GRAPH2, ensure_ascii=False), encoding="utf-8"
+        )
+        self.rules_path.write_text("[]", encoding="utf-8")
+        self.service = ReviewService(self.graph_dir, self.rules_path, self.audit_path)
+
+    def test_build_queue_filters_relation_code(self):
+        queue = build_queue(
+            service=self.service, graph_files=["REVIEW-TEST2.json"],
+            item_type="graph_relation", relation_code="DISEASE_HAS_SYMPTOM",
+        )
+        self.assertTrue(queue["items"])
+        self.assertTrue(all(item["relation_code"] == "DISEASE_HAS_SYMPTOM" for item in queue["items"]))
+
+    def test_build_queue_summary_counts_relations(self):
+        # GRAPH2 共 8 条关系：6 draft / 2 active（与 fixture 实际一致）。
+        queue = build_queue(service=self.service, graph_files=["REVIEW-TEST2.json"], limit=300)
+        summary = queue["summary"]
+        self.assertEqual(summary["graph_relations"].get("draft"), 6)
+        self.assertEqual(summary["graph_relations"].get("active"), 2)

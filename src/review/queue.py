@@ -40,6 +40,7 @@ def build_queue(
     node_type: Optional[str] = None,
     source_doc: Optional[str] = None,
     q: Optional[str] = None,
+    relation_code: Optional[str] = None,
     limit: int = 300,
 ) -> Dict[str, Any]:
     service = service or ReviewService()
@@ -69,6 +70,7 @@ def build_queue(
             )
             for item in service.list_items(
                 filename, status=status, item_type=wanted, node_type=node_type, source_doc=source_doc, q=q,
+                relation_code=relation_code,
             ):
                 items.append({
                     **item,

@@ -75,6 +75,7 @@ async def review_items(
     source_doc: Optional[str] = None,
     referenced_by_rule: Optional[bool] = None,
     q: Optional[str] = None,
+    relation_code: Optional[str] = None,
 ):
     return service.list_items(
         graph_filename,
@@ -84,6 +85,7 @@ async def review_items(
         source_doc=source_doc,
         referenced_by_rule=referenced_by_rule,
         q=q,
+        relation_code=relation_code,
     )
 
 
@@ -193,6 +195,7 @@ async def review_queue(
     node_type: Optional[str] = None,
     source_doc: Optional[str] = None,
     q: Optional[str] = None,
+    relation_code: Optional[str] = None,
     limit: int = 300,
 ):
     return build_queue(
@@ -205,6 +208,7 @@ async def review_queue(
         node_type=node_type,
         source_doc=source_doc,
         q=q,
+        relation_code=relation_code,
         limit=limit,
     )
 
