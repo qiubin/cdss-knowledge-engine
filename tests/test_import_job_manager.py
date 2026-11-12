@@ -10,7 +10,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.api.import_job_manager import (
-    ImportController, ImportJobManager, ImportStopped,
+    ImportController, ImportJob, ImportJobManager, ImportStopped,
 )
 
 
@@ -161,12 +161,54 @@ class ManagerLifecycleTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(seen), 1)
         self.assertIs(seen[0], job)
 
+    def test_prune_only_evicts_terminal_jobs(self):
+        """_prune 兜底分支只逐出终态条目；无非终态可逐时允许暂时超 50。"""
+        mgr = ImportJobManager()
+        # 51 个非终态（running/paused/字符串占位）：一个都不能被逐出
+        mgr._jobs["R00"] = ImportJob(job_id="R00", mode="auto", doc_title="t")
+        mgr._jobs["R00"].status = "running"
+        mgr._jobs["P00"] = ImportJob(job_id="P00", mode="auto", doc_title="t")
+        mgr._jobs["P00"].status = "paused"
+        for i in range(49):
+            mgr._jobs[f"Q{i:02d}"] = "x"  # 字符串占位（getattr status 兜底 → 非终态）
+        mgr._prune()
+        self.assertIn("R00", mgr._jobs)
+        self.assertIn("P00", mgr._jobs)
+        self.assertEqual(len(mgr._jobs), 51)  # 允许暂时超过 MAX_JOBS
+
+        # 终态充足时：只逐出最旧终态，非终态与较新终态保留
+        mgr2 = ImportJobManager()
+        for i in range(45):
+            mgr2._jobs[f"Q{i:02d}"] = "x"
+        for i in range(10):
+            done = ImportJob(job_id=f"D{i}", mode="auto", doc_title="t")
+            done.status = "succeeded"
+            done.finished_at = float(i)
+            mgr2._jobs[f"D{i}"] = done
+        mgr2._prune()  # 55 → 50：逐出 D0..D4
+        self.assertEqual(len(mgr2._jobs), 50)
+        self.assertNotIn("D0", mgr2._jobs)
+        self.assertNotIn("D4", mgr2._jobs)
+        self.assertIn("D5", mgr2._jobs)  # 较新终态保留
+        self.assertIn("D9", mgr2._jobs)
+        self.assertEqual(
+            len([k for k in mgr2._jobs if k.startswith("Q")]), 45
+        )  # 非终态全部保留
+
     def test_list_jobs_keeps_most_recent_50(self):
+        """终态条目为主时仍维持 50 上限：最旧终态逐出、最新 50 个保留。"""
         mgr = ImportJobManager()
         for i in range(55):
-            mgr._jobs[f"J{i:02d}"] = "x"
+            done = ImportJob(job_id=f"J{i:02d}", mode="auto", doc_title="t")
+            done.status = "succeeded"
+            done.finished_at = float(i)
+            mgr._jobs[f"J{i:02d}"] = done
         mgr._prune()
         self.assertEqual(len(mgr._jobs), 50)
+        self.assertNotIn("J00", mgr._jobs)  # 最旧被逐
+        self.assertNotIn("J04", mgr._jobs)
+        self.assertIn("J05", mgr._jobs)
+        self.assertIn("J54", mgr._jobs)     # 最新保留
 
 
 if __name__ == "__main__":

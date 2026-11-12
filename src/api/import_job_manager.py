@@ -92,12 +92,10 @@ class ImportJobManager:
     def _prune(self) -> None:
         finished = [j for j in self._jobs.values() if getattr(j, "status", None) in _TERMINAL]
         finished.sort(key=lambda j: j.finished_at or 0)
-        while len(self._jobs) > MAX_JOBS:
-            if finished:
-                oldest = finished.pop(0)
-                self._jobs.pop(oldest.job_id, None)
-            else:
-                self._jobs.pop(next(iter(self._jobs)), None)
+        while len(self._jobs) > MAX_JOBS and finished:
+            oldest = finished.pop(0)
+            self._jobs.pop(oldest.job_id, None)
+        # 无终态可逐时保留超额注册表：单机单用户，逐出非终态会导致轮询 404
 
     def submit(
         self,
