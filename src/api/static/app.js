@@ -50,6 +50,7 @@
     reviewItems: [],
   };
   let importTimer = null;
+  let importSubmitting = false; // 「开始导入」提交进行中：防双击重复建任务
   window.__cdssState = state;
 
   const $ = (selector) => document.querySelector(selector);
@@ -597,7 +598,11 @@
           <button id="pendingDiscardBtn" class="btn">重新选择</button>
         </div></div>
       </section>`;
-    $("#jobStartBtn").onclick = () => startImportJob();
+    $("#jobStartBtn").onclick = (event) => {
+      const btn = event.currentTarget;
+      btn.disabled = true; // 双击防护：settle 后恢复；成功时面板被任务卡片替换
+      startImportJob().finally(() => { btn.disabled = false; });
+    };
     $("#pendingDiscardBtn").onclick = () => { state.pendingUpload = null; renderPendingUpload(); };
   }
 
@@ -641,7 +646,11 @@
     $("#jobPauseBtn")?.addEventListener("click", () => importJobControl("pause"));
     $("#jobResumeBtn")?.addEventListener("click", () => importJobControl("resume"));
     $("#jobStopBtn")?.addEventListener("click", () => importJobControl("stop"));
-    $("#jobRestartBtn")?.addEventListener("click", () => startImportJob());
+    $("#jobRestartBtn")?.addEventListener("click", (event) => {
+      const btn = event.currentTarget;
+      btn.disabled = true; // 同开始按钮：提交进行中防双击
+      startImportJob().finally(() => { btn.disabled = false; });
+    });
   }
 
   function renderImportJobSummary(job) {
@@ -669,7 +678,9 @@
   async function startImportJob() {
     const pending = state.pendingUpload;
     if (!pending) return toast("请先选择指南 PDF", true);
+    if (importSubmitting) return toast("任务正在提交，请勿重复点击", true);
     if (activeImportJob()) return toast("已有导入任务正在进行，请等待完成或停止当前任务", true);
+    importSubmitting = true;
     stopImportPolling();
     // Hide results from a previous document so a failed new parse cannot be
     // mistaken for the old success banner.
@@ -693,6 +704,8 @@
     } catch (error) {
       toast(`任务提交失败：${error.message}`, true);
       return;
+    } finally {
+      importSubmitting = false; // 请求 settle（成功/失败）即解除提交锁
     }
     state.importJob = {
       job_id: created.job_id,
