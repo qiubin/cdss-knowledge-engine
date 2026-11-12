@@ -112,6 +112,32 @@ class ManagerLifecycleTest(unittest.IsolatedAsyncioTestCase):
             await asyncio.sleep(0.02)
         self.assertEqual(job.status, "stopped")
 
+    async def test_on_finish_called_with_terminal_job(self):
+        """submit 的 on_finish 在 finally 里收到终态 job（成功与失败路径）。"""
+        mgr = ImportJobManager()
+        seen = []
+        async def ok(controller):
+            return {"doc_id": "D1"}
+        job = mgr.submit("auto", "A", ok, on_finish=seen.append)
+        for _ in range(100):
+            if job.status in {"succeeded", "failed", "stopped"}: break
+            await asyncio.sleep(0.02)
+        self.assertEqual(job.status, "succeeded")
+        self.assertEqual(len(seen), 1)
+        self.assertIs(seen[0], job)
+        self.assertEqual(seen[0].status, "succeeded")
+
+        async def boom(controller):
+            raise RuntimeError("终态回调")
+        job2 = mgr.submit("auto", "B", boom, on_finish=seen.append)
+        for _ in range(100):
+            if job2.status in {"succeeded", "failed", "stopped"}: break
+            await asyncio.sleep(0.02)
+        self.assertEqual(job2.status, "failed")
+        self.assertEqual(len(seen), 2)
+        self.assertIs(seen[1], job2)
+        self.assertEqual(seen[1].status, "failed")
+
     def test_list_jobs_keeps_most_recent_50(self):
         mgr = ImportJobManager()
         for i in range(55):

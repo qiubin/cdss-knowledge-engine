@@ -103,7 +103,9 @@ class ImportJobManager:
         mode: str,
         doc_title: str,
         runner: Callable[[ImportController], Awaitable[Dict[str, Any]]],
+        on_finish: Optional[Callable[[ImportJob], None]] = None,
     ) -> ImportJob:
+        """on_finish（可选）在 finally 中收到终态 job，供调用方做日志等留痕。"""
         job = ImportJob(job_id=f"JOB-{uuid.uuid4().hex[:8]}", mode=mode, doc_title=doc_title)
         job.control.pause_event.set()
         self._jobs[job.job_id] = job
@@ -135,6 +137,11 @@ class ImportJobManager:
                 job.log(f"任务失败：{job.error}", "error")
             finally:
                 job.finished_at = time.time()
+                if on_finish is not None:
+                    try:
+                        on_finish(job)
+                    except Exception as hook_error:  # noqa: BLE001 - 留痕失败不拖垮生命周期
+                        job.log(f"收尾回调失败：{hook_error}", "warn")
                 self._prune()
 
         job.task = asyncio.get_event_loop().create_task(_wrapped())

@@ -8,7 +8,9 @@ from typing import Any, Dict
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
-from src.api.import_job_manager import ImportController, ImportJob, manager
+from src.api.import_job_manager import (
+    FAILED, SUCCEEDED, STOPPED, ImportController, ImportJob, manager,
+)
 from src.extraction.auto_pipeline import run_auto_pipeline
 from src.extraction.graph_binding import resolve_upload_graph_filename
 from src.extraction.repository import ExtractionConfigRepository
@@ -136,17 +138,60 @@ async def create_import_job(
             mode=mode, template_id=template_id, graph_name=resolved_graph,
         )
 
-    job = manager.submit(mode, doc_title, runner)
+    job = manager.submit(mode, doc_title, runner, on_finish=_log_job_finished)
     _log_job_created(job, doc_id)
     return {"job_id": job.job_id, "status": job.status, "doc_id": doc_id}
 
 
-def _log_job_created(job: ImportJob, doc_id: str) -> None:
+# job_id -> 建任务时的 doc_id：终态前 job.result 为空，pause/resume 留痕需回查
+_JOB_DOC_IDS: Dict[str, str] = {}
+
+
+def _job_doc_id(job: ImportJob) -> str:
+    """留痕 doc_id：先查建任务登记，再兜底 result（auto/template 终态均含 doc_id）。"""
+    if job.job_id in _JOB_DOC_IDS:
+        return _JOB_DOC_IDS[job.job_id]
+    result = job.result if isinstance(job.result, dict) else {}
+    return result.get("doc_id") or ""
+
+
+def _log_job_event(job: ImportJob, status: str, **extra: Any) -> None:
+    """导入日志留痕：字段沿用 _log_job_created 的惯例（doc_id/doc_title/status/mode/job_id）。"""
     from .pdf import _append_import_log
     _append_import_log({
-        "doc_id": doc_id, "doc_title": job.doc_title, "status": "started",
-        "mode": job.mode.replace("template-", ""), "job_id": job.job_id,
+        "doc_id": _job_doc_id(job), "doc_title": job.doc_title, "status": status,
+        "mode": job.mode.replace("template-", ""), "job_id": job.job_id, **extra,
     })
+
+
+# job.result 键 -> 留痕键（成功条目仅在 result 有时附带）
+_RESULT_COUNT_KEYS = {
+    "entity_count": "entity_count",
+    "relation_count": "relation_count",
+    "rule_count": "rule_count",
+    "total_pages": "pages",
+}
+
+
+def _log_job_finished(job: ImportJob) -> None:
+    """manager.submit 的 on_finish：succeeded/failed/stopped 终态留痕。"""
+    if job.status == SUCCEEDED:
+        result = job.result if isinstance(job.result, dict) else {}
+        _log_job_event(job, "success", **{
+            log_key: result[res_key]
+            for res_key, log_key in _RESULT_COUNT_KEYS.items()
+            if res_key in result
+        })
+    elif job.status == FAILED:
+        _log_job_event(job, "failed", error=(job.error or "")[:300])
+    elif job.status == STOPPED:
+        _log_job_event(job, "stopped")
+    _JOB_DOC_IDS.pop(job.job_id, None)  # 终态后无需回查，防 map 无界增长
+
+
+def _log_job_created(job: ImportJob, doc_id: str) -> None:
+    _JOB_DOC_IDS[job.job_id] = doc_id
+    _log_job_event(job, "started")
 
 
 @router.get("/jobs")
@@ -177,12 +222,16 @@ async def _dispatch(job_id: str, action: str) -> ImportJob:
 
 @router.post("/jobs/{job_id}/pause")
 async def pause_import_job(job_id: str):
-    return (await _dispatch(job_id, "pause")).to_dict()
+    job = await _dispatch(job_id, "pause")
+    _log_job_event(job, "paused")
+    return job.to_dict()
 
 
 @router.post("/jobs/{job_id}/resume")
 async def resume_import_job(job_id: str):
-    return (await _dispatch(job_id, "resume")).to_dict()
+    job = await _dispatch(job_id, "resume")
+    _log_job_event(job, "resumed")
+    return job.to_dict()
 
 
 @router.post("/jobs/{job_id}/stop")
