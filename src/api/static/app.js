@@ -424,6 +424,26 @@
     };
   }
 
+  function templateGraphFilename(t) {
+    return t.graph_filename || `KG-${t.template_id || "GENERIC_GUIDELINE_V1"}.json`;
+  }
+
+  function refreshUploadGraphOptions() {
+    const sel = $("#uploadGraph");
+    if (!sel) return;
+    const template = state.templates.find((t) => t.template_id === $("#uploadTemplate")?.value);
+    const domain = template ? normalizeDomainClient(template.domain) : "";
+    const graphs = (state.uploadGraphs || []).filter((g) => !domain || normalizeDomainClient(g.domain) === domain);
+    const choice = state.uploadGraphChoice || "follow";
+    sel.innerHTML = [
+      `<option value="follow">跟随模板（${esc(templateGraphFilename(template || {}))}）</option>`,
+      ...graphs.map((g) => `<option value="${esc(g.graph_filename)}">${esc(g.graph_filename)}</option>`),
+      `<option value="__new__">＋ 新建图谱…</option>`,
+    ].join("");
+    sel.value = choice === "follow" || choice === "__new__" || graphs.some((g) => g.graph_filename === choice) ? choice : "follow";
+    $("#uploadGraphNew").hidden = sel.value !== "__new__";
+  }
+
   async function renderImport() {
     await loadBase();
     await loadExtractionSettings();
@@ -454,6 +474,7 @@
         <div class="inline-controls">
           <div class="field"><label>解析方式</label><select id="uploadMode"><option value="local">本地模板解析</option><option value="llm">大模型解析</option></select></div>
           <div class="field"><label>抽取模板</label><select id="uploadTemplate">${state.templates.map((t) => `<option value="${esc(t.template_id)}">[${normalizeDomainClient(t.domain) === "tcm" ? "中医" : "西医"}] ${esc(t.name)} / ${esc(t.template_id)}</option>`).join("")}</select></div>
+          <div class="field"><label>目的图谱</label><div id="uploadGraphWrap"><select id="uploadGraph"></select><input id="uploadGraphNew" placeholder="新图谱文件名，如 KG-RESPIRATORY_V1.json" hidden></div></div>
           <div class="field"><label>API Key</label><input value="${state.extractionConfig.llm.api_key_configured ? "环境变量已配置" : "未配置"}" readonly></div>
         </div>
         <div id="dropzone" class="dropzone"><strong>点击或拖拽 PDF 到此处</strong><p class="muted">解析页码、行号与正文片段；自动抽取实体并生成候选规则</p></div>
@@ -484,6 +505,12 @@
     $("#uploadMode").onchange = (e) => {
       if (e.target.value === "llm" && !state.extractionConfig.llm.api_key_configured) toast("当前环境变量未配置大模型 API Key，调用将失败", true);
     };
+    $("#uploadTemplate").onchange = () => { state.uploadGraphChoice = $("#uploadGraph")?.value || "follow"; refreshUploadGraphOptions(); };
+    $("#uploadGraph").onchange = (e) => {
+      state.uploadGraphChoice = e.target.value;
+      $("#uploadGraphNew").hidden = e.target.value !== "__new__";
+    };
+    api("/api/kg/graphs").then((graphs) => { state.uploadGraphs = graphs; refreshUploadGraphOptions(); }).catch(() => { state.uploadGraphs = []; });
     if (state.importJob?.status === "running") setImportBusy(true);
     renderImportJob();
     if (doc) renderImportResult();
@@ -640,10 +667,22 @@
   async function uploadFile(file) {
     if (!file.name.toLowerCase().endsWith(".pdf")) return toast("仅支持 PDF 文件", true);
     if (state.importJob?.status === "running") return toast("已有解析任务正在进行，请等待完成", true);
+    const graphSel = $("#uploadGraph");
+    let targetGraph = "";
+    if (graphSel && graphSel.value === "__new__") {
+      const name = ($("#uploadGraphNew")?.value || "").trim();
+      if (!/^[A-Za-z0-9][A-Za-z0-9_.-]*(\.json)?$/.test(name) || name.includes("..")) {
+        return toast("新图谱文件名无效：仅限字母、数字、点、下划线、连字符", true);
+      }
+      targetGraph = name;
+    } else if (graphSel && graphSel.value !== "follow") {
+      targetGraph = graphSel.value;
+    }
     startImportJob("template", file.name);
     const form = new FormData(); form.append("file", file);
     form.append("extraction_mode", $("#uploadMode").value);
     form.append("template_id", $("#uploadTemplate").value);
+    if (targetGraph) form.append("graph_filename", targetGraph);
     try {
       state.doc = await api("/api/pdf/upload", { method: "POST", body: form });
       state.importTab = "entities";

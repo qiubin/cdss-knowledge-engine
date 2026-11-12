@@ -22,3 +22,21 @@ def resolve_template_graph_filename(template: Any) -> str:
         return "stemi_graph.json"
     safe_id = re.sub(r"[^A-Za-z0-9_.-]+", "_", template_id).strip("._-")
     return f"KG-{safe_id or 'GENERIC_GUIDELINE_V1'}.json"
+
+
+def resolve_upload_graph_filename(template: Any, requested: str = "") -> str:
+    """Resolve a guide upload's destination graph.
+
+    Empty ``requested`` keeps the template binding.  A requested name may
+    target an existing graph or a brand-new one and follows the same
+    filename rules as kg assets (``.json`` suffix auto-appended, path
+    traversal rejected).
+    """
+    name = (requested or "").strip()
+    if not name:
+        return resolve_template_graph_filename(template)
+    if not name.endswith(".json"):
+        name = f"{name}.json"
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*\.json", name) or ".." in name:
+        raise ValueError(f"目的图谱文件名无效: {requested}")
+    return name

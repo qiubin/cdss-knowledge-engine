@@ -13,7 +13,10 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from ...extraction.models import ExtractionTemplate
-from ...extraction.graph_binding import resolve_template_graph_filename
+from ...extraction.graph_binding import (
+    resolve_template_graph_filename,
+    resolve_upload_graph_filename,
+)
 from ...domains import get_profile, normalize_domain
 from ...extraction.repository import ExtractionConfigRepository, ExtractionTemplateRepository
 from ...extraction.service import extract
@@ -303,6 +306,7 @@ async def upload_pdf(
     extraction_mode: Optional[str] = Form(None),
     template_id: Optional[str] = Form(None),
     domain: Optional[str] = Form(None),
+    graph_filename: Optional[str] = Form(None),
 ):
     """Upload a guideline PDF, parse it, and extract clinical entities."""
     if not file.filename or not file.filename.lower().endswith(".pdf"):
@@ -373,7 +377,12 @@ async def upload_pdf(
         extra_warnings.append(
             "本地模板解析在长篇指南上容易产生重复或噪声规则；建议改用大模型解析并人工审核。"
         )
-    graph_filename = resolve_template_graph_filename(template)
+    try:
+        graph_filename = resolve_upload_graph_filename(template, graph_filename or "")
+    except ValueError as e:
+        file_path.unlink(missing_ok=True)
+        _log_import("failed", stage="template", error=str(e)[:300])
+        raise HTTPException(422, str(e))
 
     result = ExtractionResult(
         doc_id=doc_id,
