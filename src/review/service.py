@@ -335,6 +335,8 @@ class ReviewService:
                 **self._relation_item(
                     graph, key, relation, relation_counts, endpoint_type_map, duplicate_pairs,
                 ),
+                # 审核台契约用 graph_relation（同 queue 端点映射），动作链路据此分发
+                "item_type": "graph_relation",
                 "graph_filename": filename,
             }
 

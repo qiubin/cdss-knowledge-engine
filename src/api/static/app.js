@@ -3726,16 +3726,9 @@
     const sections = detail.sections || [];
     state.byDiseaseSections = sections;
     state.byDiseaseItems = new Map();
-    // 分组接口沿用队列内部表示 item_type="relation"；审核台助手
-    // （relationEndpointBlocked / submitReviewAction / itemPayload /
-    // reviewItemTitle）按 "graph_relation" 判别，入 state 前统一归一化。
-    const normalize = (item) => {
-      if (item.item_type === "relation") item.item_type = "graph_relation";
-      state.byDiseaseItems.set(item.item_id, item);
-    };
     sections.forEach((section) => {
-      (section.items || []).forEach(normalize);
-      (section.containers || []).forEach((container) => (container.sections || []).forEach((nested) => (nested.items || []).forEach(normalize)));
+      (section.items || []).forEach((item) => state.byDiseaseItems.set(item.item_id, item));
+      (section.containers || []).forEach((container) => (container.sections || []).forEach((nested) => (nested.items || []).forEach((item) => state.byDiseaseItems.set(item.item_id, item))));
     });
     const subject = detail.subject || {};
     mount.innerHTML = `
