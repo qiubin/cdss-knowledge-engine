@@ -882,3 +882,15 @@ tr:last-child td { border-bottom: 0; }
 .ref-line.hit { background: rgba(255, 200, 60, .35); border-radius: 3px; padding: 0 3px; }
 .ref-line.hit .ref-text { font-weight: 600; }
 .ref-more { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* 疑似重复分组与关联条目 */
+.dupe-group { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+.dupe-head { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.dupe-nodes { display: grid; gap: 6px; margin-bottom: 8px; }
+.dupe-node { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+.related-list { display: grid; gap: 4px; }
+.related-row { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.related-rel { color: var(--muted); min-width: 110px; background: none; border: none; cursor: pointer; padding: 2px 4px; text-align: left; }
+.related-rel:hover { color: var(--fg); text-decoration: underline; }
+.related-node { display: inline-flex; gap: 6px; align-items: center; background: none; border: none; cursor: pointer; padding: 2px 4px; border-radius: 4px; }
+.related-node:hover { background: var(--accent-soft); }

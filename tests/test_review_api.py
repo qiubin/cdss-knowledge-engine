@@ -165,6 +165,20 @@ class ReviewApiTest(unittest.TestCase):
         self.assertIn("[证据不足]", audit["items"][0]["note"])
         self.assertIn("请核对指南第 3 页", audit["items"][0]["note"])
 
+    def test_node_detail_relations_include_neighbor_summary(self):
+        response = self.request(
+            "GET",
+            "/api/kg/nodes/ENTITY%3Adisease%3AI21.0?graph_filename=API-TEST.json",
+        )
+        self.assertEqual(response.status_code, 200)
+        relations = response.json()["relations"]
+        self.assertTrue(relations)
+        first = relations[0]
+        self.assertIn("source", first)
+        self.assertIn("target", first)
+        self.assertEqual(first["source"]["name"], "测试病")
+        self.assertEqual(first["target"]["node_type"], "symptom")
+
     def test_entity_history_endpoint(self):
         import src.review.metadata as metadata
         original_dir = metadata.HISTORY_DIR

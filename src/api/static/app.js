@@ -3327,6 +3327,44 @@
     return `<div class="ref-list">${blocks.join("")}${rest ? `<div class="ref-more">${rest}</div>` : ""}</div>`;
   }
 
+  function relatedItemsHtml(detail, item) {
+    const relations = detail.relations || [];
+    if (!relations.length) {
+      return '<div class="detail-section"><h4>关联条目</h4><div class="muted">暂无关联条目</div></div>';
+    }
+    const row = (entry, asSource) => {
+      const neighbor = asSource ? entry.target : entry.source;
+      const label = relationLabel({ relation_code: entry.relation.relation_code, relation_name: entry.relation.relation_name });
+      return `<div class="related-row">
+        <button class="related-rel" data-related-relation="${esc(entry.key)}"
+          data-relation-code="${esc(entry.relation.relation_code)}"
+          data-source-node="${esc(entry.source.node_id)}"
+          data-target-node="${esc(entry.target.node_id)}"
+          data-relation-status="${esc(entry.relation.review_status || "")}"
+          title="查看关系详情">${esc(asSource ? label : `← ${label}`)}</button>
+        <button class="related-node" data-related-node="${esc(neighbor.node_id)}">
+          <span class="type-chip">${esc(typeName[neighbor.node_type] || neighbor.node_type || "-")}</span>
+          <strong>${esc(neighbor.name)}</strong>${miniStatus(neighbor.status)}
+        </button>
+      </div>`;
+    };
+    const asSource = relations.filter((e) => e.source.node_id === item.node_id);
+    const asTarget = relations.filter((e) => e.target.node_id === item.node_id);
+    const section = (title, list, flag) => {
+      if (!list.length) return "";
+      const visible = list.slice(0, 20).map((e) => row(e, flag)).join("");
+      const extra = list.slice(20);
+      const hidden = extra.length
+        ? `<div class="related-extra" hidden>${extra.map((e) => row(e, flag)).join("")}</div>
+           <div class="related-row"><button class="btn sm" data-related-expand>显示全部 ${list.length} 条</button></div>`
+        : "";
+      return `<div class="detail-section"><h4>${title}（${list.length}）</h4>
+        <div class="related-list">${visible}${hidden}</div>
+      </div>`;
+    };
+    return section("作为源", asSource, true) + section("作为目标", asTarget, false);
+  }
+
   async function nodeDetailHtml(item) {
     const detail = await api(`/api/kg/nodes/${encodeURIComponent(item.node_id)}?graph_filename=${encodeURIComponent(item.graph_filename)}`);
     const node = detail.node || {};
@@ -3336,12 +3374,15 @@
       try { historyHtml = await entityHistoryHtml(item, "node", item.node_id, node); } catch (_) { historyHtml = ""; }
     }
     const refsHtml = (node.source_refs || []).length ? await sourceRefsHtml(node.source_refs) : "";
+    const relatedHtml = relatedItemsHtml(detail, item);
     return `
       <div class="detail-section endpoint-meta">
         <div><span class="muted">类型</span><strong>${esc(typeName[node.node_type] || node.node_type || "-")}</strong></div>
         <div><span class="muted">编码</span><span class="mono">${esc(node.code || "-")}</span></div>
       </div>
       ${refsHtml ? `<div class="detail-section"><h4>指南溯源</h4>${refsHtml}</div>` : ""}
+      ${relatedHtml}
+      ${(node.attribute_violations || []).length ? `<div class="detail-section"><h4>属性校验待复核（${node.attribute_violations.length}）</h4>${table(["属性", "问题"], node.attribute_violations.map((v) => `<tr><td class="mono">${esc(v.attribute_code)}</td><td>${esc(v.issue || "-")}</td></tr>`))}</div>` : ""}
       <div class="detail-section"><h4>属性</h4>${attrTableHtml(node.attributes)}</div>
       ${historyHtml}
       <div class="detail-section"><h4>依赖规则（${rules.length}）</h4>${dependentRuleTable(rules)}</div>
@@ -3435,6 +3476,24 @@
         wrap.innerHTML = await sourceRefBlock(chip.dataset.ref);
         chip.replaceWith(...wrap.childNodes);
       });
+      mount.querySelectorAll("[data-related-node]").forEach((btn) => btn.onclick = () => {
+        loadReviewDetail({ item_type: "graph_node", node_id: btn.dataset.relatedNode, graph_filename: item.graph_filename, status: "" });
+      });
+      mount.querySelectorAll("[data-related-relation]").forEach((btn) => btn.onclick = () => {
+        loadReviewDetail({
+          item_type: "graph_relation",
+          item_id: btn.dataset.relatedRelation,
+          graph_filename: item.graph_filename,
+          relation_code: btn.dataset.relationCode,
+          source_node_id: btn.dataset.sourceNode,
+          target_node_id: btn.dataset.targetNode,
+          status: btn.dataset.relationStatus || "",
+        });
+      });
+      mount.querySelectorAll("[data-related-expand]").forEach((btn) => btn.onclick = () => {
+        const extra = btn.closest(".related-list")?.querySelector(".related-extra");
+        if (extra) { extra.hidden = false; btn.closest(".related-row").remove(); }
+      });
     } catch (error) {
       if (token !== reviewDetailToken) return;
       mount.innerHTML = `<div class="empty">详情加载失败：${esc(error.message)}</div>`;
@@ -3487,6 +3546,32 @@
     });
   }
 
+  function bindDupeMerge(graphFilename) {
+    if (!graphFilename) return;
+    content.querySelectorAll("[data-dupe-merge]").forEach((button) => button.onclick = async () => {
+      const groupEl = button.closest(".dupe-group");
+      const checked = groupEl.querySelector("input[type=radio]:checked");
+      if (!checked) { toast("请选择保留节点", true); return; }
+      const survivor = checked.value;
+      const labels = [...groupEl.querySelectorAll(".dupe-node")].map((el) => ({
+        id: el.querySelector("input[type=radio]").value,
+        code: el.querySelector(".mono").textContent,
+      }));
+      const survivorCode = labels.find((l) => l.id === survivor).code;
+      const absorbed = labels.filter((l) => l.id !== survivor);
+      if (!confirm(`保留 ${survivorCode}，吸收：${absorbed.map((l) => l.code).join("、")}？\n关联关系将重挂到保留节点，引用被吸收编码的规则会自动改写（合并前自动备份）。`)) return;
+      button.disabled = true;
+      try {
+        const result = await api("/api/kg/merge-nodes", { json: {
+          graph_filename: graphFilename, survivor_node_id: survivor,
+          absorbed_node_ids: absorbed.map((l) => l.id),
+        }});
+        toast(`合并完成：重挂关系 ${result.merged_relations}、去重 ${result.deduped_relations}、改写规则 ${result.updated_rules.length} 条`);
+        renderReviewCenter();
+      } catch (error) { toast(error.message, true); button.disabled = false; }
+    });
+  }
+
   async function renderReviewCenter() {
     const tab = state.reviewTab || "graph";
     const reviewer = localStorage.getItem("cdssReviewer") || "";
@@ -3511,6 +3596,9 @@
         ? api("/api/pdf/documents").then((items) => { state.reviewDocOptions = items; }).catch(() => { state.reviewDocOptions = []; })
         : Promise.resolve(),
     ]);
+    const dupesData = tab === "dupes" && filters.graph
+      ? await api(`/api/kg/duplicates?graph_filename=${encodeURIComponent(filters.graph)}`).catch(() => ({ groups: [] }))
+      : { groups: [] };
     const allItems = queue.items || [];
     if (!filters.nodeType) {
       state.reviewNodeTypeOptions = [...new Set(
@@ -3537,6 +3625,7 @@
     const tabs = [
       ["graph", "待审图谱"], ["rules", "待审规则"], ["blocked", "被阻断"],
       ["stale", "待复核"], ["active", "已通过"], ["orphan", "孤儿条目"],
+      ["dupes", `疑似重复${(tab === "dupes" && dupesData.groups?.length) ? ` ${dupesData.groups.length}` : ""}`],
       ["audit", "审核记录"],
     ];
     const tabHtml = tabs.map(([key, label]) => `<button class="review-tab ${tab === key ? "active" : ""}" data-review-tab="${key}">${label}</button>`).join("");
@@ -3563,6 +3652,48 @@
       content.innerHTML = `<div class="review-tabs">${tabHtml}</div>
         ${panel("审核记录", table(["时间", "类型", "条目", "动作", "状态变化", "审核人", "意见"], auditRows), "", "全量审核动作的追加式日志；拒绝原因码会记录在意见前缀 [原因码] 中")}`;
       bindReviewTabs();
+      return;
+    }
+
+    if (tab === "dupes") {
+      const graphFilename = filters.graph;
+      const groups = dupesData.groups || [];
+      const dupeCards = !graphFilename
+        ? '<div class="empty">请先在下方选择目的图谱</div>'
+        : (groups.map((group) => `
+          <div class="dupe-group">
+            <div class="dupe-head">
+              <span class="type-chip">${esc(typeName[group.node_type] || group.node_type)}</span>
+              <strong>${esc(group.name)}</strong>
+              <span class="muted">${group.nodes.length} 个同名节点</span>
+            </div>
+            <div class="dupe-nodes">${group.nodes.map((n) => `
+              <label class="dupe-node">
+                <input type="radio" name="dupe-group" value="${esc(n.node_id)}" ${n.node_id === group.recommended_survivor ? "checked" : ""}>
+                <span class="mono">${esc(n.code)}</span>
+                ${n.is_standard_code ? '<span class="badge active">标准码</span>' : '<span class="badge">候选码</span>'}
+                ${reviewBadge(n.review_status)}
+                <span class="muted">关系 ${n.relation_count} · 引用 ${n.source_ref_count}</span>
+              </label>`).join("")}</div>
+            <div class="actions"><button class="btn sm primary" data-dupe-merge>合并为一</button></div>
+          </div>`).join("") || '<div class="empty">未检测到同类型同名重复</div>');
+      content.innerHTML = `<div class="review-tabs">${tabHtml}</div>
+        <div class="review-list" style="max-width:none">
+          <div class="review-toolbar compact review-filterbar">
+            <select id="reviewFilterGraph" title="按目的图谱筛选">
+              <option value="">请选择图谱</option>
+              ${(state.reviewGraphOptions || []).map((g) => `<option value="${esc(g.graph_filename)}" ${filters.graph === g.graph_filename ? "selected" : ""}>${esc(g.graph_filename)}</option>`).join("")}
+            </select>
+            <span class="muted">同类型同名节点分组；默认勾选推荐保留节点（标准码优先），「合并为一」吸收其余节点并自动改写规则引用（合并前自动备份）。</span>
+          </div>
+          ${dupeCards}
+        </div>`;
+      bindReviewTabs();
+      $("#reviewFilterGraph")?.addEventListener("change", (event) => {
+        state.reviewFilters.graph = event.target.value;
+        renderReviewCenter();
+      });
+      bindDupeMerge(graphFilename);
       return;
     }
 
