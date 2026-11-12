@@ -341,6 +341,7 @@ class ReviewService:
         sections: Dict[str, Dict[str, Any]] = {}
         container_ids_by_section: Dict[str, List[str]] = {}
         container_items: Dict[Tuple[str, str], List[Dict[str, Any]]] = {}
+        scanned_containers: set = set()
         for key, relation in graph["relations"].items():
             if key[0] != subject_node_id:
                 continue
@@ -355,6 +356,13 @@ class ReviewService:
             ids = container_ids_by_section.setdefault(key[1], [])
             if key[2] not in ids:
                 ids.append(key[2])
+            # 同一容器只全量扫描一次：主体经多种关系码指向同一容器时，
+            # 后续直接边不再重复收集该容器的出边（嵌套 items 不翻倍）。
+            # 守卫放容器粒度而非 (容器, 关系码) 键粒度，否则容器同一关系码
+            # 指向多个目标时（如一个方案含多种药品）首次扫描内就会丢边。
+            if key[2] in scanned_containers:
+                continue
+            scanned_containers.add(key[2])
             for ckey, crelation in graph["relations"].items():
                 if ckey[0] != key[2]:
                     continue

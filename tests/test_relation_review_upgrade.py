@@ -286,3 +286,48 @@ class RelationGroupsTest(unittest.TestCase):
         with self.assertRaises(ReviewError) as ctx:
             self.service.relation_group_detail("REVIEW-TEST2.json", "ENTITY:disease:NOPE")
         self.assertEqual(ctx.exception.status_code, 404)
+
+    def test_group_detail_same_container_two_codes_no_duplicate_nested_items(self):
+        # 脏数据场景：同一主体经两种关系码指向同一容器——容器出边只收集一次；
+        # 同时容器自身同码多目标出边（一个方案含多种药品）必须全量保留。
+        graph = json.loads(json.dumps(GRAPH2))
+        graph["nodes"].append({
+            "id": "ENTITY:medication:M2", "node_type": "medication", "code": "MED_2",
+            "name": "药品二", "review_status": "active",
+        })
+        graph["relations"].append({
+            "source_node_id": "ENTITY:disease:D1", "relation_code": "DISEASE_HAS_ORDER_SET",
+            "target_node_id": "ENTITY:treatment_plan:TP1", "relation_name": "疾病有医嘱组",
+            "review_status": "active", "source_refs": ["DOC-x_p1_l1-5"],
+        })
+        graph["relations"].append({
+            "source_node_id": "ENTITY:treatment_plan:TP1",
+            "relation_code": "TREATMENT_PLAN_INCLUDES_MEDICATION",
+            "target_node_id": "ENTITY:medication:M2", "relation_name": "方案含药品",
+            "review_status": "active", "source_refs": ["DOC-x_p1_l1-5"],
+        })
+        (self.graph_dir / "REVIEW-TEST3.json").write_text(
+            json.dumps(graph, ensure_ascii=False), encoding="utf-8"
+        )
+        detail = self.service.relation_group_detail("REVIEW-TEST3.json", "ENTITY:disease:D1")
+        tp_containers = [
+            container for section in detail["sections"]
+            for container in section["containers"]
+            if container["container_node_id"] == "ENTITY:treatment_plan:TP1"
+        ]
+        self.assertEqual(len(tp_containers), 2)  # 两个直接 section 各自展开 TP1
+        nested_keys = set()
+        for container in tp_containers:
+            nested = container["sections"]
+            self.assertEqual([s["relation_code"] for s in nested], ["TREATMENT_PLAN_INCLUDES_MEDICATION"])
+            # M1、M2 两条都在（同码多目标不丢边），且不因双码重复扫描翻倍
+            self.assertEqual(len(nested[0]["items"]), 2)
+            self.assertEqual(
+                {item["target_node_id"] for item in nested[0]["items"]},
+                {"ENTITY:medication:M1", "ENTITY:medication:M2"},
+            )
+            nested_keys.add(nested[0]["section_key"])
+        # 嵌套 section_key 全局唯一，两个容器展开引用同一组条目
+        self.assertEqual(
+            nested_keys, {"ENTITY:treatment_plan:TP1:TREATMENT_PLAN_INCLUDES_MEDICATION"}
+        )
