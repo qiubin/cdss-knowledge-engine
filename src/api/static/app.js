@@ -1233,6 +1233,23 @@
       values: { entity_type: owner.entity_type },
       html: `<tr><td>${esc(typeName[owner.entity_type] || owner.label || owner.entity_type)}</td><td class="mono">${esc(item.code)}</td><td>${esc(item.name)}</td><td><div class="quote">${esc((item.aliases || []).join(" / "))}</div></td><td><div class="actions"><button class="btn sm" data-struct-kind="entity" data-struct-key="${esc(owner.entity_type)}/${esc(item.code)}" data-struct-mode="edit">编辑</button><button class="btn sm danger" data-struct-kind="entity" data-struct-key="${esc(owner.entity_type)}/${esc(item.code)}" data-struct-mode="delete">删除</button></div></td></tr>`,
     }));
+    const attributeTableKey = `template-attributes-${template.template_id}`;
+    const attributesSorted = [...template.attributes].sort((left, right) => {
+      const typeOrder = String(left.owner_entity_type).localeCompare(String(right.owner_entity_type), "zh-Hans-CN");
+      return typeOrder || String(left.attribute_code).localeCompare(String(right.attribute_code), "zh-Hans-CN");
+    });
+    const attrTypeCounts = template.attributes.reduce((counts, attr) => {
+      counts.set(attr.owner_entity_type, (counts.get(attr.owner_entity_type) || 0) + 1);
+      return counts;
+    }, new Map());
+    const attributeTypeFilters = [...attrTypeCounts.entries()]
+      .sort(([left], [right]) => left.localeCompare(right, "zh-Hans-CN"))
+      .map(([value, count]) => ({ value, label: `${typeName[value] || value}（${count}）` }));
+    const attributeItems = attributesSorted.map((item) => ({
+      text: [item.attribute_code, item.name, item.owner_entity_type, typeName[item.owner_entity_type] || "", item.data_type, item.description].join(" "),
+      values: { owner_entity_type: item.owner_entity_type },
+      html: `<tr><td class="mono">${esc(item.attribute_code)}</td><td>${esc(item.name)}</td><td>${esc(typeName[item.owner_entity_type] || item.owner_entity_type)} <span class="mono muted">${esc(item.owner_entity_type)}</span></td><td>${esc(item.data_type)}</td><td>${item.required ? '<span class="badge active">必填</span>' : "否"}</td><td class="mono">${esc((item.allowed_values || []).join(", ")) || "-"}</td><td>${item.concept_code ? conceptChip(item.concept_code) : "-"}</td><td><div class="quote">${esc(item.description)}</div></td><td><div class="actions"><button class="btn sm" data-struct-kind="attribute" data-struct-key="${esc(item.attribute_code)}" data-struct-mode="edit">编辑</button><button class="btn sm danger" data-struct-kind="attribute" data-struct-key="${esc(item.attribute_code)}" data-struct-mode="delete">删除</button></div></td></tr>`,
+    }));
     const addPrivateEntity = privateEntityTypes.length
       ? '<button id="addEntity" class="btn primary">新增私有实体</button>'
       : "";
@@ -1245,9 +1262,11 @@
           <div class="field"><label>概念边界</label><input readonly value="${template.concept_codes.length} 个概念"></div>
         </div>
       `, "", "本页是 Schema 层：实体类型、关系、属性构成解析契约；具体实体在「实体词典」（术语层）维护；医院阈值只保存在标准管理中")}
-      ${panel("实体类型", table(["类型编码", "名称", "编码字段", "私有 / 共享实体", "词表", "操作"], template.entity_types.map((item) => `
-        <tr><td class="mono">${esc(item.entity_type)}</td><td>${esc(item.label)}</td><td class="mono">${esc(item.code_field)}</td><td>${item.private_entry_count ?? (item.private_entries || item.entries).length} 私有${item.shared_entry_count ? ` <span class="muted">/ ${item.shared_entry_count} 共享</span>` : ""}</td><td>${item.vocabulary ? `<button class="badge active" data-goto-vocab="${esc(item.entity_type)}" title="点击进入实体词典管理">共享词表</button>` : '<span class="badge draft" title="实体内嵌在模板中">模板私有</span>'}</td><td><div class="actions"><button class="btn sm" data-struct-kind="entity-type" data-struct-key="${esc(item.entity_type)}" data-struct-mode="edit">编辑</button><button class="btn sm danger" data-struct-kind="entity-type" data-struct-key="${esc(item.entity_type)}" data-struct-mode="delete">删除</button></div></td></tr>`
-      )), '<button id="addEntityType" class="btn primary">新增实体类型</button>', "实体类型决定图谱节点族和输出类型")}
+      ${panel("实体类型", table(["类型编码", "名称", "编码字段", "属性", "私有 / 共享实体", "词表", "操作"], template.entity_types.map((item) => {
+        const attrCount = template.attributes.filter((a) => a.owner_entity_type === item.entity_type).length;
+        return `
+        <tr><td class="mono">${esc(item.entity_type)}</td><td>${esc(item.label)}</td><td class="mono">${esc(item.code_field)}</td><td><button type="button" class="btn sm ghost" data-attr-filter="${esc(item.entity_type)}" title="点击在下方属性面板中过滤该类型的属性定义">${attrCount ? `${attrCount} 个` : "0 个"}</button></td><td>${item.private_entry_count ?? (item.private_entries || item.entries).length} 私有${item.shared_entry_count ? ` <span class="muted">/ ${item.shared_entry_count} 共享</span>` : ""}</td><td>${item.vocabulary ? `<button class="badge active" data-goto-vocab="${esc(item.entity_type)}" title="点击进入实体词典管理">共享词表</button>` : '<span class="badge draft" title="实体内嵌在模板中">模板私有</span>'}</td><td><div class="actions"><button class="btn sm" data-struct-kind="entity-type" data-struct-key="${esc(item.entity_type)}" data-struct-mode="edit">编辑</button><button class="btn sm danger" data-struct-kind="entity-type" data-struct-key="${esc(item.entity_type)}" data-struct-mode="delete">删除</button></div></td></tr>`;
+      })), '<button id="addEntityType" class="btn primary">新增实体类型</button>', "实体类型决定图谱节点族和输出类型；「属性」列可点击跳转到属性面板查看该类型的属性定义")}
       ${pagedPanel({
         key: entityTableKey,
         title: "实体（仅模板私有）",
@@ -1262,9 +1281,19 @@
       ${panel("关系", table(["编码", "名称", "源类型", "目标类型", "限定编码", "证据概念", "说明", "操作"], template.relations.map((item) => `
         <tr><td class="mono">${esc(item.relation_code)}</td><td>${esc(item.name)}</td><td>${esc(item.source_entity_type)}${item.source_code ? ` / ${esc(item.source_code)}` : ""}</td><td>${esc(item.target_entity_type)}${item.target_code ? ` / ${esc(item.target_code)}` : ""}</td><td class="mono">${esc(item.cardinality)}</td><td>${item.concept_code ? conceptChip(item.concept_code) : "-"}</td><td><div class="quote">${esc(item.extraction_hint)}</div></td><td><div class="actions"><button class="btn sm" data-struct-kind="relation" data-struct-key="${esc(item.relation_code)}" data-struct-mode="edit">编辑</button><button class="btn sm danger" data-struct-kind="relation" data-struct-key="${esc(item.relation_code)}" data-struct-mode="delete">删除</button></div></td></tr>`
       )), '<button id="addRelation" class="btn primary">新增关系</button>', "关系约束图谱导入和大模型抽取，避免自由生成无边界的边")}
-      ${panel("属性", table(["编码", "名称", "所属实体类型", "数据类型", "必填", "允许值", "绑定概念", "说明", "操作"], template.attributes.map((item) => `
-        <tr><td class="mono">${esc(item.attribute_code)}</td><td>${esc(item.name)}</td><td>${esc(item.owner_entity_type)}</td><td>${esc(item.data_type)}</td><td>${item.required ? "是" : "否"}</td><td class="mono">${esc((item.allowed_values || []).join(", ")) || "-"}</td><td>${item.concept_code ? conceptChip(item.concept_code) : "-"}</td><td><div class="quote">${esc(item.description)}</div></td><td><div class="actions"><button class="btn sm" data-struct-kind="attribute" data-struct-key="${esc(item.attribute_code)}" data-struct-mode="edit">编辑</button><button class="btn sm danger" data-struct-kind="attribute" data-struct-key="${esc(item.attribute_code)}" data-struct-mode="delete">删除</button></div></td></tr>`
-      )), '<button id="addAttribute" class="btn primary">新增属性</button>', "属性定义抽取字段契约，可绑定受控概念，但不承载医院阈值")}
+      <div id="attributePanel">
+      ${pagedPanel({
+        key: attributeTableKey,
+        title: "属性",
+        description: "属性定义抽取字段契约，可绑定受控概念，但不承载医院阈值；按所属实体类型分组排序。",
+        headers: ["编码", "名称", "所属实体类型", "数据类型", "必填", "允许值", "绑定概念", "说明", "操作"],
+        items: attributeItems,
+        filters: [{ key: "owner_entity_type", label: "实体类型", options: attributeTypeFilters }],
+        placeholder: "搜索编码、名称或说明…",
+        emptyText: attributeItems.length ? "没有匹配的属性" : "当前模板还没有属性定义，点击「新增属性」创建",
+        actions: '<button id="addAttribute" class="btn primary">新增属性</button>',
+      })}
+      </div>
     `;
     $("#templateBack").onclick = () => { state.templateStructureId = ""; render(); };
     content.querySelectorAll("[data-goto-vocab]").forEach((b) => b.onclick = () => {
@@ -1272,11 +1301,22 @@
       navigate("entityVocab");
     });
     bindPagedTable(entityTableKey);
+    bindPagedTable(attributeTableKey);
+    content.querySelectorAll("[data-attr-filter]").forEach((button) => button.onclick = () => {
+      const ts = tableStateFor(attributeTableKey);
+      ts.filters.owner_entity_type = ts.filters.owner_entity_type === button.dataset.attrFilter ? "" : button.dataset.attrFilter;
+      ts.page = 1;
+      const select = document.querySelector(`.table-filter[data-table-filter="${attributeTableKey}"][data-filter-key="owner_entity_type"]`);
+      if (select) select.value = ts.filters.owner_entity_type;
+      renderTableBody(attributeTableKey);
+      const mount = $("#attributePanel");
+      if (mount) mount.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
     $("#editTemplateMeta").onclick = () => openTemplateEditor(template);
-    $("#addEntityType").onclick = () => openTemplateItemEditor("entity-type", null);
-    if ($("#addEntity")) $("#addEntity").onclick = () => openTemplateItemEditor("entity", null, true, { privateOnly: true });
-    $("#addRelation").onclick = () => openTemplateItemEditor("relation", null);
-    $("#addAttribute").onclick = () => openTemplateItemEditor("attribute", null);
+    $("#addEntityType").onclick = () => openTemplateItemEditor("entity-type", null, false, { template });
+    if ($("#addEntity")) $("#addEntity").onclick = () => openTemplateItemEditor("entity", null, true, { privateOnly: true, template });
+    $("#addRelation").onclick = () => openTemplateItemEditor("relation", null, false, { template });
+    $("#addAttribute").onclick = () => openTemplateItemEditor("attribute", null, false, { template });
     const handleStructureAction = async (button) => {
       const kind = button.dataset.structKind, key = button.dataset.structKey, mode = button.dataset.structMode;
       if (mode === "delete") {
@@ -1295,7 +1335,7 @@
           : kind === "entity"
             ? (() => { const [type, code] = key.split("/"); const owner = template.entity_types.find((item) => item.entity_type === type); return (owner.private_entries || owner.entries).find((item) => item.code === code); })()
             : template[`${kind}s`].find((item) => item[kind === "relation" ? "relation_code" : "attribute_code"] === key);
-        openTemplateItemEditor(kind, kind === "entity" ? { ...source, __key: key } : source);
+        openTemplateItemEditor(kind, kind === "entity" ? { ...source, __key: key } : source, false, { template });
       }
     };
     content.querySelectorAll("[data-struct-mode]").forEach((button) => {
@@ -1319,19 +1359,30 @@
     const conceptOptions = (selected = "") => `<option value="" ${!selected ? "selected" : ""}>不绑定概念</option>${state.vocab.map((v) => option(selected, v.code, `${v.name_cn} / ${v.code}`)).join("")}`;
     const label = { "entity-type": "实体类型", entity: "实体", relation: "关系", attribute: "属性" }[kind];
     let fields = "";
-    if (kind === "entity-type") fields = `
+    const structureTemplate = options.template || state.templates.find((t) => t.template_id === state.templateStructureId);
+    const templateAttributesOf = (entityType) => (structureTemplate?.attributes || []).filter((a) => a.owner_entity_type === entityType);
+    if (kind === "entity-type") {
+      fields = `
       <div class="field"><label>类型编码</label><input name="entity_type" value="${esc(value.entity_type || "")}" ${!isNew ? "readonly" : ""}></div>
       <div class="field"><label>显示名称</label><input name="label" value="${esc(value.label || "")}"></div>
       <div class="field"><label>编码字段</label><input name="code_field" value="${esc(value.code_field || "code")}"></div>
       <div class="field"><label>动态发现</label><select name="discovery"><option value="false" ${!value.discovery ? "selected" : ""}>否</option><option value="true" ${value.discovery ? "selected" : ""}>是（从指南文本自动发现）</option></select></div>
       <div class="field"><label>实体词表</label><select name="vocabulary"><option value="false" ${!value.vocabulary ? "selected" : ""}>模板私有（内嵌实体）</option><option value="true" ${value.vocabulary ? "selected" : ""}>共享词表（data/vocab/entities，跨模板共用）</option></select></div>`;
+      if (!isNew) {
+        const attrs = templateAttributesOf(value.entity_type);
+        fields += `
+      <div class="field wide"><label>该类型的属性定义（${attrs.length} 个）</label>${attrs.length ? table(["编码", "名称", "数据类型", "必填", "允许值", "操作"], attrs.map((a) => `
+        <tr><td class="mono">${esc(a.attribute_code)}</td><td>${esc(a.name)}</td><td>${esc(a.data_type)}</td><td>${a.required ? "是" : "否"}</td><td class="mono">${esc((a.allowed_values || []).join(", ")) || "-"}</td><td><button type="button" class="btn sm" data-inline-attr="${esc(a.attribute_code)}">编辑属性</button></td></tr>`)) : '<div class="muted">该类型暂无属性定义；关闭对话框后在主页面「新增属性」并选择该实体类型</div>'}</div>`;
+      }
+    }
     if (kind === "entity") {
       const owner = templateOwnerByEntityKey(value.__key);
       fields = `
         <div class="field"><label>实体类型</label><select name="entity_type">${entityOptions(value.entity_type || owner || "disease")}</select></div>
         <div class="field"><label>实体编码</label><input name="code" value="${esc(value.code || "")}" ${!isNew ? "readonly" : ""}></div>
         <div class="field"><label>实体名称</label><input name="name" value="${esc(value.name || "")}"></div>
-        <div class="field wide"><label>别名 / 正则（每行一个）</label><textarea name="aliases">${esc((value.aliases || []).join("\n"))}</textarea></div>`;
+        <div class="field wide"><label>别名 / 正则（每行一个）</label><textarea name="aliases">${esc((value.aliases || []).join("\n"))}</textarea></div>
+        <div class="field wide"><label>默认属性（抽取与导入时随实体写入，按该类型的属性契约填写）</label><div id="entityAttrInputs"></div></div>`;
     }
     if (kind === "relation") fields = `
       <div class="field"><label>关系编码</label><input name="relation_code" value="${esc(value.relation_code || "")}" ${!isNew ? "readonly" : ""}></div>
@@ -1355,6 +1406,46 @@
       <div class="field wide"><label>说明</label><input name="description" value="${esc(value.description || "")}"></div>`;
     $("#editorBody").innerHTML = `<h3>${isNew ? `新增${label}` : `编辑${label}`}</h3><div class="form-grid">${fields}</div>`;
     const dialog = $("#editorDialog"); dialog.showModal();
+    let entityAttrDefs = [];
+    // 实体默认属性：跟随所选实体类型动态渲染输入控件（enum→下拉、boolean→下拉、number→数字）。
+    const renderEntityAttrInputs = () => {
+      const mount = $("#entityAttrInputs");
+      if (!mount) return;
+      const typeSelect = $("#editorBody").querySelector('select[name="entity_type"]');
+      entityAttrDefs = templateAttributesOf(typeSelect ? typeSelect.value : "");
+      if (!entityAttrDefs.length) {
+        mount.innerHTML = '<div class="muted">该实体类型暂无属性定义</div>';
+        return;
+      }
+      const currentAttrs = value.attributes || {};
+      mount.innerHTML = entityAttrDefs.map((a) => {
+        const raw = currentAttrs[a.attribute_code];
+        const strVal = raw === undefined || raw === null ? "" : String(raw);
+        const title = `${esc(a.name || a.attribute_code)} <span class="mono muted">${esc(a.attribute_code)} · ${esc(a.data_type)}</span>${a.required ? ' <span class="badge active">必填</span>' : ""}`;
+        if (a.data_type === "enum") {
+          return `<div class="field"><label>${title}</label><select name="attr_${esc(a.attribute_code)}"><option value="">（未设置）</option>${(a.allowed_values || []).map((v) => `<option value="${esc(v)}" ${strVal === v ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></div>`;
+        }
+        if (a.data_type === "boolean") {
+          return `<div class="field"><label>${title}</label><select name="attr_${esc(a.attribute_code)}"><option value="">（未设置）</option><option value="true" ${strVal === "true" ? "selected" : ""}>true</option><option value="false" ${strVal === "false" ? "selected" : ""}>false</option></select></div>`;
+        }
+        const numberAttr = a.data_type === "number" ? ' type="number" step="any"' : "";
+        return `<div class="field"><label>${title}</label><input name="attr_${esc(a.attribute_code)}"${numberAttr} value="${esc(strVal)}" placeholder="${esc(a.description || "")}"></div>`;
+      }).join("");
+    };
+    if (kind === "entity") {
+      renderEntityAttrInputs();
+      const typeSelect = $("#editorBody").querySelector('select[name="entity_type"]');
+      if (typeSelect) typeSelect.addEventListener("change", renderEntityAttrInputs);
+    }
+    // 实体类型对话框内嵌属性列表：跳转到属性编辑器。
+    $("#editorBody").querySelectorAll("[data-inline-attr]").forEach((button) => {
+      button.onclick = () => {
+        const attr = templateAttributesOf(value.entity_type).find((a) => a.attribute_code === button.dataset.inlineAttr);
+        if (!attr) return;
+        dialog.close();
+        openTemplateItemEditor("attribute", attr, false, options);
+      };
+    });
     $("#editorSave").onclick = async () => {
       const form = $("#editorBody");
       try {
@@ -1363,6 +1454,20 @@
         const base = item && !isNew ? { ...item } : {};
         delete base.__key;
         const itemPayload = { ...base, ...Object.fromEntries([...form.querySelectorAll("input,select,textarea")].map((input) => [input.name, input.value])) };
+        // 默认属性输入以 attr_ 前缀命名，需从扁平字段收敛回 attributes 字典；
+        // 留空表示清除该默认属性，number/boolean 按契约转型。
+        Object.keys(itemPayload).forEach((key) => { if (key.startsWith("attr_")) delete itemPayload[key]; });
+        if (kind === "entity") {
+          const attrs = {};
+          for (const a of entityAttrDefs) {
+            const input = form.querySelector(`[name="attr_${a.attribute_code}"]`);
+            if (!input) continue;
+            const raw = String(input.value ?? "").trim();
+            if (raw === "") continue;
+            attrs[a.attribute_code] = a.data_type === "number" ? Number(raw) : a.data_type === "boolean" ? raw === "true" : raw;
+          }
+          itemPayload.attributes = attrs;
+        }
         if (itemPayload.aliases != null) itemPayload.aliases = itemPayload.aliases.split(/\n+/).map((v) => v.trim()).filter(Boolean);
         if (itemPayload.allowed_values != null) itemPayload.allowed_values = itemPayload.allowed_values.split(",").map((v) => v.trim()).filter(Boolean);
         if (itemPayload.required != null) itemPayload.required = itemPayload.required === "true";
@@ -3110,10 +3215,25 @@
     return `<div class="detail-section"><h4>变更对比（导入覆盖前 → 当前）</h4>${diffTableHtml(rows[0].content, currentContent)}</div>
       <div class="detail-section"><h4>历史版本（${rows.length}）</h4>${versions}</div>`;
   }
+  // 汇总所有模板的属性契约，用于把图谱节点上的属性编码渲染为模板中文名。
+  function templateAttrLabelMap() {
+    const labels = {};
+    state.templates.forEach((t) => (t.attributes || []).forEach((a) => {
+      if (a.attribute_code && !labels[a.attribute_code]) labels[a.attribute_code] = a.name || a.attribute_code;
+    }));
+    return labels;
+  }
   function attrTableHtml(attributes) {
     const entries = Object.entries(attributes || {});
     if (!entries.length) return '<div class="muted">无属性</div>';
-    return table(["属性", "值"], entries.map(([key, value]) => `<tr><td class="mono">${esc(key)}</td><td>${esc(String(value))}</td></tr>`));
+    const labels = templateAttrLabelMap();
+    return table(["属性", "值"], entries.map(([key, value]) => {
+      const label = labels[key];
+      const nameCell = label
+        ? `${esc(label)} <span class="mono muted">${esc(key)}</span>`
+        : `<span class="mono">${esc(key)}</span> <span class="badge draft" title="模板中未定义该属性">未定义</span>`;
+      return `<tr><td>${nameCell}</td><td>${esc(String(value))}</td></tr>`;
+    }));
   }
   function auditListHtml(records, limit = 5) {
     const rows = (records || []).slice(0, limit).map((row) => `<tr>

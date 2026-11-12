@@ -10,7 +10,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from src.extraction.repository import ExtractionTemplateRepository
-from src.extraction.service import relation_pairs_for_chunk
+from src.extraction.service import relation_pairs_for_chunk, template_attribute_violations
 from src.extraction.graph_binding import resolve_template_graph_filename
 from src.extraction.concept_mapping import (
     STANDARD_BACKED_LABS,
@@ -898,6 +898,13 @@ async def import_graph(request: GraphImportRequest):
             warnings.append(f"实体缺少类型，已跳过（{entity.get('name', '')}）")
             continue
         entity_attrs = dict(entity.get("attributes") or {})
+        # 模板契约校验（P2-6）：违规属性不静默入库也不直接丢弃，保留原值
+        # 入库并在节点上标记待复核明细；校验在合并 open_import 标记前进行。
+        contract_violations = (
+            template_attribute_violations(entity_attrs, node_type, template)
+            if template is not None and entity_attrs
+            else []
+        )
         if node_type not in allowed_types:
             # 开放抽取：模板外类型不再丢弃，而是以草稿节点入库，由审核人
             # 在图谱审核中确认（可通过「加入实体词典」沉淀到共享词库）。
@@ -905,11 +912,18 @@ async def import_graph(request: GraphImportRequest):
                 f"开放导入模板外类型 {node_type}（{entity.get('name', '')}），已入草稿待审核确认"
             )
             entity_attrs = {**entity_attrs, "open_import": True}
-        _upsert_semantic_node(
+        node = _upsert_semantic_node(
             graph, node_type, code, entity.get("name", ""),
             [entity.get("chunk_id", "")],
             attributes=entity_attrs,
         )
+        if contract_violations:
+            node["attribute_violations"] = contract_violations
+            for violation in contract_violations:
+                warnings.append(
+                    f"实体 {entity.get('name', '')} 属性 {violation['attribute_code']} "
+                    f"{violation['issue']}，已保留原值并标记待复核"
+                )
 
     for relation in request.suggested_relations:
         relation_code = str(relation.get("relation_code") or "")
