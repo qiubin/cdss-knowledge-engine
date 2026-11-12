@@ -138,6 +138,29 @@ class ManagerLifecycleTest(unittest.IsolatedAsyncioTestCase):
         self.assertIs(seen[1], job2)
         self.assertEqual(seen[1].status, "failed")
 
+    async def test_stop_before_task_first_step_synthesizes_terminal(self):
+        """stop 先于任务体首步落地：协程从未执行也要合成终态，不留僵尸 queued。
+
+        submit 与 stop 之间不 await 任何东西 → cancel 在任务首步前生效，
+        任务体的 status/finally 全部未跑；stop 必须就地合成 STOPPED 终态、
+        补 finished_at、写日志并触发 on_finish。
+        """
+        mgr = ImportJobManager()
+        seen = []
+
+        async def runner(controller):
+            await asyncio.sleep(30, result={})
+
+        job = mgr.submit("template-llm", "t", runner, on_finish=seen.append)
+        stopped = await mgr.stop(job.job_id)
+        self.assertIs(stopped, job)
+        self.assertEqual(job.status, "stopped")
+        self.assertIsNotNone(job.finished_at)
+        self.assertTrue(job.task.done())
+        self.assertTrue(any("停止" in entry["message"] for entry in job.logs))
+        self.assertEqual(len(seen), 1)
+        self.assertIs(seen[0], job)
+
     def test_list_jobs_keeps_most_recent_50(self):
         mgr = ImportJobManager()
         for i in range(55):

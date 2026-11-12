@@ -44,6 +44,7 @@ class ImportJob:
     finished_at: Optional[float] = None
     control: JobControl = field(default_factory=JobControl)
     task: Optional[asyncio.Task] = None
+    on_finish: Optional[Callable[["ImportJob"], None]] = None
 
     def log(self, message: str, level: str = "info") -> None:
         self.logs.append({"time": time.strftime("%H:%M:%S"), "message": message, "level": level})
@@ -108,6 +109,7 @@ class ImportJobManager:
         """on_finish（可选）在 finally 中收到终态 job，供调用方做日志等留痕。"""
         job = ImportJob(job_id=f"JOB-{uuid.uuid4().hex[:8]}", mode=mode, doc_title=doc_title)
         job.control.pause_event.set()
+        job.on_finish = on_finish
         self._jobs[job.job_id] = job
         self._prune()
         controller = ImportController(job)
@@ -137,9 +139,9 @@ class ImportJobManager:
                 job.log(f"任务失败：{job.error}", "error")
             finally:
                 job.finished_at = time.time()
-                if on_finish is not None:
+                if job.on_finish is not None:
                     try:
-                        on_finish(job)
+                        job.on_finish(job)
                     except Exception as hook_error:  # noqa: BLE001 - 留痕失败不拖垮生命周期
                         job.log(f"收尾回调失败：{hook_error}", "warn")
                 self._prune()
@@ -181,6 +183,19 @@ class ImportJobManager:
             if job.status in _TERMINAL:
                 break
             await asyncio.sleep(0.02)
+        if job.task.done() and job.status not in _TERMINAL:
+            # cancel 先于任务体首步落地：协程从未执行，状态/finally 均未跑，
+            # 就地合成终态，防止永久僵尸 queued + 4s 空转
+            job.status = STOPPED
+            job.stage = "已停止（内容已丢弃）"
+            job.log("任务被用户停止（未启动）")
+            job.finished_at = time.time()
+            if job.on_finish is not None:
+                try:
+                    job.on_finish(job)
+                except Exception as hook_error:  # noqa: BLE001 - 留痕失败不拖垮生命周期
+                    job.log(f"收尾回调失败：{hook_error}", "warn")
+            self._prune()
         return job
 
     def _require(self, job_id: str) -> ImportJob:
