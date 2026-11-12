@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 
 from src.api.main import app
 from src.api.routes import import_jobs as routes
-from src.api.routes.pdf import IMPORT_LOG_PATH, UPLOAD_DIR
+from src.api.routes.pdf import IMPORT_LOG_PATH, UPLOAD_DIR, _doc_store
 
 
 class ImportJobsApiTest(unittest.TestCase):
@@ -122,7 +122,13 @@ class ImportJobsApiTest(unittest.TestCase):
         self.assertEqual(body["status"], "succeeded", body.get("error"))
         self.assertIn("entity_count", body["result"] or {})
         self.assertEqual(body["result"]["doc_id"], doc_id)
+        # 回归路径：作业落库的 doc_record 必须带 uploaded_at，否则 documents 列表 KeyError→500
+        documents = client.get("/api/pdf/documents")
+        self.assertEqual(documents.status_code, 200)
+        self.assertIn(doc_id, [d["doc_id"] for d in documents.json()])
+        self.assertTrue(documents.json()[0]["uploaded_at"])
         routes.manager._jobs.pop(job_id, None)
+        _doc_store.pop(doc_id, None)
         self._cleanup_upload(doc_id)
 
 

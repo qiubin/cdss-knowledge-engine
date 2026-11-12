@@ -29,7 +29,8 @@ async def _run_template_job(
     ``graph_name`` 已在 create 路由经 ``resolve_upload_graph_filename`` 校验。
     """
     from .pdf import (  # deferred: 保持本仓库函数内导入风格
-        _doc_store, _persist_doc, extraction_templates, parse_pdf,
+        _doc_store, _now, _persist_doc, extraction_templates, parse_pdf,
+        WARN_NO_TEXT_LAYER,
     )
     from src.extraction.service import extract
 
@@ -37,23 +38,33 @@ async def _run_template_job(
     parsed = parse_pdf(file_path, doc_id)
     await controller.checkpoint(stage="模板抽取", done=0, total=1)
     template = extraction_templates.get(template_id)
+    extraction_mode = "llm" if mode == "template-llm" else "local"
     provider = await extract(
-        "llm" if mode == "template-llm" else "local",
+        extraction_mode,
         parsed["chunks"], template, doc_id, doc_title, config, controller=controller,
     )
+    # 附加告警与 upload_pdf 对齐：OCR 兜底 + 本地长文噪声提示
+    extra_warnings = [WARN_NO_TEXT_LAYER] if parsed.get("ocr_used") else []
+    total_chars = sum(len(chunk.get("text", "")) for chunk in parsed["chunks"])
+    if extraction_mode == "local" and (total_chars > 30000 or len(parsed["chunks"]) > 12):
+        extra_warnings.append(
+            "本地模板解析在长篇指南上容易产生重复或噪声规则；建议改用大模型解析并人工审核。"
+        )
+    all_warnings = [*provider.warnings, *extra_warnings]
     # —— 以下为写库段（不可中断）——
     controller.finalizing = True
     await controller.checkpoint(stage="保存解析结果")
     doc_record = {
         "doc_id": doc_id, "doc_title": doc_title, "file_path": str(file_path),
+        "uploaded_at": _now(),
         "parsed": parsed, "entities": provider.entities,
         "suggested_relations": provider.suggested_relations,
         "suggested_rules": provider.suggested_rules,
         "extraction": {
-            "mode": "llm" if mode == "template-llm" else "local",
+            "mode": extraction_mode,
             "domain": template.domain, "template_id": template.template_id,
             "template_name": template.name, "graph_filename": graph_name,
-            "warnings": provider.warnings, "metadata": provider.metadata,
+            "warnings": all_warnings, "metadata": provider.metadata,
         },
     }
     _doc_store[doc_id] = doc_record
@@ -64,7 +75,7 @@ async def _run_template_job(
         "entity_count": len(provider.entities),
         "relation_count": len(provider.suggested_relations),
         "rule_count": len(provider.suggested_rules),
-        "warnings": provider.warnings,
+        "warnings": all_warnings,
     }
 
 
@@ -90,7 +101,6 @@ async def create_import_job(
     mode: str = Form("template-local"),
     template_id: str = Form(""),
     graph_filename: str = Form(""),
-    domain: str = Form(""),
     auto_activate: str = Form("false"),
 ):
     if not file.filename or not file.filename.lower().endswith(".pdf"):
