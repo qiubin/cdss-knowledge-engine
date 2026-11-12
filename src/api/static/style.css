@@ -891,3 +891,20 @@ tr:last-child td { border-bottom: 0; }
 .relation-matrix summary { cursor: pointer; font-size: 12px; color: var(--muted); }
 .relation-matrix td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .relation-matrix td.zero { color: var(--muted); }
+
+/* 按疾病分组：知识卡片 */
+.by-disease-layout { display: grid; grid-template-columns: 300px 1fr; gap: 12px; align-items: start; }
+.subject-list { display: flex; flex-direction: column; gap: 8px; }
+.subject-list-scroll { display: flex; flex-direction: column; gap: 6px; max-height: calc(100vh - 320px); overflow: auto; }
+.subject-card { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; cursor: pointer; background: #fff; }
+.subject-card.selected { border-color: var(--accent); background: var(--accent-soft); }
+.subject-card .sub-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 4px; font-size: 12px; color: var(--muted); }
+.pending-chip { font-size: 11px; background: var(--warn-soft); color: var(--warn); border-radius: 999px; padding: 1px 8px; }
+.pending-chip.warn { background: var(--danger-soft); color: var(--danger); }
+.kg-section { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; background: #fff; }
+.kg-section.nested { margin: 8px 0 0; }
+.kg-section-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.kg-section-head h4 { margin: 0; }
+.container-block { margin-top: 8px; }
+.container-block > summary { cursor: pointer; font-size: 12px; color: var(--accent-dark); }
+@media (max-width: 960px) { .by-disease-layout { grid-template-columns: 1fr; } }

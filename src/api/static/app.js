@@ -2901,7 +2901,7 @@
   // ==== 审核台：专业化条目显示 + 主从详情面板 ====
   const REVIEW_TYPE_LABELS = { graph_node: "节点", graph_relation: "关系", rule: "规则", package: "知识包" };
   const REVIEW_TABS = [
-    ["graph", "待审图谱"], ["relations", "关系审核"], ["rules", "待审规则"], ["blocked", "被阻断"],
+    ["graph", "待审图谱"], ["relations", "关系审核"], ["bydisease", "按疾病分组"], ["rules", "待审规则"], ["blocked", "被阻断"],
     ["stale", "待复核"], ["active", "已通过"], ["orphan", "孤儿条目"],
     ["audit", "审核记录"],
   ];
@@ -3398,6 +3398,7 @@
 
   async function renderReviewCenter() {
     const tab = state.reviewTab || "graph";
+    if (tab === "bydisease") { await renderByDisease(); return; }
     const reviewer = localStorage.getItem("cdssReviewer") || "";
     const query = (state.reviewQuery || "").trim();
     const filters = state.reviewFilters || { graph: "", sourceDoc: "", nodeType: "", relationCode: "" };
@@ -3640,6 +3641,236 @@
     bindReviewTabs();
     const selected = items.find((item) => reviewItemKey(item) === state.reviewSelectedKey);
     if (selected) loadReviewDetail(selected);
+  }
+
+  // ==== 按疾病分组：知识卡片视图（单图谱）====
+  async function renderByDisease() {
+    const tab = state.reviewTab || "graph";
+    const filters = state.reviewFilters || {};
+    const graphName = filters.graph || state.graphFilename || "";
+    state.byDisease = state.byDisease || { subject: "", search: "" };
+    const tabHtml = REVIEW_TABS.map(([key, label]) => `<button class="review-tab ${tab === key ? "active" : ""}" data-review-tab="${key}">${label}</button>`).join("");
+    if (!graphName) {
+      content.innerHTML = `<div class="review-tabs">${tabHtml}</div><div class="empty">按疾病分组视图按单图谱展示，请先在筛选中选择目的图谱。</div>`;
+      bindReviewTabs();
+      return;
+    }
+    let groups;
+    try {
+      groups = await api(`/api/kg/relations/groups?graph_filename=${encodeURIComponent(graphName)}&subject_type=disease`);
+    } catch (error) {
+      content.innerHTML = `<div class="review-tabs">${tabHtml}</div><div class="empty">加载分组失败：${esc(error.message)}</div>`;
+      bindReviewTabs();
+      return;
+    }
+    const search = (state.byDisease.search || "").trim().toLowerCase();
+    const subjects = (groups.subjects || []).filter((s) => !search || `${s.name} ${s.code}`.toLowerCase().includes(search));
+    const hint = filters.graph ? "" : `<div class="muted trunc-note">按疾病分组视图按单图谱展示，当前：${esc(graphName)}</div>`;
+    content.innerHTML = `<div class="review-tabs">${tabHtml}</div>${hint}
+      <div class="by-disease-layout">
+        <div class="subject-list">
+          <input id="byDiseaseSearch" type="search" value="${esc(state.byDisease.search || "")}" placeholder="搜索疾病 / 证候 / 编码…">
+          <div class="subject-list-scroll">
+            ${subjects.map(subjectCardHtml).join("") || '<div class="empty">没有匹配的主体节点</div>'}
+          </div>
+        </div>
+        <div class="review-detail" id="byDiseaseCard">
+          <div class="empty">在左侧选择疾病 / 证候，核对它的知识网<br><span class="muted">症见、检验、检查、诊断依据、用药会按关系类型分组展示</span></div>
+        </div>
+      </div>`;
+    bindReviewTabs();
+    let searchTimer = null;
+    $("#byDiseaseSearch").oninput = (event) => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        state.byDisease.search = event.target.value;
+        renderByDisease();
+      }, 250);
+    };
+    content.querySelectorAll(".subject-card").forEach((card) => card.onclick = () => loadByDiseaseCard(card.dataset.subject));
+    if (state.byDisease.subject && subjects.some((s) => s.node_id === state.byDisease.subject)) {
+      await loadByDiseaseCard(state.byDisease.subject);
+    } else {
+      state.byDisease.subject = "";
+    }
+  }
+
+  function subjectCardHtml(s) {
+    return `<div class="subject-card ${state.byDisease?.subject === s.node_id ? "selected" : ""}" data-subject="${esc(s.node_id)}">
+      <strong>${esc(s.display_name || s.name)}</strong>
+      <div class="sub-meta">
+        <span>${esc(typeName[s.node_type] || s.node_type || "-")}</span>
+        ${miniStatus(s.review_status)}
+        <span>出边 ${s.out_relation_count}</span>
+        ${s.pending_count ? `<span class="pending-chip">待审 ${s.pending_count}</span>` : '<span class="muted">已清</span>'}
+        ${s.suspect_count ? `<span class="pending-chip warn">⚠ ${s.suspect_count}</span>` : ""}
+      </div>
+    </div>`;
+  }
+
+  async function loadByDiseaseCard(nodeId) {
+    const filters = state.reviewFilters || {};
+    const graphName = filters.graph || state.graphFilename || "";
+    state.byDisease.subject = nodeId;
+    content.querySelectorAll(".subject-card").forEach((card) => card.classList.toggle("selected", card.dataset.subject === nodeId));
+    const mount = $("#byDiseaseCard");
+    if (!mount) return;
+    mount.innerHTML = '<div class="empty">加载知识卡片…</div>';
+    let detail;
+    try {
+      detail = await api(`/api/kg/relations/groups/${encodeURIComponent(nodeId)}?graph_filename=${encodeURIComponent(graphName)}`);
+    } catch (error) {
+      mount.innerHTML = `<div class="empty">加载失败：${esc(error.message)}</div>`;
+      return;
+    }
+    const sections = detail.sections || [];
+    state.byDiseaseSections = sections;
+    state.byDiseaseItems = new Map();
+    // 分组接口沿用队列内部表示 item_type="relation"；审核台助手
+    // （relationEndpointBlocked / submitReviewAction / itemPayload /
+    // reviewItemTitle）按 "graph_relation" 判别，入 state 前统一归一化。
+    const normalize = (item) => {
+      if (item.item_type === "relation") item.item_type = "graph_relation";
+      state.byDiseaseItems.set(item.item_id, item);
+    };
+    sections.forEach((section) => {
+      (section.items || []).forEach(normalize);
+      (section.containers || []).forEach((container) => (container.sections || []).forEach((nested) => (nested.items || []).forEach(normalize)));
+    });
+    const subject = detail.subject || {};
+    mount.innerHTML = `
+      ${detailHeadHtml({ item_type: "graph_node", node_id: nodeId, name: subject.display_name || subject.name || nodeId, code: subject.code || "", status: subject.review_status || "draft", graph_filename: detail.graph_filename || graphName, node_type: subject.node_type || "" })}
+      <div class="detail-sub mono muted">出边 ${detail.totals?.total ?? 0} 条 · 待审 ${detail.totals?.pending ?? 0} · 可疑 ${detail.totals?.suspect ?? 0}</div>
+      ${sections.map((section) => diseaseSectionHtml(section)).join("") || '<div class="empty">该节点没有出边关系</div>'}`;
+    bindByDiseaseCardActions(mount);
+  }
+
+  function diseaseSectionHtml(section) {
+    const relItems = section.items || [];
+    const pending = relItems.filter((item) => ["draft", "stale"].includes(item.status));
+    const containers = (section.containers || []).map((container) => `
+      <details class="container-block">
+        <summary>${esc(container.display_name || container.container_name)} · ${container.sections.length} 组</summary>
+        ${(container.sections || []).map((nested) => nestedSectionHtml(container, nested)).join("")}
+      </details>`).join("");
+    return `<div class="kg-section">
+      <div class="kg-section-head">
+        <h4>${esc(relationLabel(section))}</h4>
+        <span class="mono muted">${esc(section.relation_code)}</span>
+        <span class="muted">${section.total} 条 · 待审 ${pending.length}</span>
+        <div class="actions">
+          ${pending.length ? `<button class="btn sm primary" data-section-action="approve" data-section-key="${esc(section.section_key)}">整组通过</button>
+          <button class="btn sm danger" data-section-action="reject" data-section-key="${esc(section.section_key)}">整组拒绝</button>` : '<span class="muted">无待审</span>'}
+        </div>
+      </div>
+      <table><tbody>${relItems.map((item) => diseaseRelationRowHtml(item)).join("")}</tbody></table>
+      ${containers}
+    </div>`;
+  }
+
+  function nestedSectionHtml(container, nested) {
+    const pending = (nested.items || []).filter((item) => ["draft", "stale"].includes(item.status));
+    if (!pending.length && !(nested.items || []).length) return "";
+    return `<div class="kg-section nested">
+      <div class="kg-section-head">
+        <h4>${esc(container.display_name || container.container_name)} · ${esc(relationLabel(nested))}</h4>
+        <span class="mono muted">${esc(nested.relation_code)}</span>
+        <span class="muted">${nested.total} 条 · 待审 ${pending.length}</span>
+        <div class="actions">
+          ${pending.length ? `<button class="btn sm primary" data-section-action="approve" data-section-key="${esc(nested.section_key)}">整组通过</button>
+          <button class="btn sm danger" data-section-action="reject" data-section-key="${esc(nested.section_key)}">整组拒绝</button>` : ""}
+        </div>
+      </div>
+      <table><tbody>${(nested.items || []).map((item) => diseaseRelationRowHtml(item)).join("")}</tbody></table>
+    </div>`;
+  }
+
+  function diseaseRelationRowHtml(item) {
+    const actions = [];
+    if (["draft", "stale"].includes(item.status)) {
+      actions.push(`<button class="btn sm primary" data-rel-action="approve" data-rel-id="${esc(item.item_id)}">通过</button>`);
+      actions.push(`<button class="btn sm danger" data-rel-action="reject" data-rel-id="${esc(item.item_id)}">拒绝</button>`);
+    } else if (item.status === "active") {
+      actions.push(`<button class="btn sm" data-rel-action="retire" data-rel-id="${esc(item.item_id)}">失效</button>`);
+    } else {
+      actions.push(`<button class="btn sm" data-rel-action="restore" data-rel-id="${esc(item.item_id)}">恢复</button>`);
+    }
+    return `<tr>
+      <td>${relationSemHtml(item)}</td>
+      <td>${reviewBadge(item.status)}</td>
+      <td>${flagChipsHtml(item)}</td>
+      <td class="nowrap"><div class="actions">${actions.join(" ")}</div></td>
+    </tr>`;
+  }
+
+  function collectSectionItems(sectionKey) {
+    for (const section of state.byDiseaseSections || []) {
+      if (section.section_key === sectionKey) {
+        const items = [...(section.items || [])];
+        (section.containers || []).forEach((container) => (container.sections || []).forEach((nested) => items.push(...(nested.items || []))));
+        return items;
+      }
+      for (const container of section.containers || []) {
+        for (const nested of container.sections || []) {
+          if (nested.section_key === sectionKey) return [...(nested.items || [])];
+        }
+      }
+    }
+    return [];
+  }
+
+  function bindByDiseaseCardActions(mount) {
+    const refresh = async () => {
+      await renderByDisease();
+    };
+    mount.onclick = async (event) => {
+      const single = event.target.closest("[data-rel-action]");
+      if (single) {
+        const item = state.byDiseaseItems?.get(single.dataset.relId);
+        if (!item) return;
+        const action = single.dataset.relAction;
+        if (action === "reject" || action === "retire") { openReasonDialog(item, action); return; }
+        try {
+          if (action === "approve" && relationEndpointBlocked(item)) {
+            toast("该关系的端点节点尚未全部「已通过」，请先审核两端节点", true);
+            return;
+          }
+          await submitReviewAction(item, action, "");
+          toast(`${ACTION_DONE_LABELS[action] || "已处理"}：${reviewItemTitle(item)}`);
+          await refresh();
+        } catch (error) { toast(error.message, true); }
+        return;
+      }
+      const sectionBtn = event.target.closest("[data-section-action]");
+      if (sectionBtn) {
+        const action = sectionBtn.dataset.sectionAction;
+        let pending = collectSectionItems(sectionBtn.dataset.sectionKey)
+          .filter((item) => ["draft", "stale"].includes(item.status));
+        if (!pending.length) return;
+        if (action === "reject") { openReasonDialog({ multi: pending }, "reject"); return; }
+        const blocked = pending.filter(relationEndpointBlocked);
+        if (blocked.length) {
+          const rest = pending.length - blocked.length;
+          const proceed = confirm(
+            `${blocked.length} 条关系的端点节点还不是「已通过」，直接提交会被拒绝。` +
+            (rest ? `\n\n确定后仅提交其余 ${rest} 条；` : "\n\n当前没有可提交条目；") + "取消则不做操作。"
+          );
+          if (!proceed) return;
+          pending = pending.filter((item) => !relationEndpointBlocked(item));
+          if (!pending.length) { toast("没有可提交的条目，请先审核相关端点节点", true); return; }
+        }
+        try {
+          const result = await api("/api/review/bulk", { json: {
+            items: pending.map(itemPayload),
+            action,
+            reviewer: reviewReviewer(),
+            note: "",
+          }});
+          toast(`整组完成：成功 ${result.succeeded}，失败 ${result.failed}`, result.failed > 0);
+          await refresh();
+        } catch (error) { toast(error.message, true); }
+      }
+    };
   }
 
   async function renderRules() {
