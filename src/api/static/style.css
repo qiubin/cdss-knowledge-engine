@@ -882,3 +882,12 @@ tr:last-child td { border-bottom: 0; }
 .ref-line.hit { background: rgba(255, 200, 60, .35); border-radius: 3px; padding: 0 3px; }
 .ref-line.hit .ref-text { font-weight: 600; }
 .ref-more { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* 关系审核：预检徽章 / 只看可疑 / 类型×状态概览 */
+.flag-line { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
+.flag-chip { font-size: 11px; background: var(--warn-soft); color: var(--warn); border-radius: 4px; padding: 1px 6px; cursor: help; }
+.suspect-toggle { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; white-space: nowrap; }
+.relation-matrix { margin-bottom: 8px; }
+.relation-matrix summary { cursor: pointer; font-size: 12px; color: var(--muted); }
+.relation-matrix td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.relation-matrix td.zero { color: var(--muted); }

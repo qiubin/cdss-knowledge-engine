@@ -2919,6 +2919,28 @@
     source_node_id: "源节点", relation_code: "关系编码", relation_name: "关系名称",
     target_node_id: "目标节点", source_refs: "指南溯源",
   };
+  const FLAG_LABELS = {
+    endpoint_inactive: "端点未通过", no_source_refs: "无溯源",
+    direction_suspect: "方向可疑", self_loop: "自环", duplicate_pair: "重复连线",
+  };
+  function flagChipsHtml(item) {
+    return (item.flags || []).map((flag) => `<span class="flag-chip" title="${esc(flag.message)}">⚠ ${esc(FLAG_LABELS[flag.code] || flag.code)}</span>`).join(" ");
+  }
+  function relationMatrixHtml(items) {
+    const relItems = items.filter((item) => item.item_type === "graph_relation");
+    if (!relItems.length) return "";
+    const statuses = ["draft", "stale", "active", "rejected", "retired"];
+    const byCode = new Map();
+    relItems.forEach((item) => {
+      const code = item.relation_code || "-";
+      if (!byCode.has(code)) byCode.set(code, Object.fromEntries(statuses.map((s) => [s, 0])));
+      byCode.get(code)[item.status] = (byCode.get(code)[item.status] || 0) + 1;
+    });
+    const rows = [...byCode.entries()].map(([code, counts]) =>
+      `<tr><td>${esc(RELATION_LABELS[code] || code)}</td>${statuses.map((s) => `<td class="num ${counts[s] ? "" : "zero"}">${counts[s] || "·"}</td>`).join("")}</tr>`);
+    return `<details class="relation-matrix"><summary>关系类型 × 状态概览（当前列表 ${relItems.length} 条）</summary>
+      ${table(["关系类型", ...statuses.map((s) => REVIEW_LABELS[s] || s)], rows)}</details>`;
+  }
   const ACTION_DONE_LABELS = { approve: "已通过", reject: "已拒绝", retire: "已失效", restore: "已恢复" };
 
   function reviewItemKey(item) {
@@ -3437,6 +3459,7 @@
       if (tab === "orphan") return Boolean(item.orphaned_from && item.orphaned_from.length);
       return false;
     }).filter((item) => {
+      if (tab === "relations" && state.reviewSuspectOnly && !(item.flags || []).length) return false;
       if (!query) return true;
       const haystack = `${reviewItemTitle(item)} ${item.code || ""} ${item.rule_id || ""} ${item.graph_filename || ""}`.toLowerCase();
       return haystack.includes(query.toLowerCase());
@@ -3490,6 +3513,7 @@
             ${item.item_type === "graph_relation" ? relationSemHtml(item) : `<strong>${esc(reviewItemTitle(item))}</strong>`}
           </div>
           <div class="review-item-sub mono">${esc(subParts.filter(Boolean).join(" · "))}</div>
+          ${item.flags?.length ? `<div class="flag-line">${flagChipsHtml(item)}</div>` : ""}
           ${item.orphaned_from?.length ? `<div class="muted">孤儿来源：${esc(item.orphaned_from.join("、"))}</div>` : ""}
           ${issues.length ? `<div class="issue-inline" title="${esc(issues.join("\n"))}">${esc(issues[0])}</div>` : ""}
         </td>
@@ -3502,6 +3526,7 @@
       <div class="review-tabs">${tabHtml}</div>
       ${reviewProgressHtml(queue.summary)}
       ${truncated}
+      ${tab === "relations" ? relationMatrixHtml(items) : ""}
       <div class="review-layout">
         <div class="review-list">
           <div class="review-toolbar compact">
@@ -3525,6 +3550,9 @@
               <option value="">全部关系类型</option>
               ${(state.reviewRelationCodeOptions || []).map((option) => `<option value="${esc(option.value)}" ${filters.relationCode === option.value ? "selected" : ""}>${esc(option.label)}（${option.count}）</option>`).join("")}
             </select>` : ""}
+            ${tab === "relations" ? `<label class="suspect-toggle" title="只显示系统预检标记了可疑项的关系">
+              <input type="checkbox" id="reviewSuspectOnly" ${state.reviewSuspectOnly ? "checked" : ""}> 只看可疑（${allItems.filter((item) => item.item_type === "graph_relation" && ["draft", "stale"].includes(item.status) && (item.flags || []).length).length}）
+            </label>` : ""}
             ${filterParams ? '<button class="btn sm" id="reviewFilterClear">清除筛选</button>' : ""}
           </div>
           <div class="review-bulkbar">
@@ -3575,6 +3603,10 @@
     bindReviewFilter("#reviewFilterRelationCode", "relationCode");
     $("#reviewFilterClear")?.addEventListener("click", () => {
       state.reviewFilters = { graph: "", sourceDoc: "", nodeType: "", relationCode: "" };
+      renderReviewCenter();
+    });
+    $("#reviewSuspectOnly")?.addEventListener("change", (event) => {
+      state.reviewSuspectOnly = event.target.checked;
       renderReviewCenter();
     });
     const selectionCount = () => {
