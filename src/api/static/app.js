@@ -3660,7 +3660,7 @@
       const groups = dupesData.groups || [];
       const dupeCards = !graphFilename
         ? '<div class="empty">请先在下方选择目的图谱</div>'
-        : (groups.map((group) => `
+        : (groups.map((group, groupIndex) => `
           <div class="dupe-group">
             <div class="dupe-head">
               <span class="type-chip">${esc(typeName[group.node_type] || group.node_type)}</span>
@@ -3669,7 +3669,7 @@
             </div>
             <div class="dupe-nodes">${group.nodes.map((n) => `
               <label class="dupe-node">
-                <input type="radio" name="dupe-group" value="${esc(n.node_id)}" ${n.node_id === group.recommended_survivor ? "checked" : ""}>
+                <input type="radio" name="dupe-group-${groupIndex}" value="${esc(n.node_id)}" ${n.node_id === group.recommended_survivor ? "checked" : ""}>
                 <span class="mono">${esc(n.code)}</span>
                 ${n.is_standard_code ? '<span class="badge active">标准码</span>' : '<span class="badge">候选码</span>'}
                 ${reviewBadge(n.review_status)}
