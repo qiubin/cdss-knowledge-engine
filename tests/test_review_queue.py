@@ -93,3 +93,41 @@ class QueueTest(unittest.TestCase):
         rule = next(item for item in queue["items"] if item["item_type"] == "rule")
         self.assertEqual(rule["dependency_summary"]["total"], 3)
         self.assertTrue(rule["dependency_summary"]["blocked"])
+
+    def test_queue_filters_node_type(self):
+        queue = build_queue(
+            self.service, packages=[], graph_files=["QUEUE.json"], node_type="symptom",
+        )
+        nodes = [i for i in queue["items"] if i["item_type"] == "graph_node"]
+        self.assertEqual([i["name"] for i in nodes], ["待审症状"])
+        self.assertFalse([i for i in queue["items"] if i["item_type"] == "graph_relation"])
+
+    def test_queue_filters_source_doc_for_graph_items(self):
+        graph = json.loads((self.service.graph_dir / "QUEUE.json").read_text(encoding="utf-8"))
+        by_id = {node["id"]: node for node in graph["nodes"]}
+        by_id["ENTITY:disease:I21.0"]["source_refs"] = ["DOC-GUIDE-A_p3_l10-20"]
+        by_id["ENTITY:symptom:SYM_DRAFT"]["source_refs"] = ["DOC-GUIDE-B_p1_l1-5"]
+        (self.service.graph_dir / "QUEUE.json").write_text(
+            json.dumps(graph, ensure_ascii=False), encoding="utf-8"
+        )
+        queue = build_queue(
+            self.service, packages=[], graph_files=["QUEUE.json"], source_doc="DOC-GUIDE-A",
+        )
+        names = [i["name"] for i in queue["items"] if i["item_type"] == "graph_node"]
+        self.assertEqual(names, ["测试病"])
+
+    def test_queue_filters_rules_by_source_guideline(self):
+        rules = json.loads(self.service.rules_path.read_text(encoding="utf-8"))
+        rules[0]["source"] = {"guideline_id": "DOC-GUIDE-A", "guideline_title": "指南A"}
+        rules.append({
+            **rules[0],
+            "rule_id": "R2",
+            "name": "指南B规则",
+            "source": {"guideline_id": "DOC-GUIDE-B", "guideline_title": "指南B"},
+        })
+        self.service.rules_path.write_text(json.dumps(rules, ensure_ascii=False), encoding="utf-8")
+        queue = build_queue(
+            self.service, packages=[], graph_files=["QUEUE.json"], source_doc="DOC-GUIDE-B",
+        )
+        rule_ids = [i["rule_id"] for i in queue["items"] if i["item_type"] == "rule"]
+        self.assertEqual(rule_ids, ["R2"])

@@ -48,6 +48,10 @@
     importJob: null,
     reviewSelectedKey: "",
     reviewItems: [],
+    reviewFilters: { graph: "", sourceDoc: "", nodeType: "" },
+    reviewGraphOptions: null,
+    reviewDocOptions: null,
+    reviewNodeTypeOptions: [],
   };
   let importTimer = null;
   let importSubmitting = false; // 「开始导入」提交进行中：防双击重复建任务
@@ -3298,15 +3302,32 @@
     const tab = state.reviewTab || "graph";
     const reviewer = localStorage.getItem("cdssReviewer") || "";
     const query = (state.reviewQuery || "").trim();
+    const filters = state.reviewFilters || { graph: "", sourceDoc: "", nodeType: "" };
     const queueItemType = tab === "rules" || tab === "blocked"
       ? "rule"
       : (["graph", "stale", "orphan"].includes(tab) ? "graph" : "");
-    const queueUrl = `/api/review/queue?limit=300${queueItemType ? `&item_type=${queueItemType}` : ""}${query ? `&q=${encodeURIComponent(query)}` : ""}`;
-    const [queue, audit] = await Promise.all([
+    const filterParams = [
+      filters.graph ? `&graph_filename=${encodeURIComponent(filters.graph)}` : "",
+      filters.sourceDoc ? `&source_doc=${encodeURIComponent(filters.sourceDoc)}` : "",
+      filters.nodeType ? `&node_type=${encodeURIComponent(filters.nodeType)}` : "",
+    ].join("");
+    const queueUrl = `/api/review/queue?limit=300${queueItemType ? `&item_type=${queueItemType}` : ""}${filterParams}${query ? `&q=${encodeURIComponent(query)}` : ""}`;
+    const [queue, audit, graphs, docs] = await Promise.all([
       api(queueUrl),
       tab === "audit" ? api("/api/review/audit?limit=100") : Promise.resolve({ items: [] }),
+      state.reviewGraphOptions === null
+        ? api("/api/kg/graphs").then((items) => { state.reviewGraphOptions = items; }).catch(() => { state.reviewGraphOptions = []; })
+        : Promise.resolve(),
+      state.reviewDocOptions === null
+        ? api("/api/pdf/documents").then((items) => { state.reviewDocOptions = items; }).catch(() => { state.reviewDocOptions = []; })
+        : Promise.resolve(),
     ]);
     const allItems = queue.items || [];
+    if (!filters.nodeType) {
+      state.reviewNodeTypeOptions = [...new Set(
+        allItems.filter((item) => item.item_type === "graph_node").map((item) => item.node_type).filter(Boolean)
+      )].sort();
+    }
     const items = allItems.filter((item) => {
       if (tab === "graph") return ["graph_node", "graph_relation"].includes(item.item_type) && ["draft", "stale"].includes(item.status);
       if (tab === "rules") return item.item_type === "rule" && ["draft", "testing"].includes(item.status);
@@ -3390,6 +3411,21 @@
             <input id="reviewCenterReviewer" value="${esc(reviewer)}" placeholder="审核人（可署名）" title="审核人署名，写入审计记录">
             <input id="reviewSearch" type="search" value="${esc(state.reviewQuery || "")}" placeholder="搜索名称 / 编码 / 规则 ID…">
           </div>
+          <div class="review-toolbar compact review-filterbar">
+            <select id="reviewFilterGraph" title="按目的图谱筛选当前页签的条目">
+              <option value="">全部图谱</option>
+              ${(state.reviewGraphOptions || []).map((g) => `<option value="${esc(g.graph_filename)}" ${filters.graph === g.graph_filename ? "selected" : ""}>${esc(g.graph_filename)}</option>`).join("")}
+            </select>
+            <select id="reviewFilterSourceDoc" title="按来源指南筛选：图谱条目按溯源、规则按 guideline_id">
+              <option value="">全部指南</option>
+              ${(state.reviewDocOptions || []).map((d) => `<option value="${esc(d.doc_id)}" ${filters.sourceDoc === d.doc_id ? "selected" : ""}>${esc(d.doc_title || d.doc_id)}</option>`).join("")}
+            </select>
+            <select id="reviewFilterNodeType" title="按实体类型筛选图谱条目（配合全选可批量审核同一类型）">
+              <option value="">全部类型</option>
+              ${state.reviewNodeTypeOptions.map((t) => `<option value="${esc(t)}" ${filters.nodeType === t ? "selected" : ""}>${esc(typeName[t] || t)}</option>`).join("")}
+            </select>
+            ${filterParams ? '<button class="btn sm" id="reviewFilterClear">清除筛选</button>' : ""}
+          </div>
           <div class="review-bulkbar">
             <label class="nowrap"><input type="checkbox" id="reviewSelectAll"> 全选</label>
             <span class="muted" id="reviewSelectionCount">已选 0 条</span>
@@ -3426,6 +3462,19 @@
         }, 250);
       };
     }
+    const bindReviewFilter = (id, key) => {
+      $(id)?.addEventListener("change", (event) => {
+        state.reviewFilters[key] = event.target.value;
+        renderReviewCenter();
+      });
+    };
+    bindReviewFilter("#reviewFilterGraph", "graph");
+    bindReviewFilter("#reviewFilterSourceDoc", "sourceDoc");
+    bindReviewFilter("#reviewFilterNodeType", "nodeType");
+    $("#reviewFilterClear")?.addEventListener("click", () => {
+      state.reviewFilters = { graph: "", sourceDoc: "", nodeType: "" };
+      renderReviewCenter();
+    });
     const selectionCount = () => {
       const count = content.querySelectorAll("[data-review-select]:checked").length;
       const el = $("#reviewSelectionCount");

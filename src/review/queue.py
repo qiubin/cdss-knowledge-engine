@@ -37,6 +37,8 @@ def build_queue(
     graph_filename: Optional[str] = None,
     status: Optional[str] = None,
     item_type: Optional[str] = None,
+    node_type: Optional[str] = None,
+    source_doc: Optional[str] = None,
     q: Optional[str] = None,
     limit: int = 300,
 ) -> Dict[str, Any]:
@@ -65,7 +67,9 @@ def build_queue(
                 else "relation" if item_type == "graph_relation"
                 else None
             )
-            for item in service.list_items(filename, status=status, item_type=wanted, q=q):
+            for item in service.list_items(
+                filename, status=status, item_type=wanted, node_type=node_type, source_doc=source_doc, q=q,
+            ):
                 items.append({
                     **item,
                     "item_type": "graph_node" if item["item_type"] == "node" else "graph_relation",
@@ -103,6 +107,8 @@ def build_queue(
         if status and rule.get("status") != status:
             continue
         if item_type and item_type != "rule":
+            continue
+        if source_doc and (rule.get("source") or {}).get("guideline_id") != source_doc:
             continue
         text = f"{rule.get('rule_id', '')} {rule.get('name', '')}".lower()
         if query and query not in text:

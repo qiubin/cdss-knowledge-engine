@@ -98,6 +98,22 @@ class ReviewApiTest(unittest.TestCase):
             for item in payload["items"]
         ))
 
+    def test_queue_endpoint_passes_node_type_and_source_doc(self):
+        response = self.request(
+            "GET", "/api/review/queue?graph_filename=API-TEST.json&node_type=symptom"
+        )
+        self.assertEqual(response.status_code, 200)
+        items = response.json()["items"]
+        self.assertEqual([i["name"] for i in items], ["待审症状"])
+        # source_doc 对无 source_refs 的条目应过滤为空
+        response = self.request(
+            "GET", "/api/review/queue?graph_filename=API-TEST.json&source_doc=DOC-NONE"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [i for i in response.json()["items"] if i["item_type"].startswith("graph_")], []
+        )
+
     def test_unified_bulk_approves_graph_node(self):
         response = self.request("POST", "/api/review/bulk", json={
             "items": [{

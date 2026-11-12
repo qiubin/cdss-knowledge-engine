@@ -190,6 +190,8 @@ async def review_queue(
     graph_filename: Optional[str] = None,
     status: Optional[str] = None,
     item_type: Optional[str] = None,
+    node_type: Optional[str] = None,
+    source_doc: Optional[str] = None,
     q: Optional[str] = None,
     limit: int = 300,
 ):
@@ -200,6 +202,8 @@ async def review_queue(
         graph_filename=graph_filename,
         status=status,
         item_type=item_type,
+        node_type=node_type,
+        source_doc=source_doc,
         q=q,
         limit=limit,
     )
