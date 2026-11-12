@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from src.api.routes.kg import TEMPLATE_PATH
 
@@ -53,3 +53,50 @@ def load_endpoint_type_map(path: Optional[Path] = None) -> Dict[str, Dict[str, L
                 if value and value not in entry[side]:
                     entry[side].append(value)
     return merged
+
+
+def duplicate_relation_pairs(relations: Iterable[Dict[str, Any]]) -> Set[Tuple[str, str]]:
+    """同 (source, target) 被多种 relation_code 连接的对——疑似重复连线。"""
+    pair_codes: Dict[Tuple[str, str], Set[str]] = {}
+    for relation in relations:
+        pair = (str(relation.get("source_node_id") or ""), str(relation.get("target_node_id") or ""))
+        pair_codes.setdefault(pair, set()).add(str(relation.get("relation_code") or ""))
+    return {pair for pair, codes in pair_codes.items() if len(codes) > 1}
+
+
+def relation_flags(
+    relation: Dict[str, Any],
+    source_node: Optional[Dict[str, Any]],
+    target_node: Optional[Dict[str, Any]],
+    endpoint_type_map: Dict[str, Dict[str, List[str]]],
+    duplicate_pairs: Set[Tuple[str, str]],
+) -> List[Dict[str, str]]:
+    flags: List[Dict[str, str]] = []
+
+    def _status(item: Optional[Dict[str, Any]]) -> str:
+        return str((item or {}).get("review_status") or "draft")
+
+    if _status(source_node) != "active" or _status(target_node) != "active":
+        flags.append({"code": "endpoint_inactive", "message": "端点节点未全部「已通过」"})
+    if not (relation.get("source_refs") or []):
+        flags.append({"code": "no_source_refs", "message": "无指南溯源引用"})
+    source_type = str((source_node or {}).get("node_type") or "")
+    target_type = str((target_node or {}).get("node_type") or "")
+    code = str(relation.get("relation_code") or "")
+    expected = endpoint_type_map.get(code)
+    if expected and expected.get("source") and expected.get("target") and source_type and target_type:
+        if source_type not in expected["source"] or target_type not in expected["target"]:
+            flags.append({
+                "code": "direction_suspect",
+                "message": (
+                    f"预期 {type_label(expected['source'][0])}→{type_label(expected['target'][0])}，"
+                    f"实际 {type_label(source_type)}→{type_label(target_type)}"
+                ),
+            })
+    source_id = str(relation.get("source_node_id") or "")
+    target_id = str(relation.get("target_node_id") or "")
+    if source_id and source_id == target_id:
+        flags.append({"code": "self_loop", "message": "源与目标是同一节点"})
+    if (source_id, target_id) in duplicate_pairs:
+        flags.append({"code": "duplicate_pair", "message": "同一对节点被多种关系类型重复连接"})
+    return flags
