@@ -3149,6 +3149,64 @@
     return buttons.length ? `<div class="actions detail-actions">${buttons.join("")}</div>` : "";
   }
 
+  // 溯源引用 "DOC-xxx_p3_l100-20" → { docId, page, start, end }；生成器会把
+  // l100-120 截成 l100-20（end 丢首位），end < start 时按 start 前缀补全位数。
+  function parseSourceRef(ref) {
+    const match = /^([A-Za-z0-9-]+)_p(\d+)_l(\d+)-(\d+)$/.exec(String(ref || ""));
+    if (!match) return null;
+    const start = Number(match[3]);
+    let end = Number(match[4]);
+    if (end < start) {
+      const scale = Math.pow(10, match[4].length);
+      end = Math.floor(start / scale) * scale + end;
+    }
+    return { docId: match[1], page: Number(match[2]), start, end };
+  }
+
+  const sourceRefLineCache = {}; // "DOC-x:3" -> 该页行数组；null = 拉取失败（文档已删等）
+  function refDocTitle(docId) {
+    return (state.reviewDocOptions || []).find((d) => d.doc_id === docId)?.doc_title || docId;
+  }
+  async function fetchRefLines(docId, page) {
+    const key = `${docId}:${page}`;
+    if (!(key in sourceRefLineCache)) {
+      try {
+        const data = await api(`/api/pdf/${encodeURIComponent(docId)}/lines?page=${page}`);
+        sourceRefLineCache[key] = data.lines || [];
+      } catch (_) {
+        sourceRefLineCache[key] = null;
+      }
+    }
+    return sourceRefLineCache[key];
+  }
+  async function sourceRefBlock(ref) {
+    const parsed = parseSourceRef(ref);
+    if (!parsed) return `<div class="ref-context missing mono">${esc(ref)}</div>`;
+    const head = `<div class="ref-head"><strong>${esc(refDocTitle(parsed.docId))}</strong><span class="muted">第 ${parsed.page} 页 · 第 ${parsed.start}–${parsed.end} 行</span></div>`;
+    const lines = await fetchRefLines(parsed.docId, parsed.page);
+    if (!lines) return `${head}<div class="ref-context missing">原文不可用（文档可能已删除）：<span class="mono">${esc(ref)}</span></div>`;
+    const pad = 2;
+    const render = (line, cls) => `<div class="ref-line ${cls}"><span class="ref-no">${line.line}</span><span class="ref-text">${esc(line.text)}</span></div>`;
+    const body = [
+      ...lines.filter((l) => l.line >= parsed.start - pad && l.line < parsed.start).map((l) => render(l, "ctx")),
+      ...lines.filter((l) => l.line >= parsed.start && l.line <= parsed.end).map((l) => render(l, "hit")),
+      ...lines.filter((l) => l.line > parsed.end && l.line <= parsed.end + pad).map((l) => render(l, "ctx")),
+    ].join("");
+    return `${head}<div class="ref-context">${body || '<div class="muted">该页未找到引用行</div>'}</div>`;
+  }
+  async function sourceRefsHtml(refs, { expand = 3 } = {}) {
+    const list = refs || [];
+    if (!list.length) return "";
+    const blocks = [];
+    for (const ref of list.slice(0, expand)) blocks.push(await sourceRefBlock(ref));
+    const rest = list.slice(expand).map((ref) => {
+      const parsed = parseSourceRef(ref);
+      const label = parsed ? `P${parsed.page} L${parsed.start}-${parsed.end}` : ref;
+      return `<button class="btn sm ref-chip" data-ref="${esc(ref)}" title="展开该段原文">${esc(label)}</button>`;
+    }).join("");
+    return `<div class="ref-list">${blocks.join("")}${rest ? `<div class="ref-more">${rest}</div>` : ""}</div>`;
+  }
+
   async function nodeDetailHtml(item) {
     const detail = await api(`/api/kg/nodes/${encodeURIComponent(item.node_id)}?graph_filename=${encodeURIComponent(item.graph_filename)}`);
     const node = detail.node || {};
@@ -3157,12 +3215,13 @@
     if (item.status === "stale") {
       try { historyHtml = await entityHistoryHtml(item, "node", item.node_id, node); } catch (_) { historyHtml = ""; }
     }
+    const refsHtml = (node.source_refs || []).length ? await sourceRefsHtml(node.source_refs) : "";
     return `
       <div class="detail-section endpoint-meta">
         <div><span class="muted">类型</span><strong>${esc(typeName[node.node_type] || node.node_type || "-")}</strong></div>
         <div><span class="muted">编码</span><span class="mono">${esc(node.code || "-")}</span></div>
-        ${(node.source_refs || []).length ? `<div><span class="muted">溯源</span><span class="mono">${esc((node.source_refs || []).join("；"))}</span></div>` : ""}
       </div>
+      ${refsHtml ? `<div class="detail-section"><h4>指南溯源</h4>${refsHtml}</div>` : ""}
       <div class="detail-section"><h4>属性</h4>${attrTableHtml(node.attributes)}</div>
       ${historyHtml}
       <div class="detail-section"><h4>依赖规则（${rules.length}）</h4>${dependentRuleTable(rules)}</div>
@@ -3193,7 +3252,7 @@
         </div>
       </div>
       <div class="detail-section"><h4>关系属性</h4>${attrTableHtml(relation.attributes)}</div>
-      ${(relation.source_refs || []).length ? `<div class="detail-section"><h4>指南溯源</h4><div class="quote">${esc((relation.source_refs || []).join("；"))}</div></div>` : ""}
+      ${(relation.source_refs || []).length ? `<div class="detail-section"><h4>指南溯源</h4>${await sourceRefsHtml(relation.source_refs)}</div>` : ""}
       ${historyHtml}
       <div class="detail-section"><h4>依赖规则（${rulesInfo.total}）</h4>${dependentRuleTable(rulesInfo.items)}</div>
       <div class="detail-section"><h4>审核记录</h4>${auditListHtml(detail.audit)}</div>`;
@@ -3216,6 +3275,10 @@
         <div><span class="muted">所属图谱</span><span class="mono">${esc(rule.graph_filename || "-")}</span></div>
       </div>
       <div class="detail-section"><h4>触发条件</h4><div class="quote">${esc(rule.condition_text || "-")}</div><div class="concept-chips">${ruleConceptChips(rule)}</div></div>
+      ${rule.source?.quote ? `<div class="detail-section"><h4>指南溯源</h4>
+        <div class="ref-head"><strong>${esc(rule.source.guideline_title || rule.source.guideline_id || "-")}</strong><span class="muted">${rule.source.page_start ? `第 ${rule.source.page_start} 页` : ""}${rule.source.section ? ` · ${esc(rule.source.section)}` : ""}</span></div>
+        <div class="ref-context"><div class="ref-line hit"><span class="ref-text">${esc(rule.source.quote)}</span></div></div>
+      </div>` : ""}
       ${issues.length
         ? `<div class="detail-section"><h4>图谱校验问题</h4><ul class="issue-list">${issues.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul></div>`
         : '<div class="detail-section"><h4>图谱校验</h4><span class="badge active">语义一致</span></div>'}
@@ -3246,6 +3309,12 @@
       else body = '<div class="empty">该条目类型暂不支持详情展示</div>';
       if (token !== reviewDetailToken) return;
       mount.innerHTML = `${detailHeadHtml(item)}${detailActionsHtml(item)}<div class="detail-body">${body}</div>`;
+      mount.querySelectorAll(".ref-chip[data-ref]").forEach((chip) => chip.onclick = async () => {
+        chip.disabled = true;
+        const wrap = document.createElement("div");
+        wrap.innerHTML = await sourceRefBlock(chip.dataset.ref);
+        chip.replaceWith(...wrap.childNodes);
+      });
     } catch (error) {
       if (token !== reviewDetailToken) return;
       mount.innerHTML = `<div class="empty">详情加载失败：${esc(error.message)}</div>`;

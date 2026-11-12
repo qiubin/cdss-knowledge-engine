@@ -870,3 +870,15 @@ tr:last-child td { border-bottom: 0; }
 }
 .ct-ro-row b { color: var(--muted); font-weight: 600; }
 
+
+/* 审核台指南溯源：原文上下文 + 高亮引用行 */
+.ref-list { display: grid; gap: 12px; }
+.ref-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; margin-bottom: 4px; }
+.ref-context { border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; background: rgba(99, 114, 109, .05); max-width: 560px; }
+.ref-context.missing { color: var(--muted); }
+.ref-line { display: flex; gap: 8px; font-size: 12px; line-height: 1.7; }
+.ref-line .ref-no { color: var(--muted); min-width: 30px; text-align: right; font-variant-numeric: tabular-nums; flex: none; }
+.ref-line.ctx { opacity: .55; }
+.ref-line.hit { background: rgba(255, 200, 60, .35); border-radius: 3px; padding: 0 3px; }
+.ref-line.hit .ref-text { font-weight: 600; }
+.ref-more { display: flex; flex-wrap: wrap; gap: 6px; }
