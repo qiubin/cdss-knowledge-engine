@@ -1448,3 +1448,54 @@ def clear_graph_and_rules(
 async def clear_graph(request: GraphClearRequest):
     """Danger zone: preview (dry_run) or wipe a graph and its bound rules."""
     return clear_graph_and_rules(request)
+
+
+def _is_standard_code(code: str) -> bool:
+    return bool(re.fullmatch(r"[A-Z]\d{2}(?:\.\d+)?", str(code or "")))
+
+
+def find_duplicate_groups(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    relation_counts: Dict[str, int] = {}
+    for source_id, _, target_id in graph.get("relations", {}):
+        relation_counts[source_id] = relation_counts.get(source_id, 0) + 1
+        relation_counts[target_id] = relation_counts.get(target_id, 0) + 1
+    grouped: Dict[tuple, List[Dict[str, Any]]] = {}
+    for node in graph.get("nodes", {}).values():
+        name = _normalize_entity_name(str(node.get("name") or ""))
+        if not name:
+            continue
+        grouped.setdefault((str(node.get("node_type") or ""), name), []).append(node)
+    groups: List[Dict[str, Any]] = []
+    for (node_type, name), nodes in grouped.items():
+        if len(nodes) < 2:
+            continue
+        def _rank(n: Dict[str, Any]):
+            code = str(n.get("code") or "")
+            return (
+                0 if _is_standard_code(code) else 1,
+                0 if n.get("review_status") == "active" else 1,
+                -relation_counts.get(n["id"], 0),
+                code,
+            )
+        ordered = sorted(nodes, key=_rank)
+        groups.append({
+            "node_type": node_type,
+            "name": name,
+            "nodes": [{
+                "node_id": n["id"],
+                "code": str(n.get("code") or ""),
+                "is_standard_code": _is_standard_code(str(n.get("code") or "")),
+                "review_status": str(n.get("review_status") or "draft"),
+                "source_ref_count": len(n.get("source_refs") or []),
+                "relation_count": relation_counts.get(n["id"], 0),
+            } for n in ordered],
+            "recommended_survivor": ordered[0]["id"],
+        })
+    groups.sort(key=lambda g: (-len(g["nodes"]), g["node_type"], g["name"]))
+    return groups
+
+
+@router.get("/duplicates")
+async def list_duplicates(graph_filename: str):
+    graph = _load_graph(graph_filename)
+    return {"groups": find_duplicate_groups(graph)}
