@@ -155,6 +155,7 @@ def _save_graph(
     base = Path(kg_dir) if kg_dir is not None else KG_DIR
     path = base / normalize_graph_filename(filename)
     payload = dict(data)
+    payload.pop("_same_name_merges", None)
     if isinstance(data.get("nodes"), dict):
         payload["nodes"] = list(data["nodes"].values())
     if isinstance(data.get("relations"), dict):
@@ -177,6 +178,10 @@ class GraphImportRequest(BaseModel):
 
 def _semantic_node_id(node_type: str, code: str) -> str:
     return f"ENTITY:{node_type}:{code}"
+
+
+def _normalize_entity_name(name: str) -> str:
+    return " ".join(str(name or "").split())
 
 
 def _entity_semantic_code(entity: Dict[str, Any]) -> str:
@@ -254,6 +259,23 @@ def _upsert_semantic_node(
     node_id = _semantic_node_id(node_type, code)
     refs = [ref for ref in (source_refs or []) if ref]
     node = graph["nodes"].get(node_id)
+    if node is None and _normalize_entity_name(str(name or "")):
+        normalized = _normalize_entity_name(str(name))
+        for existing in graph["nodes"].values():
+            if (
+                existing.get("node_type") == node_type
+                and _normalize_entity_name(str(existing.get("name") or "")) == normalized
+            ):
+                node = existing
+                incoming_code = str(code)
+                # 后续更新分支用 code 重算 display_name，先回绑节点自身编码防止候选码污染
+                code = str(node.get("code") or code)
+                if incoming_code and incoming_code != code:
+                    alts = node.setdefault("attributes", {}).setdefault("alt_codes", [])
+                    if incoming_code not in alts:
+                        alts.append(incoming_code)
+                graph["_same_name_merges"] = graph.get("_same_name_merges", 0) + 1
+                break
     if node is None:
         node_name = _semantic_node_name(node_type, code, name)
         node = {
@@ -963,6 +985,9 @@ async def import_graph(request: GraphImportRequest):
             previous_contents=previous_contents,
             graph_filename=graph_filename,
         )
+        same_name_merges = graph.pop("_same_name_merges", 0)
+        if same_name_merges:
+            warnings.append(f"同名实体自动合并 {same_name_merges} 处候选码")
         _save_graph(graph, graph_filename)
         try:
             from src.review.service import sync_blocked_rules_for_graph
@@ -1180,6 +1205,9 @@ async def import_graph(request: GraphImportRequest):
         previous_contents=previous_contents,
         graph_filename=graph_filename,
     )
+    same_name_merges = graph.pop("_same_name_merges", 0)
+    if same_name_merges:
+        warnings.append(f"同名实体自动合并 {same_name_merges} 处候选码")
     _save_graph(graph, graph_filename)
     try:
         from src.review.service import sync_blocked_rules_for_graph
