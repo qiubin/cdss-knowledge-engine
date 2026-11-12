@@ -38,21 +38,22 @@ def load_endpoint_type_map(path: Optional[Path] = None) -> Dict[str, Dict[str, L
     target = Path(path) if path is not None else TEMPLATE_PATH
     try:
         templates = json.loads(target.read_text(encoding="utf-8"))
+        merged: Dict[str, Dict[str, List[str]]] = {}
+        for template in templates or []:
+            for relation in template.get("relations") or []:
+                code = str(relation.get("relation_code") or "")
+                if not code:
+                    continue
+                entry = merged.setdefault(code, {"source": [], "target": []})
+                for side, field in (("source", "source_entity_type"), ("target", "target_entity_type")):
+                    value = str(relation.get(field) or "")
+                    if value and value not in entry[side]:
+                        entry[side].append(value)
+        return merged
     except Exception:
+        # 合法 JSON 但结构不对（顶层为 dict、含 null 元素等）同样降级为空映射
         logger.warning("加载抽取模板失败，关系方向预检降级: %s", target)
         return {}
-    merged: Dict[str, Dict[str, List[str]]] = {}
-    for template in templates or []:
-        for relation in template.get("relations") or []:
-            code = str(relation.get("relation_code") or "")
-            if not code:
-                continue
-            entry = merged.setdefault(code, {"source": [], "target": []})
-            for side, field in (("source", "source_entity_type"), ("target", "target_entity_type")):
-                value = str(relation.get(field) or "")
-                if value and value not in entry[side]:
-                    entry[side].append(value)
-    return merged
 
 
 def duplicate_relation_pairs(relations: Iterable[Dict[str, Any]]) -> Set[Tuple[str, str]]:

@@ -32,6 +32,19 @@ class EndpointTypeMapTest(unittest.TestCase):
             path.write_text("{not json", encoding="utf-8")
             self.assertEqual(load_endpoint_type_map(path), {})
 
+    def test_malformed_structure_degrades_to_empty(self):
+        # 合法 JSON 但结构错误（顶层 dict / 含 null 元素）不得抛异常，降级为空映射
+        with tempfile.TemporaryDirectory() as tmp:
+            dict_path = Path(tmp) / "dict.json"
+            dict_path.write_text(
+                json.dumps({"template_id": "T1", "relations": []}, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            self.assertEqual(load_endpoint_type_map(dict_path), {})
+            null_path = Path(tmp) / "null_element.json"
+            null_path.write_text('[null, {"relations": [{"relation_code": "X"}]}]', encoding="utf-8")
+            self.assertEqual(load_endpoint_type_map(null_path), {})
+
     def test_real_templates_cover_key_codes(self):
         mapping = load_endpoint_type_map()
         for code in ("DISEASE_HAS_SYMPTOM", "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",

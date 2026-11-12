@@ -3407,7 +3407,7 @@
       : tab === "relations"
         ? "graph_relation"
         : tab === "graph"
-          ? "graph_node"
+          ? "graph"
           : (["stale", "orphan"].includes(tab) ? "graph" : "");
     const filterParams = [
       filters.graph ? `&graph_filename=${encodeURIComponent(filters.graph)}` : "",
@@ -3648,7 +3648,14 @@
     const tab = state.reviewTab || "graph";
     const filters = state.reviewFilters || {};
     const graphName = filters.graph || state.graphFilename || "";
-    state.byDisease = state.byDisease || { subject: "", search: "" };
+    state.byDisease = state.byDisease || { subject: "", search: "", composing: false };
+    // 重渲染会重建搜索框，先记录焦点与光标，渲染后恢复（防抖过滤不打断输入）
+    state.byDisease.composing = false;
+    const prevSearch = content.querySelector("#byDiseaseSearch");
+    const searchHadFocus = Boolean(prevSearch && document.activeElement === prevSearch);
+    const searchSelection = searchHadFocus
+      ? { start: prevSearch.selectionStart, end: prevSearch.selectionEnd }
+      : null;
     const tabHtml = REVIEW_TABS.map(([key, label]) => `<button class="review-tab ${tab === key ? "active" : ""}" data-review-tab="${key}">${label}</button>`).join("");
     if (!graphName) {
       content.innerHTML = `<div class="review-tabs">${tabHtml}</div><div class="empty">按疾病分组视图按单图谱展示，请先在筛选中选择目的图谱。</div>`;
@@ -3679,14 +3686,39 @@
         </div>
       </div>`;
     bindReviewTabs();
-    let searchTimer = null;
-    $("#byDiseaseSearch").oninput = (event) => {
-      clearTimeout(searchTimer);
-      searchTimer = setTimeout(() => {
-        state.byDisease.search = event.target.value;
-        renderByDisease();
-      }, 250);
-    };
+    const searchInput = $("#byDiseaseSearch");
+    if (searchInput) {
+      let searchTimer = null;
+      const scheduleSearch = () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+          state.byDisease.search = searchInput.value;
+          renderByDisease();
+        }, 250);
+      };
+      // 输入法合成期间跳过防抖重渲染，避免打断 IME；合成结束后再过滤一次。
+      // composition 事件用 addEventListener 绑定：Chrome 对（未受信任派发的）
+      // 合成事件不触发 on* 属性处理器，addEventListener 两种路径都覆盖。
+      searchInput.oninput = () => {
+        if (state.byDisease.composing) return;
+        scheduleSearch();
+      };
+      searchInput.addEventListener("compositionstart", () => { state.byDisease.composing = true; });
+      searchInput.addEventListener("compositionend", () => {
+        state.byDisease.composing = false;
+        scheduleSearch();
+      });
+      if (searchHadFocus) {
+        searchInput.focus();
+        if (searchSelection) {
+          const max = searchInput.value.length;
+          searchInput.setSelectionRange(
+            Math.min(searchSelection.start, max),
+            Math.min(searchSelection.end, max),
+          );
+        }
+      }
+    }
     content.querySelectorAll(".subject-card").forEach((card) => card.onclick = () => loadByDiseaseCard(card.dataset.subject));
     if (state.byDisease.subject && subjects.some((s) => s.node_id === state.byDisease.subject)) {
       await loadByDiseaseCard(state.byDisease.subject);
