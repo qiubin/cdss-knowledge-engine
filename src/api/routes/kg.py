@@ -1466,8 +1466,11 @@ async def clear_graph(request: GraphClearRequest):
     return clear_graph_and_rules(request)
 
 
-def _is_standard_code(code: str) -> bool:
-    return bool(re.fullmatch(r"[A-Z]\d{2}(?:\.\d+)?", str(code or "")))
+def _is_standard_code(node_type: str, code: str) -> bool:
+    # ICD 风格编码，或共享词库中登记的编码，均视为标准码
+    if re.fullmatch(r"[A-Z]\d{2}(?:\.\d+)?", str(code or "")):
+        return True
+    return find_shared_entry(node_type, code) is not None
 
 
 def find_duplicate_groups(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -1488,7 +1491,7 @@ def find_duplicate_groups(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
         def _rank(n: Dict[str, Any]):
             code = str(n.get("code") or "")
             return (
-                0 if _is_standard_code(code) else 1,
+                0 if _is_standard_code(node_type, code) else 1,
                 0 if n.get("review_status") == "active" else 1,
                 -relation_counts.get(n["id"], 0),
                 code,
@@ -1500,7 +1503,7 @@ def find_duplicate_groups(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
             "nodes": [{
                 "node_id": n["id"],
                 "code": str(n.get("code") or ""),
-                "is_standard_code": _is_standard_code(str(n.get("code") or "")),
+                "is_standard_code": _is_standard_code(node_type, str(n.get("code") or "")),
                 "review_status": str(n.get("review_status") or "draft"),
                 "source_ref_count": len(n.get("source_refs") or []),
                 "relation_count": relation_counts.get(n["id"], 0),
@@ -1574,6 +1577,9 @@ def merge_duplicate_nodes(
     if not absorbed:
         raise HTTPException(422, "被吸收节点列表为空")
     absorbed_ids = {n["id"] for n in absorbed}
+    # 保留节点缺编码会把所有被吸收码改写为空，必须在备份/落盘前拒绝
+    if not str(survivor.get("code") or ""):
+        raise HTTPException(422, "保留节点缺少标准编码，无法改写规则引用")
 
     stamp = datetime.now().strftime("%Y%m%d")
     graph_path = (Path(kg_dir) if kg_dir is not None else KG_DIR) / graph_filename
@@ -1638,6 +1644,7 @@ def merge_duplicate_nodes(
             continue
         original = copy.deepcopy(rule)
         if _rewrite_codes(rule, code_mapping):
+            rule.pop("condition_text", None)  # 陈旧条件文本仍描述被吸收码，重载时按新条件树重建
             record_snapshot(original, "update", actor=f"merge:{survivor['id']}", directory=snapshot_dir)
             updated_rules.append(str(rule.get("rule_id") or ""))
     _save_all_rules(rules, rules_path)

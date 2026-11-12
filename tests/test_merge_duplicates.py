@@ -1,9 +1,15 @@
 """疑似重复检测：同类型同名分组 + 标准码识别 + 推荐保留节点。"""
-import sys, unittest
+import json
+import sys
+import tempfile
+import unittest
+import unittest.mock
 from pathlib import Path
 
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
+
+from fastapi import HTTPException
 
 from src.api.routes.kg import find_duplicate_groups, _is_standard_code
 
@@ -19,11 +25,38 @@ class DetectDuplicatesTest(unittest.TestCase):
                 "relations": {k: {"review_status": "draft"} for k in relations}}
 
     def test_standard_code_pattern(self):
-        self.assertTrue(_is_standard_code("Q21.0"))
-        self.assertTrue(_is_standard_code("I21.0"))
-        self.assertFalse(_is_standard_code("CAND-VSD"))
-        self.assertFalse(_is_standard_code("SYM_CHEST_PAIN"))
-        self.assertFalse(_is_standard_code(""))
+        self.assertTrue(_is_standard_code("disease", "Q21.0"))
+        self.assertTrue(_is_standard_code("disease", "I21.0"))
+        self.assertFalse(_is_standard_code("disease", "CAND-VSD"))
+        # 既非 ICD 正则、也未被共享词库登记 → 非标准码
+        self.assertFalse(_is_standard_code("symptom", "TOTALLY-BOGUS"))
+        self.assertFalse(_is_standard_code("disease", ""))
+
+    def test_standard_code_accepts_vocabulary_backed_entry(self):
+        # ICD 正则不命中、但共享词库登记了该编码 → 视为标准码（未来非 ICD 标准码场景）
+        with unittest.mock.patch("src.api.routes.kg.find_shared_entry") as lookup:
+            lookup.return_value = object()
+            self.assertTrue(_is_standard_code("medication", "MED-001"))
+            lookup.assert_called_once_with("medication", "MED-001")
+        # 不打桩时正则路径照常生效
+        self.assertTrue(_is_standard_code("disease", "Q21.0"))
+        self.assertFalse(_is_standard_code("medication", "MED-001"))
+
+    def test_recommended_survivor_prefers_vocabulary_backed_code(self):
+        graph = self._graph(
+            _node("ENTITY:medication:CAND-MED", "CAND-MED", "地高辛", node_type="medication", refs=["a"]),
+            _node("ENTITY:medication:MED-001", "MED-001", "地高辛", node_type="medication", status="active"),
+        )
+        with unittest.mock.patch(
+            "src.api.routes.kg.find_shared_entry",
+            side_effect=lambda entity_type, code, directory=None: object() if code == "MED-001" else None,
+        ):
+            groups = find_duplicate_groups(graph)
+        self.assertEqual(len(groups), 1)
+        self.assertEqual(groups[0]["recommended_survivor"], "ENTITY:medication:MED-001")
+        by_id = {n["node_id"]: n for n in groups[0]["nodes"]}
+        self.assertTrue(by_id["ENTITY:medication:MED-001"]["is_standard_code"])
+        self.assertFalse(by_id["ENTITY:medication:CAND-MED"]["is_standard_code"])
 
     def test_groups_same_type_same_name_and_recommends_standard_code(self):
         graph = self._graph(
@@ -52,8 +85,6 @@ class DetectDuplicatesTest(unittest.TestCase):
         self.assertEqual(find_duplicate_groups(graph), [])
 
 
-import json
-import tempfile
 from src.api.routes.kg import merge_duplicate_nodes
 from src.api.routes.rules import _load_all_rules
 
@@ -135,6 +166,39 @@ class MergeDuplicatesTest(unittest.TestCase):
         with self.assertRaises(Exception):
             merge_duplicate_nodes(self._request(absorbed=["ENTITY:disease:NOPE"]),
                                   kg_dir=self.kg_dir, rules_path=self.rules_path)
+
+    def test_merge_rejects_empty_survivor_code_before_writes(self):
+        # 保留节点缺编码：被吸收码会被改写为 ""（数据损坏）→ 必须在落盘前 422 拒绝
+        graph_path = self.kg_dir / "test_graph.json"
+        graph = json.loads(graph_path.read_text(encoding="utf-8"))
+        survivor = next(n for n in graph["nodes"].values() if n["id"] == "ENTITY:disease:Q21.0")
+        survivor["code"] = ""
+        graph_path.write_text(json.dumps(graph, ensure_ascii=False), encoding="utf-8")
+        with self.assertRaises(HTTPException) as ctx:
+            merge_duplicate_nodes(self._request(), kg_dir=self.kg_dir, rules_path=self.rules_path,
+                                  snapshot_dir=self.snapshot_dir, audit_path=self.audit_path)
+        self.assertEqual(ctx.exception.status_code, 422)
+        self.assertEqual(ctx.exception.detail, "保留节点缺少标准编码，无法改写规则引用")
+        # 任何备份与改写都未发生
+        self.assertFalse(list(self.kg_dir.glob("*.bak-*-merge")))
+        self.assertFalse(list(self.rules_path.parent.glob("managed_rules.json.bak-*")))
+        rule = json.loads(self.rules_path.read_text(encoding="utf-8"))[0]
+        self.assertEqual(rule["disease_code"], "CAND-VSD")
+        graph_after = json.loads(graph_path.read_text(encoding="utf-8"))
+        self.assertIn("ENTITY:disease:CAND-VSD", graph_after["nodes"])
+
+    def test_merge_discards_stale_condition_text(self):
+        # 改写后的规则若保留旧 condition_text（描述被吸收码）会误导审核 → 落盘前弃置，重载时重建
+        rules = json.loads(self.rules_path.read_text(encoding="utf-8"))
+        rules[0]["condition_text"] = "存在检查 CAND-VSD 或症状 胸痛"
+        self.rules_path.write_text(json.dumps(rules, ensure_ascii=False), encoding="utf-8")
+        merge_duplicate_nodes(self._request(), kg_dir=self.kg_dir, rules_path=self.rules_path,
+                              snapshot_dir=self.snapshot_dir, audit_path=self.audit_path)
+        saved = json.loads(self.rules_path.read_text(encoding="utf-8"))
+        self.assertNotIn("condition_text", saved[0])  # 陈旧文本已弃置
+        reloaded = _load_all_rules(self.rules_path)[0]
+        self.assertNotIn("CAND-VSD", reloaded.get("condition_text") or "")
+        self.assertTrue(reloaded.get("condition_text"))  # 重载后按新条件树重新生成
 
 
 if __name__ == "__main__":
