@@ -127,6 +127,7 @@ class ImportJobManager:
                 if job.control.stop_requested:
                     job.status = STOPPED
                     job.stage = "已停止（内容已丢弃）"
+                    job.log("任务被用户停止，未写入任何数据", "warn")
                 else:
                     job.status = FAILED
                     job.error = "任务被取消"

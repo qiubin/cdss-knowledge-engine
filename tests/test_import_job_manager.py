@@ -161,6 +161,30 @@ class ManagerLifecycleTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(seen), 1)
         self.assertIs(seen[0], job)
 
+    async def test_cancelled_error_branch_writes_stop_log(self):
+        """生产停止路径恒走 CancelledError 分支：必须像 ImportStopped 分支一样写日志。
+
+        stop 必 cancel → 任务在 await 点收到 CancelledError；该分支此前只置状态
+        不写日志，前端日志流看不到停止原因。
+        """
+        mgr = ImportJobManager()
+
+        async def runner(controller):
+            await asyncio.sleep(30, result={})
+
+        job = mgr.submit("template-llm", "t", runner)
+        await asyncio.sleep(0.05)  # 任务体先启动（running），stop 走 cancel 路径
+        await mgr.stop(job.job_id)
+        for _ in range(100):
+            if job.status == "stopped":
+                break
+            await asyncio.sleep(0.02)
+        self.assertEqual(job.status, "stopped")
+        self.assertTrue(
+            any("停止" in entry["message"] for entry in job.logs),
+            f"CancelledError 分支未写停止日志：{job.logs}",
+        )
+
     def test_prune_only_evicts_terminal_jobs(self):
         """_prune 兜底分支只逐出终态条目；无非终态可逐时允许暂时超 50。"""
         mgr = ImportJobManager()
