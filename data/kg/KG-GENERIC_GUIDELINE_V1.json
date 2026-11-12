@@ -14103,29 +14103,6 @@
       "review_note": "先天性心脏病指南验收"
     },
     {
-      "id": "ENTITY:disease:CAND-VSD",
-      "node_type": "disease",
-      "code": "CAND-VSD",
-      "concept_code": "",
-      "name": "室间隔缺损",
-      "display_name": "室间隔缺损（CAND-VSD）",
-      "attributes": {},
-      "source_refs": [
-        "DOC-6ed4dedc_p10_l37-60"
-      ],
-      "review_status": "active",
-      "version": 1,
-      "content_hash": "sha256:b5b056be383a083f158dc5a70c84a014cd8b5901a532f05614cd204c142e4949",
-      "last_imported_at": "2026-11-10T09:43:33.854575+00:00",
-      "source_doc_ids": [
-        "DOC-6ed4dedc"
-      ],
-      "orphaned_from": [],
-      "reviewed_by": "验收",
-      "reviewed_at": "2026-11-10T09:43:34.716914+00:00",
-      "review_note": "先天性心脏病指南验收"
-    },
-    {
       "id": "ENTITY:treatment_plan:TP-PDA-OCCLUSION",
       "node_type": "treatment_plan",
       "code": "TP-PDA-OCCLUSION",
@@ -14204,9 +14181,14 @@
       "concept_code": "",
       "name": "室间隔缺损",
       "display_name": "室间隔缺损（Q21.0）",
-      "attributes": {},
+      "attributes": {
+        "alt_codes": [
+          "CAND-VSD"
+        ]
+      },
       "source_refs": [
-        "DOC-6ed4dedc_p11_l74-3"
+        "DOC-6ed4dedc_p11_l74-3",
+        "DOC-6ed4dedc_p10_l37-60"
       ],
       "review_status": "active",
       "version": 1,
@@ -34295,7 +34277,8 @@
       "target_node_id": "ENTITY:treatment_plan:TP-VSD-OCCLUSION",
       "attributes": {},
       "source_refs": [
-        "DOC-6ed4dedc_p11_l74-3"
+        "DOC-6ed4dedc_p11_l74-3",
+        "DOC-6ed4dedc_p10_l37-60"
       ],
       "review_status": "active",
       "version": 1,
@@ -34540,27 +34523,6 @@
       "reviewed_by": "验收",
       "reviewed_at": "2026-11-10T11:28:32.449992+00:00",
       "review_note": "hash 修复后复核"
-    },
-    {
-      "source_node_id": "ENTITY:disease:CAND-VSD",
-      "relation_code": "DISEASE_HAS_TREATMENT_PLAN",
-      "relation_name": "疾病有治疗方案",
-      "target_node_id": "ENTITY:treatment_plan:TP-VSD-OCCLUSION",
-      "attributes": {},
-      "source_refs": [
-        "DOC-6ed4dedc_p10_l37-60"
-      ],
-      "review_status": "active",
-      "version": 1,
-      "content_hash": "sha256:563f65b7035fd0a56a4e94b4c7830c9a4ed06853389e86fa7f12b02467ffd1e0",
-      "last_imported_at": "2026-11-10T09:43:33.854575+00:00",
-      "source_doc_ids": [
-        "DOC-6ed4dedc"
-      ],
-      "orphaned_from": [],
-      "reviewed_by": "验收",
-      "reviewed_at": "2026-11-10T09:43:38.882159+00:00",
-      "review_note": "先天性心脏病指南验收"
     },
     {
       "source_node_id": "ENTITY:treatment_plan:TP-VSD-OCCLUSION",
