@@ -44,6 +44,7 @@
     caseRecord: null,
     caseSavedAt: "",
     importRequestToken: 0,
+    pendingUpload: null,
     importJob: null,
     reviewSelectedKey: "",
     reviewItems: [],
@@ -428,6 +429,42 @@
     return t.graph_filename || `KG-${t.template_id || "GENERIC_GUIDELINE_V1"}.json`;
   }
 
+  // ---- 导入任务控制（消费 /api/import/jobs* 异步作业端点）----
+  function jobControlButtons(status) {
+    const map = {
+      queued: { pause: true, resume: false, stop: true, start: false },
+      running: { pause: true, resume: false, stop: true, start: false },
+      pausing: { pause: false, resume: true, stop: true, start: false },
+      paused: { pause: false, resume: true, stop: true, start: false },
+      succeeded: { pause: false, resume: false, stop: false, start: false },
+      failed: { pause: false, resume: false, stop: false, start: true },
+      stopped: { pause: false, resume: false, stop: false, start: true },
+    };
+    return map[status] || map.succeeded;
+  }
+
+  function jobProgressText(job) {
+    const { done = 0, total = 0 } = job.progress || {};
+    const suffix = job.status === "paused" ? " · 已暂停" : job.status === "pausing" ? " · 暂停中" : "";
+    return total ? `${job.stage || "处理中"}（${done}/${total} 组）${suffix}` : `${job.stage || "处理中"}${suffix}`;
+  }
+
+  const IMPORT_JOB_STATUS_LABELS = {
+    queued: "排队中", running: "正在导入", pausing: "正在暂停", paused: "已暂停",
+    succeeded: "导入完成", failed: "导入失败", stopped: "已停止",
+  };
+  const IMPORT_JOB_TERMINAL = ["succeeded", "failed", "stopped"];
+
+  function activeImportJob() {
+    return ["queued", "running", "pausing", "paused"].includes(state.importJob?.status) ? state.importJob : null;
+  }
+
+  function pendingUploadMode() {
+    const pending = state.pendingUpload;
+    if (!pending) return "";
+    return pending.kind === "auto" ? "auto" : pending.mode === "llm" ? "template-llm" : "template-local";
+  }
+
   function refreshUploadGraphOptions() {
     const sel = $("#uploadGraph");
     if (!sel) return;
@@ -453,6 +490,7 @@
     }
     const doc = state.doc;
     content.innerHTML = `
+      <div id="pendingUploadPanel"></div>
       <div id="importJobPanel"></div>
       ${panel("导入历史", '<div id="importHistoryBody" class="muted">加载中…</div>', "", "记录每次上传（含一键自动）的成功与失败；新文档使用新编号，不会覆盖历史记录")}
       ${panel("一键自动生成（LLM 推荐）", `
@@ -479,13 +517,13 @@
         </div>
         <div id="dropzone" class="dropzone"><strong>点击或拖拽 PDF 到此处</strong><p class="muted">解析页码、行号与正文片段；自动抽取实体并生成候选规则</p></div>
         <input id="pdfInput" type="file" accept=".pdf" hidden>
-      `, "", "上传仅进入审核区，图谱和规则需人工确认后才入库；长篇指南建议使用大模型解析，本地解析容易产生噪声规则")}
+      `, "", "选择文件后先进入「待导入」卡片，点击「开始导入」才提交服务端；解析仅进入审核区，图谱和规则需人工确认后才入库；长篇指南建议使用大模型解析，本地解析容易产生噪声规则")}
       <div id="importResult"></div>
     `;
     const drop = $("#dropzone"), input = $("#pdfInput");
     const autoInput = $("#autoPdfInput"), autoButton = $("#autoUploadBtn");
     autoButton.onclick = () => autoInput.click();
-    autoInput.onchange = () => autoInput.files[0] && autoUploadFile(autoInput.files[0]);
+    autoInput.onchange = () => autoInput.files[0] && prepareAutoUpload(autoInput.files[0]);
     $("#autoOpenPackage")?.addEventListener("click", () => {
       state.guidePackageId = state.autoResult.package_id;
       navigate("packages");
@@ -498,8 +536,8 @@
     drop.onclick = () => input.click();
     drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("drag"); };
     drop.ondragleave = () => drop.classList.remove("drag");
-    drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove("drag"); if (e.dataTransfer.files[0]) uploadFile(e.dataTransfer.files[0]); };
-    input.onchange = () => input.files[0] && uploadFile(input.files[0]);
+    drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove("drag"); if (e.dataTransfer.files[0]) prepareUpload(e.dataTransfer.files[0]); };
+    input.onchange = () => input.files[0] && prepareUpload(input.files[0]);
     $("#uploadMode").value = state.extractionConfig.default_mode || "local";
     $("#uploadTemplate").value = state.extractionConfig.default_template_id || state.templates.find((t) => t.is_default)?.template_id || "";
     $("#uploadMode").onchange = (e) => {
@@ -511,7 +549,7 @@
       $("#uploadGraphNew").hidden = e.target.value !== "__new__";
     };
     api("/api/kg/graphs").then((graphs) => { state.uploadGraphs = graphs; refreshUploadGraphOptions(); }).catch(() => { state.uploadGraphs = []; });
-    if (state.importJob?.status === "running") setImportBusy(true);
+    if (activeImportJob()) setImportBusy(true); else setImportBusy(false);
     renderImportJob();
     if (doc) renderImportResult();
     api("/api/pdf/import-logs?limit=50").then((logs) => {
@@ -523,7 +561,7 @@
         <td class="nowrap mono">${esc(formatTime(log.ts))}</td>
         <td><strong>${esc(log.doc_title || "-")}</strong><div class="mono muted">${esc(log.doc_id || "")}</div></td>
         <td>${log.mode === "auto" ? "一键自动" : log.mode === "llm" ? "大模型" : log.mode === "local" ? "本地模板" : esc(log.mode || "-")}</td>
-        <td>${log.status === "success" ? '<span class="badge active">成功</span>' : '<span class="badge danger">失败</span>'}</td>
+        <td>${log.status === "success" ? '<span class="badge active">成功</span>' : log.status === "started" ? "已开始" : log.status === "stopped" ? '<span class="badge">已停止</span>' : '<span class="badge danger">失败</span>'}</td>
         <td class="muted">${log.status === "success" ? `${log.entity_count ?? "-"} 实体 / ${log.relation_count ?? "-"} 关系 / ${log.rule_count ?? "-"} 规则` : "-"}</td>
         <td class="mono muted">${log.duration_ms != null ? `${log.duration_ms} ms` : "-"}</td>
         <td>${esc(log.error || "-")}</td>
@@ -531,44 +569,98 @@
     }).catch(() => {});
   }
 
-  function importLog(message, level = "info") {
-    const job = state.importJob;
-    if (!job) return;
-    job.logs.push({
-      time: new Date().toLocaleTimeString("zh-CN", { hour12: false }),
-      message,
-      level,
-    });
-    renderImportJob();
+  function renderPendingUpload() {
+    const box = $("#pendingUploadPanel");
+    if (!box) return;
+    const pending = state.pendingUpload;
+    if (!pending || activeImportJob()) { box.innerHTML = ""; return; }
+    const summary = pending.kind === "auto"
+      ? "一键自动生成：开放术语发现 → 标准码/LOCAL 码 → 图谱 → 诊断/治疗/禁忌规则 → 结构化治疗方案"
+      : `解析方式：${pending.mode === "llm" ? "大模型解析" : "本地模板解析"} · 抽取模板：${esc(pending.templateId || "-")} · 目的图谱：${pending.graphFilename ? esc(pending.graphFilename) : "跟随模板"}`;
+    box.innerHTML = `
+      <section class="panel">
+        <div class="panel-head"><div><h3>待导入</h3><p>已选择指南文件；确认配置后点击开始，任务提交到服务端异步执行，可暂停、继续或停止</p></div></div>
+        <div class="panel-body"><div class="inline-controls">
+          <strong>${esc(pending.file.name)}</strong>
+          <span class="muted">${summary}</span>
+          <button id="jobStartBtn" class="btn primary">开始导入</button>
+          <button id="pendingDiscardBtn" class="btn">重新选择</button>
+        </div></div>
+      </section>`;
+    $("#jobStartBtn").onclick = () => startImportJob();
+    $("#pendingDiscardBtn").onclick = () => { state.pendingUpload = null; renderPendingUpload(); };
   }
 
   function renderImportJob() {
+    renderPendingUpload();
     const box = $("#importJobPanel");
     if (!box) return;
     const job = state.importJob;
     if (!job) { box.innerHTML = ""; return; }
-    const now = job.finishedAt || Date.now();
-    const elapsed = Math.max(0, (now - job.startedAt) / 1000);
-    const title = job.status === "running" ? "正在解析指南" : job.status === "success" ? "解析完成" : "解析失败";
-    const percent = job.status === "success" ? 100 : Math.max(2, Math.min(99, job.percent));
-    const clause = job.mode === "auto" ? "一键自动生成（解析 + 图谱 + 规则）" : "模板模式解析";
+    const controls = jobControlButtons(job.status);
+    const terminal = IMPORT_JOB_TERMINAL.includes(job.status);
+    const { done = 0, total = 0 } = job.progress || {};
+    const percent = job.status === "succeeded" ? 100
+      : total ? Math.max(2, Math.min(99, Math.round((done / total) * 100))) : 2;
+    const tone = job.status === "failed" ? "error" : job.status;
+    const clause = job.mode === "auto" ? "一键自动生成（解析 + 图谱 + 规则）"
+      : job.mode === "template-llm" ? "模板模式解析（大模型）" : "模板模式解析（本地）";
+    const nowSec = job.finished_at || Date.now() / 1000;
+    const elapsed = Math.max(0, nowSec - (job.created_at || nowSec));
+    const logs = (job.logs || []).slice(-10);
     box.innerHTML = `
-      <section class="progress-panel ${job.status}" aria-live="polite">
+      <section class="progress-panel ${tone}" aria-live="polite">
         <div class="progress-head">
-          <div><strong>${title}：${esc(job.fileName || "")}</strong><div class="muted">${clause}</div></div>
-          <strong class="progress-percent">${job.status === "error" ? "失败" : `${Math.round(percent)}%`}</strong>
+          <div><strong>${esc(IMPORT_JOB_STATUS_LABELS[job.status] || job.status)}：${esc(job.doc_title || "")}</strong><div class="muted">${clause}</div></div>
+          <strong class="progress-percent">${job.status === "failed" ? "失败" : job.status === "stopped" ? "已停止" : `${percent}%`}</strong>
         </div>
-        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(percent)}"><div class="progress-fill ${job.status}" style="width:${percent}%"></div></div>
+        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}"><div class="progress-fill ${tone}" style="width:${percent}%"></div></div>
         <div class="progress-meta">
-          <span>${job.status === "running" ? "进度为估算，实际耗时取决于指南长度和模型速度" : `总用时 ${elapsed.toFixed(1)} 秒`}</span>
-          <span>${job.status === "running" ? `已用时 ${Math.floor(elapsed)} 秒` : ""}</span>
+          <span>${esc(jobProgressText(job))}</span>
+          <span>${terminal ? `总用时 ${elapsed.toFixed(1)} 秒` : `已用时 ${Math.floor(elapsed)} 秒`}</span>
         </div>
-        <div class="progress-log">${job.logs.map((item) => `<div class="log-line ${item.level}"><span class="time">${esc(item.time)}</span><span>${esc(item.message)}</span></div>`).join("")}</div>
+        <div class="progress-log">${logs.map((item) => `<div class="log-line ${esc(item.level || "info")}"><span class="time">${esc(item.time)}</span><span>${esc(item.message)}</span></div>`).join("")}</div>
+        ${job.error ? `<div class="result-banner error" style="margin:10px 18px 14px">${esc(job.error)}</div>` : ""}
+        <div class="actions" style="padding:0 18px 14px">
+          ${controls.pause ? '<button id="jobPauseBtn" class="btn sm">暂停</button>' : ""}
+          ${controls.resume ? '<button id="jobResumeBtn" class="btn sm primary">继续</button>' : ""}
+          ${controls.stop ? '<button id="jobStopBtn" class="btn sm danger">停止</button>' : ""}
+          ${controls.start && state.pendingUpload ? '<button id="jobRestartBtn" class="btn sm primary">重新开始</button>' : ""}
+        </div>
       </section>`;
+    $("#jobPauseBtn")?.addEventListener("click", () => importJobControl("pause"));
+    $("#jobResumeBtn")?.addEventListener("click", () => importJobControl("resume"));
+    $("#jobStopBtn")?.addEventListener("click", () => importJobControl("stop"));
+    $("#jobRestartBtn")?.addEventListener("click", () => startImportJob());
   }
 
-  function startImportJob(mode, fileName) {
-    if (importTimer) { clearInterval(importTimer); importTimer = null; }
+  function renderImportJobSummary(job) {
+    const box = $("#importResult");
+    if (!box) return;
+    const result = job.result || {};
+    const warnings = result.warnings || [];
+    box.innerHTML = `
+      <div class="result-banner ok">
+        <strong>${esc(result.doc_title || job.doc_title || "")} 解析成功：${esc(result.total_pages ?? "-")} 页 / ${esc(result.entity_count ?? "-")} 实体 / ${esc(result.relation_count ?? "-")} 关系 / ${esc(result.rule_count ?? "-")} 条候选规则</strong>
+        <div class="mono">文档 ${esc(result.doc_id || "-")} · 图谱 ${esc(result.graph_filename || "-")}</div>
+        ${warnings.length ? `<details class="debug-panel" style="margin-top:8px"><summary>解析告警 ${warnings.length} 条</summary><ul class="issue-list">${warnings.map((item) => `<li>${esc(item)}</li>`).join("")}</ul></details>` : ""}
+        <div class="actions" style="margin-top:10px"><button id="jobOpenDetailBtn" class="btn sm primary">查看详情并审核</button></div>
+        <div class="muted" style="margin-top:6px">此处为提交结果摘要；候选实体、关系与规则在完整解析结果中审核。</div>
+      </div>`;
+    $("#jobOpenDetailBtn")?.addEventListener("click", async () => {
+      try {
+        state.doc = await api(`/api/pdf/${encodeURIComponent(result.doc_id)}/result`);
+        state.importTab = "entities";
+        renderImportResult();
+      } catch (error) { toast(error.message, true); }
+    });
+  }
+
+  async function startImportJob() {
+    const pending = state.pendingUpload;
+    if (!pending) return toast("请先选择指南 PDF", true);
+    if (activeImportJob()) return toast("已有导入任务正在进行，请等待完成或停止当前任务", true);
+    stopImportPolling();
     // Hide results from a previous document so a failed new parse cannot be
     // mistaken for the old success banner.
     state.doc = null;
@@ -576,54 +668,128 @@
     const resultBox = $("#importResult");
     if (resultBox) resultBox.innerHTML = "";
     $("#autoResultPanel")?.remove();
+    const form = new FormData();
+    form.append("file", pending.file);
+    form.append("mode", pendingUploadMode());
+    if (pending.kind === "template") {
+      form.append("template_id", pending.templateId || "");
+      if (pending.graphFilename) form.append("graph_filename", pending.graphFilename);
+    } else {
+      form.append("auto_activate", "false");
+    }
+    let created;
+    try {
+      created = await api("/api/import/jobs", { method: "POST", body: form });
+    } catch (error) {
+      toast(`任务提交失败：${error.message}`, true);
+      return;
+    }
     state.importJob = {
-      mode,
-      fileName,
-      status: "running",
-      percent: 2,
-      startedAt: Date.now(),
-      finishedAt: 0,
+      job_id: created.job_id,
+      mode: pendingUploadMode(),
+      doc_title: pending.file.name.replace(/\.pdf$/i, ""),
+      status: created.status || "queued",
+      stage: "排队中",
+      progress: { done: 0, total: 0 },
       logs: [],
+      result: null,
+      error: "",
+      created_at: Date.now() / 1000,
+      finished_at: null,
     };
-    importLog(`开始上传：${fileName}`);
-    importLog(
-      mode === "auto"
-        ? "已提交解析任务：先提取 PDF 文本，再调用大模型抽取实体、关系和规则，通常需要数分钟。"
-        : "已提交解析任务：正在提取 PDF 文本并执行模板解析。"
-    );
-    const milestones = mode === "auto"
-      ? [[12, "正在提取 PDF 文本与章节"], [28, "正在调用大模型抽取实体、关系和候选规则"], [55, "正在做术语映射与知识图谱整理"], [75, "正在生成诊断/治疗/禁忌规则和治疗方案"], [90, "等待服务返回最终结果"]]
-      : [[20, "正在提取 PDF 文本"], [55, "正在执行解析并生成候选内容"], [85, "正在整理候选实体、关系和规则"]];
-    let milestoneIndex = 0;
     setImportBusy(true);
-    importTimer = setInterval(() => {
-      const job = state.importJob;
-      if (!job || job.status !== "running") {
-        clearInterval(importTimer); importTimer = null; return;
-      }
-      const seconds = (Date.now() - job.startedAt) / 1000;
-      job.percent = Math.min(92, 2 + 90 * (1 - Math.exp(-seconds / 45)));
-      while (milestoneIndex < milestones.length && job.percent >= milestones[milestoneIndex][0]) {
-        job.logs.push({ time: new Date().toLocaleTimeString("zh-CN", { hour12: false }), message: milestones[milestoneIndex][1], level: "info" });
-        milestoneIndex += 1;
-      }
-      renderImportJob();
-    }, 700);
+    renderImportJob();
+    pollImportJob(created.job_id);
   }
 
-  function finishImportJob(success, message, level = "ok") {
+  async function fetchImportJob(jobId) {
+    const response = await fetch(`/api/import/jobs/${encodeURIComponent(jobId)}`);
+    if (response.status === 404) return { __not_found: true };
+    if (!response.ok) throw new Error(`请求失败 ${response.status}`);
+    return response.json();
+  }
+
+  function stopImportPolling() {
     if (importTimer) { clearInterval(importTimer); importTimer = null; }
+  }
+
+  function applyImportJobData(data) {
+    state.importJob = data;
+    if (IMPORT_JOB_TERMINAL.includes(data.status)) {
+      stopImportPolling();
+      handleImportJobFinished(data);
+    } else {
+      renderImportJob();
+    }
+  }
+
+  function pollImportJob(jobId) {
+    stopImportPolling();
+    let failures = 0;
+    importTimer = setInterval(async () => {
+      if (state.importJob?.job_id !== jobId) { stopImportPolling(); return; }
+      let data;
+      try {
+        data = await fetchImportJob(jobId);
+        failures = 0;
+      } catch (_) {
+        failures += 1;
+        if (failures < 5) return; // 偶发网络抖动：跳过本轮，继续轮询
+        stopImportPolling();
+        state.importJob = { ...state.importJob, status: "failed", error: "连续多次无法获取任务状态，已停止轮询" };
+        setImportBusy(false);
+        renderImportJob();
+        toast("无法连接服务，已停止轮询；确认服务恢复后可重新开始", true);
+        return;
+      }
+      if (data.__not_found) {
+        stopImportPolling();
+        state.importJob = { ...state.importJob, status: "failed", stage: "任务已丢失", error: "服务已重启，任务终止" };
+        setImportBusy(false);
+        renderImportJob();
+        toast("服务已重启，任务终止", true);
+        return;
+      }
+      applyImportJobData(data);
+    }, 1500);
+  }
+
+  async function importJobControl(action) {
     const job = state.importJob;
     if (!job) return;
-    job.status = success ? "success" : "error";
-    job.percent = success ? 100 : job.percent;
-    job.finishedAt = Date.now();
-    job.logs.push({
-      time: new Date().toLocaleTimeString("zh-CN", { hour12: false }),
-      message,
-      level: success ? level : "error",
-    });
+    try {
+      const data = await api(`/api/import/jobs/${encodeURIComponent(job.job_id)}/${action}`, { method: "POST" });
+      applyImportJobData(data);
+      // stop 的响应若仍未终态（finalizing 兜底），立即再刷新一次
+      if (action === "stop" && importTimer) await refreshImportJob(job.job_id);
+    } catch (error) {
+      toast(error.message, true);
+    }
+  }
+
+  async function refreshImportJob(jobId) {
+    try {
+      const data = await fetchImportJob(jobId);
+      if (data.__not_found || state.importJob?.job_id !== jobId) return;
+      applyImportJobData(data);
+    } catch (_) { /* 下一次轮询再取 */ }
+  }
+
+  function handleImportJobFinished(job) {
     setImportBusy(false);
+    if (job.status === "succeeded") {
+      state.pendingUpload = null;
+      if (job.mode === "auto") {
+        state.autoResult = job.result || {};
+        state.guidePackageId = state.autoResult.package_id || state.guidePackageId;
+        if (state.route === "import") renderImport();
+        return;
+      }
+      renderImportJob();
+      renderImportJobSummary(job);
+      return;
+    }
+    // failed / stopped：保留 pendingUpload，允许直接重新开始
     renderImportJob();
   }
 
@@ -640,63 +806,37 @@
     }
   }
 
-  async function autoUploadFile(file) {
+  function prepareAutoUpload(file) {
     if (!file.name.toLowerCase().endsWith(".pdf")) return toast("仅支持 PDF 文件", true);
-    if (state.importJob?.status === "running") return toast("已有解析任务正在进行，请等待完成", true);
-    startImportJob("auto", file.name);
-    const form = new FormData();
-    form.append("file", file);
-    form.append("auto_activate", "false");
-    try {
-      state.autoResult = await api("/api/auto/import", { method: "POST", body: form });
-      state.doc = await api(`/api/pdf/${state.autoResult.doc_id}/result`);
-      state.guidePackageId = state.autoResult.package_id;
-      finishImportJob(
-        true,
-        `解析成功：实体 ${state.autoResult.entity_count}，关系 ${state.autoResult.relation_count}，规则 ${state.autoResult.rule_count}（已启用 ${state.autoResult.active_rule_count}），知识包 ${state.autoResult.package_id}`
-      );
-      (state.autoResult.warnings || []).forEach((item) => importLog(`告警：${item}`, "warn"));
-      toast(`自动生成完成：${state.autoResult.entity_count} 实体 / ${state.autoResult.rule_count} 规则`);
-      renderImport();
-    } catch (error) {
-      finishImportJob(false, `解析失败：${error.message}`);
-      toast(error.message, true);
-    }
+    if (activeImportJob()) return toast("已有导入任务正在进行，请等待完成或停止当前任务", true);
+    state.pendingUpload = { file, kind: "auto", mode: "auto", templateId: "", graphFilename: "" };
+    renderPendingUpload();
+    toast(`已选择 ${file.name}；确认后点击「开始导入」`);
   }
 
-  async function uploadFile(file) {
+  function prepareUpload(file) {
     if (!file.name.toLowerCase().endsWith(".pdf")) return toast("仅支持 PDF 文件", true);
-    if (state.importJob?.status === "running") return toast("已有解析任务正在进行，请等待完成", true);
+    if (activeImportJob()) return toast("已有导入任务正在进行，请等待完成或停止当前任务", true);
     const graphSel = $("#uploadGraph");
-    let targetGraph = "";
+    let graphFilename = "";
     if (graphSel && graphSel.value === "__new__") {
       const name = ($("#uploadGraphNew")?.value || "").trim();
       if (!/^[A-Za-z0-9][A-Za-z0-9_.-]*(\.json)?$/.test(name) || name.includes("..")) {
         return toast("新图谱文件名无效：仅限字母、数字、点、下划线、连字符", true);
       }
-      targetGraph = name;
+      graphFilename = name;
     } else if (graphSel && graphSel.value !== "follow") {
-      targetGraph = graphSel.value;
+      graphFilename = graphSel.value;
     }
-    startImportJob("template", file.name);
-    const form = new FormData(); form.append("file", file);
-    form.append("extraction_mode", $("#uploadMode").value);
-    form.append("template_id", $("#uploadTemplate").value);
-    if (targetGraph) form.append("graph_filename", targetGraph);
-    try {
-      state.doc = await api("/api/pdf/upload", { method: "POST", body: form });
-      state.importTab = "entities";
-      finishImportJob(
-        true,
-        `解析完成：${state.doc.total_pages} 页 / ${state.doc.entities.length} 个实体 / ${state.doc.suggested_rules.length} 条候选规则`
-      );
-      (state.doc.warnings || []).forEach((item) => importLog(`告警：${item}`, "warn"));
-      toast(`解析完成：${state.doc.total_pages} 页 / ${state.doc.entities.length} 个实体`);
-      renderImportResult();
-    } catch (error) {
-      finishImportJob(false, `解析失败：${error.message}`);
-      toast(error.message, true);
-    }
+    state.pendingUpload = {
+      file,
+      kind: "template",
+      mode: $("#uploadMode")?.value || "local",
+      templateId: $("#uploadTemplate")?.value || "",
+      graphFilename,
+    };
+    renderPendingUpload();
+    toast(`已选择 ${file.name}；确认配置后点击「开始导入」`);
   }
 
   function renderImportResult() {
