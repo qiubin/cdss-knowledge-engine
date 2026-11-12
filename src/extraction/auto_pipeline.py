@@ -415,6 +415,7 @@ async def run_auto_pipeline(
     llm_call: Optional[Callable[..., Any]] = None,
     data_root: Optional[Path] = None,
     auto_import_disease: bool = True,
+    controller: Any = None,
 ) -> Dict[str, Any]:
     """Run the complete universal auto ingestion pipeline."""
     root = Path(data_root) if data_root else Path(__file__).resolve().parents[2] / "data"
@@ -442,7 +443,13 @@ async def run_auto_pipeline(
     async def call_group(chunk_group: List[Dict[str, Any]]) -> Dict[str, Any]:
         return await call(settings, _auto_prompt(chunk_group, doc_title))
 
-    for group in groups:
+    total_groups = len(groups)
+    for index, group in enumerate(groups):
+        if controller is not None:
+            await controller.checkpoint(
+                stage=f"自动抽取（第 {index + 1}/{total_groups} 组）",
+                done=index, total=total_groups,
+            )
         try:
             payload = await call_group(group)
         except Exception as error:
@@ -476,6 +483,9 @@ async def run_auto_pipeline(
         succeeded += 1
     if not succeeded:
         raise LLMError("大模型没有成功解析任何片段，请检查地址/API Key/模型配置")
+
+    if controller is not None:
+        await controller.checkpoint(stage="术语映射与图谱整理")
 
     chunk_map = {chunk["chunk_id"]: chunk for chunk in chunks}
     entities: List[Dict[str, Any]] = []
@@ -663,6 +673,9 @@ async def run_auto_pipeline(
     ).get("code", "")
 
     # Import graph and rules.
+    if controller is not None:
+        controller.finalizing = True
+        await controller.checkpoint(stage="写入图谱与规则（不可中断）")
     from ..api.routes.kg import GraphImportRequest, import_graph, normalize_graph_filename
 
     graph_filename = normalize_graph_filename(graph_filename)

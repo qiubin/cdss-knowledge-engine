@@ -998,6 +998,7 @@ async def extract_llm(
     doc_id: str,
     doc_title: str,
     config: Dict[str, Any],
+    controller: Any = None,
 ) -> ProviderResult:
     settings = config.get("llm", {})
     template = resolve_template(template)
@@ -1052,7 +1053,13 @@ async def extract_llm(
         all_contraindications.extend(contraindications)
         warnings.extend(group_warnings)
 
-    for group in groups:
+    total_groups = len(groups)
+    for index, group in enumerate(groups):
+        if controller is not None:
+            await controller.checkpoint(
+                stage=f"大模型抽取（第 {index + 1}/{total_groups} 组）",
+                done=index, total=total_groups,
+            )
         try:
             payload = await chat_json(settings, _llm_prompt(template, group, doc_title))
             absorb(payload, group)
@@ -1159,9 +1166,10 @@ async def extract(
     doc_id: str,
     doc_title: str,
     config: Dict[str, Any],
+    controller: Any = None,
 ) -> ProviderResult:
     if mode == "llm":
-        return await extract_llm(chunks, template, doc_id, doc_title, config)
+        return await extract_llm(chunks, template, doc_id, doc_title, config, controller=controller)
     if mode == "local":
         return extract_local(chunks, template, doc_id, doc_title)
     raise ValueError(f"不支持的解析方式: {mode}")
