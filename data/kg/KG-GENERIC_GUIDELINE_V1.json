@@ -15281,14 +15281,17 @@
       "source_refs": [
         "DOC-1d41bcdc_p1_l1-517_part5"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "version": 1,
       "content_hash": "sha256:b8bc1c84d47055bd7234b6eeec17251fd9fcad663f0317946f0c6069d2171d9a",
       "last_imported_at": "2026-11-12T07:40:21.983180+00:00",
       "source_doc_ids": [
         "DOC-1d41bcdc"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "未署名",
+      "reviewed_at": "2026-11-13T02:18:39.895522+00:00",
+      "review_note": ""
     },
     {
       "id": "ENTITY:disease:SEVERE_SEPSIS_CAND",
@@ -34933,14 +34936,17 @@
       "source_refs": [
         "DOC-1d41bcdc_p1_l1-517_part2"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "version": 1,
       "content_hash": "sha256:75d84900186b13a2f65cbe5c7834876248f2ae79251423a201f721de9e0b4562",
       "last_imported_at": "2026-11-12T07:40:21.983180+00:00",
       "source_doc_ids": [
         "DOC-1d41bcdc"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "未署名",
+      "reviewed_at": "2026-11-13T08:32:15.287878+00:00",
+      "review_note": ""
     },
     {
       "source_node_id": "ENTITY:disease:CAND-SEPTIC-SHOCK",
@@ -34951,14 +34957,17 @@
       "source_refs": [
         "DOC-1d41bcdc_p1_l1-517_part2"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "version": 1,
       "content_hash": "sha256:5f520af04b96eeb85bfc0eae1dfe81d0cb7c3bcedcf414d4237f9829d3f24cf1",
       "last_imported_at": "2026-11-12T07:40:21.983180+00:00",
       "source_doc_ids": [
         "DOC-1d41bcdc"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "未署名",
+      "reviewed_at": "2026-11-13T08:32:25.316238+00:00",
+      "review_note": ""
     },
     {
       "source_node_id": "ENTITY:lab:CBC",
