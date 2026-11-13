@@ -12,7 +12,6 @@ import hashlib
 import httpx
 
 from ..models.rule import Rule
-from ..clinical_intent import normalize_clinical_intent
 from ..domains import normalize_domain
 from ..domains.western.rule_generation import generate_western_rules
 from ..llm import LLMError, chat_json, resolve_api_key
@@ -630,7 +629,6 @@ def _validate_llm_payload(
         normalized["conclusion"] = conclusion
         labels.annotate(conditions)
         normalized["condition_text"] = labels.summarize(conditions)
-        normalized["clinical_intent"] = normalize_clinical_intent(normalized)
         try:
             rule = Rule(**normalized)
             if rule.conclusion.confidence not in {"high", "medium", "low"}:
@@ -692,7 +690,6 @@ def _validate_llm_payload(
             "disease_code": disease_code,
             "disease_name": str(raw.get("anchor_name") or raw.get("disease_name") or ""),
             "rule_type": "treatment",
-            "clinical_intent": "treatment_recommendation",
             "status": "draft",
             "graph_filename": resolve_template_graph_filename(template),
             "priority": int(raw.get("priority") or 50),
