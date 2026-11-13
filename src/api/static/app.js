@@ -3573,6 +3573,8 @@
   }
 
   async function renderReviewCenter() {
+    // 节点/关系详情的属性表依赖模板契约渲染中文名，直接进入审核台时也需加载模板数据。
+    await loadExtractionSettings();
     const tab = state.reviewTab || "graph";
     const reviewer = localStorage.getItem("cdssReviewer") || "";
     const query = (state.reviewQuery || "").trim();
