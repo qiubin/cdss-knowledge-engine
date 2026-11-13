@@ -26,6 +26,7 @@ NODE_TYPE_LABELS = {
     "risk_factor": "危险因素", "stage": "分期", "pathology": "病理", "histology": "组织学",
     "biomarker": "生物标志物", "molecular_test": "分子检测", "syndrome_element": "证素",
     "pathogenesis": "病机", "acupoint": "穴位", "meridian": "经络", "western_disease": "西医疾病",
+    "external_therapy": "外治疗法", "constitution": "体质", "etiology": "病因",
 }
 
 

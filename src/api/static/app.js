@@ -48,7 +48,7 @@
     importJob: null,
     reviewSelectedKey: "",
     reviewItems: [],
-    reviewFilters: { graph: "", sourceDoc: "", nodeType: "", relationCode: "" },
+    reviewFilters: { graph: "", sourceDoc: "", nodeType: "", relationCode: "", itemType: "" },
     reviewRelationCodeOptions: [],
     reviewSuspectOnly: false,
     reviewGraphOptions: null,
@@ -131,11 +131,21 @@
   const availableTcmTargetGraphs = (items) => items.filter((item) => (
     item.source !== "builtin-demo" && Number(item.schema_version || 1) >= 2
   ));
+  // 实体类型中文名的唯一前端来源；新增实体类型时必须同步维护，
+  // tests/js/type_name_parity.test.js 会校验它与模板类型全集、后端
+  // precheck.NODE_TYPE_LABELS 双向一致（concept/exam_finding 为遗留类型豁免）。
   const typeName = {
-    disease: "疾病", lab: "检验", concept: "概念", exam: "检查", exam_finding: "检查发现",
-    symptom: "症状", diagnostic_evidence: "诊断证据", syndrome: "证候", tongue: "舌象",
-    pulse: "脉象", sign: "体征", pathogenesis: "病机", treatment_method: "治法",
-    formula: "方剂", herb: "中药", contraindication: "禁忌",
+    disease: "疾病", syndrome: "证候", symptom: "症状", sign: "体征",
+    lab: "检验", exam: "检查", exam_finding: "检查发现", diagnostic_evidence: "诊断依据",
+    treatment_plan: "治疗方案", medication: "药品", intervention: "干预操作",
+    contraindication: "禁忌", monitoring_requirement: "监测要求",
+    care_pathway: "临床路径", pathway_phase: "路径阶段", order_set: "医嘱组", order_item: "医嘱项",
+    treatment_method: "治法", formula: "方剂", herb: "中药", external_therapy: "外治疗法",
+    care_guidance: "调护", tongue: "舌象", pulse: "脉象", pathogenesis: "病机",
+    syndrome_element: "证素", acupoint: "穴位", meridian: "经络", constitution: "体质",
+    etiology: "病因", western_disease: "西医疾病", risk_factor: "危险因素", stage: "分期",
+    pathology: "病理", histology: "组织学", biomarker: "生物标志物", molecular_test: "分子检测",
+    concept: "抽象概念",
   };
 
   function navigate(route) {
@@ -3578,6 +3588,15 @@
     });
   }
 
+  function reviewQueueItemType(tab, filters = {}) {
+    if (tab === "rules" || tab === "blocked") return "rule";
+    if (tab === "relations") return "graph_relation";
+    if (tab === "graph") return "graph";
+    if (["stale", "orphan"].includes(tab)) return "graph";
+    if (tab === "active") return filters.itemType || "";
+    return "";
+  }
+
   function bindDupeMerge(graphFilename) {
     if (!graphFilename) return;
     content.querySelectorAll("[data-dupe-merge]").forEach((button) => button.onclick = async () => {
@@ -3611,14 +3630,8 @@
     if (tab === "bydisease") { await renderByDisease(); return; }
     const reviewer = localStorage.getItem("cdssReviewer") || "";
     const query = (state.reviewQuery || "").trim();
-    const filters = state.reviewFilters || { graph: "", sourceDoc: "", nodeType: "", relationCode: "" };
-    const queueItemType = tab === "rules" || tab === "blocked"
-      ? "rule"
-      : tab === "relations"
-        ? "graph_relation"
-        : tab === "graph"
-          ? "graph"
-          : (["stale", "orphan"].includes(tab) ? "graph" : "");
+    const filters = state.reviewFilters || { graph: "", sourceDoc: "", nodeType: "", relationCode: "", itemType: "" };
+    const queueItemType = reviewQueueItemType(tab, filters);
     const filterParams = [
       filters.graph ? `&graph_filename=${encodeURIComponent(filters.graph)}` : "",
       filters.sourceDoc ? `&source_doc=${encodeURIComponent(filters.sourceDoc)}` : "",
@@ -3799,6 +3812,12 @@
               <option value="">全部指南</option>
               ${(state.reviewDocOptions || []).map((d) => `<option value="${esc(d.doc_id)}" ${filters.sourceDoc === d.doc_id ? "selected" : ""}>${esc(d.doc_title || d.doc_id)}</option>`).join("")}
             </select>
+            ${tab === "active" ? `<select id="reviewFilterItemType" title="按已通过资产类型筛选">
+              <option value="">全部资产类型</option>
+              <option value="graph_node" ${filters.itemType === "graph_node" ? "selected" : ""}>实体节点</option>
+              <option value="graph_relation" ${filters.itemType === "graph_relation" ? "selected" : ""}>图谱关系</option>
+              <option value="rule" ${filters.itemType === "rule" ? "selected" : ""}>规则</option>
+            </select>` : ""}
             <select id="reviewFilterNodeType" title="按实体类型筛选图谱条目（配合全选可批量审核同一类型）">
               <option value="">全部类型</option>
               ${state.reviewNodeTypeOptions.map((t) => `<option value="${esc(t)}" ${filters.nodeType === t ? "selected" : ""}>${esc(typeName[t] || t)}</option>`).join("")}
@@ -3810,7 +3829,7 @@
             ${tab === "relations" ? `<label class="suspect-toggle" title="只显示系统预检标记了可疑项的关系">
               <input type="checkbox" id="reviewSuspectOnly" ${state.reviewSuspectOnly ? "checked" : ""}> 只看可疑（${allItems.filter((item) => item.item_type === "graph_relation" && ["draft", "stale"].includes(item.status) && (item.flags || []).length).length}）
             </label>` : ""}
-            ${filterParams ? '<button class="btn sm" id="reviewFilterClear">清除筛选</button>' : ""}
+            ${(filterParams || (tab === "active" && filters.itemType)) ? '<button class="btn sm" id="reviewFilterClear">清除筛选</button>' : ""}
           </div>
           <div class="review-bulkbar">
             <label class="nowrap"><input type="checkbox" id="reviewSelectAll"> 全选</label>
@@ -3856,10 +3875,11 @@
     };
     bindReviewFilter("#reviewFilterGraph", "graph");
     bindReviewFilter("#reviewFilterSourceDoc", "sourceDoc");
+    bindReviewFilter("#reviewFilterItemType", "itemType");
     bindReviewFilter("#reviewFilterNodeType", "nodeType");
     bindReviewFilter("#reviewFilterRelationCode", "relationCode");
     $("#reviewFilterClear")?.addEventListener("click", () => {
-      state.reviewFilters = { graph: "", sourceDoc: "", nodeType: "", relationCode: "" };
+      state.reviewFilters = { graph: "", sourceDoc: "", nodeType: "", relationCode: "", itemType: "" };
       renderReviewCenter();
     });
     $("#reviewSuspectOnly")?.addEventListener("change", (event) => {
