@@ -1534,6 +1534,7 @@
   async function renderEntityVocab() {
     await loadBase();
     const dictionaries = await api("/api/vocab/entities");
+    const terminologySummary = await api("/api/vocab/terminology/summary");
     if (!state.entityVocabType || !dictionaries.some((d) => d.entity_type === state.entityVocabType)) {
       state.entityVocabType = dictionaries.find((d) => d.entity_type === "disease")?.entity_type
         || dictionaries[0]?.entity_type
@@ -1596,10 +1597,17 @@
         <div class="step done"><strong>实例层 · 知识图谱</strong><span>文档导入后生成的节点与证据</span></div>
       </div>`, "", "模板只定义“有哪些类型和关系”（Schema 层）；具体实体统一存放在共享词典（术语层）；图谱节点按导入文档生成（实例层）")}
       <div class="grid c4">
-        <div class="kpi"><span>词典数</span><strong>${dictionaries.length}</strong><small>按实体类型分文件</small></div>
-        <div class="kpi"><span>实体总数</span><strong>${totalEntries}</strong><small>共享术语条目</small></div>
-        <div class="kpi"><span>引用模板数</span><strong>${templateCount}</strong><small>通过共享词表引用词典</small></div>
-        <div class="kpi"><span>当前词典</span><strong>${selected ? entries.length : 0}</strong><small>${esc(selected ? dictLabel(selected.entity_type) : "-")} 条目 · 已分类 ${classifiedCount}</small></div>
+        ${selected?.entity_type === "disease" ? `
+          <div class="kpi"><span>启用疾病实体</span><strong>${terminologySummary.active_entities}</strong><small>参与解析与规则生成</small></div>
+          <div class="kpi"><span>标准参考术语</span><strong>${terminologySummary.reference_terms}</strong><small>只读参考库，审核后启用</small></div>
+          <div class="kpi"><span>待确认术语</span><strong>${terminologySummary.pending_candidates}</strong><small>抽取发现、尚未入库</small></div>
+          <div class="kpi"><span>已审核院内映射</span><strong>${terminologySummary.approved_mappings}</strong><small>院内码 → 标准实体</small></div>
+        ` : `
+          <div class="kpi"><span>词典数</span><strong>${dictionaries.length}</strong><small>按实体类型分文件</small></div>
+          <div class="kpi"><span>实体总数</span><strong>${totalEntries}</strong><small>共享术语条目</small></div>
+          <div class="kpi"><span>引用模板数</span><strong>${templateCount}</strong><small>通过共享词表引用词典</small></div>
+          <div class="kpi"><span>当前词典</span><strong>${selected ? entries.length : 0}</strong><small>${esc(selected ? dictLabel(selected.entity_type) : "-")} 条目 · 已分类 ${classifiedCount}</small></div>
+        `}
       </div>
       ${panel("词典选择", `
         <div class="inline-controls">
@@ -1615,7 +1623,7 @@
         filters: activeFilters,
         placeholder: "搜索编码、名称、别名、专科或疾病…",
         emptyText: "没有匹配的实体",
-        actions: '<button id="importIcd10" class="btn ghost">从标准库导入</button><button id="newEntityEntry" class="btn primary">新增实体</button>',
+        actions: `${selected.entity_type === "disease" ? '<button id="termCandidates" class="btn ghost">待确认术语</button><button id="hospitalMappings" class="btn ghost">院内映射</button><button id="importIcd10" class="btn ghost">标准术语库</button>' : ''}<button id="newEntityEntry" class="btn primary">新增实体</button>`,
       }) : '<div class="empty">暂无词典；在解析模板中将实体类型设为共享词表后自动创建</div>'}
       ${selected && selected.referencing_templates.length ? panel("引用该词典的模板", table(["模板", "ID", "状态"], selected.referencing_templates.map((t) => `
         <tr><td><strong>${esc(t.name)}</strong></td><td class="mono">${esc(t.template_id)}</td><td>${badge(t.status)}</td></tr>`
@@ -1626,6 +1634,10 @@
     if (newButton && selected) newButton.onclick = () => openEntityEntryEditor(selected.entity_type, null);
     const importButton = $("#importIcd10");
     if (importButton && selected) importButton.onclick = () => openIcd10Importer(selected.entity_type);
+    const candidatesButton = $("#termCandidates");
+    if (candidatesButton) candidatesButton.onclick = () => openTerminologyCandidates();
+    const mappingsButton = $("#hospitalMappings");
+    if (mappingsButton) mappingsButton.onclick = () => openHospitalMappings(entries);
     bindPagedTable(tableKey);
     const tableBody = document.querySelector(`[data-table-body="${tableKey}"]`);
     if (tableBody && selected) {
@@ -1646,6 +1658,94 @@
         } catch (error) { toast(error.message, true); }
       });
     }
+  }
+
+  async function openTerminologyCandidates() {
+    const dialog = $("#editorDialog");
+    const saveButton = $("#editorSave");
+    saveButton.style.display = "none";
+    const render = async () => {
+      const items = await api("/api/vocab/terminology/candidates?entity_type=disease&status=pending");
+      $("#editorBody").innerHTML = `
+        <h3>待确认疾病术语</h3>
+        <p class="muted">模糊匹配只提供候选，不会直接写入启用字典。请选择正确标准编码后审核通过，或拒绝无效术语。</p>
+        ${items.length ? `<div class="table-wrap"><table class="table">
+          <thead><tr><th>抽取术语</th><th>出现</th><th>来源</th><th>建议标准术语</th><th>操作</th></tr></thead>
+          <tbody>${items.map((item) => `<tr>
+            <td><strong>${esc(item.name)}</strong><div class="mono muted">${esc(item.local_code)}</div><div class="quote">${esc((item.aliases || []).join(" / "))}</div></td>
+            <td>${item.occurrences || 1}</td>
+            <td>${esc((item.source_doc_ids || []).join("、") || "-")}</td>
+            <td><input data-candidate-code="${esc(item.candidate_id)}" list="suggestions-${esc(item.candidate_id)}" placeholder="输入 ICD-10 编码">
+              <datalist id="suggestions-${esc(item.candidate_id)}">${(item.suggested_mappings || []).map((mapping) => `<option value="${esc(mapping.code)}">${esc(mapping.name)}</option>`).join("")}</datalist>
+            </td>
+            <td><div class="actions"><button class="btn sm primary" data-candidate-approve="${esc(item.candidate_id)}">通过</button><button class="btn sm danger" data-candidate-reject="${esc(item.candidate_id)}">拒绝</button></div></td>
+          </tr>`).join("")}</tbody>
+        </table></div>` : '<div class="empty">暂无待确认疾病术语</div>'}`;
+      $("#editorBody").querySelectorAll("[data-candidate-approve]").forEach((button) => button.onclick = async () => {
+        const id = button.dataset.candidateApprove;
+        const standardCode = $("#editorBody").querySelector(`[data-candidate-code="${id}"]`).value;
+        if (!standardCode) return toast("请选择标准疾病编码", true);
+        try {
+          await api(`/api/vocab/terminology/candidates/${encodeURIComponent(id)}/review`, { json: { status: "approved", standard_code: standardCode } });
+          toast("候选术语已审核并加入启用字典");
+          await render();
+        } catch (error) { toast(error.message, true); }
+      });
+      $("#editorBody").querySelectorAll("[data-candidate-reject]").forEach((button) => button.onclick = async () => {
+        try {
+          await api(`/api/vocab/terminology/candidates/${encodeURIComponent(button.dataset.candidateReject)}/review`, { json: { status: "rejected" } });
+          toast("候选术语已拒绝");
+          await render();
+        } catch (error) { toast(error.message, true); }
+      });
+    };
+    dialog.showModal();
+    await render();
+    $("#editorCancel").onclick = () => {
+      dialog.close();
+      saveButton.style.display = "";
+      renderEntityVocab();
+    };
+  }
+
+  async function openHospitalMappings(diseases) {
+    const dialog = $("#editorDialog");
+    const saveButton = $("#editorSave");
+    const mappings = await api("/api/vocab/terminology/mappings?entity_type=disease");
+    saveButton.style.display = "";
+    saveButton.textContent = "新增映射";
+    $("#editorBody").innerHTML = `
+      <h3>疾病院内码映射</h3>
+      <p class="muted">只有“已审核”映射会进入病历标准化；草稿可继续维护，不影响推理。</p>
+      <div class="form-grid">
+        <div class="field"><label>医院编码</label><input name="hospital_id" placeholder="例如 XM_FIRST"></div>
+        <div class="field"><label>院内诊断码</label><input name="local_code"></div>
+        <div class="field"><label>院内名称</label><input name="local_name"></div>
+        <div class="field"><label>标准疾病</label><select name="canonical_code"><option value="">请选择</option>${diseases.map((item) => `<option value="${esc(item.code)}">${esc(item.code)} · ${esc(item.name)}</option>`).join("")}</select></div>
+        <div class="field"><label>状态</label><select name="status"><option value="draft">草稿</option><option value="approved">已审核</option></select></div>
+      </div>
+      ${mappings.length ? `<div class="table-wrap"><table class="table"><thead><tr><th>医院</th><th>院内术语</th><th>标准实体</th><th>关系</th><th>状态</th></tr></thead><tbody>
+        ${mappings.map((item) => `<tr><td>${esc(item.hospital_id)}</td><td><span class="mono">${esc(item.local_code)}</span><div>${esc(item.local_name || "-")}</div></td><td class="mono">${esc(item.canonical_code)}</td><td>${esc(item.relation)}</td><td>${badge(item.status)}</td></tr>`).join("")}
+      </tbody></table></div>` : '<div class="empty">暂无疾病院内码映射</div>'}`;
+    dialog.showModal();
+    saveButton.onclick = async () => {
+      const form = $("#editorBody");
+      const payload = Object.fromEntries([...form.querySelectorAll("input,select")].map((input) => [input.name, input.value]));
+      payload.entity_type = "disease";
+      payload.relation = "exact";
+      payload.source = "manual";
+      try {
+        await api("/api/vocab/terminology/mappings", { json: payload });
+        dialog.close();
+        saveButton.textContent = "保存";
+        toast("院内疾病映射已保存");
+        renderEntityVocab();
+      } catch (error) { toast(error.message, true); }
+    };
+    $("#editorCancel").onclick = () => {
+      dialog.close();
+      saveButton.textContent = "保存";
+    };
   }
 
   function openEntityEntryEditor(entityType, item, isNew = false) {
@@ -1719,16 +1819,68 @@
     }
     const dialog = $("#editorDialog");
     const saveButton = $("#editorSave");
+    const bundles = await api("/api/vocab/reference/icd10/bundles");
     saveButton.textContent = "导入选中条目";
     $("#editorBody").innerHTML = `
       <h3>从 ICD-10 标准库导入</h3>
       <p class="muted">标准库只提供标准编码和名称，不直接参与解析识别。勾选后导入到活跃疾病字典，解析时才会使用。</p>
+      <h4>按专科批量启用</h4>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>疾病包</th><th>参考条目</th><th>已启用</th><th>可启用</th><th>操作</th></tr></thead>
+        <tbody>${bundles.map((bundle) => `<tr>
+          <td><strong>${esc(bundle.name)}</strong><div class="muted">${esc(bundle.description || "")}</div></td>
+          <td>${bundle.reference_count}</td><td>${bundle.active_count}</td><td>${bundle.available_count}</td>
+          <td><button type="button" class="btn sm" data-activate-bundle="${esc(bundle.bundle_id)}" ${bundle.available_count ? "" : "disabled"}>启用缺失条目</button></td>
+        </tr>`).join("")}</tbody>
+      </table></div>
+      <h4>导入授权标准库文件</h4>
+      <div class="form-grid">
+        <div class="field wide"><label>JSON / CSV 文件（最大 20MB）</label><input id="catalogFile" type="file" accept=".json,.csv"></div>
+        <div class="field"><label>标准版本</label><input id="catalogVersion" placeholder="例如：国家临床版 2.0（2022汇总版）"></div>
+        <div class="field"><label>数据来源</label><input id="catalogSource" placeholder="授权文件名称或发布机构"></div>
+        <div class="field wide"><div class="actions"><button type="button" id="validateCatalog" class="btn ghost">仅校验</button><button type="button" id="importCatalog" class="btn">校验并合并</button></div></div>
+        <div id="catalogReport" class="field wide muted">正式合并前可先校验；不会自动启用新导入的参考术语。</div>
+      </div>
+      <h4>搜索并选择启用</h4>
       <div class="inline-controls">
         <div class="field"><label>搜索编码、名称或别名</label><input id="icd10Search" placeholder="例如：I10、高血压、淋巴瘤"></div>
       </div>
       <div id="icd10Results" class="table-wrap"><div class="empty">正在加载...</div></div>
     `;
     dialog.showModal();
+
+    $("#editorBody").querySelectorAll("[data-activate-bundle]").forEach((button) => button.onclick = async () => {
+      const bundle = bundles.find((item) => item.bundle_id === button.dataset.activateBundle);
+      if (!confirm(`确认将“${bundle?.name || button.dataset.activateBundle}”中尚未启用的 ${bundle?.available_count || 0} 条疾病加入实体字典？`)) return;
+      try {
+        const result = await api(`/api/vocab/reference/icd10/bundles/${encodeURIComponent(button.dataset.activateBundle)}/activate`, { json: {} });
+        dialog.close();
+        saveButton.textContent = "保存";
+        toast(`专科包已启用 ${result.imported_count} 条；跳过 ${result.skipped_count} 条`);
+        renderEntityVocab();
+      } catch (error) { toast(error.message, true); }
+    });
+
+    const submitCatalog = async (dryRun) => {
+      const file = $("#catalogFile").files[0];
+      if (!file) return toast("请选择标准术语 JSON 或 CSV 文件", true);
+      const form = new FormData();
+      form.append("file", file);
+      form.append("version", $("#catalogVersion").value.trim());
+      form.append("source", $("#catalogSource").value.trim());
+      form.append("mode", "merge");
+      form.append("dry_run", String(dryRun));
+      try {
+        const report = await api("/api/vocab/reference/icd10/catalog/import", { method: "POST", body: form });
+        const box = $("#catalogReport");
+        box.innerHTML = report.valid
+          ? `<span class="badge active">校验通过</span> 文件 ${report.incoming_count} 条；新增 ${report.added_count} 条；更新 ${report.updated_count} 条；警告 ${(report.warnings || []).length} 条${dryRun ? "（尚未写入）" : `；合并后 ${report.result_count} 条`}`
+          : `<span class="badge rejected">校验失败</span> ${(report.errors || []).slice(0, 5).map((item) => `第 ${item.row} 行：${esc(item.message)}`).join("；")}`;
+        if (!dryRun && report.valid) toast("标准参考库已合并；新条目需审核或按专科启用");
+      } catch (error) { toast(error.message, true); }
+    };
+    $("#validateCatalog").onclick = () => submitCatalog(true);
+    $("#importCatalog").onclick = () => submitCatalog(false);
 
     const renderResults = async (query = "") => {
       try {

@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import ValidationError
 
 from src.api.routes.rules import _load_all_rules
@@ -14,6 +14,10 @@ from src.domains import normalize_domain
 from src.extraction.models import TemplateEntityEntry
 from src.kg.schema import ConceptDefinition
 from src.terminology.labels import default_labels
+from src.terminology.repository import (
+    HospitalTerminologyMappingRepository,
+    TerminologyCandidateRepository,
+)
 from src.vocab import cascade as vocab_cascade
 from src.vocab import entity_vocabulary
 from src.vocab.cascade import (
@@ -24,7 +28,12 @@ from src.vocab.cascade import (
 )
 from src.vocab.entity_classification import classify_entries
 from src.vocab.entity_vocabulary import EntityVocabularyRepository, graph_usage
-from src.vocab.reference_vocabulary import ReferenceVocabularyRepository
+from src.vocab.reference_vocabulary import (
+    ReferenceBundleRepository,
+    ReferenceVocabularyRepository,
+    import_reference_catalog,
+    parse_reference_catalog,
+)
 from src.vocab.repository import ConceptVocabularyRepository
 
 router = APIRouter(prefix="/api/vocab", tags=["concept-vocabulary"])
@@ -95,6 +104,9 @@ def _validate_entry(entity_type: str, entry: TemplateEntityEntry) -> TemplateEnt
 
 
 icd10_reference = ReferenceVocabularyRepository("icd10")
+term_candidates = TerminologyCandidateRepository()
+hospital_mappings = HospitalTerminologyMappingRepository()
+icd10_bundles = ReferenceBundleRepository()
 
 
 @router.get("/reference/icd10")
@@ -153,6 +165,182 @@ async def import_icd10_reference(payload: Dict):
         "imported_count": len(imported),
         "skipped_count": len(skipped),
     }
+
+
+@router.post("/reference/icd10/catalog/import")
+async def upload_icd10_catalog(
+    file: UploadFile = File(...),
+    version: str = Form(""),
+    source: str = Form(""),
+    mode: str = Form("merge"),
+    dry_run: bool = Form(True),
+):
+    """Validate and optionally import an authorized ICD-10 JSON/CSV file."""
+    content = await file.read()
+    if len(content) > 20 * 1024 * 1024:
+        raise HTTPException(413, "标准术语文件最大 20MB")
+    try:
+        metadata, entries = parse_reference_catalog(content, file.filename or "")
+        if not dry_run and not (str(version or "").strip() or metadata.get("version")):
+            raise HTTPException(422, "正式导入必须填写标准版本，或由 JSON 文件提供 version")
+        if not dry_run and not (str(source or "").strip() or metadata.get("source")):
+            raise HTTPException(422, "正式导入必须填写数据来源，或由 JSON 文件提供 source")
+        report = import_reference_catalog(
+            icd10_reference,
+            entries,
+            metadata=metadata,
+            version=str(version or "").strip(),
+            source=str(source or "").strip(),
+            mode=str(mode or "merge").strip(),
+            dry_run=bool(dry_run),
+        )
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
+        raise HTTPException(422, str(error))
+    if not report.get("valid"):
+        return report
+    return report
+
+
+@router.get("/reference/icd10/bundles")
+async def list_icd10_bundles():
+    """Preview specialty bundles without activating reference entries."""
+    catalogue = icd10_reference.entries()
+    active_codes = {item.code for item in EntityVocabularyRepository("disease").list()}
+    result = []
+    for bundle in icd10_bundles.list():
+        entries = icd10_bundles.entries(bundle, catalogue)
+        codes = {str(item.get("code") or "") for item in entries}
+        result.append({
+            **bundle,
+            "reference_count": len(entries),
+            "active_count": len(codes & active_codes),
+            "available_count": len(codes - active_codes),
+        })
+    return result
+
+
+@router.post("/reference/icd10/bundles/{bundle_id}/activate")
+async def activate_icd10_bundle(bundle_id: str):
+    """Copy the missing entries in one specialty bundle to the active dictionary."""
+    bundle = icd10_bundles.get(bundle_id)
+    if bundle is None:
+        raise HTTPException(404, f"专科疾病包 {bundle_id} 不存在")
+    entries = icd10_bundles.entries(bundle, icd10_reference.entries())
+    repository = EntityVocabularyRepository("disease")
+    imported: List[Dict[str, Any]] = []
+    skipped: List[Dict[str, Any]] = []
+    for reference in entries:
+        code = str(reference.get("code") or "")
+        if repository.find(code):
+            skipped.append({"code": code, "reason": "活跃字典中已存在"})
+            continue
+        raw = {
+            **reference,
+            "specialty": str(reference.get("specialty") or bundle.get("specialty") or ""),
+        }
+        parsed = _validate_entry("disease", TemplateEntityEntry(**raw))
+        imported.append(repository.save(parsed, is_new=True).model_dump())
+    return {
+        "bundle_id": bundle_id,
+        "name": bundle.get("name"),
+        "imported": imported,
+        "skipped": skipped,
+        "imported_count": len(imported),
+        "skipped_count": len(skipped),
+    }
+
+
+@router.get("/terminology/summary")
+async def terminology_summary():
+    """Counts for the four terminology-management work areas."""
+    active_diseases = EntityVocabularyRepository("disease").list()
+    reference_entries = icd10_reference.entries()
+    candidates = term_candidates.list()
+    mappings = hospital_mappings.list()
+    return {
+        "active_entities": len(active_diseases),
+        "reference_terms": len(reference_entries),
+        "pending_candidates": sum(item.get("status") == "pending" for item in candidates),
+        "approved_mappings": sum(item.get("status") == "approved" for item in mappings),
+    }
+
+
+@router.get("/terminology/candidates")
+async def list_terminology_candidates(
+    status: str = "",
+    entity_type: str = "",
+    q: str = "",
+):
+    return term_candidates.list(status=status, entity_type=entity_type, query=q)
+
+
+@router.post("/terminology/candidates/{candidate_id}/review")
+async def review_terminology_candidate(candidate_id: str, payload: Dict):
+    status = str(payload.get("status") or "").strip()
+    note = str(payload.get("note") or "").strip()
+    candidate = term_candidates.get(candidate_id)
+    if candidate is None:
+        raise HTTPException(404, f"候选术语 {candidate_id} 不存在")
+    if status == "rejected":
+        return term_candidates.review(candidate_id, status, note)
+    if status != "approved":
+        raise HTTPException(422, "审核状态必须是 approved 或 rejected")
+    if candidate.get("entity_type") != "disease":
+        raise HTTPException(422, "当前审核入库仅支持疾病术语")
+
+    standard_code = str(payload.get("standard_code") or "").strip().upper()
+    if not standard_code:
+        suggestions = candidate.get("suggested_mappings") or []
+        if len(suggestions) == 1:
+            standard_code = str(suggestions[0].get("code") or "").upper()
+    reference = icd10_reference.find(standard_code)
+    if reference is None:
+        raise HTTPException(422, "请选择标准参考库中存在的 ICD-10 编码")
+
+    repository = EntityVocabularyRepository("disease")
+    active = repository.find(standard_code)
+    if active is None:
+        aliases = sorted(set([
+            *map(str, reference.get("aliases") or []),
+            str(candidate.get("name") or ""),
+            *map(str, candidate.get("aliases") or []),
+        ]))
+        entry = TemplateEntityEntry(**{**reference, "aliases": [item for item in aliases if item]})
+        repository.save(_validate_entry("disease", entry), is_new=True)
+    return term_candidates.review(candidate_id, "approved", note)
+
+
+@router.get("/terminology/mappings")
+async def list_terminology_mappings(
+    hospital_id: str = "",
+    entity_type: str = "",
+    status: str = "",
+):
+    return hospital_mappings.list(
+        hospital_id=hospital_id,
+        entity_type=entity_type,
+        status=status,
+    )
+
+
+def _validate_mapping_target(payload: Dict) -> None:
+    entity_type = str(payload.get("entity_type") or "").strip()
+    canonical_code = str(payload.get("canonical_code") or "").strip()
+    if entity_type and canonical_code \
+            and EntityVocabularyRepository(entity_type).find(canonical_code) is None:
+        raise HTTPException(422, f"活跃 {entity_type} 实体字典中不存在编码 {canonical_code}")
+
+
+@router.post("/terminology/mappings")
+async def create_terminology_mapping(payload: Dict):
+    _validate_mapping_target(payload)
+    return hospital_mappings.save(payload)
+
+
+@router.put("/terminology/mappings/{mapping_id}")
+async def update_terminology_mapping(mapping_id: str, payload: Dict):
+    _validate_mapping_target(payload)
+    return hospital_mappings.save(payload, mapping_id=mapping_id)
 
 
 def _check_concept_entry(entity_type: str, code: str) -> None:

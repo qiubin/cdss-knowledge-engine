@@ -12,6 +12,7 @@ from typing import Any, Dict, Iterable, List, Optional
 from .models import TemplateEntityEntry
 from ..vocab.entity_vocabulary import EntityVocabularyRepository
 from ..vocab.reference_vocabulary import ReferenceVocabularyRepository
+from ..terminology.repository import TerminologyCandidateRepository
 
 UNIVERSAL_TYPES = {
     "disease", "symptom", "sign", "lab", "exam", "diagnostic_evidence",
@@ -67,7 +68,11 @@ def local_code(entity_type: str, name: str) -> str:
 
 
 class UniversalTermResolver:
-    def __init__(self, auto_import_disease: bool = True):
+    def __init__(
+        self,
+        auto_import_disease: bool = False,
+        candidate_repository: Optional[TerminologyCandidateRepository] = None,
+    ):
         self.reference = ReferenceVocabularyRepository("icd10")
         try:
             self.reference.load()
@@ -75,28 +80,71 @@ class UniversalTermResolver:
         except (FileNotFoundError, ValueError):
             self.reference_available = False
         self.auto_import_disease = auto_import_disease
+        self.candidates = candidate_repository or TerminologyCandidateRepository()
         self.resolved_terms: List[Dict[str, Any]] = []
 
-    def _reference_match(self, name: str, aliases: Iterable[str], code: str = "") -> Optional[Dict[str, Any]]:
+    def _reference_matches(
+        self, name: str, aliases: Iterable[str], code: str = ""
+    ) -> tuple[Optional[Dict[str, Any]], List[Dict[str, Any]]]:
+        """Return an exact match and separate fuzzy suggestions.
+
+        Containment is useful for review suggestions, but unsafe as an
+        automatic mapping because related diseases commonly contain each
+        other's names.
+        """
         if not self.reference_available:
-            return None
+            return None, []
         if code:
             found = self.reference.find(code)
             if found:
-                return found
-        names = [str(name or "")] + [str(alias) for alias in aliases or []]
-        best = None
+                return found, []
+        names = {str(name or "").strip(), *[str(alias).strip() for alias in aliases or []]}
+        names.discard("")
+        fuzzy: List[Dict[str, Any]] = []
         for item in self.reference.entries():
             candidates = [str(item.get("name") or ""), *map(str, item.get("aliases") or [])]
-            for candidate in candidates:
-                if not candidate or len(candidate) < 2:
-                    continue
-                if candidate in names:
-                    return item
-                if candidate in (name or "") or (name and name in candidate):
-                    if best is None or len(candidate) > len(str(best.get("name") or "")):
-                        best = item
-        return best
+            usable = [candidate for candidate in candidates if candidate and len(candidate) >= 2]
+            if any(candidate in names for candidate in usable):
+                return item, []
+            if any(
+                candidate in value or value in candidate
+                for candidate in usable for value in names
+            ):
+                fuzzy.append(item)
+        fuzzy.sort(key=lambda item: len(str(item.get("name") or "")), reverse=True)
+        return None, fuzzy[:5]
+
+    @staticmethod
+    def _mapping_suggestions(items: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        return [{
+            "system": str(item.get("standard_system") or "ICD-10"),
+            "code": str(item.get("code") or ""),
+            "name": str(item.get("name") or ""),
+            "relation": "related",
+        } for item in items]
+
+    def _queue_candidate(
+        self,
+        result: Dict[str, Any],
+        *,
+        doc_id: str,
+        match_type: str,
+        suggestions: Iterable[Dict[str, Any]] = (),
+    ) -> None:
+        try:
+            self.candidates.upsert(
+                entity_type="disease",
+                name=str(result.get("name") or ""),
+                local_code=str(result.get("code") or ""),
+                aliases=result.get("aliases") or [],
+                source_doc_id=doc_id,
+                match_type=match_type,
+                suggested_mappings=self._mapping_suggestions(suggestions),
+            )
+        except (OSError, ValueError):
+            # Terminology resolution must not make guideline extraction fail
+            # when the optional review queue is temporarily unavailable.
+            pass
 
     def resolve(
         self,
@@ -132,7 +180,7 @@ class UniversalTermResolver:
         }
 
         if entity_type == "disease" and self.reference_available:
-            matched = self._reference_match(name, aliases, result["code"])
+            matched, fuzzy = self._reference_matches(name, aliases, result["code"])
             if matched:
                 result.update({
                     "code": str(matched.get("code") or result["code"]),
@@ -142,8 +190,30 @@ class UniversalTermResolver:
                 })
                 if self.auto_import_disease:
                     self._import_disease(result)
-                self.resolved_terms.append({**result, "resolution": "reference"})
+                elif EntityVocabularyRepository("disease").find(result["code"]) is None:
+                    self._queue_candidate(
+                        result,
+                        doc_id=doc_id,
+                        match_type="exact_reference",
+                        suggestions=[matched],
+                    )
+                self.resolved_terms.append({**result, "resolution": "reference_exact"})
                 return result
+
+            # Fuzzy matches are suggestions only; keep a stable local code
+            # until a reviewer chooses the correct standard concept.
+            result["code"] = local_code(entity_type, name)
+            result["standard_system"] = "LOCAL"
+            result["standard_code"] = ""
+            self._queue_candidate(
+                result,
+                doc_id=doc_id,
+                match_type="ambiguous" if fuzzy else "unmatched",
+                suggestions=fuzzy,
+            )
+            resolution = "ambiguous_candidate" if fuzzy else "local_candidate"
+            self.resolved_terms.append({**result, "resolution": resolution})
+            return result
 
         if not result["code"]:
             result["code"] = local_code(entity_type, name)

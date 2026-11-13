@@ -22,6 +22,7 @@ from .terminology_resolver import (
     UniversalTermResolver,
     normalize_type,
 )
+from ..terminology.repository import TerminologyCandidateRepository
 
 AUTO_TEMPLATE_ID = "UNIVERSAL_GUIDELINE_V1"
 DEFAULT_AUTO_GRAPH_PREFIX = "KG-AUTO-"
@@ -421,12 +422,17 @@ async def run_auto_pipeline(
     auto_activate: bool = False,
     llm_call: Optional[Callable[..., Any]] = None,
     data_root: Optional[Path] = None,
-    auto_import_disease: bool = True,
+    auto_import_disease: bool = False,
     controller: Any = None,
 ) -> Dict[str, Any]:
     """Run the complete universal auto ingestion pipeline."""
     root = Path(data_root) if data_root else Path(__file__).resolve().parents[2] / "data"
-    resolver = UniversalTermResolver(auto_import_disease=auto_import_disease)
+    resolver = UniversalTermResolver(
+        auto_import_disease=auto_import_disease,
+        candidate_repository=TerminologyCandidateRepository(
+            root / "terminology" / "candidates.json"
+        ),
+    )
     settings = dict(config.get("llm", {}))
     call = llm_call or chat_json
     groups = _chunk_groups(

@@ -1,0 +1,58 @@
+[
+  {
+    "bundle_id": "CARDIOVASCULAR",
+    "name": "心血管疾病包",
+    "specialty": "心血管内科",
+    "description": "ICD-10 I 章：循环系统疾病",
+    "code_prefixes": ["I"]
+  },
+  {
+    "bundle_id": "ONCO_HEMATOLOGY",
+    "name": "肿瘤与血液疾病包",
+    "specialty": "肿瘤与血液科",
+    "description": "ICD-10 C、D 章：肿瘤及血液相关疾病",
+    "code_prefixes": ["C", "D"]
+  },
+  {
+    "bundle_id": "RESPIRATORY",
+    "name": "呼吸系统疾病包",
+    "specialty": "呼吸内科",
+    "description": "ICD-10 J 章：呼吸系统疾病",
+    "code_prefixes": ["J"]
+  },
+  {
+    "bundle_id": "DIGESTIVE",
+    "name": "消化系统疾病包",
+    "specialty": "消化内科",
+    "description": "ICD-10 K 章：消化系统疾病",
+    "code_prefixes": ["K"]
+  },
+  {
+    "bundle_id": "ENDOCRINE",
+    "name": "内分泌代谢疾病包",
+    "specialty": "内分泌科",
+    "description": "ICD-10 E 章：内分泌、营养和代谢疾病",
+    "code_prefixes": ["E"]
+  },
+  {
+    "bundle_id": "NEUROLOGY",
+    "name": "神经系统疾病包",
+    "specialty": "神经内科",
+    "description": "ICD-10 G 章：神经系统疾病",
+    "code_prefixes": ["G"]
+  },
+  {
+    "bundle_id": "INFECTIOUS",
+    "name": "感染性疾病包",
+    "specialty": "感染科",
+    "description": "ICD-10 A、B 章：传染病和寄生虫病",
+    "code_prefixes": ["A", "B"]
+  },
+  {
+    "bundle_id": "UROGENITAL",
+    "name": "泌尿生殖系统疾病包",
+    "specialty": "肾内科/泌尿外科",
+    "description": "ICD-10 N 章：泌尿生殖系统疾病",
+    "code_prefixes": ["N"]
+  }
+]
