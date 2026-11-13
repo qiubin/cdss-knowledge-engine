@@ -908,3 +908,15 @@ tr:last-child td { border-bottom: 0; }
 .container-block { margin-top: 8px; }
 .container-block > summary { cursor: pointer; font-size: 12px; color: var(--accent-dark); }
 @media (max-width: 960px) { .by-disease-layout { grid-template-columns: 1fr; } }
+
+/* 疑似重复分组与关联条目 */
+.dupe-group { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+.dupe-head { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.dupe-nodes { display: grid; gap: 6px; margin-bottom: 8px; }
+.dupe-node { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+.related-list { display: grid; gap: 4px; }
+.related-row { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.related-rel { color: var(--muted); min-width: 110px; background: none; border: none; cursor: pointer; padding: 2px 4px; text-align: left; }
+.related-rel:hover { color: var(--fg); text-decoration: underline; }
+.related-node { display: inline-flex; gap: 6px; align-items: center; background: none; border: none; cursor: pointer; padding: 2px 4px; border-radius: 4px; }
+.related-node:hover { background: var(--accent-soft); }

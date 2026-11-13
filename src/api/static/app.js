@@ -1235,6 +1235,23 @@
       values: { entity_type: owner.entity_type },
       html: `<tr><td>${esc(typeName[owner.entity_type] || owner.label || owner.entity_type)}</td><td class="mono">${esc(item.code)}</td><td>${esc(item.name)}</td><td><div class="quote">${esc((item.aliases || []).join(" / "))}</div></td><td><div class="actions"><button class="btn sm" data-struct-kind="entity" data-struct-key="${esc(owner.entity_type)}/${esc(item.code)}" data-struct-mode="edit">编辑</button><button class="btn sm danger" data-struct-kind="entity" data-struct-key="${esc(owner.entity_type)}/${esc(item.code)}" data-struct-mode="delete">删除</button></div></td></tr>`,
     }));
+    const attributeTableKey = `template-attributes-${template.template_id}`;
+    const attributesSorted = [...template.attributes].sort((left, right) => {
+      const typeOrder = String(left.owner_entity_type).localeCompare(String(right.owner_entity_type), "zh-Hans-CN");
+      return typeOrder || String(left.attribute_code).localeCompare(String(right.attribute_code), "zh-Hans-CN");
+    });
+    const attrTypeCounts = template.attributes.reduce((counts, attr) => {
+      counts.set(attr.owner_entity_type, (counts.get(attr.owner_entity_type) || 0) + 1);
+      return counts;
+    }, new Map());
+    const attributeTypeFilters = [...attrTypeCounts.entries()]
+      .sort(([left], [right]) => left.localeCompare(right, "zh-Hans-CN"))
+      .map(([value, count]) => ({ value, label: `${typeName[value] || value}（${count}）` }));
+    const attributeItems = attributesSorted.map((item) => ({
+      text: [item.attribute_code, item.name, item.owner_entity_type, typeName[item.owner_entity_type] || "", item.data_type, item.description].join(" "),
+      values: { owner_entity_type: item.owner_entity_type },
+      html: `<tr><td class="mono">${esc(item.attribute_code)}</td><td>${esc(item.name)}</td><td>${esc(typeName[item.owner_entity_type] || item.owner_entity_type)} <span class="mono muted">${esc(item.owner_entity_type)}</span></td><td>${esc(item.data_type)}</td><td>${item.required ? '<span class="badge active">必填</span>' : "否"}</td><td class="mono">${esc((item.allowed_values || []).join(", ")) || "-"}</td><td>${item.concept_code ? conceptChip(item.concept_code) : "-"}</td><td><div class="quote">${esc(item.description)}</div></td><td><div class="actions"><button class="btn sm" data-struct-kind="attribute" data-struct-key="${esc(item.attribute_code)}" data-struct-mode="edit">编辑</button><button class="btn sm danger" data-struct-kind="attribute" data-struct-key="${esc(item.attribute_code)}" data-struct-mode="delete">删除</button></div></td></tr>`,
+    }));
     const addPrivateEntity = privateEntityTypes.length
       ? '<button id="addEntity" class="btn primary">新增私有实体</button>'
       : "";
@@ -1247,9 +1264,11 @@
           <div class="field"><label>概念边界</label><input readonly value="${template.concept_codes.length} 个概念"></div>
         </div>
       `, "", "本页是 Schema 层：实体类型、关系、属性构成解析契约；具体实体在「实体词典」（术语层）维护；医院阈值只保存在标准管理中")}
-      ${panel("实体类型", table(["类型编码", "名称", "编码字段", "私有 / 共享实体", "词表", "操作"], template.entity_types.map((item) => `
-        <tr><td class="mono">${esc(item.entity_type)}</td><td>${esc(item.label)}</td><td class="mono">${esc(item.code_field)}</td><td>${item.private_entry_count ?? (item.private_entries || item.entries).length} 私有${item.shared_entry_count ? ` <span class="muted">/ ${item.shared_entry_count} 共享</span>` : ""}</td><td>${item.vocabulary ? `<button class="badge active" data-goto-vocab="${esc(item.entity_type)}" title="点击进入实体词典管理">共享词表</button>` : '<span class="badge draft" title="实体内嵌在模板中">模板私有</span>'}</td><td><div class="actions"><button class="btn sm" data-struct-kind="entity-type" data-struct-key="${esc(item.entity_type)}" data-struct-mode="edit">编辑</button><button class="btn sm danger" data-struct-kind="entity-type" data-struct-key="${esc(item.entity_type)}" data-struct-mode="delete">删除</button></div></td></tr>`
-      )), '<button id="addEntityType" class="btn primary">新增实体类型</button>', "实体类型决定图谱节点族和输出类型")}
+      ${panel("实体类型", table(["类型编码", "名称", "编码字段", "属性", "私有 / 共享实体", "词表", "操作"], template.entity_types.map((item) => {
+        const attrCount = template.attributes.filter((a) => a.owner_entity_type === item.entity_type).length;
+        return `
+        <tr><td class="mono">${esc(item.entity_type)}</td><td>${esc(item.label)}</td><td class="mono">${esc(item.code_field)}</td><td><button type="button" class="btn sm ghost" data-attr-filter="${esc(item.entity_type)}" title="点击在下方属性面板中过滤该类型的属性定义">${attrCount ? `${attrCount} 个` : "0 个"}</button></td><td>${item.private_entry_count ?? (item.private_entries || item.entries).length} 私有${item.shared_entry_count ? ` <span class="muted">/ ${item.shared_entry_count} 共享</span>` : ""}</td><td>${item.vocabulary ? `<button class="badge active" data-goto-vocab="${esc(item.entity_type)}" title="点击进入实体词典管理">共享词表</button>` : '<span class="badge draft" title="实体内嵌在模板中">模板私有</span>'}</td><td><div class="actions"><button class="btn sm" data-struct-kind="entity-type" data-struct-key="${esc(item.entity_type)}" data-struct-mode="edit">编辑</button><button class="btn sm danger" data-struct-kind="entity-type" data-struct-key="${esc(item.entity_type)}" data-struct-mode="delete">删除</button></div></td></tr>`;
+      })), '<button id="addEntityType" class="btn primary">新增实体类型</button>', "实体类型决定图谱节点族和输出类型；「属性」列可点击跳转到属性面板查看该类型的属性定义")}
       ${pagedPanel({
         key: entityTableKey,
         title: "实体（仅模板私有）",
@@ -1264,9 +1283,19 @@
       ${panel("关系", table(["编码", "名称", "源类型", "目标类型", "限定编码", "证据概念", "说明", "操作"], template.relations.map((item) => `
         <tr><td class="mono">${esc(item.relation_code)}</td><td>${esc(item.name)}</td><td>${esc(item.source_entity_type)}${item.source_code ? ` / ${esc(item.source_code)}` : ""}</td><td>${esc(item.target_entity_type)}${item.target_code ? ` / ${esc(item.target_code)}` : ""}</td><td class="mono">${esc(item.cardinality)}</td><td>${item.concept_code ? conceptChip(item.concept_code) : "-"}</td><td><div class="quote">${esc(item.extraction_hint)}</div></td><td><div class="actions"><button class="btn sm" data-struct-kind="relation" data-struct-key="${esc(item.relation_code)}" data-struct-mode="edit">编辑</button><button class="btn sm danger" data-struct-kind="relation" data-struct-key="${esc(item.relation_code)}" data-struct-mode="delete">删除</button></div></td></tr>`
       )), '<button id="addRelation" class="btn primary">新增关系</button>', "关系约束图谱导入和大模型抽取，避免自由生成无边界的边")}
-      ${panel("属性", table(["编码", "名称", "所属实体类型", "数据类型", "必填", "允许值", "绑定概念", "说明", "操作"], template.attributes.map((item) => `
-        <tr><td class="mono">${esc(item.attribute_code)}</td><td>${esc(item.name)}</td><td>${esc(item.owner_entity_type)}</td><td>${esc(item.data_type)}</td><td>${item.required ? "是" : "否"}</td><td class="mono">${esc((item.allowed_values || []).join(", ")) || "-"}</td><td>${item.concept_code ? conceptChip(item.concept_code) : "-"}</td><td><div class="quote">${esc(item.description)}</div></td><td><div class="actions"><button class="btn sm" data-struct-kind="attribute" data-struct-key="${esc(item.attribute_code)}" data-struct-mode="edit">编辑</button><button class="btn sm danger" data-struct-kind="attribute" data-struct-key="${esc(item.attribute_code)}" data-struct-mode="delete">删除</button></div></td></tr>`
-      )), '<button id="addAttribute" class="btn primary">新增属性</button>', "属性定义抽取字段契约，可绑定受控概念，但不承载医院阈值")}
+      <div id="attributePanel">
+      ${pagedPanel({
+        key: attributeTableKey,
+        title: "属性",
+        description: "属性定义抽取字段契约，可绑定受控概念，但不承载医院阈值；按所属实体类型分组排序。",
+        headers: ["编码", "名称", "所属实体类型", "数据类型", "必填", "允许值", "绑定概念", "说明", "操作"],
+        items: attributeItems,
+        filters: [{ key: "owner_entity_type", label: "实体类型", options: attributeTypeFilters }],
+        placeholder: "搜索编码、名称或说明…",
+        emptyText: attributeItems.length ? "没有匹配的属性" : "当前模板还没有属性定义，点击「新增属性」创建",
+        actions: '<button id="addAttribute" class="btn primary">新增属性</button>',
+      })}
+      </div>
     `;
     $("#templateBack").onclick = () => { state.templateStructureId = ""; render(); };
     content.querySelectorAll("[data-goto-vocab]").forEach((b) => b.onclick = () => {
@@ -1274,11 +1303,22 @@
       navigate("entityVocab");
     });
     bindPagedTable(entityTableKey);
+    bindPagedTable(attributeTableKey);
+    content.querySelectorAll("[data-attr-filter]").forEach((button) => button.onclick = () => {
+      const ts = tableStateFor(attributeTableKey);
+      ts.filters.owner_entity_type = ts.filters.owner_entity_type === button.dataset.attrFilter ? "" : button.dataset.attrFilter;
+      ts.page = 1;
+      const select = document.querySelector(`.table-filter[data-table-filter="${attributeTableKey}"][data-filter-key="owner_entity_type"]`);
+      if (select) select.value = ts.filters.owner_entity_type;
+      renderTableBody(attributeTableKey);
+      const mount = $("#attributePanel");
+      if (mount) mount.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
     $("#editTemplateMeta").onclick = () => openTemplateEditor(template);
-    $("#addEntityType").onclick = () => openTemplateItemEditor("entity-type", null);
-    if ($("#addEntity")) $("#addEntity").onclick = () => openTemplateItemEditor("entity", null, true, { privateOnly: true });
-    $("#addRelation").onclick = () => openTemplateItemEditor("relation", null);
-    $("#addAttribute").onclick = () => openTemplateItemEditor("attribute", null);
+    $("#addEntityType").onclick = () => openTemplateItemEditor("entity-type", null, false, { template });
+    if ($("#addEntity")) $("#addEntity").onclick = () => openTemplateItemEditor("entity", null, true, { privateOnly: true, template });
+    $("#addRelation").onclick = () => openTemplateItemEditor("relation", null, false, { template });
+    $("#addAttribute").onclick = () => openTemplateItemEditor("attribute", null, false, { template });
     const handleStructureAction = async (button) => {
       const kind = button.dataset.structKind, key = button.dataset.structKey, mode = button.dataset.structMode;
       if (mode === "delete") {
@@ -1297,7 +1337,7 @@
           : kind === "entity"
             ? (() => { const [type, code] = key.split("/"); const owner = template.entity_types.find((item) => item.entity_type === type); return (owner.private_entries || owner.entries).find((item) => item.code === code); })()
             : template[`${kind}s`].find((item) => item[kind === "relation" ? "relation_code" : "attribute_code"] === key);
-        openTemplateItemEditor(kind, kind === "entity" ? { ...source, __key: key } : source);
+        openTemplateItemEditor(kind, kind === "entity" ? { ...source, __key: key } : source, false, { template });
       }
     };
     content.querySelectorAll("[data-struct-mode]").forEach((button) => {
@@ -1321,19 +1361,32 @@
     const conceptOptions = (selected = "") => `<option value="" ${!selected ? "selected" : ""}>不绑定概念</option>${state.vocab.map((v) => option(selected, v.code, `${v.name_cn} / ${v.code}`)).join("")}`;
     const label = { "entity-type": "实体类型", entity: "实体", relation: "关系", attribute: "属性" }[kind];
     let fields = "";
-    if (kind === "entity-type") fields = `
+    const structureTemplate = options.template || state.templates.find((t) => t.template_id === state.templateStructureId);
+    const templateAttributesOf = (entityType) => (structureTemplate?.attributes || []).filter((a) => a.owner_entity_type === entityType);
+    if (kind === "entity-type") {
+      fields = `
       <div class="field"><label>类型编码</label><input name="entity_type" value="${esc(value.entity_type || "")}" ${!isNew ? "readonly" : ""}></div>
       <div class="field"><label>显示名称</label><input name="label" value="${esc(value.label || "")}"></div>
       <div class="field"><label>编码字段</label><input name="code_field" value="${esc(value.code_field || "code")}"></div>
       <div class="field"><label>动态发现</label><select name="discovery"><option value="false" ${!value.discovery ? "selected" : ""}>否</option><option value="true" ${value.discovery ? "selected" : ""}>是（从指南文本自动发现）</option></select></div>
-      <div class="field"><label>实体词表</label><select name="vocabulary"><option value="false" ${!value.vocabulary ? "selected" : ""}>模板私有（内嵌实体）</option><option value="true" ${value.vocabulary ? "selected" : ""}>共享词表（data/vocab/entities，跨模板共用）</option></select></div>`;
+      <div class="field"><label>实体词表</label><select name="vocabulary"><option value="false" ${!value.vocabulary ? "selected" : ""}>模板私有（内嵌实体）</option><option value="true" ${value.vocabulary ? "selected" : ""}>共享词表（data/vocab/entities，跨模板共用）</option></select></div>
+      <div class="field wide"><label>抽取提示</label><input name="extraction_hint" value="${esc(value.extraction_hint || "")}" placeholder="大模型抽取该类型实体时的指引说明"></div>
+      <div class="field wide"><label>描述</label><input name="description" value="${esc(value.description || "")}" placeholder="该实体类型的用途说明"></div>`;
+      if (!isNew) {
+        const attrs = templateAttributesOf(value.entity_type);
+        fields += `
+      <div class="field wide"><label>该类型的属性定义（${attrs.length} 个）</label>${attrs.length ? table(["编码", "名称", "数据类型", "必填", "允许值", "操作"], attrs.map((a) => `
+        <tr><td class="mono">${esc(a.attribute_code)}</td><td>${esc(a.name)}</td><td>${esc(a.data_type)}</td><td>${a.required ? "是" : "否"}</td><td class="mono">${esc((a.allowed_values || []).join(", ")) || "-"}</td><td><button type="button" class="btn sm" data-inline-attr="${esc(a.attribute_code)}">编辑属性</button></td></tr>`)) : '<div class="muted">该类型暂无属性定义；关闭对话框后在主页面「新增属性」并选择该实体类型</div>'}</div>`;
+      }
+    }
     if (kind === "entity") {
       const owner = templateOwnerByEntityKey(value.__key);
       fields = `
         <div class="field"><label>实体类型</label><select name="entity_type">${entityOptions(value.entity_type || owner || "disease")}</select></div>
         <div class="field"><label>实体编码</label><input name="code" value="${esc(value.code || "")}" ${!isNew ? "readonly" : ""}></div>
         <div class="field"><label>实体名称</label><input name="name" value="${esc(value.name || "")}"></div>
-        <div class="field wide"><label>别名 / 正则（每行一个）</label><textarea name="aliases">${esc((value.aliases || []).join("\n"))}</textarea></div>`;
+        <div class="field wide"><label>别名 / 正则（每行一个）</label><textarea name="aliases">${esc((value.aliases || []).join("\n"))}</textarea></div>
+        <div class="field wide"><label>默认属性（抽取与导入时随实体写入，按该类型的属性契约填写）</label><div id="entityAttrInputs"></div></div>`;
     }
     if (kind === "relation") fields = `
       <div class="field"><label>关系编码</label><input name="relation_code" value="${esc(value.relation_code || "")}" ${!isNew ? "readonly" : ""}></div>
@@ -1357,6 +1410,46 @@
       <div class="field wide"><label>说明</label><input name="description" value="${esc(value.description || "")}"></div>`;
     $("#editorBody").innerHTML = `<h3>${isNew ? `新增${label}` : `编辑${label}`}</h3><div class="form-grid">${fields}</div>`;
     const dialog = $("#editorDialog"); dialog.showModal();
+    let entityAttrDefs = [];
+    // 实体默认属性：跟随所选实体类型动态渲染输入控件（enum→下拉、boolean→下拉、number→数字）。
+    const renderEntityAttrInputs = () => {
+      const mount = $("#entityAttrInputs");
+      if (!mount) return;
+      const typeSelect = $("#editorBody").querySelector('select[name="entity_type"]');
+      entityAttrDefs = templateAttributesOf(typeSelect ? typeSelect.value : "");
+      if (!entityAttrDefs.length) {
+        mount.innerHTML = '<div class="muted">该实体类型暂无属性定义</div>';
+        return;
+      }
+      const currentAttrs = value.attributes || {};
+      mount.innerHTML = entityAttrDefs.map((a) => {
+        const raw = currentAttrs[a.attribute_code];
+        const strVal = raw === undefined || raw === null ? "" : String(raw);
+        const title = `${esc(a.name || a.attribute_code)} <span class="mono muted">${esc(a.attribute_code)} · ${esc(a.data_type)}</span>${a.required ? ' <span class="badge active">必填</span>' : ""}`;
+        if (a.data_type === "enum") {
+          return `<div class="field"><label>${title}</label><select name="attr_${esc(a.attribute_code)}"><option value="">（未设置）</option>${(a.allowed_values || []).map((v) => `<option value="${esc(v)}" ${strVal === v ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></div>`;
+        }
+        if (a.data_type === "boolean") {
+          return `<div class="field"><label>${title}</label><select name="attr_${esc(a.attribute_code)}"><option value="">（未设置）</option><option value="true" ${strVal === "true" ? "selected" : ""}>true</option><option value="false" ${strVal === "false" ? "selected" : ""}>false</option></select></div>`;
+        }
+        const numberAttr = a.data_type === "number" ? ' type="number" step="any"' : "";
+        return `<div class="field"><label>${title}</label><input name="attr_${esc(a.attribute_code)}"${numberAttr} value="${esc(strVal)}" placeholder="${esc(a.description || "")}"></div>`;
+      }).join("");
+    };
+    if (kind === "entity") {
+      renderEntityAttrInputs();
+      const typeSelect = $("#editorBody").querySelector('select[name="entity_type"]');
+      if (typeSelect) typeSelect.addEventListener("change", renderEntityAttrInputs);
+    }
+    // 实体类型对话框内嵌属性列表：跳转到属性编辑器。
+    $("#editorBody").querySelectorAll("[data-inline-attr]").forEach((button) => {
+      button.onclick = () => {
+        const attr = templateAttributesOf(value.entity_type).find((a) => a.attribute_code === button.dataset.inlineAttr);
+        if (!attr) return;
+        dialog.close();
+        openTemplateItemEditor("attribute", attr, false, options);
+      };
+    });
     $("#editorSave").onclick = async () => {
       const form = $("#editorBody");
       try {
@@ -1365,6 +1458,20 @@
         const base = item && !isNew ? { ...item } : {};
         delete base.__key;
         const itemPayload = { ...base, ...Object.fromEntries([...form.querySelectorAll("input,select,textarea")].map((input) => [input.name, input.value])) };
+        // 默认属性输入以 attr_ 前缀命名，需从扁平字段收敛回 attributes 字典；
+        // 留空表示清除该默认属性，number/boolean 按契约转型。
+        Object.keys(itemPayload).forEach((key) => { if (key.startsWith("attr_")) delete itemPayload[key]; });
+        if (kind === "entity") {
+          const attrs = {};
+          for (const a of entityAttrDefs) {
+            const input = form.querySelector(`[name="attr_${a.attribute_code}"]`);
+            if (!input) continue;
+            const raw = String(input.value ?? "").trim();
+            if (raw === "") continue;
+            attrs[a.attribute_code] = a.data_type === "number" ? Number(raw) : a.data_type === "boolean" ? raw === "true" : raw;
+          }
+          itemPayload.attributes = attrs;
+        }
         if (itemPayload.aliases != null) itemPayload.aliases = itemPayload.aliases.split(/\n+/).map((v) => v.trim()).filter(Boolean);
         if (itemPayload.allowed_values != null) itemPayload.allowed_values = itemPayload.allowed_values.split(",").map((v) => v.trim()).filter(Boolean);
         if (itemPayload.required != null) itemPayload.required = itemPayload.required === "true";
@@ -2903,6 +3010,7 @@
   const REVIEW_TABS = [
     ["graph", "待审图谱"], ["relations", "关系审核"], ["bydisease", "按疾病分组"], ["rules", "待审规则"], ["blocked", "被阻断"],
     ["stale", "待复核"], ["active", "已通过"], ["orphan", "孤儿条目"],
+    ["dupes", "疑似重复"],
     ["audit", "审核记录"],
   ];
   const REJECT_REASONS = ["编码错误", "证据不足", "关系方向错误", "重复条目", "超出指南范围", "内容过期", "其他"];
@@ -3139,10 +3247,25 @@
     return `<div class="detail-section"><h4>变更对比（导入覆盖前 → 当前）</h4>${diffTableHtml(rows[0].content, currentContent)}</div>
       <div class="detail-section"><h4>历史版本（${rows.length}）</h4>${versions}</div>`;
   }
+  // 汇总所有模板的属性契约，用于把图谱节点上的属性编码渲染为模板中文名。
+  function templateAttrLabelMap() {
+    const labels = {};
+    state.templates.forEach((t) => (t.attributes || []).forEach((a) => {
+      if (a.attribute_code && !labels[a.attribute_code]) labels[a.attribute_code] = a.name || a.attribute_code;
+    }));
+    return labels;
+  }
   function attrTableHtml(attributes) {
     const entries = Object.entries(attributes || {});
     if (!entries.length) return '<div class="muted">无属性</div>';
-    return table(["属性", "值"], entries.map(([key, value]) => `<tr><td class="mono">${esc(key)}</td><td>${esc(String(value))}</td></tr>`));
+    const labels = templateAttrLabelMap();
+    return table(["属性", "值"], entries.map(([key, value]) => {
+      const label = labels[key];
+      const nameCell = label
+        ? `${esc(label)} <span class="mono muted">${esc(key)}</span>`
+        : `<span class="mono">${esc(key)}</span> <span class="badge draft" title="模板中未定义该属性">未定义</span>`;
+      return `<tr><td>${nameCell}</td><td>${esc(String(value))}</td></tr>`;
+    }));
   }
   function auditListHtml(records, limit = 5) {
     const rows = (records || []).slice(0, limit).map((row) => `<tr>
@@ -3236,6 +3359,44 @@
     return `<div class="ref-list">${blocks.join("")}${rest ? `<div class="ref-more">${rest}</div>` : ""}</div>`;
   }
 
+  function relatedItemsHtml(detail, item) {
+    const relations = detail.relations || [];
+    if (!relations.length) {
+      return '<div class="detail-section"><h4>关联条目</h4><div class="muted">暂无关联条目</div></div>';
+    }
+    const row = (entry, asSource) => {
+      const neighbor = asSource ? entry.target : entry.source;
+      const label = relationLabel({ relation_code: entry.relation.relation_code, relation_name: entry.relation.relation_name });
+      return `<div class="related-row">
+        <button class="related-rel" data-related-relation="${esc(entry.key)}"
+          data-relation-code="${esc(entry.relation.relation_code)}"
+          data-source-node="${esc(entry.source.node_id)}"
+          data-target-node="${esc(entry.target.node_id)}"
+          data-relation-status="${esc(entry.relation.review_status || "")}"
+          title="查看关系详情">${esc(asSource ? label : `← ${label}`)}</button>
+        <button class="related-node" data-related-node="${esc(neighbor.node_id)}">
+          <span class="type-chip">${esc(typeName[neighbor.node_type] || neighbor.node_type || "-")}</span>
+          <strong>${esc(neighbor.name)}</strong>${miniStatus(neighbor.status)}
+        </button>
+      </div>`;
+    };
+    const asSource = relations.filter((e) => e.source.node_id === item.node_id);
+    const asTarget = relations.filter((e) => e.target.node_id === item.node_id);
+    const section = (title, list, flag) => {
+      if (!list.length) return "";
+      const visible = list.slice(0, 20).map((e) => row(e, flag)).join("");
+      const extra = list.slice(20);
+      const hidden = extra.length
+        ? `<div class="related-extra" hidden>${extra.map((e) => row(e, flag)).join("")}</div>
+           <div class="related-row"><button class="btn sm" data-related-expand>显示全部 ${list.length} 条</button></div>`
+        : "";
+      return `<div class="detail-section"><h4>${title}（${list.length}）</h4>
+        <div class="related-list">${visible}${hidden}</div>
+      </div>`;
+    };
+    return section("作为源", asSource, true) + section("作为目标", asTarget, false);
+  }
+
   async function nodeDetailHtml(item) {
     const detail = await api(`/api/kg/nodes/${encodeURIComponent(item.node_id)}?graph_filename=${encodeURIComponent(item.graph_filename)}`);
     const node = detail.node || {};
@@ -3245,12 +3406,15 @@
       try { historyHtml = await entityHistoryHtml(item, "node", item.node_id, node); } catch (_) { historyHtml = ""; }
     }
     const refsHtml = (node.source_refs || []).length ? await sourceRefsHtml(node.source_refs) : "";
+    const relatedHtml = relatedItemsHtml(detail, item);
     return `
       <div class="detail-section endpoint-meta">
         <div><span class="muted">类型</span><strong>${esc(typeName[node.node_type] || node.node_type || "-")}</strong></div>
         <div><span class="muted">编码</span><span class="mono">${esc(node.code || "-")}</span></div>
       </div>
       ${refsHtml ? `<div class="detail-section"><h4>指南溯源</h4>${refsHtml}</div>` : ""}
+      ${relatedHtml}
+      ${(node.attribute_violations || []).length ? `<div class="detail-section"><h4>属性校验待复核（${node.attribute_violations.length}）</h4>${table(["属性", "问题"], node.attribute_violations.map((v) => `<tr><td class="mono">${esc(v.attribute_code)}</td><td>${esc(v.issue || "-")}</td></tr>`))}</div>` : ""}
       <div class="detail-section"><h4>属性</h4>${attrTableHtml(node.attributes)}</div>
       ${historyHtml}
       <div class="detail-section"><h4>依赖规则（${rules.length}）</h4>${dependentRuleTable(rules)}</div>
@@ -3344,6 +3508,24 @@
         wrap.innerHTML = await sourceRefBlock(chip.dataset.ref);
         chip.replaceWith(...wrap.childNodes);
       });
+      mount.querySelectorAll("[data-related-node]").forEach((btn) => btn.onclick = () => {
+        loadReviewDetail({ item_type: "graph_node", node_id: btn.dataset.relatedNode, graph_filename: item.graph_filename, status: "" });
+      });
+      mount.querySelectorAll("[data-related-relation]").forEach((btn) => btn.onclick = () => {
+        loadReviewDetail({
+          item_type: "graph_relation",
+          item_id: btn.dataset.relatedRelation,
+          graph_filename: item.graph_filename,
+          relation_code: btn.dataset.relationCode,
+          source_node_id: btn.dataset.sourceNode,
+          target_node_id: btn.dataset.targetNode,
+          status: btn.dataset.relationStatus || "",
+        });
+      });
+      mount.querySelectorAll("[data-related-expand]").forEach((btn) => btn.onclick = () => {
+        const extra = btn.closest(".related-list")?.querySelector(".related-extra");
+        if (extra) { extra.hidden = false; btn.closest(".related-row").remove(); }
+      });
     } catch (error) {
       if (token !== reviewDetailToken) return;
       mount.innerHTML = `<div class="empty">详情加载失败：${esc(error.message)}</div>`;
@@ -3396,7 +3578,35 @@
     });
   }
 
+  function bindDupeMerge(graphFilename) {
+    if (!graphFilename) return;
+    content.querySelectorAll("[data-dupe-merge]").forEach((button) => button.onclick = async () => {
+      const groupEl = button.closest(".dupe-group");
+      const checked = groupEl.querySelector("input[type=radio]:checked");
+      if (!checked) { toast("请选择保留节点", true); return; }
+      const survivor = checked.value;
+      const labels = [...groupEl.querySelectorAll(".dupe-node")].map((el) => ({
+        id: el.querySelector("input[type=radio]").value,
+        code: el.querySelector(".mono").textContent,
+      }));
+      const survivorCode = labels.find((l) => l.id === survivor).code;
+      const absorbed = labels.filter((l) => l.id !== survivor);
+      if (!confirm(`保留 ${survivorCode}，吸收：${absorbed.map((l) => l.code).join("、")}？\n关联关系将重挂到保留节点，引用被吸收编码的规则会自动改写（合并前自动备份）。`)) return;
+      button.disabled = true;
+      try {
+        const result = await api("/api/kg/merge-nodes", { json: {
+          graph_filename: graphFilename, survivor_node_id: survivor,
+          absorbed_node_ids: absorbed.map((l) => l.id),
+        }});
+        toast(`合并完成：重挂关系 ${result.merged_relations}、去重 ${result.deduped_relations}、改写规则 ${result.updated_rules.length} 条`);
+        renderReviewCenter();
+      } catch (error) { toast(error.message, true); button.disabled = false; }
+    });
+  }
+
   async function renderReviewCenter() {
+    // 节点/关系详情的属性表依赖模板契约渲染中文名，直接进入审核台时也需加载模板数据。
+    await loadExtractionSettings();
     const tab = state.reviewTab || "graph";
     if (tab === "bydisease") { await renderByDisease(); return; }
     const reviewer = localStorage.getItem("cdssReviewer") || "";
@@ -3426,6 +3636,9 @@
         ? api("/api/pdf/documents").then((items) => { state.reviewDocOptions = items; }).catch(() => { state.reviewDocOptions = []; })
         : Promise.resolve(),
     ]);
+    const dupesData = tab === "dupes" && filters.graph
+      ? await api(`/api/kg/duplicates?graph_filename=${encodeURIComponent(filters.graph)}`).catch(() => ({ groups: [] }))
+      : { groups: [] };
     const allItems = queue.items || [];
     if (!filters.nodeType) {
       const types = new Set();
@@ -3471,7 +3684,8 @@
     }
     const relationPending = Number(queue.summary?.graph_relations?.draft || 0)
       + Number(queue.summary?.graph_relations?.stale || 0);
-    const tabHtml = REVIEW_TABS.map(([key, label]) => `<button class="review-tab ${tab === key ? "active" : ""}" data-review-tab="${key}">${label}${key === "relations" && relationPending ? `（${relationPending}）` : ""}</button>`).join("");
+    const dupesBadge = (tab === "dupes" && dupesData.groups?.length) ? ` ${dupesData.groups.length}` : "";
+    const tabHtml = REVIEW_TABS.map(([key, label]) => `<button class="review-tab ${tab === key ? "active" : ""}" data-review-tab="${key}">${label}${key === "relations" && relationPending ? `（${relationPending}）` : ""}${key === "dupes" ? dupesBadge : ""}</button>`).join("");
     const trunc = queue.truncated || {};
     const truncParts = [];
     if (trunc.graph_nodes || trunc.graph_relations) truncParts.push("图谱条目");
@@ -3495,6 +3709,48 @@
       content.innerHTML = `<div class="review-tabs">${tabHtml}</div>
         ${panel("审核记录", table(["时间", "类型", "条目", "动作", "状态变化", "审核人", "意见"], auditRows), "", "全量审核动作的追加式日志；拒绝原因码会记录在意见前缀 [原因码] 中")}`;
       bindReviewTabs();
+      return;
+    }
+
+    if (tab === "dupes") {
+      const graphFilename = filters.graph;
+      const groups = dupesData.groups || [];
+      const dupeCards = !graphFilename
+        ? '<div class="empty">请先在下方选择目的图谱</div>'
+        : (groups.map((group, groupIndex) => `
+          <div class="dupe-group">
+            <div class="dupe-head">
+              <span class="type-chip">${esc(typeName[group.node_type] || group.node_type)}</span>
+              <strong>${esc(group.name)}</strong>
+              <span class="muted">${group.nodes.length} 个同名节点</span>
+            </div>
+            <div class="dupe-nodes">${group.nodes.map((n) => `
+              <label class="dupe-node">
+                <input type="radio" name="dupe-group-${groupIndex}" value="${esc(n.node_id)}" ${n.node_id === group.recommended_survivor ? "checked" : ""}>
+                <span class="mono">${esc(n.code)}</span>
+                ${n.is_standard_code ? '<span class="badge active">标准码</span>' : '<span class="badge">候选码</span>'}
+                ${reviewBadge(n.review_status)}
+                <span class="muted">关系 ${n.relation_count} · 引用 ${n.source_ref_count}</span>
+              </label>`).join("")}</div>
+            <div class="actions"><button class="btn sm primary" data-dupe-merge>合并为一</button></div>
+          </div>`).join("") || '<div class="empty">未检测到同类型同名重复</div>');
+      content.innerHTML = `<div class="review-tabs">${tabHtml}</div>
+        <div class="review-list" style="max-width:none">
+          <div class="review-toolbar compact review-filterbar">
+            <select id="reviewFilterGraph" title="按目的图谱筛选">
+              <option value="">请选择图谱</option>
+              ${(state.reviewGraphOptions || []).map((g) => `<option value="${esc(g.graph_filename)}" ${filters.graph === g.graph_filename ? "selected" : ""}>${esc(g.graph_filename)}</option>`).join("")}
+            </select>
+            <span class="muted">同类型同名节点分组；默认勾选推荐保留节点（标准码优先），「合并为一」吸收其余节点并自动改写规则引用（合并前自动备份）。</span>
+          </div>
+          ${dupeCards}
+        </div>`;
+      bindReviewTabs();
+      $("#reviewFilterGraph")?.addEventListener("change", (event) => {
+        state.reviewFilters.graph = event.target.value;
+        renderReviewCenter();
+      });
+      bindDupeMerge(graphFilename);
       return;
     }
 

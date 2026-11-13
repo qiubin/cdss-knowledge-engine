@@ -19,7 +19,7 @@ from ..terminology.labels import default_labels
 from .graph_binding import resolve_template_graph_filename
 from ..vocab.entity_vocabulary import resolve_template
 from .disease_discovery import _discovered_disease_entities, _position_for_match
-from .models import ExtractionTemplate, TemplateEntityEntry, TemplateRelation
+from .models import ExtractionTemplate, TemplateAttribute, TemplateEntityEntry, TemplateRelation
 
 
 @dataclass
@@ -302,6 +302,11 @@ def _validate_llm_payload(
     entity_index = _entity_index(template)
     attribute_index = {item.attribute_code: item for item in template.attributes}
     relation_index = {item.relation_code: item for item in template.relations}
+    # 必填属性按归属实体类型预索引：模板无 required 属性时保持零开销。
+    required_attributes: Dict[str, List[TemplateAttribute]] = {}
+    for definition in template.attributes:
+        if definition.required:
+            required_attributes.setdefault(definition.owner_entity_type, []).append(definition)
 
     for raw in payload.get("entities", []):
         if not isinstance(raw, dict):
@@ -382,6 +387,12 @@ def _validate_llm_payload(
                     warnings.append(f"属性 {attribute_code} 不在允许值内，已忽略")
                     continue
             attributes[attribute_code] = value
+
+        # 模板必填属性缺失检查：字典默认属性已合并，合并后仍缺码才告警；
+        # 只标记不阻断导入。
+        for definition in required_attributes.get(entity_type, ()):
+            if definition.attribute_code not in attributes:
+                warnings.append(f"缺少必填属性 {definition.attribute_code}（{definition.name}）")
 
         is_concept = entity_type == "concept"
         entities.append({
@@ -786,6 +797,61 @@ def _validate_llm_payload(
             f"已忽略 {ignored_contraindication_missing_code} 条缺少治疗方案或禁忌编码的禁忌关系"
         )
     return entities, validated_rules, validated_relations, warnings, validated_treatment_plans, validated_treatment_rules, validated_contraindications
+
+
+def template_attribute_violations(
+    attributes: Dict[str, Any],
+    entity_type: str,
+    template: ExtractionTemplate,
+) -> List[Dict[str, str]]:
+    """按模板契约校验导入节点属性（P2-6）。
+
+    逐条返回违规明细：attribute_code、key（attributes.<CODE>，审核台前端
+    对该前缀自动渲染为「属性·xxx」）与中文问题描述。调用方对违规值不静默
+    入库也不直接丢弃，保留原值并标记待复核。
+    """
+    attribute_index = {item.attribute_code: item for item in template.attributes}
+    # 模板未定义某实体类型的属性契约时该类型不校验（属性不受约束，
+    # 例如测试模板、开放导入的模板外类型）。
+    contracted_types = {item.owner_entity_type for item in template.attributes}
+    if entity_type not in contracted_types:
+        return []
+    violations: List[Dict[str, str]] = []
+    for code, value in (attributes or {}).items():
+        definition = attribute_index.get(code)
+        if not definition or definition.owner_entity_type != entity_type:
+            violations.append({
+                "attribute_code": str(code),
+                "key": f"attributes.{code}",
+                "issue": "不在模板属性定义内或归属实体类型不符",
+            })
+            continue
+        if definition.data_type == "number":
+            try:
+                float(value)
+            except (TypeError, ValueError):
+                violations.append({
+                    "attribute_code": str(code),
+                    "key": f"attributes.{code}",
+                    "issue": "类型应为数值",
+                })
+        elif definition.data_type == "boolean" and not isinstance(value, bool):
+            violations.append({
+                "attribute_code": str(code),
+                "key": f"attributes.{code}",
+                "issue": "类型应为布尔",
+            })
+        elif (
+            definition.data_type == "enum"
+            and definition.allowed_values
+            and str(value) not in definition.allowed_values
+        ):
+            violations.append({
+                "attribute_code": str(code),
+                "key": f"attributes.{code}",
+                "issue": "取值不在模板允许值内",
+            })
+    return violations
 
 
 def _parse_json_response(text: str) -> Dict[str, Any]:

@@ -430,8 +430,26 @@ class ReviewService:
         node = graph["nodes"].get(node_id)
         if node is None:
             raise ReviewError("节点不存在", 404)
+
+        def neighbor_summary(node_id: str) -> Dict[str, Any]:
+            node = graph["nodes"].get(node_id)
+            if node is None:
+                return {"node_id": node_id, "name": node_id, "code": "", "node_type": "", "status": "missing"}
+            return {
+                "node_id": node_id,
+                "name": str(node.get("name") or node_id),
+                "code": str(node.get("code") or node.get("concept_code") or ""),
+                "node_type": str(node.get("node_type") or ""),
+                "status": _status(node),
+            }
+
         relations = [
-            {"key": "|".join(key), "relation": relation}
+            {
+                "key": "|".join(key),
+                "relation": relation,
+                "source": neighbor_summary(key[0]),
+                "target": neighbor_summary(key[2]),
+            }
             for key, relation in graph["relations"].items()
             if node_id in (key[0], key[2])
         ]

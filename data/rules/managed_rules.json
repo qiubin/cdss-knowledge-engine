@@ -9494,7 +9494,7 @@
     "anchor_type": "disease",
     "rule_type": "treatment",
     "name": "膜周部和肌部VSD介入封堵替代外科规则",
-    "disease_code": "CAND-VSD",
+    "disease_code": "Q21.0",
     "disease_name": "室间隔缺损",
     "priority": 2,
     "status": "active",
@@ -9531,7 +9531,7 @@
     },
     "condition_text": "同疾病诊断成立后触发",
     "conclusion": {
-      "diagnosis": "CAND-VSD",
+      "diagnosis": "Q21.0",
       "confidence": "medium",
       "message": "",
       "action": null,

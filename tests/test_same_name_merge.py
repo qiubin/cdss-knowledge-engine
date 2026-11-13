@@ -43,6 +43,18 @@ class SameNameMergeTest(unittest.TestCase):
         _upsert_semantic_node(graph, "lab", "LAB_B", "", [])
         self.assertEqual(len([n for n in graph["nodes"].values() if n["node_type"] == "lab"]), 2)
 
+    def test_same_code_different_name_keeps_existing_node(self):
+        # 同类型同码不同名 → 命中既有 id 更新分支：首名优先，不触发同名合并、不追加 alt_codes
+        graph = _fresh_graph()
+        first = _upsert_semantic_node(graph, "disease", "Q21.0", "室间隔缺损", ["DOC-A_p1_l1-1"])
+        second = _upsert_semantic_node(graph, "disease", "Q21.0", "室间隔缺损（修订名）", ["DOC-B_p1_l1-2"])
+        self.assertEqual(second["id"], first["id"])
+        self.assertEqual(len(graph["nodes"]), 1)
+        self.assertEqual(first["name"], "室间隔缺损")
+        self.assertNotIn("alt_codes", first.get("attributes", {}))
+        self.assertNotIn("_same_name_merges", graph)
+        self.assertEqual(first["source_refs"], ["DOC-A_p1_l1-1", "DOC-B_p1_l1-2"])
+
     def test_relations_attach_to_merged_node(self):
         graph = _fresh_graph()
         disease = _upsert_semantic_node(graph, "disease", "R57.2", "感染性休克", [])

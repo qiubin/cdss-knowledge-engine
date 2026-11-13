@@ -16,6 +16,8 @@ from src.models.rule import Rule
 from src.domains import TCM, get_profile, normalize_domain
 from src.extraction.graph_binding import resolve_template_graph_filename
 from src.extraction.concept_mapping import GENERIC_FINDING_BLOCKLIST
+from src.extraction.models import ExtractionTemplate
+from src.extraction.service import template_attribute_violations
 from src.vocab.repository import ConceptVocabularyRepository, collect_concept_codes
 
 from .kg import GraphImportRequest, import_graph
@@ -711,6 +713,39 @@ def _build_checks(package: Dict[str, Any]) -> List[Dict[str, Any]]:
                 "请在图谱审核中确认；确认后可通过「加入实体词典」沉淀到共享词库"
             ],
             "details": [{"open_types": names, "count": len(open_entities)}],
+        })
+
+    # 模板属性契约预检（P2-6）：属性编码/类型/枚举值须符合模板定义，违规
+    # 不阻断导入，以 warning 呈现；明细 key 形如 attributes.<CODE>，审核台
+    # 前端自动渲染为「属性·xxx」。
+    contract_template = None
+    if template is not None:
+        try:
+            contract_template = ExtractionTemplate(**template)
+        except Exception:
+            contract_template = None
+    if contract_template is not None:
+        attribute_violations: List[Dict[str, str]] = []
+        for item in entities:
+            attrs = item.get("attributes")
+            if not isinstance(attrs, dict) or not attrs:
+                continue
+            entity_type = str(item.get("entity_type") or "")
+            for violation in template_attribute_violations(attrs, entity_type, contract_template):
+                attribute_violations.append({
+                    "entity": str(item.get("name") or item.get("code") or ""),
+                    "entity_type": entity_type,
+                    **violation,
+                })
+        checks.append({
+            "code": "attribute_contract",
+            "status": "warning" if attribute_violations else "passed",
+            "title": "实体属性契约",
+            "issues": [
+                f"实体 {item['entity']} 属性 {item['attribute_code']} {item['issue']}"
+                for item in attribute_violations
+            ],
+            "details": attribute_violations,
         })
 
     entity_concept_codes = []

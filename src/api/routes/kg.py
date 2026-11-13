@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -10,7 +12,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from src.extraction.repository import ExtractionTemplateRepository
-from src.extraction.service import relation_pairs_for_chunk
+from src.extraction.service import relation_pairs_for_chunk, template_attribute_violations
 from src.extraction.graph_binding import resolve_template_graph_filename
 from src.extraction.concept_mapping import (
     STANDARD_BACKED_LABS,
@@ -898,6 +900,13 @@ async def import_graph(request: GraphImportRequest):
             warnings.append(f"实体缺少类型，已跳过（{entity.get('name', '')}）")
             continue
         entity_attrs = dict(entity.get("attributes") or {})
+        # 模板契约校验（P2-6）：违规属性不静默入库也不直接丢弃，保留原值
+        # 入库并在节点上标记待复核明细；校验在合并 open_import 标记前进行。
+        contract_violations = (
+            template_attribute_violations(entity_attrs, node_type, template)
+            if template is not None and entity_attrs
+            else []
+        )
         if node_type not in allowed_types:
             # 开放抽取：模板外类型不再丢弃，而是以草稿节点入库，由审核人
             # 在图谱审核中确认（可通过「加入实体词典」沉淀到共享词库）。
@@ -905,11 +914,18 @@ async def import_graph(request: GraphImportRequest):
                 f"开放导入模板外类型 {node_type}（{entity.get('name', '')}），已入草稿待审核确认"
             )
             entity_attrs = {**entity_attrs, "open_import": True}
-        _upsert_semantic_node(
+        node = _upsert_semantic_node(
             graph, node_type, code, entity.get("name", ""),
             [entity.get("chunk_id", "")],
             attributes=entity_attrs,
         )
+        if contract_violations:
+            node["attribute_violations"] = contract_violations
+            for violation in contract_violations:
+                warnings.append(
+                    f"实体 {entity.get('name', '')} 属性 {violation['attribute_code']} "
+                    f"{violation['issue']}，已保留原值并标记待复核"
+                )
 
     for relation in request.suggested_relations:
         relation_code = str(relation.get("relation_code") or "")
@@ -1448,3 +1464,212 @@ def clear_graph_and_rules(
 async def clear_graph(request: GraphClearRequest):
     """Danger zone: preview (dry_run) or wipe a graph and its bound rules."""
     return clear_graph_and_rules(request)
+
+
+def _is_standard_code(node_type: str, code: str) -> bool:
+    # ICD 风格编码，或共享词库中登记的编码，均视为标准码
+    if re.fullmatch(r"[A-Z]\d{2}(?:\.\d+)?", str(code or "")):
+        return True
+    return find_shared_entry(node_type, code) is not None
+
+
+def find_duplicate_groups(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    relation_counts: Dict[str, int] = {}
+    for source_id, _, target_id in graph.get("relations", {}):
+        relation_counts[source_id] = relation_counts.get(source_id, 0) + 1
+        relation_counts[target_id] = relation_counts.get(target_id, 0) + 1
+    grouped: Dict[tuple, List[Dict[str, Any]]] = {}
+    for node in graph.get("nodes", {}).values():
+        name = _normalize_entity_name(str(node.get("name") or ""))
+        if not name:
+            continue
+        grouped.setdefault((str(node.get("node_type") or ""), name), []).append(node)
+    groups: List[Dict[str, Any]] = []
+    for (node_type, name), nodes in grouped.items():
+        if len(nodes) < 2:
+            continue
+        def _rank(n: Dict[str, Any]):
+            code = str(n.get("code") or "")
+            return (
+                0 if _is_standard_code(node_type, code) else 1,
+                0 if n.get("review_status") == "active" else 1,
+                -relation_counts.get(n["id"], 0),
+                code,
+            )
+        ordered = sorted(nodes, key=_rank)
+        groups.append({
+            "node_type": node_type,
+            "name": name,
+            "nodes": [{
+                "node_id": n["id"],
+                "code": str(n.get("code") or ""),
+                "is_standard_code": _is_standard_code(node_type, str(n.get("code") or "")),
+                "review_status": str(n.get("review_status") or "draft"),
+                "source_ref_count": len(n.get("source_refs") or []),
+                "relation_count": relation_counts.get(n["id"], 0),
+            } for n in ordered],
+            "recommended_survivor": ordered[0]["id"],
+        })
+    groups.sort(key=lambda g: (-len(g["nodes"]), g["node_type"], g["name"]))
+    return groups
+
+
+@router.get("/duplicates")
+async def list_duplicates(graph_filename: str):
+    graph = _load_graph(graph_filename)
+    return {"groups": find_duplicate_groups(graph)}
+
+
+class MergeNodesRequest(BaseModel):
+    graph_filename: str
+    survivor_node_id: str
+    absorbed_node_ids: List[str]
+
+
+_STATUS_RANK = {"active": 3, "draft": 2}
+
+
+def _rewrite_codes(value, mapping: Dict[str, str]) -> bool:
+    changed = False
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if (
+                isinstance(item, str)
+                and (key.endswith("_code") or key == "diagnosis")
+                and item in mapping
+            ):
+                value[key] = mapping[item]
+                changed = True
+            elif isinstance(item, (dict, list)):
+                changed = _rewrite_codes(item, mapping) or changed
+    elif isinstance(value, list):
+        for item in value:
+            changed = _rewrite_codes(item, mapping) or changed
+    return changed
+
+
+def merge_duplicate_nodes(
+    request: MergeNodesRequest,
+    kg_dir: Optional[Path] = None,
+    rules_path: Optional[Path] = None,
+    snapshot_dir: Optional[Path] = None,
+    audit_path: Optional[Path] = None,
+) -> Dict[str, Any]:
+    import copy
+    from .rules import MANAGED_RULES_PATH, _load_all_rules, _save_all_rules
+    from src.rules.history import record_snapshot
+    from src.review.audit import append_audit
+
+    graph_filename = normalize_graph_filename(request.graph_filename)
+    graph = _load_graph(graph_filename, kg_dir)
+    nodes = graph["nodes"]
+    survivor = nodes.get(request.survivor_node_id)
+    if survivor is None:
+        raise HTTPException(404, "保留节点不存在")
+    absorbed = []
+    for node_id in request.absorbed_node_ids:
+        if node_id == request.survivor_node_id:
+            raise HTTPException(422, "保留节点不能同时出现在被吸收列表中")
+        node = nodes.get(node_id)
+        if node is None:
+            raise HTTPException(404, f"被吸收节点不存在：{node_id}")
+        absorbed.append(node)
+    if not absorbed:
+        raise HTTPException(422, "被吸收节点列表为空")
+    absorbed_ids = {n["id"] for n in absorbed}
+    # 保留节点缺编码会把所有被吸收码改写为空，必须在备份/落盘前拒绝
+    if not str(survivor.get("code") or ""):
+        raise HTTPException(422, "保留节点缺少标准编码，无法改写规则引用")
+
+    stamp = datetime.now().strftime("%Y%m%d")
+    graph_path = (Path(kg_dir) if kg_dir is not None else KG_DIR) / graph_filename
+    if graph_path.exists():
+        shutil.copy2(graph_path, graph_path.with_name(f"{graph_path.name}.bak-{stamp}-merge"))
+
+    rules = _load_all_rules(rules_path)
+    rules_file = Path(rules_path) if rules_path is not None else MANAGED_RULES_PATH
+    if rules_file.exists() and any(
+        normalize_graph_filename(r.get("graph_filename") or "") == graph_filename for r in rules
+    ):
+        shutil.copy2(rules_file, rules_file.with_name(f"{rules_file.name}.bak-{stamp}-merge"))
+
+    merged_relations = 0
+    deduped_relations = 0
+    new_relations: Dict[tuple, Dict[str, Any]] = {}
+    for (source_id, relation_code, target_id), relation in list(graph["relations"].items()):
+        new_source = survivor["id"] if source_id in absorbed_ids else source_id
+        new_target = survivor["id"] if target_id in absorbed_ids else target_id
+        new_key = (new_source, relation_code, new_target)
+        if new_key == (source_id, relation_code, target_id):
+            existing = new_relations.get(new_key)
+            if existing is None:
+                new_relations[new_key] = relation
+            else:
+                deduped_relations += 1
+                existing["source_refs"] = list(dict.fromkeys([
+                    *(existing.get("source_refs") or []), *(relation.get("source_refs") or []),
+                ]))
+                if _STATUS_RANK.get(relation.get("review_status"), 1) > _STATUS_RANK.get(existing.get("review_status"), 1):
+                    existing["review_status"] = relation.get("review_status")
+            continue
+        merged_relations += 1
+        existing = new_relations.get(new_key)
+        if existing is None:
+            new_relations[new_key] = {**relation, "source_node_id": new_source, "target_node_id": new_target}
+        else:
+            deduped_relations += 1
+            existing["source_refs"] = list(dict.fromkeys([
+                *(existing.get("source_refs") or []), *(relation.get("source_refs") or []),
+            ]))
+            if _STATUS_RANK.get(relation.get("review_status"), 1) > _STATUS_RANK.get(existing.get("review_status"), 1):
+                existing["review_status"] = relation.get("review_status")
+    graph["relations"] = new_relations
+
+    survivor["source_refs"] = list(dict.fromkeys([
+        *(survivor.get("source_refs") or []), *[r for n in absorbed for r in (n.get("source_refs") or [])],
+    ]))
+    survivor.setdefault("attributes", {}).setdefault("alt_codes", [])
+    for node in absorbed:
+        for code in [str(node.get("code") or ""), *(node.get("attributes", {}).get("alt_codes") or [])]:
+            if code and code != survivor.get("code") and code not in survivor["attributes"]["alt_codes"]:
+                survivor["attributes"]["alt_codes"].append(code)
+    for node_id in absorbed_ids:
+        nodes.pop(node_id, None)
+
+    code_mapping = {str(n.get("code") or ""): str(survivor.get("code") or "") for n in absorbed}
+    code_mapping.pop("", None)
+    updated_rules = []
+    for rule in rules:
+        if normalize_graph_filename(rule.get("graph_filename") or "") != graph_filename:
+            continue
+        original = copy.deepcopy(rule)
+        if _rewrite_codes(rule, code_mapping):
+            rule.pop("condition_text", None)  # 陈旧条件文本仍描述被吸收码，重载时按新条件树重建
+            record_snapshot(original, "update", actor=f"merge:{survivor['id']}", directory=snapshot_dir)
+            updated_rules.append(str(rule.get("rule_id") or ""))
+    _save_all_rules(rules, rules_path)
+
+    append_audit({
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "entity_type": "graph_node",
+        "entity_id": survivor["id"],
+        "action": "merge",
+        "before_status": survivor.get("review_status"),
+        "after_status": survivor.get("review_status"),
+        "reviewer": "合并工具",
+        "note": "吸收同类型同名节点：" + "、".join(f"{n['id']}({n.get('code')})" for n in absorbed),
+    }, path=audit_path)
+
+    _save_graph(graph, graph_filename, kg_dir)
+    return {
+        "survivor_node_id": survivor["id"],
+        "absorbed": [{"node_id": n["id"], "code": str(n.get("code") or "")} for n in absorbed],
+        "merged_relations": merged_relations,
+        "deduped_relations": deduped_relations,
+        "updated_rules": updated_rules,
+    }
+
+
+@router.post("/merge-nodes")
+async def merge_nodes_endpoint(request: MergeNodesRequest):
+    return merge_duplicate_nodes(request)
