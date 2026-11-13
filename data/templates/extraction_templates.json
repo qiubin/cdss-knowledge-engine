@@ -47,7 +47,7 @@
       },
       {
         "entity_type": "diagnostic_evidence",
-        "label": "诊断证据",
+        "label": "诊断依据",
         "code_field": "code",
         "concept_required": false,
         "entries": [],
@@ -65,7 +65,7 @@
       },
       {
         "entity_type": "intervention",
-        "label": "治疗措施",
+        "label": "干预操作",
         "code_field": "code",
         "concept_required": false,
         "entries": [],
@@ -74,7 +74,7 @@
       },
       {
         "entity_type": "medication",
-        "label": "药物",
+        "label": "药品",
         "code_field": "code",
         "concept_required": false,
         "entries": [],
@@ -108,7 +108,7 @@
       },
       {
         "entity_type": "order_set",
-        "label": "医嘱套餐",
+        "label": "医嘱组",
         "discovery": true,
         "vocabulary": true,
         "domain": "western",
@@ -118,7 +118,7 @@
       },
       {
         "entity_type": "order_item",
-        "label": "医嘱条目",
+        "label": "医嘱项",
         "discovery": true,
         "vocabulary": true,
         "domain": "western",
@@ -128,7 +128,7 @@
       },
       {
         "entity_type": "care_pathway",
-        "label": "诊疗路径",
+        "label": "临床路径",
         "discovery": true,
         "vocabulary": true,
         "domain": "western",
@@ -186,7 +186,7 @@
       },
       {
         "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
-        "name": "疾病有诊断证据",
+        "name": "疾病构成诊断依据",
         "source_entity_type": "disease",
         "target_entity_type": "diagnostic_evidence",
         "source_code": "",
@@ -198,7 +198,7 @@
       },
       {
         "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
-        "name": "检验形成诊断证据",
+        "name": "检验形成诊断依据",
         "source_entity_type": "lab",
         "target_entity_type": "diagnostic_evidence",
         "source_code": "",
@@ -210,7 +210,7 @@
       },
       {
         "relation_code": "EXAM_HAS_DIAGNOSTIC_EVIDENCE",
-        "name": "检查形成诊断证据",
+        "name": "检查形成诊断依据",
         "source_entity_type": "exam",
         "target_entity_type": "diagnostic_evidence",
         "source_code": "",
@@ -234,7 +234,7 @@
       },
       {
         "relation_code": "TREATMENT_PLAN_INCLUDES_INTERVENTION",
-        "name": "治疗方案包含治疗措施",
+        "name": "治疗方案包含干预操作",
         "source_entity_type": "treatment_plan",
         "target_entity_type": "intervention",
         "source_code": "",
@@ -246,7 +246,7 @@
       },
       {
         "relation_code": "TREATMENT_PLAN_INCLUDES_MEDICATION",
-        "name": "治疗方案包含药物",
+        "name": "治疗方案包含药品",
         "source_entity_type": "treatment_plan",
         "target_entity_type": "medication",
         "source_code": "",
@@ -282,7 +282,7 @@
       },
       {
         "relation_code": "TREATMENT_PLAN_MATERIALIZED_AS",
-        "name": "治疗方案物化为医嘱套餐",
+        "name": "治疗方案物化为医嘱组",
         "source_entity_type": "treatment_plan",
         "target_entity_type": "order_set",
         "cardinality": "1:N",
@@ -290,7 +290,7 @@
       },
       {
         "relation_code": "ORDER_SET_INCLUDES_ITEM",
-        "name": "医嘱套餐包含医嘱条目",
+        "name": "医嘱组包含医嘱项",
         "source_entity_type": "order_set",
         "target_entity_type": "order_item",
         "cardinality": "1:N",
@@ -298,7 +298,7 @@
       },
       {
         "relation_code": "DISEASE_HAS_CARE_PATHWAY",
-        "name": "疾病有诊疗路径",
+        "name": "疾病关联临床路径",
         "source_entity_type": "disease",
         "target_entity_type": "care_pathway",
         "cardinality": "1:N",
@@ -306,7 +306,7 @@
       },
       {
         "relation_code": "CARE_PATHWAY_HAS_PHASE",
-        "name": "诊疗路径包含阶段",
+        "name": "临床路径包含阶段",
         "source_entity_type": "care_pathway",
         "target_entity_type": "pathway_phase",
         "cardinality": "1:N",
@@ -314,7 +314,7 @@
       },
       {
         "relation_code": "PHASE_USES_ORDER_SET",
-        "name": "路径阶段使用医嘱套餐",
+        "name": "路径阶段使用医嘱组",
         "source_entity_type": "pathway_phase",
         "target_entity_type": "order_set",
         "cardinality": "N:M",
@@ -728,7 +728,7 @@
       },
       {
         "entity_type": "diagnostic_evidence",
-        "label": "诊断证据",
+        "label": "诊断依据",
         "code_field": "code",
         "concept_required": false,
         "entries": [],
@@ -746,7 +746,7 @@
       },
       {
         "entity_type": "intervention",
-        "label": "治疗措施",
+        "label": "干预操作",
         "code_field": "code",
         "concept_required": false,
         "entries": [],
@@ -755,7 +755,7 @@
       },
       {
         "entity_type": "medication",
-        "label": "药物",
+        "label": "药品",
         "code_field": "code",
         "concept_required": false,
         "entries": [],
@@ -782,7 +782,7 @@
       },
       {
         "entity_type": "order_set",
-        "label": "医嘱套餐",
+        "label": "医嘱组",
         "discovery": true,
         "domain": "western",
         "color": "#fbd38d",
@@ -791,7 +791,7 @@
       },
       {
         "entity_type": "order_item",
-        "label": "医嘱条目",
+        "label": "医嘱项",
         "discovery": true,
         "domain": "western",
         "color": "#fefcbf",
@@ -800,7 +800,7 @@
       },
       {
         "entity_type": "care_pathway",
-        "label": "诊疗路径",
+        "label": "临床路径",
         "discovery": true,
         "domain": "western",
         "color": "#e9d8fd",
@@ -856,7 +856,7 @@
       },
       {
         "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
-        "name": "疾病有诊断证据",
+        "name": "疾病构成诊断依据",
         "source_entity_type": "disease",
         "target_entity_type": "diagnostic_evidence",
         "source_code": "",
@@ -868,7 +868,7 @@
       },
       {
         "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
-        "name": "检验形成诊断证据",
+        "name": "检验形成诊断依据",
         "source_entity_type": "lab",
         "target_entity_type": "diagnostic_evidence",
         "source_code": "",
@@ -880,7 +880,7 @@
       },
       {
         "relation_code": "EXAM_HAS_DIAGNOSTIC_EVIDENCE",
-        "name": "检查形成诊断证据",
+        "name": "检查形成诊断依据",
         "source_entity_type": "exam",
         "target_entity_type": "diagnostic_evidence",
         "source_code": "",
@@ -904,7 +904,7 @@
       },
       {
         "relation_code": "TREATMENT_PLAN_INCLUDES_INTERVENTION",
-        "name": "治疗方案包含治疗措施",
+        "name": "治疗方案包含干预操作",
         "source_entity_type": "treatment_plan",
         "target_entity_type": "intervention",
         "source_code": "",
@@ -916,7 +916,7 @@
       },
       {
         "relation_code": "TREATMENT_PLAN_INCLUDES_MEDICATION",
-        "name": "治疗方案包含药物",
+        "name": "治疗方案包含药品",
         "source_entity_type": "treatment_plan",
         "target_entity_type": "medication",
         "source_code": "",
@@ -952,7 +952,7 @@
       },
       {
         "relation_code": "TREATMENT_PLAN_MATERIALIZED_AS",
-        "name": "治疗方案物化为医嘱套餐",
+        "name": "治疗方案物化为医嘱组",
         "source_entity_type": "treatment_plan",
         "target_entity_type": "order_set",
         "cardinality": "1:N",
@@ -960,7 +960,7 @@
       },
       {
         "relation_code": "ORDER_SET_INCLUDES_ITEM",
-        "name": "医嘱套餐包含医嘱条目",
+        "name": "医嘱组包含医嘱项",
         "source_entity_type": "order_set",
         "target_entity_type": "order_item",
         "cardinality": "1:N",
@@ -968,7 +968,7 @@
       },
       {
         "relation_code": "DISEASE_HAS_CARE_PATHWAY",
-        "name": "疾病有诊疗路径",
+        "name": "疾病关联临床路径",
         "source_entity_type": "disease",
         "target_entity_type": "care_pathway",
         "cardinality": "1:N",
@@ -976,7 +976,7 @@
       },
       {
         "relation_code": "CARE_PATHWAY_HAS_PHASE",
-        "name": "诊疗路径包含阶段",
+        "name": "临床路径包含阶段",
         "source_entity_type": "care_pathway",
         "target_entity_type": "pathway_phase",
         "cardinality": "1:N",
@@ -984,7 +984,7 @@
       },
       {
         "relation_code": "PHASE_USES_ORDER_SET",
-        "name": "路径阶段使用医嘱套餐",
+        "name": "路径阶段使用医嘱组",
         "source_entity_type": "pathway_phase",
         "target_entity_type": "order_set",
         "cardinality": "N:M",
@@ -1399,7 +1399,7 @@
       },
       {
         "entity_type": "diagnostic_evidence",
-        "label": "诊断证据",
+        "label": "诊断依据",
         "code_field": "code",
         "concept_required": false,
         "entries": [],
@@ -1417,7 +1417,7 @@
       },
       {
         "entity_type": "intervention",
-        "label": "治疗措施",
+        "label": "干预操作",
         "code_field": "code",
         "concept_required": false,
         "entries": [],
@@ -1426,7 +1426,7 @@
       },
       {
         "entity_type": "medication",
-        "label": "药物",
+        "label": "药品",
         "code_field": "code",
         "concept_required": false,
         "entries": [],
@@ -1453,7 +1453,7 @@
       },
       {
         "entity_type": "order_set",
-        "label": "医嘱套餐",
+        "label": "医嘱组",
         "discovery": true,
         "domain": "western",
         "color": "#fbd38d",
@@ -1462,7 +1462,7 @@
       },
       {
         "entity_type": "order_item",
-        "label": "医嘱条目",
+        "label": "医嘱项",
         "discovery": true,
         "domain": "western",
         "color": "#fefcbf",
@@ -1471,7 +1471,7 @@
       },
       {
         "entity_type": "care_pathway",
-        "label": "诊疗路径",
+        "label": "临床路径",
         "discovery": true,
         "domain": "western",
         "color": "#e9d8fd",
@@ -1527,7 +1527,7 @@
       },
       {
         "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
-        "name": "疾病有诊断证据",
+        "name": "疾病构成诊断依据",
         "source_entity_type": "disease",
         "target_entity_type": "diagnostic_evidence",
         "source_code": "",
@@ -1539,7 +1539,7 @@
       },
       {
         "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
-        "name": "检验形成诊断证据",
+        "name": "检验形成诊断依据",
         "source_entity_type": "lab",
         "target_entity_type": "diagnostic_evidence",
         "source_code": "",
@@ -1551,7 +1551,7 @@
       },
       {
         "relation_code": "EXAM_HAS_DIAGNOSTIC_EVIDENCE",
-        "name": "检查形成诊断证据",
+        "name": "检查形成诊断依据",
         "source_entity_type": "exam",
         "target_entity_type": "diagnostic_evidence",
         "source_code": "",
@@ -1575,7 +1575,7 @@
       },
       {
         "relation_code": "TREATMENT_PLAN_INCLUDES_INTERVENTION",
-        "name": "治疗方案包含治疗措施",
+        "name": "治疗方案包含干预操作",
         "source_entity_type": "treatment_plan",
         "target_entity_type": "intervention",
         "source_code": "",
@@ -1587,7 +1587,7 @@
       },
       {
         "relation_code": "TREATMENT_PLAN_INCLUDES_MEDICATION",
-        "name": "治疗方案包含药物",
+        "name": "治疗方案包含药品",
         "source_entity_type": "treatment_plan",
         "target_entity_type": "medication",
         "source_code": "",
@@ -1623,7 +1623,7 @@
       },
       {
         "relation_code": "TREATMENT_PLAN_MATERIALIZED_AS",
-        "name": "治疗方案物化为医嘱套餐",
+        "name": "治疗方案物化为医嘱组",
         "source_entity_type": "treatment_plan",
         "target_entity_type": "order_set",
         "cardinality": "1:N",
@@ -1631,7 +1631,7 @@
       },
       {
         "relation_code": "ORDER_SET_INCLUDES_ITEM",
-        "name": "医嘱套餐包含医嘱条目",
+        "name": "医嘱组包含医嘱项",
         "source_entity_type": "order_set",
         "target_entity_type": "order_item",
         "cardinality": "1:N",
@@ -1639,7 +1639,7 @@
       },
       {
         "relation_code": "DISEASE_HAS_CARE_PATHWAY",
-        "name": "疾病有诊疗路径",
+        "name": "疾病关联临床路径",
         "source_entity_type": "disease",
         "target_entity_type": "care_pathway",
         "cardinality": "1:N",
@@ -1647,7 +1647,7 @@
       },
       {
         "relation_code": "CARE_PATHWAY_HAS_PHASE",
-        "name": "诊疗路径包含阶段",
+        "name": "临床路径包含阶段",
         "source_entity_type": "care_pathway",
         "target_entity_type": "pathway_phase",
         "cardinality": "1:N",
@@ -1655,7 +1655,7 @@
       },
       {
         "relation_code": "PHASE_USES_ORDER_SET",
-        "name": "路径阶段使用医嘱套餐",
+        "name": "路径阶段使用医嘱组",
         "source_entity_type": "pathway_phase",
         "target_entity_type": "order_set",
         "cardinality": "N:M",
@@ -1950,7 +1950,7 @@
       },
       {
         "entity_type": "diagnostic_evidence",
-        "label": "诊断证据",
+        "label": "诊断依据",
         "code_field": "code",
         "concept_required": false,
         "entries": [],
@@ -2055,7 +2055,7 @@
       },
       {
         "entity_type": "medication",
-        "label": "药物",
+        "label": "药品",
         "code_field": "code",
         "concept_required": false,
         "entries": [],
@@ -2070,7 +2070,7 @@
       },
       {
         "entity_type": "intervention",
-        "label": "治疗措施",
+        "label": "干预操作",
         "code_field": "code",
         "concept_required": false,
         "entries": [],
@@ -2130,7 +2130,7 @@
       },
       {
         "entity_type": "order_set",
-        "label": "医嘱套餐",
+        "label": "医嘱组",
         "code_field": "code",
         "concept_required": false,
         "entries": [],
@@ -2145,7 +2145,7 @@
       },
       {
         "entity_type": "order_item",
-        "label": "医嘱条目",
+        "label": "医嘱项",
         "code_field": "code",
         "concept_required": false,
         "entries": [],
@@ -2160,7 +2160,7 @@
       },
       {
         "entity_type": "care_pathway",
-        "label": "诊疗路径",
+        "label": "临床路径",
         "code_field": "code",
         "concept_required": false,
         "entries": [],
@@ -2276,7 +2276,7 @@
       },
       {
         "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
-        "name": "疾病有诊断证据",
+        "name": "疾病构成诊断依据",
         "source_entity_type": "disease",
         "target_entity_type": "diagnostic_evidence",
         "source_code": "",
@@ -2360,7 +2360,7 @@
       },
       {
         "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
-        "name": "lab形成诊断证据",
+        "name": "检验形成诊断依据",
         "source_entity_type": "lab",
         "target_entity_type": "diagnostic_evidence",
         "source_code": "",
@@ -2372,7 +2372,7 @@
       },
       {
         "relation_code": "EXAM_HAS_DIAGNOSTIC_EVIDENCE",
-        "name": "exam形成诊断证据",
+        "name": "检查形成诊断依据",
         "source_entity_type": "exam",
         "target_entity_type": "diagnostic_evidence",
         "source_code": "",
@@ -2384,7 +2384,7 @@
       },
       {
         "relation_code": "PATHOLOGY_HAS_DIAGNOSTIC_EVIDENCE",
-        "name": "pathology形成诊断证据",
+        "name": "病理形成诊断依据",
         "source_entity_type": "pathology",
         "target_entity_type": "diagnostic_evidence",
         "source_code": "",
@@ -2396,7 +2396,7 @@
       },
       {
         "relation_code": "BIOMARKER_HAS_DIAGNOSTIC_EVIDENCE",
-        "name": "biomarker形成诊断证据",
+        "name": "生物标志物形成诊断依据",
         "source_entity_type": "biomarker",
         "target_entity_type": "diagnostic_evidence",
         "source_code": "",
@@ -2408,7 +2408,7 @@
       },
       {
         "relation_code": "MOLECULAR_TEST_HAS_DIAGNOSTIC_EVIDENCE",
-        "name": "molecular_test形成诊断证据",
+        "name": "分子检测形成诊断依据",
         "source_entity_type": "molecular_test",
         "target_entity_type": "diagnostic_evidence",
         "source_code": "",
@@ -2420,7 +2420,7 @@
       },
       {
         "relation_code": "TREATMENT_PLAN_INCLUDES_MEDICATION",
-        "name": "治疗方案包含药物",
+        "name": "治疗方案包含药品",
         "source_entity_type": "treatment_plan",
         "target_entity_type": "medication",
         "source_code": "",
@@ -2468,7 +2468,7 @@
       },
       {
         "relation_code": "TREATMENT_PLAN_MATERIALIZED_AS",
-        "name": "治疗方案物化为医嘱套餐",
+        "name": "治疗方案物化为医嘱组",
         "source_entity_type": "treatment_plan",
         "target_entity_type": "order_set",
         "source_code": "",
@@ -2480,7 +2480,7 @@
       },
       {
         "relation_code": "ORDER_SET_INCLUDES_ITEM",
-        "name": "医嘱套餐包含医嘱条目",
+        "name": "医嘱组包含医嘱项",
         "source_entity_type": "order_set",
         "target_entity_type": "order_item",
         "source_code": "",
@@ -2492,7 +2492,7 @@
       },
       {
         "relation_code": "DISEASE_HAS_CARE_PATHWAY",
-        "name": "疾病有诊疗路径",
+        "name": "疾病关联临床路径",
         "source_entity_type": "disease",
         "target_entity_type": "care_pathway",
         "source_code": "",
@@ -2504,7 +2504,7 @@
       },
       {
         "relation_code": "CARE_PATHWAY_HAS_PHASE",
-        "name": "诊疗路径包含阶段",
+        "name": "临床路径包含阶段",
         "source_entity_type": "care_pathway",
         "target_entity_type": "pathway_phase",
         "source_code": "",
@@ -2516,7 +2516,7 @@
       },
       {
         "relation_code": "PHASE_USES_ORDER_SET",
-        "name": "路径阶段使用医嘱套餐",
+        "name": "路径阶段使用医嘱组",
         "source_entity_type": "pathway_phase",
         "target_entity_type": "order_set",
         "source_code": "",

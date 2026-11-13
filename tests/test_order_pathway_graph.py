@@ -223,7 +223,7 @@ class OrderGraphProjectionTest(unittest.TestCase):
         ))
         self.assertIsNotNone(relation)
         self.assertEqual(
-            relation["relation_name"], "治疗方案物化为医嘱套餐",
+            relation["relation_name"], "治疗方案物化为医嘱组",
         )
         self.assertEqual(relation["review_status"], "draft")
 

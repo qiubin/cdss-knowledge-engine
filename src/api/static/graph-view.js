@@ -6,10 +6,10 @@
     lab: { label: "检验", color: "#63b3ed", stroke: "#3182ce", shape: "dot", size: 20 },
     exam: { label: "检查", color: "#b794f4", stroke: "#805ad5", shape: "dot", size: 20 },
     symptom: { label: "症状", color: "#f687b3", stroke: "#d53f8c", shape: "dot", size: 20 },
-    diagnostic_evidence: { label: "诊断证据", color: "#4fd1c5", stroke: "#319795", shape: "dot", size: 18 },
+    diagnostic_evidence: { label: "诊断依据", color: "#4fd1c5", stroke: "#319795", shape: "dot", size: 18 },
     treatment_plan: { label: "治疗方案", color: "#ecc94b", stroke: "#d69e2e", shape: "diamond", size: 26 },
-    intervention: { label: "治疗措施", color: "#68d391", stroke: "#38a169", shape: "dot", size: 20 },
-    medication: { label: "药物", color: "#9ae6b4", stroke: "#48bb78", shape: "dot", size: 18 },
+    intervention: { label: "干预操作", color: "#68d391", stroke: "#38a169", shape: "dot", size: 20 },
+    medication: { label: "药品", color: "#9ae6b4", stroke: "#48bb78", shape: "dot", size: 18 },
     contraindication: { label: "禁忌", color: "#fc8181", stroke: "#e53e3e", shape: "dot", size: 18 },
     monitoring_requirement: { label: "监测要求", color: "#b794f4", stroke: "#805ad5", shape: "dot", size: 18 }
   };

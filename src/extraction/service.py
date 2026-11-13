@@ -12,6 +12,7 @@ import hashlib
 import httpx
 
 from ..models.rule import Rule
+from ..clinical_intent import normalize_clinical_intent
 from ..domains import normalize_domain
 from ..domains.western.rule_generation import generate_western_rules
 from ..llm import LLMError, chat_json, resolve_api_key
@@ -629,6 +630,7 @@ def _validate_llm_payload(
         normalized["conclusion"] = conclusion
         labels.annotate(conditions)
         normalized["condition_text"] = labels.summarize(conditions)
+        normalized["clinical_intent"] = normalize_clinical_intent(normalized)
         try:
             rule = Rule(**normalized)
             if rule.conclusion.confidence not in {"high", "medium", "low"}:
@@ -690,6 +692,7 @@ def _validate_llm_payload(
             "disease_code": disease_code,
             "disease_name": str(raw.get("anchor_name") or raw.get("disease_name") or ""),
             "rule_type": "treatment",
+            "clinical_intent": "treatment_recommendation",
             "status": "draft",
             "graph_filename": resolve_template_graph_filename(template),
             "priority": int(raw.get("priority") or 50),
@@ -923,10 +926,10 @@ def _llm_prompt(
         "不得把治疗方案属性写到疾病等其它实体。 "
         "诊断候选规则必须优先使用检验概念（lab_code:concept_code），"
         "不得用出血、结节、溃疡等通用病理词充当疾病证据；"
-        "治疗规则应从治疗方案、治疗措施、药物生成。 "
-        "模板包含治疗方案（treatment_plan）、治疗措施（intervention）、药物（medication）、"
+        "治疗规则应从治疗方案、干预操作、药品生成。 "
+        "模板包含治疗方案（treatment_plan）、干预操作（intervention）、药品（medication）、"
         "禁忌（contraindication）和监测要求（monitoring_requirement）时，"
-        "请同时抽取治疗方案及其包含的措施、药物、禁忌、监测要求，"
+        "请同时抽取治疗方案及其包含的干预操作、药品、禁忌、监测要求，"
         "并生成 rule_type=treatment 的候选治疗规则（默认草稿状态，不得自动启用）。 "
         + " ".join(template.prompt_instructions)
     )

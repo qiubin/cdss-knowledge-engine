@@ -418,7 +418,7 @@ def generate_western_rules(
                 set_names = [
                     str(item.get("name") or item.get("code")) for item in order_sets
                 ]
-                conclusion["message"] = "指南同章节医嘱套餐：" + "、".join(set_names[:6])
+                conclusion["message"] = "指南同章节医嘱组：" + "、".join(set_names[:6])
         rules.append({
             "rule_id": f"{doc_id}-TREAT-{treatment_index:03d}",
             "version": 1,

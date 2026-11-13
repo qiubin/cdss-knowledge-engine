@@ -20,6 +20,7 @@
     ruleSync: null,
     ruleDomain: "",
     ruleDisease: "",
+    ruleClinicalIntent: "",
     terms: { lab: {}, symptom: {}, exam: {}, exam_finding: {}, diagnostic_evidence: {} },
     vocab: [],
     standards: [],
@@ -48,7 +49,7 @@
     importJob: null,
     reviewSelectedKey: "",
     reviewItems: [],
-    reviewFilters: { graph: "", sourceDoc: "", nodeType: "", relationCode: "", itemType: "" },
+    reviewFilters: { graph: "", sourceDoc: "", nodeType: "", relationCode: "", itemType: "", clinicalIntent: "" },
     reviewRelationCodeOptions: [],
     reviewSuspectOnly: false,
     reviewGraphOptions: null,
@@ -116,6 +117,27 @@
     retired: "已失效", stale: "待复核", blocked: "已阻断", testing: "测试中",
     approved: "预审通过",
   };
+  const CLINICAL_INTENT_LABELS = {
+    suspected_diagnosis: "疑似诊断", diagnosis_confirmation: "确诊判断",
+    differential_diagnosis: "鉴别诊断", diagnosis_exclusion: "排除诊断",
+    risk_stratification: "风险分层", severity_assessment: "严重程度/分期评估",
+    treatment_recommendation: "治疗方案推荐", treatment_selection: "方案选择/调整",
+    contraindication_check: "禁忌与慎用判断", dose_adjustment: "剂量调整",
+    monitoring_plan: "监测计划", follow_up_plan: "随访与复查计划",
+    syndrome_identification: "辨证判断",
+  };
+  const CLINICAL_INTENT_OPTIONS = Object.entries(CLINICAL_INTENT_LABELS);
+  function defaultClinicalIntent(ruleType) {
+    if (ruleType === "diagnosis") return "diagnosis_confirmation";
+    if (ruleType === "tcm_pattern") return "syndrome_identification";
+    if (["treatment", "tcm_treatment", "tcm_prescription"].includes(ruleType)) return "treatment_recommendation";
+    if (["contraindication", "tcm_contraindication"].includes(ruleType)) return "contraindication_check";
+    if (ruleType === "monitoring") return "monitoring_plan";
+    return "diagnosis_confirmation";
+  }
+  const clinicalIntentLabel = (value, ruleType = "diagnosis") => (
+    CLINICAL_INTENT_LABELS[value] || CLINICAL_INTENT_LABELS[defaultClinicalIntent(ruleType)]
+  );
   const reviewBadge = (value) => {
     const status = value || "draft";
     return `<span class="badge ${esc(status)}">${esc(REVIEW_LABELS[status] || status)}</span>`;
@@ -970,7 +992,7 @@
           <td><div class="quote">${esc(r.quote)}</div></td>
         </tr>`)) : '<div class="empty">本次解析未生成显式候选关系；导入图谱时会按同片段实体和证据结构兜底补齐。</div>';
     } else {
-      body.innerHTML = doc.suggested_rules.length ? table(["规则 / 结论", "条件逻辑", "溯源"], doc.suggested_rules.map((r) => `<tr><td><strong>${esc(r.name)}</strong><div class="muted">${badge(r.status)} 优先级 ${r.priority}</div></td><td><div class="quote">${esc(r.condition_text || "无条件下")}</div><details class="debug-panel"><summary>原始条件 JSON</summary><pre class="mono">${esc(JSON.stringify(r.conditions, null, 2))}</pre></details></td><td class="mono muted">${esc(r.source.section || "-")}</td></tr>`)) : '<div class="empty">未生成候选规则，可先导入实体</div>';
+      body.innerHTML = doc.suggested_rules.length ? table(["规则 / 结论", "条件逻辑", "溯源"], doc.suggested_rules.map((r) => `<tr><td><strong>${esc(r.name)}</strong><div class="muted">${badge(clinicalIntentLabel(r.clinical_intent, r.rule_type))} ${badge(r.status)} 优先级 ${r.priority}</div></td><td><div class="quote">${esc(r.condition_text || "无条件下")}</div><details class="debug-panel"><summary>原始条件 JSON</summary><pre class="mono">${esc(JSON.stringify(r.conditions, null, 2))}</pre></details></td><td class="mono muted">${esc(r.source.section || "-")}</td></tr>`)) : '<div class="empty">未生成候选规则，可先导入实体</div>';
     }
   }
 
@@ -1999,7 +2021,7 @@
             ["检验 / 检查 / 发现 / 症状", (selected.entities || []).filter((item) => ["lab", "exam", "exam_finding", "symptom", "diagnostic_evidence"].includes(item.entity_type)).length, (selected.entities || []).filter((item) => ["lab", "exam", "exam_finding", "symptom", "diagnostic_evidence"].includes(item.entity_type)).map((item) => `${typeName[item.entity_type]}:${item.name} (${item.code})`).join("；") || "-"],
           ]),
           ["候选关系", (selected.suggested_relations || []).length, (selected.suggested_relations || []).map((item) => `${item.source_code} → ${item.relation_code} → ${item.target_code || item.target_concept_code}`).join("；") || "导入时按同片段结构兜底生成"],
-          ["候选规则", (selected.suggested_rules || []).length, (selected.suggested_rules || []).map((item) => `${item.rule_id} → ${item.disease_code}`).join("；") || "-"],
+          ["候选规则", (selected.suggested_rules || []).length, (selected.suggested_rules || []).map((item) => `${item.rule_id} → ${clinicalIntentLabel(item.clinical_intent, item.rule_type)} → ${item.disease_code}`).join("；") || "-"],
         ].map((row) => `<tr><td>${esc(row[0])}</td><td>${row[1]}</td><td><div class="quote">${esc(row[2])}</div></td></tr>`)))}
         ${packageItems ? panel("包内预审", `
           <div class="review-toolbar">
@@ -2042,7 +2064,7 @@
       mount.innerHTML = table(["", "类型", "条目", "状态", "操作"], items.map((item) => `
         <tr>
           <td><input type="checkbox" data-package-select="${esc(item.item_id)}"></td>
-          <td>${esc(item.item_type)}${item.entity_type ? ` / ${esc(item.entity_type)}` : ""}</td>
+          <td>${esc(item.item_type)}${item.entity_type ? ` / ${esc(item.entity_type)}` : ""}${item.item_type === "rule" ? ` / ${esc(clinicalIntentLabel(item.clinical_intent, item.rule_type))}` : ""}</td>
           <td><strong>${esc(item.name || item.rule_id || item.item_id)}</strong><div class="mono muted">${esc(item.code || item.item_id)}</div></td>
           <td>${reviewBadge(item.status)}</td>
           <td><div class="actions">
@@ -3031,6 +3053,15 @@
     SYNDROME_HAS_SYMPTOM: "症见", SYNDROME_HAS_TONGUE: "舌象", SYNDROME_HAS_PULSE: "脉象",
     SYNDROME_HAS_SIGN: "体征", SYNDROME_HAS_PATHOGENESIS: "病机",
     SYNDROME_TREATED_BY_METHOD: "治以", METHOD_HAS_FORMULA: "选方", FORMULA_CONTAINS_HERB: "组成",
+    TREATMENT_PLAN_INCLUDES_MEDICATION: "含药品", TREATMENT_PLAN_INCLUDES_INTERVENTION: "含干预操作",
+    TREATMENT_PLAN_HAS_MONITORING: "监测要求", TREATMENT_PLAN_HAS_CONTRAINDICATION: "禁忌",
+    TREATMENT_PLAN_MATERIALIZED_AS: "物化为医嘱组", ORDER_SET_INCLUDES_ITEM: "含医嘱项",
+    PHASE_USES_ORDER_SET: "使用医嘱组", DISEASE_HAS_CARE_PATHWAY: "临床路径",
+    CARE_PATHWAY_HAS_PHASE: "路径阶段", PATHOLOGY_HAS_DIAGNOSTIC_EVIDENCE: "病理形成证据",
+    BIOMARKER_HAS_DIAGNOSTIC_EVIDENCE: "生物标志物形成证据", MOLECULAR_TEST_HAS_DIAGNOSTIC_EVIDENCE: "分子检测形成证据",
+    DISEASE_HAS_PATHOLOGY: "病理", DISEASE_HAS_HISTOLOGY: "组织学", DISEASE_HAS_STAGE: "分期",
+    DISEASE_HAS_RISK_FACTOR: "危险因素", DISEASE_HAS_BIOMARKER: "生物标志物", DISEASE_HAS_MOLECULAR_TEST: "分子检测",
+    DISEASE_HAS_SIGN: "体征", DISEASE_HAS_MONITORING: "监测要求", DISEASE_HAS_CONTRAINDICATION: "禁忌",
   };
   const FIELD_LABELS = {
     node_type: "类型", code: "编码", name: "名称", review_status: "审核状态",
@@ -3472,7 +3503,7 @@
     const historyRows = (history || []).slice(0, 8);
     return `
       <div class="detail-section endpoint-meta">
-        <div><span class="muted">类型</span><strong>${esc(rule.rule_type || "-")}</strong> ${badge(normalizeDomainClient(rule.domain))}</div>
+        <div><span class="muted">类型</span><strong>${esc(rule.rule_type || "-")}</strong> ${badge(clinicalIntentLabel(rule.clinical_intent, rule.rule_type))} ${badge(normalizeDomainClient(rule.domain))}</div>
         <div><span class="muted">版本</span>v${esc(rule.version ?? "-")} · 优先级 ${esc(rule.priority ?? "-")}</div>
         <div><span class="muted">目标</span>${esc(rule.disease_name || rule.disease_code || "-")}${rule.disease_code ? ` <span class="mono muted">(${esc(rule.disease_code)})</span>` : ""}</div>
         <div><span class="muted">所属图谱</span><span class="mono">${esc(rule.graph_filename || "-")}</span></div>
@@ -3630,13 +3661,16 @@
     if (tab === "bydisease") { await renderByDisease(); return; }
     const reviewer = localStorage.getItem("cdssReviewer") || "";
     const query = (state.reviewQuery || "").trim();
-    const filters = state.reviewFilters || { graph: "", sourceDoc: "", nodeType: "", relationCode: "", itemType: "" };
+    const filters = state.reviewFilters || { graph: "", sourceDoc: "", nodeType: "", relationCode: "", itemType: "", clinicalIntent: "" };
     const queueItemType = reviewQueueItemType(tab, filters);
+    const showClinicalIntentFilter = ["rules", "blocked"].includes(tab)
+      || (tab === "active" && (!filters.itemType || filters.itemType === "rule"));
     const filterParams = [
       filters.graph ? `&graph_filename=${encodeURIComponent(filters.graph)}` : "",
       filters.sourceDoc ? `&source_doc=${encodeURIComponent(filters.sourceDoc)}` : "",
       filters.nodeType ? `&node_type=${encodeURIComponent(filters.nodeType)}` : "",
       filters.relationCode ? `&relation_code=${encodeURIComponent(filters.relationCode)}` : "",
+      showClinicalIntentFilter && filters.clinicalIntent ? `&clinical_intent=${encodeURIComponent(filters.clinicalIntent)}` : "",
     ].join("");
     const queueUrl = `/api/review/queue?limit=300${queueItemType ? `&item_type=${queueItemType}` : ""}${filterParams}${query ? `&q=${encodeURIComponent(query)}` : ""}`;
     const [queue, audit, graphs, docs] = await Promise.all([
@@ -3771,7 +3805,7 @@
     const rows = items.map((item) => {
       const key = reviewItemKey(item);
       const subParts = item.item_type === "rule"
-        ? [item.rule_id, item.graph_filename || ""]
+        ? [item.rule_id, clinicalIntentLabel(item.clinical_intent, item.rule_type), item.graph_filename || ""]
         : item.item_type === "graph_relation"
           ? [item.relation_code, item.graph_filename || ""]
           : [item.code || item.node_id, typeName[item.node_type] || item.node_type || "", item.graph_filename || ""];
@@ -3817,6 +3851,10 @@
               <option value="graph_node" ${filters.itemType === "graph_node" ? "selected" : ""}>实体节点</option>
               <option value="graph_relation" ${filters.itemType === "graph_relation" ? "selected" : ""}>图谱关系</option>
               <option value="rule" ${filters.itemType === "rule" ? "selected" : ""}>规则</option>
+            </select>` : ""}
+            ${showClinicalIntentFilter ? `<select id="reviewFilterClinicalIntent" title="按规则临床用途筛选">
+              <option value="">全部规则用途</option>
+              ${CLINICAL_INTENT_OPTIONS.map(([value, label]) => `<option value="${esc(value)}" ${filters.clinicalIntent === value ? "selected" : ""}>${esc(label)}</option>`).join("")}
             </select>` : ""}
             <select id="reviewFilterNodeType" title="按实体类型筛选图谱条目（配合全选可批量审核同一类型）">
               <option value="">全部类型</option>
@@ -3875,11 +3913,16 @@
     };
     bindReviewFilter("#reviewFilterGraph", "graph");
     bindReviewFilter("#reviewFilterSourceDoc", "sourceDoc");
-    bindReviewFilter("#reviewFilterItemType", "itemType");
+    $("#reviewFilterItemType")?.addEventListener("change", (event) => {
+      state.reviewFilters.itemType = event.target.value;
+      if (event.target.value && event.target.value !== "rule") state.reviewFilters.clinicalIntent = "";
+      renderReviewCenter();
+    });
+    bindReviewFilter("#reviewFilterClinicalIntent", "clinicalIntent");
     bindReviewFilter("#reviewFilterNodeType", "nodeType");
     bindReviewFilter("#reviewFilterRelationCode", "relationCode");
     $("#reviewFilterClear")?.addEventListener("click", () => {
-      state.reviewFilters = { graph: "", sourceDoc: "", nodeType: "", relationCode: "", itemType: "" };
+      state.reviewFilters = { graph: "", sourceDoc: "", nodeType: "", relationCode: "", itemType: "", clinicalIntent: "" };
       renderReviewCenter();
     });
     $("#reviewSuspectOnly")?.addEventListener("change", (event) => {
@@ -4181,14 +4224,17 @@
     const domainRules = state.ruleDomain
       ? state.rules.filter((rule) => normalizeDomainClient(rule.domain) === state.ruleDomain)
       : state.rules;
+    const purposeRules = state.ruleClinicalIntent
+      ? domainRules.filter((rule) => (rule.clinical_intent || defaultClinicalIntent(rule.rule_type)) === state.ruleClinicalIntent)
+      : domainRules;
     const diseaseMap = new Map();
-    domainRules.forEach((rule) => {
+    purposeRules.forEach((rule) => {
       if (rule.disease_code) diseaseMap.set(rule.disease_code, rule.disease_name || rule.disease_code);
     });
     if (state.ruleDisease && !diseaseMap.has(state.ruleDisease)) state.ruleDisease = "";
     const visibleRules = state.ruleDisease
-      ? domainRules.filter((rule) => rule.disease_code === state.ruleDisease)
-      : domainRules;
+      ? purposeRules.filter((rule) => rule.disease_code === state.ruleDisease)
+      : purposeRules;
     const syncStatus = `<span class="badge ${sync.inconsistent_count ? "danger" : "active"}" title="${esc(`一致 ${sync.consistent_count} 条；不一致 ${sync.inconsistent_count} 条`)}">图谱语义同步 ${sync.consistent_count}/${sync.total}</span>`;
     const domainFilter = `<select id="ruleDomainFilter">
       <option value="" ${state.ruleDomain === "" ? "selected" : ""}>全部领域</option>
@@ -4198,6 +4244,10 @@
     const diseaseFilter = `<select id="ruleDiseaseFilter">
       <option value="">全部疾病 / 证候</option>
       ${[...diseaseMap.entries()].sort((a, b) => a[1].localeCompare(b[1], "zh-Hans-CN")).map(([code, name]) => `<option value="${esc(code)}" ${state.ruleDisease === code ? "selected" : ""}>${esc(name)}（${esc(code)}）</option>`).join("")}
+    </select>`;
+    const clinicalIntentFilter = `<select id="ruleClinicalIntentFilter">
+      <option value="">全部规则用途</option>
+      ${CLINICAL_INTENT_OPTIONS.map(([value, label]) => `<option value="${esc(value)}" ${state.ruleClinicalIntent === value ? "selected" : ""}>${esc(label)}</option>`).join("")}
     </select>`;
     const inconsistentIds = new Set(
       (state.ruleSync?.rules || []).filter((item) => item.semantic_status !== "consistent").map((item) => item.rule_id)
@@ -4223,8 +4273,8 @@
       const approveDepsButton = dependency.blocked
         ? `<button class="btn sm primary" data-rule-approve-deps="${esc(r.rule_id)}">补审依赖</button>`
         : "";
-      return `<tr><td><strong>${esc(r.name)}</strong><div class="mono muted">${esc(r.rule_id)} v${r.version}</div><div>${badge(r.rule_type || "diagnosis")} ${badge(normalizeDomainClient(r.domain))}</div></td><td>${esc(disease ? disease.name_cn : r.disease_name || r.disease_code)}</td><td><div class="quote">${esc(conditionText(r.conditions))}</div></td><td>${ruleConceptChips(r)}</td><td>${ruleSyncBadge(r.rule_id)}</td><td>${dependencyCell}</td><td class="mono muted">${esc(r.graph_filename || "stemi_graph.json")}</td><td>${r.priority}</td><td>${reviewBadge(r.status)}</td><td><div class="actions">${completeButton}${approveDepsButton}<button class="btn sm" data-rule-edit="${esc(r.rule_id)}">编辑</button><button class="btn sm" data-rule-history="${esc(r.rule_id)}">历史</button><button class="btn sm" data-rule-status="${esc(r.rule_id)}" data-rule-action="${ruleAction.action}">${ruleAction.label}</button><button class="btn sm danger" data-rule-delete="${esc(r.rule_id)}">删除</button></div></td></tr>`;
-    })), `<span class="nowrap">${domainFilter}${diseaseFilter}${syncStatus}<span id="engineChip" class="nowrap"></span><button id="ruleWizard" class="btn primary">规则向导</button><button id="completeConditions" class="btn">批量补全条件</button><button id="activateConsistent" class="btn">批量启用一致规则</button><button id="newRule" class="btn primary">新建规则</button></span>`, "条件引用概念词汇，执行时按患者所属医院解析标准；启用前检查疾病、实体、概念链路和图谱审核状态");
+      return `<tr><td><strong>${esc(r.name)}</strong><div class="mono muted">${esc(r.rule_id)} v${r.version}</div><div>${badge(r.rule_type || "diagnosis")} ${badge(clinicalIntentLabel(r.clinical_intent, r.rule_type))} ${badge(normalizeDomainClient(r.domain))}</div></td><td>${esc(disease ? disease.name_cn : r.disease_name || r.disease_code)}</td><td><div class="quote">${esc(conditionText(r.conditions))}</div></td><td>${ruleConceptChips(r)}</td><td>${ruleSyncBadge(r.rule_id)}</td><td>${dependencyCell}</td><td class="mono muted">${esc(r.graph_filename || "stemi_graph.json")}</td><td>${r.priority}</td><td>${reviewBadge(r.status)}</td><td><div class="actions">${completeButton}${approveDepsButton}<button class="btn sm" data-rule-edit="${esc(r.rule_id)}">编辑</button><button class="btn sm" data-rule-history="${esc(r.rule_id)}">历史</button><button class="btn sm" data-rule-status="${esc(r.rule_id)}" data-rule-action="${ruleAction.action}">${ruleAction.label}</button><button class="btn sm danger" data-rule-delete="${esc(r.rule_id)}">删除</button></div></td></tr>`;
+    })), `<span class="nowrap">${domainFilter}${clinicalIntentFilter}${diseaseFilter}${syncStatus}<span id="engineChip" class="nowrap"></span><button id="ruleWizard" class="btn primary">规则向导</button><button id="completeConditions" class="btn">批量补全条件</button><button id="activateConsistent" class="btn">批量启用一致规则</button><button id="newRule" class="btn primary">新建规则</button></span>`, "条件引用概念词汇，执行时按患者所属医院解析标准；启用前检查疾病、实体、概念链路和图谱审核状态");
     $("#newRule").onclick = () => openRuleEditor(null);
     $("#ruleWizard").onclick = () => openRuleWizard();
     renderEngineChip(content.querySelector("#engineChip"));
@@ -4264,6 +4314,11 @@
     });
     $("#ruleDiseaseFilter").onchange = (event) => {
       state.ruleDisease = event.target.value;
+      renderRules();
+    };
+    $("#ruleClinicalIntentFilter").onchange = (event) => {
+      state.ruleClinicalIntent = event.target.value;
+      state.ruleDisease = "";
       renderRules();
     };
     $("#ruleDomainFilter").onchange = (event) => {
@@ -4379,8 +4434,9 @@
   };
 
   function openRuleEditor(rule) {
-    const base = rule || { rule_id: `CUSTOM-${Date.now()}`, version: 1, domain: "western", anchor_type: "disease", rule_type: "diagnosis", name: "", disease_code: "", disease_name: "", priority: 50, status: "draft", department: "心血管内科", conditions: { type: "group", operator: "AND", children: [] }, conclusion: { diagnosis: "", confidence: "medium", message: "", action: "" }, source: {}, exclusions: [], tags: [] };
-    const ruleTypes = ["diagnosis", "treatment", "tcm_pattern", "tcm_treatment", "tcm_prescription", "tcm_contraindication"];
+    const base = rule || { rule_id: `CUSTOM-${Date.now()}`, version: 1, domain: "western", anchor_type: "disease", rule_type: "diagnosis", clinical_intent: "diagnosis_confirmation", name: "", disease_code: "", disease_name: "", priority: 50, status: "draft", department: "心血管内科", conditions: { type: "group", operator: "AND", children: [] }, conclusion: { diagnosis: "", confidence: "medium", message: "", action: "" }, source: {}, exclusions: [], tags: [] };
+    const ruleTypes = ["diagnosis", "treatment", "contraindication", "monitoring", "tcm_pattern", "tcm_treatment", "tcm_prescription", "tcm_contraindication"];
+    const selectedIntent = base.clinical_intent || defaultClinicalIntent(base.rule_type);
     $("#editorBody").innerHTML = `
       <h3>${rule ? "编辑规则" : "新建规则"}</h3>
       <div class="form-grid">
@@ -4388,6 +4444,7 @@
         <div class="field"><label>名称</label><input name="name" value="${esc(base.name)}"></div>
         <div class="field"><label>领域</label><select name="domain"><option value="western" ${normalizeDomainClient(base.domain) === "western" ? "selected" : ""}>西医</option><option value="tcm" ${normalizeDomainClient(base.domain) === "tcm" ? "selected" : ""}>中医</option></select></div>
         <div class="field"><label>规则类型</label><select name="rule_type">${ruleTypes.map((type) => `<option value="${type}" ${base.rule_type === type ? "selected" : ""}>${type}</option>`).join("")}</select></div>
+        <div class="field"><label>临床用途</label><select name="clinical_intent">${CLINICAL_INTENT_OPTIONS.map(([value, label]) => `<option value="${value}" ${selectedIntent === value ? "selected" : ""}>${esc(label)}</option>`).join("")}</select></div>
         <div class="field"><label>锚点类型</label><select name="anchor_type"><option value="disease" ${base.anchor_type === "disease" ? "selected" : ""}>疾病</option><option value="syndrome" ${base.anchor_type === "syndrome" ? "selected" : ""}>证候</option></select></div>
         <div class="field"><label>目标编码（疾病/证候）</label><input name="disease_code" value="${esc(base.disease_code)}"></div>
         <div class="field"><label>目标名称</label><input name="disease_name" value="${esc(base.disease_name)}"></div>
@@ -4689,6 +4746,7 @@
           version: base.version,
           domain: form.querySelector("[name=domain]").value,
           rule_type: form.querySelector("[name=rule_type]").value,
+          clinical_intent: form.querySelector("[name=clinical_intent]").value,
           anchor_type: form.querySelector("[name=anchor_type]").value,
           name: form.querySelector("[name=name]").value,
           disease_code: form.querySelector("[name=disease_code]").value,

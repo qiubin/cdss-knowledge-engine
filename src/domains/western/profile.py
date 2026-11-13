@@ -8,15 +8,15 @@ NODE_META = {
     "lab": {"label": "检验", "color": "#63b3ed", "stroke": "#3182ce", "shape": "dot", "size": 20},
     "exam": {"label": "检查", "color": "#b794f4", "stroke": "#805ad5", "shape": "dot", "size": 20},
     "symptom": {"label": "症状", "color": "#f687b3", "stroke": "#d53f8c", "shape": "dot", "size": 20},
-    "diagnostic_evidence": {"label": "诊断证据", "color": "#4fd1c5", "stroke": "#319795", "shape": "dot", "size": 18},
+    "diagnostic_evidence": {"label": "诊断依据", "color": "#4fd1c5", "stroke": "#319795", "shape": "dot", "size": 18},
     "treatment_plan": {"label": "治疗方案", "color": "#ecc94b", "stroke": "#d69e2e", "shape": "diamond", "size": 26},
-    "intervention": {"label": "治疗措施", "color": "#68d391", "stroke": "#38a169", "shape": "dot", "size": 20},
-    "medication": {"label": "药物", "color": "#9ae6b4", "stroke": "#48bb78", "shape": "dot", "size": 18},
+    "intervention": {"label": "干预操作", "color": "#68d391", "stroke": "#38a169", "shape": "dot", "size": 20},
+    "medication": {"label": "药品", "color": "#9ae6b4", "stroke": "#48bb78", "shape": "dot", "size": 18},
     "contraindication": {"label": "禁忌", "color": "#fc8181", "stroke": "#e53e3e", "shape": "dot", "size": 18},
     "monitoring_requirement": {"label": "监测要求", "color": "#b794f4", "stroke": "#805ad5", "shape": "dot", "size": 18},
-    "order_set": {"label": "医嘱套餐", "color": "#fbd38d", "stroke": "#d69e2e", "shape": "diamond", "size": 24},
-    "order_item": {"label": "医嘱条目", "color": "#fefcbf", "stroke": "#b7791f", "shape": "dot", "size": 16},
-    "care_pathway": {"label": "诊疗路径", "color": "#e9d8fd", "stroke": "#6b46c1", "shape": "diamond", "size": 28},
+    "order_set": {"label": "医嘱组", "color": "#fbd38d", "stroke": "#d69e2e", "shape": "diamond", "size": 24},
+    "order_item": {"label": "医嘱项", "color": "#fefcbf", "stroke": "#b7791f", "shape": "dot", "size": 16},
+    "care_pathway": {"label": "临床路径", "color": "#e9d8fd", "stroke": "#6b46c1", "shape": "diamond", "size": 28},
     "pathway_phase": {"label": "路径阶段", "color": "#d6bcfa", "stroke": "#553c9a", "shape": "box", "size": 20},
     "pathology": {"label": "病理", "color": "#b83280", "stroke": "#97266d", "shape": "box", "size": 20},
     "biomarker": {"label": "生物标志物", "color": "#38b2ac", "stroke": "#2c7a7b", "shape": "box", "size": 20},
@@ -30,17 +30,17 @@ NODE_META = {
 PATH_PANELS = (
     {
         "title": "诊断逻辑链路",
-        "description": "疾病 → 检验/检查/症状 → 诊断证据",
+        "description": "疾病 → 检验/检查/症状 → 诊断依据",
         "spec": "disease->lab/exam/symptom->diagnostic_evidence",
     },
     {
         "title": "治疗方案链路",
-        "description": "疾病 → 治疗方案 → 措施/药物/禁忌/监测",
+        "description": "疾病 → 治疗方案 → 干预操作/药品/禁忌/监测",
         "spec": "disease->treatment_plan->intervention/medication/contraindication/monitoring_requirement",
     },
     {
-        "title": "诊疗路径与医嘱套餐链路",
-        "description": "疾病 → 诊疗路径 → 路径阶段 → 医嘱套餐 → 医嘱条目；治疗方案物化为医嘱套餐",
+        "title": "临床路径与医嘱组链路",
+        "description": "疾病 → 临床路径 → 路径阶段 → 医嘱组 → 医嘱项；治疗方案物化为医嘱组",
         "spec": (
             "disease->care_pathway->pathway_phase->order_set->order_item;"
             "treatment_plan->order_set"
