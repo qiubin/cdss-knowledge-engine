@@ -1872,162 +1872,321 @@
     "domain": "western",
     "specialty": "通用",
     "graph_filename": "",
-    "standard_system": "ICD-10 / LOINC / ATC / LOCAL",
     "entity_types": [
       {
         "entity_type": "disease",
         "label": "疾病",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
         "vocabulary": true,
-        "entries": []
+        "discovery_suffixes": [],
+        "domain": "",
+        "color": "",
+        "icon": "",
+        "extraction_hint": "",
+        "description": ""
       },
       {
         "entity_type": "symptom",
         "label": "症状",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
         "vocabulary": false,
-        "entries": []
+        "discovery_suffixes": [],
+        "domain": "",
+        "color": "",
+        "icon": "",
+        "extraction_hint": "",
+        "description": ""
       },
       {
         "entity_type": "sign",
         "label": "体征",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
         "vocabulary": false,
-        "entries": []
+        "discovery_suffixes": [],
+        "domain": "",
+        "color": "",
+        "icon": "",
+        "extraction_hint": "",
+        "description": ""
       },
       {
         "entity_type": "lab",
         "label": "检验",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
         "vocabulary": false,
-        "entries": []
+        "discovery_suffixes": [],
+        "domain": "",
+        "color": "",
+        "icon": "",
+        "extraction_hint": "",
+        "description": ""
       },
       {
         "entity_type": "exam",
         "label": "检查",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
         "vocabulary": false,
-        "entries": []
+        "discovery_suffixes": [],
+        "domain": "",
+        "color": "",
+        "icon": "",
+        "extraction_hint": "",
+        "description": ""
       },
       {
         "entity_type": "diagnostic_evidence",
         "label": "诊断证据",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
         "vocabulary": false,
-        "entries": []
+        "discovery_suffixes": [],
+        "domain": "",
+        "color": "",
+        "icon": "",
+        "extraction_hint": "",
+        "description": ""
       },
       {
         "entity_type": "pathology",
         "label": "病理",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
         "vocabulary": false,
-        "entries": []
+        "discovery_suffixes": [],
+        "domain": "",
+        "color": "",
+        "icon": "",
+        "extraction_hint": "",
+        "description": ""
       },
       {
         "entity_type": "biomarker",
         "label": "生物标志物",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
         "vocabulary": false,
-        "entries": []
+        "discovery_suffixes": [],
+        "domain": "",
+        "color": "",
+        "icon": "",
+        "extraction_hint": "",
+        "description": ""
       },
       {
         "entity_type": "molecular_test",
         "label": "分子检测",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
         "vocabulary": false,
-        "entries": []
+        "discovery_suffixes": [],
+        "domain": "",
+        "color": "",
+        "icon": "",
+        "extraction_hint": "",
+        "description": ""
       },
       {
         "entity_type": "stage",
         "label": "分期",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
         "vocabulary": false,
-        "entries": []
+        "discovery_suffixes": [],
+        "domain": "",
+        "color": "",
+        "icon": "",
+        "extraction_hint": "",
+        "description": ""
       },
       {
         "entity_type": "histology",
         "label": "组织学",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
         "vocabulary": false,
-        "entries": []
+        "discovery_suffixes": [],
+        "domain": "",
+        "color": "",
+        "icon": "",
+        "extraction_hint": "",
+        "description": ""
       },
       {
         "entity_type": "risk_factor",
         "label": "危险因素",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
         "vocabulary": false,
-        "entries": []
+        "discovery_suffixes": [],
+        "domain": "",
+        "color": "",
+        "icon": "",
+        "extraction_hint": "",
+        "description": ""
       },
       {
         "entity_type": "medication",
         "label": "药物",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
         "vocabulary": false,
-        "entries": []
+        "discovery_suffixes": [],
+        "domain": "",
+        "color": "",
+        "icon": "",
+        "extraction_hint": "",
+        "description": ""
       },
       {
         "entity_type": "intervention",
         "label": "治疗措施",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
         "vocabulary": false,
-        "entries": []
+        "discovery_suffixes": [],
+        "domain": "",
+        "color": "",
+        "icon": "",
+        "extraction_hint": "",
+        "description": ""
       },
       {
         "entity_type": "treatment_plan",
         "label": "治疗方案",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
         "vocabulary": false,
-        "entries": []
+        "discovery_suffixes": [],
+        "domain": "",
+        "color": "",
+        "icon": "",
+        "extraction_hint": "",
+        "description": ""
       },
       {
         "entity_type": "contraindication",
         "label": "禁忌",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
         "vocabulary": false,
-        "entries": []
+        "discovery_suffixes": [],
+        "domain": "",
+        "color": "",
+        "icon": "",
+        "extraction_hint": "",
+        "description": ""
       },
       {
         "entity_type": "monitoring_requirement",
         "label": "监测要求",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
         "vocabulary": false,
-        "entries": []
+        "discovery_suffixes": [],
+        "domain": "",
+        "color": "",
+        "icon": "",
+        "extraction_hint": "",
+        "description": ""
       },
       {
         "entity_type": "order_set",
         "label": "医嘱套餐",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
+        "vocabulary": false,
+        "discovery_suffixes": [],
         "domain": "western",
         "color": "#fbd38d",
         "icon": "clipboard-list",
-        "extraction_hint": "指南中成组的医嘱推荐（如再灌注方案用药组合、监护与复查组合）"
+        "extraction_hint": "指南中成组的医嘱推荐（如再灌注方案用药组合、监护与复查组合）",
+        "description": ""
       },
       {
         "entity_type": "order_item",
         "label": "医嘱条目",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
+        "vocabulary": false,
+        "discovery_suffixes": [],
         "domain": "western",
         "color": "#fefcbf",
         "icon": "pill",
-        "extraction_hint": "套餐内单条可开立医嘱：药品/检验/检查/治疗/护理/宣教/随访"
+        "extraction_hint": "套餐内单条可开立医嘱：药品/检验/检查/治疗/护理/宣教/随访",
+        "description": ""
       },
       {
         "entity_type": "care_pathway",
         "label": "诊疗路径",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
+        "vocabulary": false,
+        "discovery_suffixes": [],
         "domain": "western",
         "color": "#e9d8fd",
         "icon": "route",
-        "extraction_hint": "覆盖疾病全诊疗周期的路径锚点（入院→治疗→出院→随访）"
+        "extraction_hint": "覆盖疾病全诊疗周期的路径锚点（入院→治疗→出院→随访）",
+        "description": ""
       },
       {
         "entity_type": "pathway_phase",
         "label": "路径阶段",
+        "code_field": "code",
+        "concept_required": false,
+        "entries": [],
         "discovery": true,
+        "vocabulary": false,
+        "discovery_suffixes": [],
         "domain": "western",
         "color": "#d6bcfa",
         "icon": "git-branch",
-        "extraction_hint": "按病程划分的阶段：急诊期/急性期/恢复期/维持期/随访期等"
+        "extraction_hint": "按病程划分的阶段：急诊期/急性期/恢复期/维持期/随访期等",
+        "description": ""
       }
     ],
     "relations": [
@@ -2036,6 +2195,11 @@
         "name": "疾病关联检验",
         "source_entity_type": "disease",
         "target_entity_type": "lab",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2043,6 +2207,11 @@
         "name": "疾病关联检查",
         "source_entity_type": "disease",
         "target_entity_type": "exam",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2050,6 +2219,11 @@
         "name": "疾病关联症状",
         "source_entity_type": "disease",
         "target_entity_type": "symptom",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2057,6 +2231,11 @@
         "name": "疾病关联体征",
         "source_entity_type": "disease",
         "target_entity_type": "sign",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2064,6 +2243,11 @@
         "name": "疾病关联病理",
         "source_entity_type": "disease",
         "target_entity_type": "pathology",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2071,6 +2255,11 @@
         "name": "疾病关联生物标志物",
         "source_entity_type": "disease",
         "target_entity_type": "biomarker",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2078,6 +2267,11 @@
         "name": "疾病关联分子检测",
         "source_entity_type": "disease",
         "target_entity_type": "molecular_test",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2085,6 +2279,11 @@
         "name": "疾病有诊断证据",
         "source_entity_type": "disease",
         "target_entity_type": "diagnostic_evidence",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2092,6 +2291,11 @@
         "name": "疾病有治疗方案",
         "source_entity_type": "disease",
         "target_entity_type": "treatment_plan",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2099,6 +2303,11 @@
         "name": "疾病有禁忌",
         "source_entity_type": "disease",
         "target_entity_type": "contraindication",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2106,6 +2315,11 @@
         "name": "疾病有监测要求",
         "source_entity_type": "disease",
         "target_entity_type": "monitoring_requirement",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2113,6 +2327,11 @@
         "name": "疾病有危险因素",
         "source_entity_type": "disease",
         "target_entity_type": "risk_factor",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2120,6 +2339,11 @@
         "name": "疾病组织学类型",
         "source_entity_type": "disease",
         "target_entity_type": "histology",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2127,6 +2351,11 @@
         "name": "疾病分期",
         "source_entity_type": "disease",
         "target_entity_type": "stage",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2134,6 +2363,11 @@
         "name": "lab形成诊断证据",
         "source_entity_type": "lab",
         "target_entity_type": "diagnostic_evidence",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2141,6 +2375,11 @@
         "name": "exam形成诊断证据",
         "source_entity_type": "exam",
         "target_entity_type": "diagnostic_evidence",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2148,6 +2387,11 @@
         "name": "pathology形成诊断证据",
         "source_entity_type": "pathology",
         "target_entity_type": "diagnostic_evidence",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2155,6 +2399,11 @@
         "name": "biomarker形成诊断证据",
         "source_entity_type": "biomarker",
         "target_entity_type": "diagnostic_evidence",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2162,6 +2411,11 @@
         "name": "molecular_test形成诊断证据",
         "source_entity_type": "molecular_test",
         "target_entity_type": "diagnostic_evidence",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2169,6 +2423,11 @@
         "name": "治疗方案包含药物",
         "source_entity_type": "treatment_plan",
         "target_entity_type": "medication",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2176,6 +2435,11 @@
         "name": "治疗方案包含措施",
         "source_entity_type": "treatment_plan",
         "target_entity_type": "intervention",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2183,6 +2447,11 @@
         "name": "治疗方案有禁忌",
         "source_entity_type": "treatment_plan",
         "target_entity_type": "contraindication",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2190,6 +2459,11 @@
         "name": "治疗方案有监测",
         "source_entity_type": "treatment_plan",
         "target_entity_type": "monitoring_requirement",
+        "source_code": "",
+        "target_code": "",
+        "cardinality": "N:M",
+        "extraction_hint": "",
+        "concept_code": "",
         "generate_evidence": false
       },
       {
@@ -2197,40 +2471,60 @@
         "name": "治疗方案物化为医嘱套餐",
         "source_entity_type": "treatment_plan",
         "target_entity_type": "order_set",
+        "source_code": "",
+        "target_code": "",
         "cardinality": "1:N",
-        "extraction_hint": "治疗方案的医嘱落地形式（同章节或同疾病语境）"
+        "extraction_hint": "治疗方案的医嘱落地形式（同章节或同疾病语境）",
+        "concept_code": "",
+        "generate_evidence": true
       },
       {
         "relation_code": "ORDER_SET_INCLUDES_ITEM",
         "name": "医嘱套餐包含医嘱条目",
         "source_entity_type": "order_set",
         "target_entity_type": "order_item",
+        "source_code": "",
+        "target_code": "",
         "cardinality": "1:N",
-        "extraction_hint": "套餐罗列的每一条医嘱"
+        "extraction_hint": "套餐罗列的每一条医嘱",
+        "concept_code": "",
+        "generate_evidence": true
       },
       {
         "relation_code": "DISEASE_HAS_CARE_PATHWAY",
         "name": "疾病有诊疗路径",
         "source_entity_type": "disease",
         "target_entity_type": "care_pathway",
+        "source_code": "",
+        "target_code": "",
         "cardinality": "1:N",
-        "extraction_hint": "指南描述了该疾病的规范诊治流程时建立"
+        "extraction_hint": "指南描述了该疾病的规范诊治流程时建立",
+        "concept_code": "",
+        "generate_evidence": true
       },
       {
         "relation_code": "CARE_PATHWAY_HAS_PHASE",
         "name": "诊疗路径包含阶段",
         "source_entity_type": "care_pathway",
         "target_entity_type": "pathway_phase",
+        "source_code": "",
+        "target_code": "",
         "cardinality": "1:N",
-        "extraction_hint": "按病程顺序罗列各阶段"
+        "extraction_hint": "按病程顺序罗列各阶段",
+        "concept_code": "",
+        "generate_evidence": true
       },
       {
         "relation_code": "PHASE_USES_ORDER_SET",
         "name": "路径阶段使用医嘱套餐",
         "source_entity_type": "pathway_phase",
         "target_entity_type": "order_set",
+        "source_code": "",
+        "target_code": "",
         "cardinality": "N:M",
-        "extraction_hint": "某阶段默认开立的医嘱套餐"
+        "extraction_hint": "某阶段默认开立的医嘱套餐",
+        "concept_code": "",
+        "generate_evidence": true
       }
     ],
     "attributes": [
@@ -2238,65 +2532,104 @@
         "attribute_code": "DISEASE_ICD_CODE",
         "name": "ICD-10 编码",
         "owner_entity_type": "disease",
-        "data_type": "string"
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": ""
       },
       {
         "attribute_code": "HISTOLOGY",
         "name": "组织学类型",
         "owner_entity_type": "histology",
-        "data_type": "string"
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": ""
       },
       {
         "attribute_code": "STAGE",
         "name": "分期",
         "owner_entity_type": "stage",
-        "data_type": "string"
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": ""
       },
       {
         "attribute_code": "GRADE",
         "name": "分级",
         "owner_entity_type": "histology",
-        "data_type": "string"
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": ""
       },
       {
         "attribute_code": "MOLECULAR_MARKER",
         "name": "分子标志物",
         "owner_entity_type": "biomarker",
-        "data_type": "string"
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": ""
       },
       {
         "attribute_code": "BIOMARKER_RESULT",
         "name": "标志物结果",
         "owner_entity_type": "biomarker",
-        "data_type": "string"
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": ""
       },
       {
         "attribute_code": "TREATMENT_DOSE",
         "name": "剂量",
         "owner_entity_type": "medication",
-        "data_type": "string"
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": ""
       },
       {
         "attribute_code": "TREATMENT_ROUTE",
         "name": "给药途径",
         "owner_entity_type": "medication",
-        "data_type": "string"
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": ""
       },
       {
         "attribute_code": "TREATMENT_LINE",
         "name": "治疗线数",
         "owner_entity_type": "treatment_plan",
-        "data_type": "string"
+        "data_type": "string",
+        "required": false,
+        "allowed_values": [],
+        "concept_code": "",
+        "description": ""
       },
       {
         "attribute_code": "CONTRAINDICATION_LEVEL",
         "name": "禁忌级别",
         "owner_entity_type": "contraindication",
         "data_type": "enum",
+        "required": false,
         "allowed_values": [
           "禁用",
           "慎用"
-        ]
+        ],
+        "concept_code": "",
+        "description": ""
       },
       {
         "attribute_code": "ORDER_CLASS",
@@ -2314,6 +2647,7 @@
           "宣教",
           "随访"
         ],
+        "concept_code": "",
         "description": "医嘱条目的开立类别"
       },
       {
@@ -2327,6 +2661,7 @@
           "optional",
           "conditional"
         ],
+        "concept_code": "",
         "description": "套餐内该条目为必选/可选/按条件勾选"
       },
       {
@@ -2335,6 +2670,8 @@
         "owner_entity_type": "order_item",
         "data_type": "string",
         "required": false,
+        "allowed_values": [],
+        "concept_code": "",
         "description": "指南原文的剂量/频次/途径描述，保留数值供院内参数化"
       },
       {
@@ -2348,6 +2685,7 @@
           "alternative",
           "rescue"
         ],
+        "concept_code": "",
         "description": "首选/替代/挽救，与治疗规则优先级语义一致"
       },
       {
@@ -2356,6 +2694,8 @@
         "owner_entity_type": "pathway_phase",
         "data_type": "int",
         "required": false,
+        "allowed_values": [],
+        "concept_code": "",
         "description": "路径内的阶段序号，从 1 开始"
       },
       {
@@ -2364,6 +2704,8 @@
         "owner_entity_type": "pathway_phase",
         "data_type": "string",
         "required": false,
+        "allowed_values": [],
+        "concept_code": "",
         "description": "进入该阶段的临床条件（如确诊STEMI、入院完成）"
       },
       {
@@ -2372,6 +2714,8 @@
         "owner_entity_type": "pathway_phase",
         "data_type": "string",
         "required": false,
+        "allowed_values": [],
+        "concept_code": "",
         "description": "结束/转出该阶段的条件（如再灌注完成、出院评估通过）"
       }
     ],
@@ -2409,7 +2753,9 @@
       "diagnosis",
       "treatment"
     ],
-    "rule_generation": []
+    "rule_generation": [],
+    "standard_system": "ICD-10 / LOINC / ATC / LOCAL",
+    "standard_mappings": []
   },
   {
     "template_id": "TCM_GUIDELINE_V2",

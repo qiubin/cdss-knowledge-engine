@@ -62,6 +62,10 @@ class TemplateEntityType(BaseModel):
     domain: str = ""
     color: str = ""
     icon: str = ""
+    # Guidance for the LLM extractor and import precheck; the relation model
+    # carries the same field, keep both in sync to survive JSON round-trips.
+    extraction_hint: str = ""
+    description: str = ""
 
 
 class TemplateRelation(BaseModel):

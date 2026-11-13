@@ -1367,7 +1367,9 @@
       <div class="field"><label>显示名称</label><input name="label" value="${esc(value.label || "")}"></div>
       <div class="field"><label>编码字段</label><input name="code_field" value="${esc(value.code_field || "code")}"></div>
       <div class="field"><label>动态发现</label><select name="discovery"><option value="false" ${!value.discovery ? "selected" : ""}>否</option><option value="true" ${value.discovery ? "selected" : ""}>是（从指南文本自动发现）</option></select></div>
-      <div class="field"><label>实体词表</label><select name="vocabulary"><option value="false" ${!value.vocabulary ? "selected" : ""}>模板私有（内嵌实体）</option><option value="true" ${value.vocabulary ? "selected" : ""}>共享词表（data/vocab/entities，跨模板共用）</option></select></div>`;
+      <div class="field"><label>实体词表</label><select name="vocabulary"><option value="false" ${!value.vocabulary ? "selected" : ""}>模板私有（内嵌实体）</option><option value="true" ${value.vocabulary ? "selected" : ""}>共享词表（data/vocab/entities，跨模板共用）</option></select></div>
+      <div class="field wide"><label>抽取提示</label><input name="extraction_hint" value="${esc(value.extraction_hint || "")}" placeholder="大模型抽取该类型实体时的指引说明"></div>
+      <div class="field wide"><label>描述</label><input name="description" value="${esc(value.description || "")}" placeholder="该实体类型的用途说明"></div>`;
       if (!isNew) {
         const attrs = templateAttributesOf(value.entity_type);
         fields += `
