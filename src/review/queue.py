@@ -41,6 +41,7 @@ def build_queue(
     source_doc: Optional[str] = None,
     q: Optional[str] = None,
     relation_code: Optional[str] = None,
+    clinical_intent: Optional[str] = None,
     limit: int = 300,
 ) -> Dict[str, Any]:
     service = service or ReviewService()
@@ -52,9 +53,9 @@ def build_queue(
     query = str(q or "").strip().lower()
     # "graph" is a convenience alias covering nodes and relations, so the
     # review center can fetch one tab's payload without pulling rules too.
-    want_graph = item_type in (None, "", "graph", "graph_node", "graph_relation")
+    want_graph = not clinical_intent and item_type in (None, "", "graph", "graph_node", "graph_relation")
     want_rules = item_type in (None, "", "rule")
-    want_packages = item_type in (None, "", "package")
+    want_packages = not clinical_intent and item_type in (None, "", "package")
 
     items: List[Dict[str, Any]] = []
     for filename in graph_files:
@@ -112,6 +113,8 @@ def build_queue(
             continue
         if source_doc and (rule.get("source") or {}).get("guideline_id") != source_doc:
             continue
+        if clinical_intent and rule.get("clinical_intent") != clinical_intent:
+            continue
         text = f"{rule.get('rule_id', '')} {rule.get('name', '')}".lower()
         if query and query not in text:
             continue
@@ -120,6 +123,8 @@ def build_queue(
             "item_id": rule.get("rule_id", ""),
             "rule_id": rule.get("rule_id", ""),
             "name": rule.get("name", ""),
+            "rule_type": rule.get("rule_type", "diagnosis"),
+            "clinical_intent": rule.get("clinical_intent", ""),
             "status": rule.get("status", ""),
             "domain": rule_domain,
             "graph_filename": rule.get("graph_filename", ""),

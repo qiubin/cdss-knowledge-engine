@@ -15,6 +15,7 @@ from typing import Any, Callable, Dict, List, Optional
 from ..llm import LLMError, chat_json
 from .concept_mapping import CARDIAC_FINDINGS
 from ..models.rule import Rule
+from ..clinical_intent import normalize_clinical_intent
 from ..terminology.labels import default_labels
 from .terminology_resolver import (
     UNIVERSAL_TYPES,
@@ -97,7 +98,12 @@ def _auto_prompt(group: List[Dict[str, Any]], doc_title: str) -> List[Dict[str, 
         "DISEASE_HAS_CARE_PATHWAY（疾病→诊疗路径）、CARE_PATHWAY_HAS_PHASE（诊疗路径→路径阶段）、"
         "PHASE_USES_ORDER_SET（路径阶段→医嘱套餐）。"
         "规则使用 Rule 结构：rule_id、rule_type(diagnosis/treatment/contraindication/monitoring)、"
+        "clinical_intent(suspected_diagnosis/diagnosis_confirmation/differential_diagnosis/"
+        "diagnosis_exclusion/risk_stratification/severity_assessment/treatment_recommendation/"
+        "treatment_selection/contraindication_check/dose_adjustment/monitoring_plan/follow_up_plan)、"
         "disease_name、disease_code、conditions、conclusion、source、confidence。"
+        "用途必须按指南原意选择：疑似/初筛/诊断线索用 suspected_diagnosis，明确诊断标准用 diagnosis_confirmation，"
+        "治疗推荐用 treatment_recommendation，首选/替代/升级换药用 treatment_selection，且不得把疑似诊断标成确诊。"
         "condition 类型只能是：group, lab_concept, exam_finding, symptom, vital, demographic, "
         "past_history, medication, observation, attribute, evidence, fact。"
         "lab_concept 使用 lab_code + concept_code（ELEVATED/DECREASED/ABOVE_ULN_1/POSITIVE/NEGATIVE）；"
@@ -342,6 +348,7 @@ def _normalize_rules(
             "source": source,
             "tags": list(dict.fromkeys([*(raw.get("tags") or []), "auto-generated", doc_id])),
         }
+        rule["clinical_intent"] = normalize_clinical_intent(rule)
         try:
             Rule(**rule)
             rules.append(rule)
@@ -632,6 +639,7 @@ async def run_auto_pipeline(
             "domain": "western",
             "anchor_type": "disease",
             "rule_type": "treatment",
+            "clinical_intent": "treatment_recommendation",
             "name": f"自动生成: {disease_name or disease_code}治疗方案",
             "disease_code": disease_code,
             "disease_name": disease_name or disease_code,

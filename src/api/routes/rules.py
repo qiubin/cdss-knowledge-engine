@@ -18,6 +18,7 @@ from src.extraction.repository import ExtractionTemplateRepository
 from src.review.audit import AUDIT_PATH as REVIEW_AUDIT_PATH, append_audit
 from src.review.condition_completion import complete_rule_conditions
 from src.review.status import StatusTransitionError, next_rule_status
+from src.clinical_intent import normalize_clinical_intent
 from src.rules.history import get_snapshot, list_snapshots, record_snapshot
 from src.terminology.labels import default_labels
 from src.vocab.repository import ConceptVocabularyRepository, collect_concept_codes
@@ -60,6 +61,7 @@ def _load_all_rules(path: Optional[Path] = None) -> List[Dict]:
     for rule in rules:
         if not isinstance(rule, dict):
             continue
+        rule["clinical_intent"] = normalize_clinical_intent(rule)
         conditions = rule.get("conditions")
         labels.annotate(conditions)
         if not rule.get("condition_text"):
@@ -74,6 +76,9 @@ def _load_all_rules(path: Optional[Path] = None) -> List[Dict]:
 def _save_all_rules(rules: List[Dict], path: Optional[Path] = None):
     target = Path(path) if path is not None else MANAGED_RULES_PATH
     target.parent.mkdir(parents=True, exist_ok=True)
+    for rule in rules:
+        if isinstance(rule, dict):
+            rule["clinical_intent"] = normalize_clinical_intent(rule)
     target.write_text(
         json.dumps(rules, ensure_ascii=False, indent=2), encoding="utf-8"
     )
@@ -929,6 +934,7 @@ async def update_rule(rule_id: str, rule: Dict[str, Any]):
         if r.get("rule_id") == rule_id:
             if rule.get("graph_filename"):
                 normalize_graph_filename(str(rule["graph_filename"]))
+            rule["clinical_intent"] = normalize_clinical_intent(rule)
             validate_rule_concepts(rule)
             _ensure_active_rule_dependencies(rule)
             rules[i] = rule
@@ -945,6 +951,7 @@ async def create_rule(rule: Dict[str, Any]):
         raise HTTPException(409, "规则ID已存在")
     if rule.get("graph_filename"):
         normalize_graph_filename(str(rule["graph_filename"]))
+    rule["clinical_intent"] = normalize_clinical_intent(rule)
     validate_rule_concepts(rule)
     _ensure_active_rule_dependencies(rule)
     rules.append(rule)

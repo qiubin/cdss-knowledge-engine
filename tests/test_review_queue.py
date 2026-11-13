@@ -131,3 +131,21 @@ class QueueTest(unittest.TestCase):
         )
         rule_ids = [i["rule_id"] for i in queue["items"] if i["item_type"] == "rule"]
         self.assertEqual(rule_ids, ["R2"])
+
+    def test_queue_filters_rules_by_clinical_intent(self):
+        rules = json.loads(self.service.rules_path.read_text(encoding="utf-8"))
+        rules[0]["clinical_intent"] = "suspected_diagnosis"
+        rules.append({
+            **rules[0],
+            "rule_id": "R-TREAT",
+            "name": "测试治疗方案",
+            "rule_type": "treatment",
+            "clinical_intent": "treatment_recommendation",
+        })
+        self.service.rules_path.write_text(json.dumps(rules, ensure_ascii=False), encoding="utf-8")
+        queue = build_queue(
+            self.service, packages=[], graph_files=["QUEUE.json"],
+            clinical_intent="treatment_recommendation",
+        )
+        self.assertEqual([item["rule_id"] for item in queue["items"]], ["R-TREAT"])
+        self.assertEqual(queue["items"][0]["clinical_intent"], "treatment_recommendation")

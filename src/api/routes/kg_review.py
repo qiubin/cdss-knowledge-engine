@@ -206,6 +206,7 @@ async def review_queue(
     source_doc: Optional[str] = None,
     q: Optional[str] = None,
     relation_code: Optional[str] = None,
+    clinical_intent: Optional[str] = None,
     limit: int = 300,
 ):
     return build_queue(
@@ -219,6 +220,7 @@ async def review_queue(
         source_doc=source_doc,
         q=q,
         relation_code=relation_code,
+        clinical_intent=clinical_intent,
         limit=limit,
     )
 

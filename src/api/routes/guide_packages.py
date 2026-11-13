@@ -145,6 +145,7 @@ def _package_items(package: Dict[str, Any]) -> List[Dict[str, Any]]:
             "rule_id": rule.get("rule_id", ""),
             "name": rule.get("name", ""),
             "rule_type": rule.get("rule_type", ""),
+            "clinical_intent": rule.get("clinical_intent", ""),
             "status": review.get("status", "draft"),
             "reviewed_by": review.get("reviewed_by", ""),
             "reviewed_at": review.get("reviewed_at", ""),

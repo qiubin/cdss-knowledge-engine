@@ -4,7 +4,9 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+from src.clinical_intent import normalize_clinical_intent
 
 
 class ConditionOperator(str, Enum):
@@ -130,7 +132,9 @@ class Rule(BaseModel):
     # on syndrome.  ``disease_code`` remains the storage field for backward
     # compatibility and holds the anchor code.
     anchor_type: str = "disease"
-    rule_type: str = "diagnosis"  # diagnosis / treatment / tcm_pattern / tcm_treatment / tcm_prescription / tcm_contraindication
+    rule_type: str = "diagnosis"  # diagnosis / treatment / contraindication / monitoring / tcm_*
+    # Fine-grained purpose, independent from target and broad execution stage.
+    clinical_intent: str = ""
     name: str = ""
     disease_code: str
     disease_name: str = ""
@@ -148,6 +152,11 @@ class Rule(BaseModel):
     created_by: str = ""
     created_at: str = ""
     updated_at: str = ""
+
+    @model_validator(mode="after")
+    def fill_clinical_intent(self) -> "Rule":
+        self.clinical_intent = normalize_clinical_intent(self.model_dump())
+        return self
 
 
 RuleCondition.model_rebuild()

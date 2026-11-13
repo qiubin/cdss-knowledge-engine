@@ -1091,6 +1091,7 @@ class InferenceEngine:
             rule_id=rule.rule_id,
             rule_version=rule.version,
             rule_type=rule.rule_type,
+            clinical_intent=rule.clinical_intent,
             anchor_type=anchor_type,
             anchor_code=anchor_code,
             anchor_name=anchor_name,

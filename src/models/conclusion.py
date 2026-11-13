@@ -21,7 +21,8 @@ class Conclusion(BaseModel):
     """Output of the inference engine for one matched rule."""
     rule_id: str
     rule_version: int = 1
-    rule_type: str = "diagnosis"  # diagnosis / treatment / tcm_pattern / tcm_treatment / tcm_prescription / tcm_contraindication
+    rule_type: str = "diagnosis"  # diagnosis / treatment / contraindication / monitoring / tcm_*
+    clinical_intent: str = ""
     # Anchor: disease for western medicine, syndrome for TCM.  disease_code /
     # disease_name remain populated as the legacy mirror of anchor_code /
     # anchor_name so existing consumers keep working.

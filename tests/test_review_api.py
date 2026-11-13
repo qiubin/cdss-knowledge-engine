@@ -119,6 +119,23 @@ class ReviewApiTest(unittest.TestCase):
             [i for i in response.json()["items"] if i["item_type"].startswith("graph_")], []
         )
 
+    def test_queue_endpoint_filters_rule_clinical_intent(self):
+        self.service.rules_path.write_text(json.dumps([{
+            "rule_id": "R-SUSPECT",
+            "name": "疑似心衰筛查",
+            "rule_type": "diagnosis",
+            "clinical_intent": "suspected_diagnosis",
+            "disease_code": "I50.9",
+            "status": "draft",
+            "conditions": {"type": "group", "operator": "AND", "children": []},
+            "conclusion": {"diagnosis": "I50.9"},
+        }], ensure_ascii=False), encoding="utf-8")
+        response = self.request(
+            "GET", "/api/review/queue?clinical_intent=suspected_diagnosis"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([item["rule_id"] for item in response.json()["items"]], ["R-SUSPECT"])
+
     def test_unified_bulk_approves_graph_node(self):
         response = self.request("POST", "/api/review/bulk", json={
             "items": [{
