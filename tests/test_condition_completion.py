@@ -59,6 +59,14 @@ def empty_rule():
 
 
 class CollectTest(unittest.TestCase):
+    def test_reviewed_edges_work_without_legacy_evidence_map(self):
+        graph = graph_with_evidence()
+        graph["evidences"] = []
+        graph["disease_evidence"] = []
+        collected = collect_disease_evidence_conditions(graph, "I21.0", approved_only=True)
+        self.assertTrue(collected["symptoms"])
+        self.assertTrue(collected["objective"])
+
     def test_collect_maps_lab_symptom_and_finding(self):
         collected = collect_disease_evidence_conditions(graph_with_evidence(), "I21.0")
         types = sorted(c["type"] for c in collected["symptoms"] + collected["objective"])
@@ -72,6 +80,19 @@ class CollectTest(unittest.TestCase):
         skipped_reasons = " ".join(item["reason"] for item in collected["skipped"])
         self.assertIn("NOT_IN_VOCAB", skipped_reasons)
 
+    def test_approved_only_excludes_condition_with_draft_relation(self):
+        graph = graph_with_evidence()
+        symptom_relation = next(
+            item for item in graph["relations"]
+            if item["relation_code"] == "DISEASE_HAS_SYMPTOM"
+        )
+        symptom_relation["review_status"] = "draft"
+        collected = collect_disease_evidence_conditions(
+            graph, "I21.0", approved_only=True
+        )
+        self.assertFalse(any(item["type"] == "symptom" for item in collected["symptoms"]))
+        self.assertIn("尚未全部审核通过", " ".join(item["reason"] for item in collected["skipped"]))
+
 
 class BuildTreeTest(unittest.TestCase):
     def test_builds_and_tree_with_or_branches(self):
@@ -83,6 +104,14 @@ class BuildTreeTest(unittest.TestCase):
 
 
 class CompleteRuleTest(unittest.TestCase):
+    def test_reviewed_associations_do_not_add_mandatory_clause(self):
+        rule = empty_rule()
+        rule["conditions"] = {"type": "symptom", "symptom_code": "SYM_TEST"}
+        result = complete_rule_conditions(rule, graph_with_evidence(), approved_only=True)
+        self.assertFalse(result["changed"])
+        self.assertTrue(result["candidates"])
+        self.assertEqual(rule["conditions"], {"type": "symptom", "symptom_code": "SYM_TEST"})
+
     def test_empty_group_replaced_and_becomes_consistent(self):
         rule = empty_rule()
         result = complete_rule_conditions(rule, graph_with_evidence())

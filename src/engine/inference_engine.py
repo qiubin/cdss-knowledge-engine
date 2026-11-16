@@ -78,6 +78,7 @@ class InferenceEngine:
         self._current_facts: Dict[str, Dict[str, Conclusion]] = {}
         self._last_weighted_detail: Dict[str, Any] = {}
         self._atom_cache: Dict[str, tuple] = {}
+        self.evaluation_issues: List[Dict[str, Any]] = []
 
     def run(
         self,
@@ -152,6 +153,7 @@ class InferenceEngine:
         }
 
         self._atom_cache = {}
+        self.evaluation_issues = []
         conclusions: List[Conclusion] = []
         patient_key_set = patient_keys(patient)
         facts: Dict[str, Dict[str, Conclusion]] = {}
@@ -188,6 +190,16 @@ class InferenceEngine:
             if stage.draft_allowed:
                 prior_codes = set().union(*(set(items) for items in facts.values())) if facts else set()
                 stage_rules = [rule for rule in stage_rules if rule.disease_code in prior_codes]
+
+            # Scenario-generated treatments explicitly choose which diagnosis
+            # state authorizes them; suspected findings must not imply confirmed.
+            stage_rules = [rule for rule in stage_rules if not rule.diagnosis_prerequisite or (rule.status == "active" and any(
+                conclusion.disease_code == rule.disease_code
+                and conclusion.rule_type == "diagnosis"
+                and (conclusion.clinical_intent == "diagnosis_confirmation"
+                     or (rule.diagnosis_prerequisite == "suspected"
+                         and conclusion.clinical_intent == "suspected_diagnosis"))
+                for conclusion in conclusions))]
 
             self._current_facts = facts
             matched_map = matcher(stage_rules, patient)
@@ -305,7 +317,7 @@ class InferenceEngine:
                 + json.dumps(condition.parameter or {}, sort_keys=True, ensure_ascii=False)
             )
         if ctype == "exam_finding":
-            return f"exam_finding:{condition.exam_code}:{condition.finding_code}:{condition.concept_code}"
+            return f"exam_finding:{condition.exam_code}:{condition.finding_code}:{condition.concept_code}:" + json.dumps({**(condition.parameter or {}), "standard_required": condition.standard_required}, sort_keys=True)
         if ctype == "symptom":
             return f"symptom:{condition.symptom_code}:{condition.duration_minutes}:{condition.concept_code}"
         if ctype == "vital":
@@ -401,11 +413,10 @@ class InferenceEngine:
             all_traces.extend(traces)
 
         if op == "AND":
-            matched = all(results)
-        elif op == "OR":
-            matched = any(results)
-        elif op == "NOT":
-            matched = not any(results)
+            matched = False if any(value is False for value in results) else None if any(value is None for value in results) else True
+        elif op in {"OR", "NOT"}:
+            matched = True if any(value is True for value in results) else None if any(value is None for value in results) else False
+            if op == "NOT" and matched is not None: matched = not matched
         else:
             matched = False
 
@@ -628,18 +639,30 @@ class InferenceEngine:
         if result.matched:
             self._attach_source(evidence, trace)
 
-        return result.matched, ([trace] if result.matched else [])
+        return self._interpretation_state(result, item_type="lab", lab_code=lab_code), ([trace] if result.matched else [])
+
+    def _interpretation_state(self, result, **context):
+        if result.detail.get("evaluation_status") == "unknown" or result.evidence_description == "标准未配置":
+            issue = {**context, "status": "unknown", "reason": result.evidence_description}
+            if issue not in self.evaluation_issues: self.evaluation_issues.append(issue)
+            return None
+        return result.matched
+
+    def _exam_result(self, patient, exam_code, finding_code, concept_code, parameter=None):
+        params = {**(parameter or {}), "exam_code": exam_code, "finding_code": finding_code, "concept_code": concept_code or "PRESENT"}
+        finding = patient.get_finding(exam_code or "", finding_code or "")
+        lookup = getattr(self.standard_repo, "get_exam_active", None)
+        standard = lookup(patient.hospital_id, exam_code, finding_code, params["concept_code"],
+            patient.gender.value if patient.gender else None, patient.age, finding.method if finding else "") if lookup else None
+        configured = getattr(self.standard_repo, "has_exam_standard", None)
+        if configured and configured(patient.hospital_id, exam_code, finding_code, params["concept_code"]) and standard is None:
+            params["standard_required"] = True
+        return EvaluatorFactory.create("finding_exists").evaluate(patient, standard, params)
 
     def _evaluate_exam_evidence(self, evidence, patient) -> Tuple[bool, List[EvidenceTrace]]:
         """Evaluate an exam finding evidence node."""
-        evaluator = EvaluatorFactory.create("finding_exists")
         concept_code = evidence.concept_code or "PRESENT"
-        param = {
-            "exam_code": evidence.exam_code,
-            "finding_code": evidence.finding_code,
-            "concept_code": concept_code,
-        }
-        result = evaluator.evaluate(patient, None, param)
+        result = self._exam_result(patient, evidence.exam_code, evidence.finding_code, concept_code, evidence.parameter)
         finding = patient.get_finding(
             evidence.exam_code or "", evidence.finding_code or ""
         )
@@ -671,7 +694,7 @@ class InferenceEngine:
         if result.matched:
             self._attach_source(evidence, trace)
 
-        return result.matched, ([trace] if result.matched else [])
+        return self._interpretation_state(result, item_type="exam", exam_code=evidence.exam_code, finding_code=evidence.finding_code), ([trace] if result.matched else [])
 
     def _evaluate_symptom_evidence(self, evidence, patient) -> Tuple[bool, List[EvidenceTrace]]:
         """Evaluate a symptom evidence node."""
@@ -767,7 +790,7 @@ class InferenceEngine:
             standard_used=self._localized_concept(result.standard_used, concept_code),
         )
 
-        return result.matched, ([trace] if result.matched else [])
+        return self._interpretation_state(result, item_type="lab", lab_code=lab_code), ([trace] if result.matched else [])
 
     def _evaluate_exam_finding(
         self,
@@ -775,15 +798,11 @@ class InferenceEngine:
         patient: PatientSnapshot,
     ) -> Tuple[bool, List[EvidenceTrace]]:
         """Direct exam finding evaluation."""
-        finding = patient.get_finding(condition.exam_code or "", condition.finding_code or "")
-        matched = finding is not None and finding.present
-        trace = EvidenceTrace(
-            evidence_id=f"direct_{condition.exam_code}_{condition.finding_code}",
-            description=f"{self._entity_label('exam', condition.exam_code or '', finding.exam_name if finding else '')} · "
-            f"{self._entity_label('exam_finding', condition.finding_code or '', finding.finding_name if finding else '')}",
-            patient_value_display=f"{'+' if matched else '-'}",
-            standard_used=self._concept_term(condition.concept_code or "PRESENT"),
-        )
+        result = self._exam_result(patient, condition.exam_code, condition.finding_code, condition.concept_code, {**(condition.parameter or {}), "standard_required": condition.standard_required})
+        matched = self._interpretation_state(result, item_type="exam", exam_code=condition.exam_code, finding_code=condition.finding_code)
+        trace = EvidenceTrace(evidence_id=f"direct_{condition.exam_code}_{condition.finding_code}",
+            description=self._entity_label("exam", condition.exam_code or "") + " · " + self._entity_label("exam_finding", condition.finding_code or ""),
+            patient_value_display=result.patient_value_display, standard_used=result.standard_used)
         return matched, ([trace] if matched else [])
 
     def _evaluate_symptom(

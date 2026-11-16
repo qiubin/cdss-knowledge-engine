@@ -316,7 +316,9 @@ class GraphSemanticChecker:
             if not finding_code:
                 issues.append("检查发现条件缺少发现编码")
             else:
-                concepts.append("PRESENT")
+                code = str(condition.get("concept_code") or "PRESENT")
+                concepts.append(code)
+                self._add_concept_issue(issues, code)
                 self._check_diagnostic_evidence(
                     issues, concepts, disease_code,
                     finding_code=finding_code, exam_code=exam_code,
@@ -463,6 +465,11 @@ def check_rule_sync(rules: List[Dict[str, Any]], graph_loader=None) -> Dict[str,
             domain = normalize_domain(rule.get("domain") or graph_domain)
             checker = tcm_checker if domain == TCM else western_checker
             result = checker.check_rule(rule)
+            from src.review.rule_checks import condition_structure_issues
+            structural = condition_structure_issues(rule)
+            if structural:
+                result["issues"] = list(dict.fromkeys([*(result.get("issues") or []), *structural]))
+                result["semantic_status"] = "inconsistent"
             result["graph_filename"] = filename
             result["domain"] = domain
             results.append(result)
@@ -549,10 +556,28 @@ def _dependency_result(rule: Dict[str, Any], graph_loader=None) -> Dict[str, Any
     return check_rule_sync([rule], graph_loader=graph_loader)["rules"][0]
 
 
+def _ensure_clinical_basis(rule):
+    tags = [tag for tag in rule.get("tags", []) if str(tag).startswith("clinical-basis:")]
+    if not tags and not str(rule.get("rule_id", "")).startswith("RULE-CB-"):
+        return
+    from src.review.clinical_basis import get_basis, require_approved
+    from src.review.service import ReviewService
+    filename = normalize_graph_filename(rule.get("graph_filename"))
+    graph = _load_graph(filename)
+    linked = [basis for basis in graph.get("clinical_bases", []) if basis.get("generated_rule_id") == rule.get("rule_id")]
+    for basis in linked:
+        require_approved(ReviewService(), filename, graph, basis)
+    if not linked and not tags:
+        raise HTTPException(409, "生成规则的诊疗依据已缺失")
+    for tag in tags:
+        require_approved(ReviewService(), filename, graph, get_basis(graph, tag.split(":", 1)[1]))
+
+
 def _ensure_active_rule_dependencies(rule: Dict[str, Any]) -> None:
     """Reject saving an active rule whose graph dependencies are not approved."""
     if str(rule.get("status") or "draft") != "active":
         return
+    _ensure_clinical_basis(rule)
     result = _dependency_result(rule)
     if result.get("semantic_status") != "consistent":
         raise HTTPException(
@@ -584,6 +609,7 @@ def apply_rule_review(
         except StatusTransitionError as exc:
             raise HTTPException(422, str(exc)) from exc
         if action == "approve":
+            _ensure_clinical_basis(rule)
             result = _dependency_result(rule)
             if result.get("semantic_status") != "consistent":
                 issues = result.get("issues") or ["图谱语义不一致"]
@@ -876,6 +902,11 @@ async def activate_consistent(request: ActivateConsistentRequest):
         activated = 0
         audit_records = []
         for rule in candidates:
+            try:
+                _ensure_clinical_basis(rule)
+            except HTTPException as error:
+                skipped.append({"rule_id": rule.get("rule_id"), "reason": str(error.detail)})
+                continue
             result = by_id.get(rule.get("rule_id"), {})
             if result.get("semantic_status") != "consistent":
                 skipped.append({

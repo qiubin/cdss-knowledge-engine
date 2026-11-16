@@ -172,7 +172,7 @@ class AutoPipelineCheckpointTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(group_calls[-1]["total"], 2)
         stages = [c["stage"] for c in calls]
         self.assertIn("术语映射与图谱整理", stages)
-        self.assertIn("写入图谱与规则（不可中断）", stages)
+        self.assertIn("写入图谱与待审诊疗依据（不可中断）", stages)
         self.assertTrue(controller.finalizing)
 
     async def test_stop_between_groups_raises(self):

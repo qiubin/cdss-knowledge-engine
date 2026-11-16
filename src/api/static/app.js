@@ -62,6 +62,133 @@
 
   const $ = (selector) => document.querySelector(selector);
   const content = $("#content");
+
+  // ==== Keep-alive 页面容器 ====
+  // 每个路由一个常驻 DOM 容器：首次访问挂载，之后切换只做挂载/摘除，
+  // 保留筛选词、滚动位置、输入草稿与图谱视口。摘除的节点缓存在
+  // pageRegistry 中（脱离文档但保留监听器与输入状态），因此所有
+  // document 级查询天然只命中当前活动页，不会跨页串扰。
+  const pageRegistry = new Map();   // route -> { el, loading }
+  const scrollMem = {};             // route -> 离开时 .content 的 scrollTop
+  const stalePages = new Set();     // 数据已变更、需要重挂载的路由
+  let pageEl = null;                // 当前正在渲染/交互的页面容器（renderXxx 的写入目标）
+  const pageRenderers = {
+    dashboard: renderDashboard, import: renderImport, packages: renderGuidePackages,
+    templates: renderTemplates, entityVocab: renderEntityVocab, vocab: renderVocab,
+    graph: renderGraph, graphVisual: renderGraphVisual, graphClear: renderGraphClear,
+    tcmGraph: renderTcmGraph, rules: renderRules, review: renderReviewCenter,
+    standards: renderStandards, tcmInference: renderTcmInference, inference: renderInference,
+  };
+
+  async function navigate(route, { reload = false } = {}) {
+    if (!pageRenderers[route]) route = "dashboard";
+    const prev = state.route;
+    if (prev && prev !== route) scrollMem[prev] = content.scrollTop;
+    state.route = route;
+    document.querySelectorAll(".nav-item").forEach((b) => {
+      b.classList.toggle("active", b.dataset.route === route);
+      b.classList.toggle("opened", openedTabs.includes(b.dataset.route));
+    });
+    const [title, desc] = titles[route] || ["概览", ""];
+    $("#pageTitle").textContent = title;
+    $("#pageDesc").textContent = desc;
+    if (!openedTabs.includes(route)) openedTabs.push(route);
+    renderTabs();
+    if (location.hash !== `#${route}`) location.hash = route;
+    if (stalePages.has(route)) reload = true;
+    let page = pageRegistry.get(route);
+    if (page && reload) {
+      page.el.remove();
+      pageRegistry.delete(route);
+      stalePages.delete(route);
+      page = null;
+    }
+    if (!page) {
+      const el = document.createElement("div");
+      el.className = "page";
+      el.dataset.page = route;
+      el.innerHTML = '<div class="empty">加载中...</div>';
+      page = { el, loading: null };
+      pageRegistry.set(route, page);
+      content.replaceChildren(el);
+      pageEl = el;
+      stalePages.delete(route);
+      page.loading = mountPage(route, el);
+      await page.loading;
+      page.loading = null;
+      content.scrollTop = 0;
+      return;
+    }
+    content.replaceChildren(page.el);
+    pageEl = page.el;
+    if (page.loading) { await page.loading; return; } // 首次挂载进行中：等它完成
+    content.scrollTop = scrollMem[route] || 0;
+  }
+
+  // 强制重渲染当前页（原 render() 的语义）
+  function reload() { return navigate(state.route, { reload: true }); }
+  // 数据变更后标记受影响页面失效：已挂载的页在下次进入时重挂载；
+  // 当前活动页不在此处理，由调用方自行 reload() 或内部重渲染
+  function markStale(...routes) {
+    routes.forEach((route) => {
+      if (!pageRenderers[route] || route === state.route) return;
+      if (pageRegistry.has(route)) stalePages.add(route);
+    });
+  }
+
+  // ==== 页签栏 ====
+  // 点菜单 = 打开页签（页面常驻），点 × 关闭并销毁该页；概览为常驻页签。
+  const openedTabs = ["dashboard"];           // 页签打开顺序
+  const pinnedTabs = new Set(["dashboard"]);  // 不可关闭的常驻页签
+
+  function renderTabs() {
+    const bar = $("#pagetabs");
+    if (!bar) return;
+    bar.replaceChildren(...openedTabs.map((route) => {
+      const tab = document.createElement("div");
+      tab.className = "pagetab" + (route === state.route ? " active" : "");
+      tab.dataset.route = route;
+      tab.title = (titles[route] || [route])[1] || "";
+      tab.onclick = () => navigate(route);
+      const label = document.createElement("span");
+      label.className = "pagetab-label";
+      label.textContent = (titles[route] || [route])[0];
+      tab.appendChild(label);
+      if (!pinnedTabs.has(route)) {
+        const close = document.createElement("button");
+        close.className = "pagetab-close";
+        close.type = "button";
+        close.title = `关闭「${(titles[route] || [route])[0]}」页签`;
+        close.setAttribute("aria-label", `关闭「${(titles[route] || [route])[0]}」页签`);
+        close.textContent = "×";
+        close.onclick = (event) => { event.stopPropagation(); closeTab(route); };
+        tab.appendChild(close);
+      }
+      return tab;
+    }));
+  }
+
+  function closeTab(route) {
+    if (pinnedTabs.has(route)) return;
+    const index = openedTabs.indexOf(route);
+    if (index < 0) return;
+    openedTabs.splice(index, 1);
+    delete scrollMem[route];
+    const page = pageRegistry.get(route);
+    if (page) {
+      page.el.remove();
+      pageRegistry.delete(route);
+      stalePages.delete(route);
+    }
+    if (state.route === route) {
+      // 关闭当前页签：激活相邻（优先左侧）页签
+      const next = openedTabs[Math.max(0, index - 1)] || openedTabs[0] || "dashboard";
+      navigate(next);
+    } else {
+      renderTabs();
+    }
+  }
+
   const titles = {
     dashboard: ["概览", "知识资产、流程状态与快速验证入口"],
     import: ["指南导入", "上传并解析指南，审核候选内容后生成知识包"],
@@ -70,10 +197,12 @@
     entityVocab: ["实体词典", "术语层：共享实体字典，具体临床实体与别名跨模板复用"],
     vocab: ["概念词汇", "管理规则生成与推理判断使用的抽象语义"],
     graph: ["知识图谱", "管理疾病、诊断证据和指南出处"],
+    graphVisual: ["图谱可视", "选择知识图谱，查看实体、关系和指南溯源"],
+    graphClear: ["图谱清除", "清空所选图谱内容及关联规则，保留指南原文与解析资料"],
     tcmGraph: ["中医图谱", "证候为中心的辨证、治法与方药知识图谱"],
     rules: ["规则管理", "规则使用抽象证据概念，不保存医院阈值"],
     review: ["审核台", "跨图谱与规则的待办、阻断、待复核与审核记录"],
-    standards: ["标准管理", "按医院维护概念到检验判定阈值的标准"],
+    standards: ["标准管理", "按医院维护检查与检验的判定方式、适用范围和来源"],
     inference: ["病历测试", "用模拟病历调用知识图谱、规则和医院标准"],
     tcmInference: ["中医辨证", "输入症状、舌象、脉象，输出证候、治法与方药"],
   };
@@ -169,15 +298,6 @@
     pathology: "病理", histology: "组织学", biomarker: "生物标志物", molecular_test: "分子检测",
     concept: "抽象概念",
   };
-
-  function navigate(route) {
-    state.route = route;
-    document.querySelectorAll(".nav-item").forEach((b) => b.classList.toggle("active", b.dataset.route === route));
-    const [title, desc] = titles[route] || ["概览", ""];
-    $("#pageTitle").textContent = title;
-    $("#pageDesc").textContent = desc;
-    render();
-  }
 
   function panel(title, body, actions = "", description = "", flush = false) {
     return `<section class="panel"><div class="panel-head"><div><h3>${esc(title)}</h3>${description ? `<p>${esc(description)}</p>` : ""}</div><div class="actions">${actions}</div></div><div class="panel-body${flush ? " flush" : ""}">${body || '<div class="empty">暂无数据</div>'}</div></section>`;
@@ -340,25 +460,11 @@
     return evidence.data_type === "exam_finding" || evidence.data_type === "symptom" ? conceptChip("PRESENT") : '<span class="muted">-</span>';
   }
 
-  async function render() {
-    content.innerHTML = '<div class="empty">加载中...</div>';
-    try {
-      if (state.route === "dashboard") await renderDashboard();
-      else if (state.route === "import") await renderImport();
-      else if (state.route === "packages") await renderGuidePackages();
-      else if (state.route === "templates") await renderTemplates();
-      else if (state.route === "entityVocab") await renderEntityVocab();
-      else if (state.route === "vocab") await renderVocab();
-      else if (state.route === "graph") await renderGraph();
-      else if (state.route === "tcmGraph") await renderTcmGraph();
-      else if (state.route === "rules") await renderRules();
-      else if (state.route === "review") await renderReviewCenter();
-      else if (state.route === "standards") await renderStandards();
-      else if (state.route === "tcmInference") await renderTcmInference();
-      else await renderInference();
-    } catch (error) {
-      content.innerHTML = `<div class="result-banner error">${esc(error.message)}</div>`;
-    }
+  // 页面首次挂载入口：renderXxx 写入自己的页面容器 pageEl（而非全局 content）
+  async function mountPage(route, el) {
+    pageEl = el;
+    try { await pageRenderers[route](); }
+    catch (error) { el.innerHTML = `<div class="result-banner error">${esc(error.message)}</div>`; }
   }
 
   async function loadBase() {
@@ -419,31 +525,38 @@
       + sumStatuses(reviewSummary.rules, ["draft", "testing", "blocked"]);
     const semanticNodes = Array.isArray(graph.nodes) ? graph.nodes : Object.values(graph.nodes || {});
     const semanticRelations = Array.isArray(graph.relations) ? graph.relations : Object.values(graph.relations || {});
-    const planNodes = semanticNodes.filter((node) => node.node_type === "treatment_plan");
-    const planDiseaseLinks = semanticRelations.filter((relation) => relation.relation_code === "DISEASE_HAS_TREATMENT_PLAN");
-    const medNodes = semanticNodes.filter((node) => node.node_type === "medication");
-    const interventionNodes = semanticNodes.filter((node) => node.node_type === "intervention");
+    // 概览口径：只统计已通过审核（review_status=active）的图谱数据
+    const isApproved = (item) => (item.review_status || "draft") === "active";
+    const approvedNodes = semanticNodes.filter(isApproved);
+    const approvedRelations = semanticRelations.filter(isApproved);
+    const diseaseNodes = approvedNodes.filter((node) => node.node_type === "disease" || node.node_type === "western_disease");
+    const evidenceNodes = approvedNodes.filter((node) => node.node_type === "diagnostic_evidence");
+    const planNodes = approvedNodes.filter((node) => node.node_type === "treatment_plan");
+    const planDiseaseLinks = approvedRelations.filter((relation) => relation.relation_code === "DISEASE_HAS_TREATMENT_PLAN");
+    const medNodes = approvedNodes.filter((node) => node.node_type === "medication");
+    const interventionNodes = approvedNodes.filter((node) => node.node_type === "intervention");
+    const diseaseLinkCount = approvedRelations.filter((relation) => (relation.relation_code || "").startsWith("DISEASE_HAS")).length;
     const steps = [
       ["上传指南", `${docs.length} 份文档`, docs.length ? "done" : "pending"],
       ["知识包生成", "候选图谱与规则", "pending"],
       ["人工导入", "草稿进入图谱与规则", "pending"],
-      ["图谱入库", `${graph.evidences.length} 证据节点`, "done"],
-      ["规则配置", `${activeRules.length} 条活跃`, "done"],
-      ["医院标准", `${standardOverview.active_count} 条活跃`, "done"],
+      ["图谱入库", `${evidenceNodes.length} 证据节点已通过审核`, evidenceNodes.length ? "done" : "pending"],
+      ["规则配置", `${activeRules.length} 条已启用`, activeRules.length ? "done" : "pending"],
+      ["医院标准", `${standardOverview.active_count} 条已启用`, standardOverview.active_count ? "done" : "pending"],
     ];
-    content.innerHTML = `
+    pageEl.innerHTML = `
       ${panel("知识图谱上下文", `
         <div class="inline-controls">
           <div class="field"><label>当前图谱</label><select id="dashboardGraph">${graphs.map((item) => `<option value="${esc(item.graph_filename)}" ${item.graph_filename === graphFilename ? "selected" : ""}>${esc(item.graph_filename)}</option>`).join("")}</select></div>
         </div>
-      `, "", "统计口径跟随当前图谱；规则执行仍按规则自身配置的图谱加载")}
+      `, "", "统计口径：当前图谱中已通过审核（active）的数据；规则执行仍按规则自身配置的图谱加载")}
       <div class="grid c4">
-        <div class="kpi"><span>疾病节点</span><strong>${graph.diseases.length}</strong><small>当前图谱 ICD 实体</small></div>
-        <div class="kpi"><span>诊断证据</span><strong>${graph.evidences.length}</strong><small>${graph.disease_evidence.length} 条疾病关联</small></div>
-        <div class="kpi"><span>治疗方案</span><strong>${planNodes.length}</strong><small>${planDiseaseLinks.length} 条疾病关联</small></div>
+        <div class="kpi"><span>疾病节点</span><strong>${diseaseNodes.length}</strong><small>仅统计已通过审核 · 当前图谱</small></div>
+        <div class="kpi"><span>诊断证据</span><strong>${evidenceNodes.length}</strong><small>${diseaseLinkCount} 条已通过疾病关联</small></div>
+        <div class="kpi"><span>治疗方案</span><strong>${planNodes.length}</strong><small>${planDiseaseLinks.length} 条已通过疾病关联</small></div>
         <div class="kpi"><span>药物与措施</span><strong>${medNodes.length + interventionNodes.length}</strong><small>${medNodes.length} 药物 / ${interventionNodes.length} 措施</small></div>
-        <div class="kpi"><span>推理规则</span><strong>${selectedRules.length}</strong><small>${activeRules.length} 条活跃</small></div>
-        <div class="kpi"><span>医院标准</span><strong>${standardOverview.total_count}</strong><small>${standardOverview.active_count} 条活跃 / ${standardOverview.hospital_count} 家机构</small></div>
+        <div class="kpi"><span>推理规则</span><strong>${activeRules.length}</strong><small>已通过审核并启用 · 共 ${selectedRules.length} 条</small></div>
+        <div class="kpi"><span>医院标准</span><strong>${standardOverview.active_count}</strong><small>已启用 · ${standardOverview.hospital_count} 家机构</small></div>
       </div>
       ${panel("全流程状态", `<div class="pipeline">${steps.map((s) => `<div class="step ${s[2]}"><strong>${s[0]}</strong><span>${s[1]}</span></div>`).join("")}</div>`)}
       ${panel("快速操作", `
@@ -538,23 +651,23 @@
       if (docs.length) state.doc = await api(`/api/pdf/${docs[0].doc_id}/result`);
     }
     const doc = state.doc;
-    content.innerHTML = `
+    pageEl.innerHTML = `
       <div id="pendingUploadPanel"></div>
       <div id="importJobPanel"></div>
       ${panel("一键自动生成（LLM 推荐）", `
         <div class="inline-controls">
           <button id="autoUploadBtn" class="btn primary">选择指南 PDF 自动生成</button>
-          <span class="muted">自动完成并直接入库：开放术语发现 → 标准码/LOCAL 码 → 图谱 → 诊断/治疗/禁忌规则 → 结构化治疗方案</span>
+          <span class="muted">自动完成并直接入库：开放术语发现 → 标准码/LOCAL 码 → 图谱与诊疗依据 → 人工审核 → 规则草稿</span>
         </div>
         <input id="autoPdfInput" type="file" accept=".pdf" hidden>
       `, "", "不需要预先补疾病、症状、检查词典；需先在「解析模板」页配置 LLM 地址、API Key、模型")}
       ${state.autoResult ? `
         <div id="autoResultPanel" class="result-banner ok">
           <strong>自动生成并已入库：${esc(state.autoResult.doc_title || state.autoResult.doc_id)}</strong>
-          <div>实体 ${state.autoResult.entity_count} / 关系 ${state.autoResult.relation_count} / 规则 ${state.autoResult.rule_count}（已启用 ${state.autoResult.active_rule_count}）/ LOCAL 术语 ${state.autoResult.local_term_count}</div>
-          <div class="muted">图谱和草稿规则已自动写入；请到「知识包」页核验预检结果，再到「规则管理」逐条启用。</div>
+          <div>实体 ${state.autoResult.entity_count} / 关系 ${state.autoResult.relation_count} / 待审诊疗依据 ${state.autoResult.rule_count}/ LOCAL 术语 ${state.autoResult.local_term_count}</div>
+          <div class="muted">图谱和待审诊疗依据已写入；请在审核台依次审核实体、关系和诊疗依据，通过后生成规则草稿。</div>
           <div class="mono">图谱：${esc(state.autoResult.graph_filename)} · 知识包：${esc(state.autoResult.package_id)}</div>
-          <div class="actions"><button id="autoOpenPackage" class="btn sm primary">查看知识包</button><button id="autoOpenGraph" class="btn sm">查看图谱</button><button id="autoOpenRules" class="btn sm">查看规则</button></div>
+          <div class="actions"><button id="autoOpenPackage" class="btn sm primary">查看知识包</button><button id="autoOpenGraph" class="btn sm">查看图谱</button><button id="autoOpenRules" class="btn sm">审核诊疗依据</button></div>
         </div>` : ""}
       ${panel("上传指南 PDF（模板模式）", `
         <div class="inline-controls">
@@ -575,13 +688,13 @@
     autoInput.onchange = () => autoInput.files[0] && prepareAutoUpload(autoInput.files[0]);
     $("#autoOpenPackage")?.addEventListener("click", () => {
       state.guidePackageId = state.autoResult.package_id;
-      navigate("packages");
+      navigate("packages", { reload: true });
     });
     $("#autoOpenGraph")?.addEventListener("click", () => {
       state.graphFilename = state.autoResult.graph_filename;
-      navigate("graph");
+      navigate("graph", { reload: true });
     });
-    $("#autoOpenRules")?.addEventListener("click", () => navigate("rules"));
+    $("#autoOpenRules")?.addEventListener("click", () => { state.reviewTab = "bases"; state.reviewFilters.graph = state.autoResult.graph_filename; navigate("review", { reload: true }); });
     drop.onclick = () => input.click();
     drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("drag"); };
     drop.ondragleave = () => drop.classList.remove("drag");
@@ -624,7 +737,7 @@
     const pending = state.pendingUpload;
     if (!pending || activeImportJob()) { box.innerHTML = ""; return; }
     const summary = pending.kind === "auto"
-      ? "一键自动生成：开放术语发现 → 标准码/LOCAL 码 → 图谱 → 诊断/治疗/禁忌规则 → 结构化治疗方案"
+      ? "一键自动生成：开放术语发现 → 标准码/LOCAL 码 → 图谱与诊疗依据 → 人工审核 → 规则草稿"
       : `解析方式：${pending.mode === "llm" ? "大模型解析" : "本地模板解析"} · 抽取模板：${esc(pending.templateId || "-")} · 目的图谱：${pending.graphFilename ? esc(pending.graphFilename) : "跟随模板"}`;
     box.innerHTML = `
       <section class="panel">
@@ -843,7 +956,9 @@
       if (job.mode === "auto") {
         state.autoResult = job.result || {};
         state.guidePackageId = state.autoResult.package_id || state.guidePackageId;
-        if (state.route === "import") renderImport();
+        if (state.route === "import") reload();
+        else markStale("import");
+        markStale("dashboard", "packages", "graph", "review", "rules");
         return;
       }
       renderImportJob();
@@ -927,7 +1042,7 @@
           <div class="field"><label>主目标${domain === "tcm" ? "证候" : "疾病"}（预检锚点）</label><select id="targetDisease">${anchors.map((d) => `<option value="${esc(d.code)}" ${d.code === target ? "selected" : ""}>${esc(d.name)} ${esc(d.code)}</option>`).join("")}</select></div>
           <div class="muted" style="flex-basis:100%">${anchors.length > 1
             ? `本次将导入包内全部 ${anchors.length} 个${domain === "tcm" ? "证候" : "疾病"}：${esc(anchors.map((d) => `${d.name}（${d.code}）`).join("、"))}。主目标仅用于预检锚点与诊断链路定位，不是唯一导入对象。`
-            : "主目标仅用于预检锚点与诊断链路定位；包内全部实体、关系和规则都会导入。"}</div>
+            : "主目标仅用于预检锚点与诊断链路定位；包内实体、关系和待审诊疗依据会导入。"}</div>
           ${domain === "tcm" ? `
           <div class="field"><label>目标图谱</label><select id="graphTargetMode">
             <option value="new" selected>新建独立中医图谱</option>
@@ -1026,7 +1141,7 @@
     if (state.templateStructureId) return renderTemplateStructure();
     const config = state.extractionConfig;
     state.lastLlmProvider = config.llm.provider || "openai_compatible";
-    content.innerHTML = `
+    pageEl.innerHTML = `
       ${panel("解析服务", `
         <div class="form-grid">
           <div class="field"><label>默认解析方式</label><select id="defaultMode"><option value="local" ${config.default_mode === "local" ? "selected" : ""}>本地模板解析</option><option value="llm" ${config.default_mode === "llm" ? "selected" : ""}>大模型解析</option></select></div>
@@ -1063,9 +1178,9 @@
       ${panel("模板列表", table(["模板", "范围", "目标图谱", "结构规模", "状态", "操作"], state.templates.map(templateRow)), '<button id="newTemplate" class="btn primary">新建模板</button>', "本地解析读取别名/正则；大模型解析读取同一结构、提示指令和输出契约")}
     `;
     $("#newTemplate").onclick = () => openTemplateEditor(null);
-    content.querySelectorAll("[data-template-structure]").forEach((b) => b.onclick = () => {
+    pageEl.querySelectorAll("[data-template-structure]").forEach((b) => b.onclick = () => {
       state.templateStructureId = b.dataset.templateStructure;
-      render();
+      reload();
     });
     $("#saveExtraction").onclick = saveExtractionConfig;
     $("#llmProvider").onchange = (event) => {
@@ -1149,8 +1264,8 @@
       toast("API Key 已清除");
       renderTemplates();
     };
-    content.querySelectorAll("[data-template-edit]").forEach((b) => b.onclick = () => openTemplateEditor(state.templates.find((t) => t.template_id === b.dataset.templateEdit)));
-    content.querySelectorAll("[data-template-copy]").forEach((b) => b.onclick = () => {
+    pageEl.querySelectorAll("[data-template-edit]").forEach((b) => b.onclick = () => openTemplateEditor(state.templates.find((t) => t.template_id === b.dataset.templateEdit)));
+    pageEl.querySelectorAll("[data-template-copy]").forEach((b) => b.onclick = () => {
       const source = state.templates.find((t) => t.template_id === b.dataset.templateCopy);
       const copied = JSON.parse(JSON.stringify(source));
       copied.template_id = `${source.template_id}_COPY_${Date.now().toString(36).toUpperCase()}`;
@@ -1159,7 +1274,7 @@
       copied.version = 1;
       openTemplateEditor(copied, true);
     });
-    content.querySelectorAll("[data-template-default]").forEach((b) => b.onclick = async () => {
+    pageEl.querySelectorAll("[data-template-default]").forEach((b) => b.onclick = async () => {
       await api(`/api/templates/${b.dataset.templateDefault}/default`, { method: "POST" });
       await loadExtractionSettings(true);
       const template = state.templates.find((item) => item.template_id === b.dataset.templateDefault);
@@ -1171,7 +1286,7 @@
       toast("默认模板已更新");
       renderTemplates();
     });
-    content.querySelectorAll("[data-template-delete]").forEach((b) => b.onclick = async () => {
+    pageEl.querySelectorAll("[data-template-delete]").forEach((b) => b.onclick = async () => {
       if (!confirm("确认删除该解析模板？")) return;
       await api(`/api/templates/${b.dataset.templateDelete}`, { method: "DELETE" });
       toast("模板已删除");
@@ -1287,7 +1402,7 @@
     const addPrivateEntity = privateEntityTypes.length
       ? '<button id="addEntity" class="btn primary">新增私有实体</button>'
       : "";
-    content.innerHTML = `
+    pageEl.innerHTML = `
       ${panel(`${template.name} · 结构管理`, `
         <div class="inline-controls">
           ${back}
@@ -1329,14 +1444,14 @@
       })}
       </div>
     `;
-    $("#templateBack").onclick = () => { state.templateStructureId = ""; render(); };
-    content.querySelectorAll("[data-goto-vocab]").forEach((b) => b.onclick = () => {
+    $("#templateBack").onclick = () => { state.templateStructureId = ""; reload(); };
+    pageEl.querySelectorAll("[data-goto-vocab]").forEach((b) => b.onclick = () => {
       state.entityVocabType = b.dataset.gotoVocab;
-      navigate("entityVocab");
+      navigate("entityVocab", { reload: true });
     });
     bindPagedTable(entityTableKey);
     bindPagedTable(attributeTableKey);
-    content.querySelectorAll("[data-attr-filter]").forEach((button) => button.onclick = () => {
+    pageEl.querySelectorAll("[data-attr-filter]").forEach((button) => button.onclick = () => {
       const ts = tableStateFor(attributeTableKey);
       ts.filters.owner_entity_type = ts.filters.owner_entity_type === button.dataset.attrFilter ? "" : button.dataset.attrFilter;
       ts.page = 1;
@@ -1372,7 +1487,7 @@
         openTemplateItemEditor(kind, kind === "entity" ? { ...source, __key: key } : source, false, { template });
       }
     };
-    content.querySelectorAll("[data-struct-mode]").forEach((button) => {
+    pageEl.querySelectorAll("[data-struct-mode]").forEach((button) => {
       if (button.dataset.structKind === "entity") return;
       button.onclick = () => handleStructureAction(button);
     });
@@ -1541,6 +1656,7 @@
         || "";
     }
     const selected = dictionaries.find((d) => d.entity_type === state.entityVocabType) || null;
+    if (selected?.entity_type === "concept") { await renderVocab(dictionaries); return; }
     const entries = selected ? await api(`/api/vocab/entities/${encodeURIComponent(selected.entity_type)}`) : [];
     const totalEntries = dictionaries.reduce((sum, d) => sum + d.entry_count, 0);
     const templateCount = new Set(dictionaries.flatMap((d) => d.referencing_templates.map((t) => t.template_id))).size;
@@ -1590,7 +1706,7 @@
       filters.push({ key: "disease", label: "关联疾病", options: diseaseOptions.map((value) => ({ value, label: `${value}（${diseaseCounts.get(value) || 0}）` })) });
     }
     const activeFilters = filters.filter((filter) => filter.options.length > 1);
-    content.innerHTML = `
+    pageEl.innerHTML = `
       ${panel("三层架构", `<div class="pipeline">
         <div class="step done"><strong>Schema 层 · 解析模板</strong><span>实体类型、关系、属性契约</span></div>
         <div class="step done"><strong>术语层 · 实体词典（本页）</strong><span>共享实体字典 data/vocab/entities</span></div>
@@ -1623,7 +1739,7 @@
         filters: activeFilters,
         placeholder: "搜索编码、名称、别名、专科或疾病…",
         emptyText: "没有匹配的实体",
-        actions: `${selected.entity_type === "disease" ? '<button id="termCandidates" class="btn ghost">待确认术语</button><button id="hospitalMappings" class="btn ghost">院内映射</button><button id="importIcd10" class="btn ghost">标准术语库</button>' : ''}<button id="newEntityEntry" class="btn primary">新增实体</button>`,
+        actions: `${selected.entity_type === "disease" ? '<button id="termCandidates" class="btn ghost">待确认术语</button><button id="hospitalMappings" class="btn ghost">院内映射</button>' : ''}${["disease", "exam", "lab", "medication", "intervention"].includes(selected.entity_type) ? '<button id="importIcd10" class="btn ghost">标准术语库</button>' : ''}<button id="newEntityEntry" class="btn primary">新增实体</button>`,
       }) : '<div class="empty">暂无词典；在解析模板中将实体类型设为共享词表后自动创建</div>'}
       ${selected && selected.referencing_templates.length ? panel("引用该词典的模板", table(["模板", "ID", "状态"], selected.referencing_templates.map((t) => `
         <tr><td><strong>${esc(t.name)}</strong></td><td class="mono">${esc(t.template_id)}</td><td>${badge(t.status)}</td></tr>`
@@ -1633,7 +1749,12 @@
     const newButton = $("#newEntityEntry");
     if (newButton && selected) newButton.onclick = () => openEntityEntryEditor(selected.entity_type, null);
     const importButton = $("#importIcd10");
-    if (importButton && selected) importButton.onclick = () => openIcd10Importer(selected.entity_type);
+    if (importButton && selected) importButton.onclick = async () => {
+      try {
+        if (selected.entity_type === "disease") await openIcd10Importer(selected.entity_type);
+        else await openReferenceImporter(selected.entity_type);
+      } catch (error) { toast(error.message, true); }
+    };
     const candidatesButton = $("#termCandidates");
     if (candidatesButton) candidatesButton.onclick = () => openTerminologyCandidates();
     const mappingsButton = $("#hospitalMappings");
@@ -1688,19 +1809,19 @@
         try {
           await api(`/api/vocab/terminology/candidates/${encodeURIComponent(id)}/review`, { json: { status: "approved", standard_code: standardCode } });
           toast("候选术语已审核并加入启用字典");
-          await render();
+          await reload();
         } catch (error) { toast(error.message, true); }
       });
       $("#editorBody").querySelectorAll("[data-candidate-reject]").forEach((button) => button.onclick = async () => {
         try {
           await api(`/api/vocab/terminology/candidates/${encodeURIComponent(button.dataset.candidateReject)}/review`, { json: { status: "rejected" } });
           toast("候选术语已拒绝");
-          await render();
+          await reload();
         } catch (error) { toast(error.message, true); }
       });
     };
     dialog.showModal();
-    await render();
+    await reload();
     $("#editorCancel").onclick = () => {
       dialog.close();
       saveButton.style.display = "";
@@ -1941,29 +2062,144 @@
     };
   }
 
-  async function renderVocab() {
+  async function openReferenceImporter(entityType) {
+    const catalog = { exam: "exam", lab: "lab", medication: "medication", intervention: "surgery" }[entityType];
+    if (!catalog) return;
+    const metadata = (await api("/api/vocab/reference/catalogs")).find((item) => item.catalog === catalog);
+    if (!metadata) return toast("未找到所选参考库", true);
+    const endpoint = `/api/vocab/reference/catalogs/${catalog}`;
+    const dialog = $("#editorDialog");
+    const saveButton = $("#editorSave");
+    saveButton.textContent = "导入选中条目";
+    $("#editorBody").innerHTML = `
+      <h3>${esc(metadata.label)}标准参考库</h3>
+      <p>编码体系：${esc(metadata.standard)} · 版本：${esc(metadata.version)} · 参考条目：${metadata.count}</p>
+      <p>${esc(metadata.scope || "")}</p><p>${esc(metadata.description || "")}</p>
+      <p class="muted">数据来源：${esc(metadata.source || "")}。选中条目加入${esc(typeName[entityType] || entityType)}词典后，使用共享词表的模板才会读取。</p>
+      <h4>导入授权标准库文件</h4>
+      <div class="form-grid">
+        <div class="field wide"><label>JSON / CSV 文件（最大 20MB）</label><input id="catalogFile" type="file" accept=".json,.csv"></div>
+        <div class="field"><label>标准版本</label><input id="catalogVersion" placeholder="填写导入文件对应版本"></div>
+        <div class="field"><label>数据来源</label><input id="catalogSource" placeholder="授权文件名称或发布机构"></div>
+        <div class="field wide"><div class="actions"><button type="button" id="validateCatalog" class="btn ghost">仅校验</button><button type="button" id="importCatalog" class="btn">校验并合并</button></div></div>
+        <div id="catalogReport" class="field wide muted">正式合并前可先校验；不会自动启用新导入的参考术语。</div>
+      </div>
+      <h4>搜索并选择启用</h4>
+      <div class="inline-controls">
+        <div class="field"><label>搜索编码、名称或别名</label><input id="icd10Search" placeholder="搜索标准编码、名称或别名"></div>
+      </div>
+      <div id="icd10Results" class="table-wrap"><div class="empty">正在加载...</div></div>
+    `;
+    dialog.showModal();
+
+    const submitCatalog = async (dryRun) => {
+      const file = $("#catalogFile").files[0];
+      if (!file) return toast("请选择标准术语 JSON 或 CSV 文件", true);
+      const form = new FormData();
+      form.append("file", file);
+      form.append("version", $("#catalogVersion").value.trim());
+      form.append("source", $("#catalogSource").value.trim());
+      form.append("mode", "merge");
+      form.append("dry_run", String(dryRun));
+      try {
+        const report = await api(`${endpoint}/import`, { method: "POST", body: form });
+        if (!dryRun && report.valid) await renderResults($("#icd10Search").value);
+        const box = $("#catalogReport");
+        box.innerHTML = report.valid
+          ? `<span class="badge active">校验通过</span> 文件 ${report.incoming_count} 条；新增 ${report.added_count} 条；更新 ${report.updated_count} 条；警告 ${(report.warnings || []).length} 条${dryRun ? "（尚未写入）" : `；合并后 ${report.result_count} 条`}`
+          : `<span class="badge rejected">校验失败</span> ${(report.errors || []).slice(0, 5).map((item) => `第 ${item.row} 行：${esc(item.message)}`).join("；")}`;
+        if (!dryRun && report.valid) toast("标准参考库已合并；新条目需选用后才进入实体字典");
+      } catch (error) { toast(error.message, true); }
+    };
+    $("#validateCatalog").onclick = () => submitCatalog(true);
+    $("#importCatalog").onclick = () => submitCatalog(false);
+
+    const renderResults = async (query = "") => {
+      try {
+        const result = await api(`${endpoint}?q=${encodeURIComponent(query)}&limit=50`);
+        const box = $("#icd10Results");
+        if (!result.items?.length) {
+          box.innerHTML = `<div class="empty">没有匹配的参考术语</div>`;
+          return;
+        }
+        box.innerHTML = `
+          <table class="table">
+            <thead><tr><th>选择</th><th>编码</th><th>标准名称</th><th>别名</th><th>状态</th></tr></thead>
+            <tbody>
+              ${result.items.map((item) => `
+                <tr>
+                  <td><input type="checkbox" class="icd10-select" value="${esc(item.code)}" ${item.in_active_dictionary ? "disabled" : ""}></td>
+                  <td class="mono">${esc(item.code)}</td>
+                  <td><strong>${esc(item.name)}</strong><div class="muted">${esc(item.standard_system)} · ${esc(item.standard_code)}</div><div class="muted">${esc(item.source || "")}</div></td>
+                  <td><div class="quote">${esc((item.aliases || []).join(" / "))}</div></td>
+                  <td>${item.in_active_dictionary ? '<span class="badge active">已在活跃字典</span>' : '<span class="badge">可选</span>'}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
+      } catch (error) {
+        $("#icd10Results").innerHTML = `<div class="empty">${esc(error.message)}</div>`;
+      }
+    };
+
+    let searchTimer;
+    $("#icd10Search").oninput = (event) => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => renderResults(event.target.value), 250);
+    };
+    await renderResults();
+
+    saveButton.onclick = async () => {
+      const codes = [...document.querySelectorAll("#icd10Results .icd10-select:checked")].map((input) => input.value);
+      if (!codes.length) {
+        toast("请先勾选要导入的参考术语", true);
+        return;
+      }
+      try {
+        const result = await api(`${endpoint}/activate`, { json: { codes } });
+        dialog.close();
+        saveButton.textContent = "保存";
+        toast(`已导入 ${result.imported_count} 条；跳过 ${result.skipped_count} 条`);
+        renderEntityVocab();
+      } catch (error) {
+        toast(error.message, true);
+      }
+    };
+
+    $("#editorCancel").onclick = () => {
+      dialog.close();
+      saveButton.textContent = "保存";
+    };
+  }
+
+  async function renderVocab(dictionaries = null) {
+    if (state.route !== "entityVocab") { state.entityVocabType = "concept"; navigate("entityVocab"); return; }
     await loadBase();
+    dictionaries = dictionaries || await api("/api/vocab/entities");
     const search = state.vocabSearch.trim().toLowerCase();
     const category = state.vocabCategory;
-    const filtered = state.vocab.filter((item) => (!category || item.category === category) && (!search || `${item.code} ${item.name_cn} ${item.name_en} ${item.description}`.toLowerCase().includes(search)));
+    const filtered = state.vocab.filter((item) => (!category || item.category === category) && (!search || `${item.code} ${item.name_cn} ${item.name_en} ${(item.aliases || []).join(" ")} ${item.description}`.toLowerCase().includes(search)));
     const categories = [...new Set(state.vocab.map((item) => item.category))].sort();
-    content.innerHTML = `
+    pageEl.innerHTML = `
+      ${panel("词典选择", `<div class="field"><label>实体类型词典</label><select id="entityVocabSelector">${dictionaries.map((d) => `<option value="${esc(d.entity_type)}" ${d.entity_type === "concept" ? "selected" : ""}>${esc(typeName[d.entity_type] || d.entity_type)} / ${esc(d.entity_type)}（${d.entry_count} 实体）</option>`).join("")}</select></div>`)}
       <div class="grid c4">
         <div class="kpi"><span>概念总数</span><strong>${state.vocab.length}</strong><small>受控语义集合</small></div>
         <div class="kpi"><span>检验概念</span><strong>${state.vocab.filter((v) => v.category === "lab_concept").length}</strong><small>升高、降低、动态趋势等</small></div>
         <div class="kpi"><span>检查 / 症状概念</span><strong>${state.vocab.filter((v) => ["exam_concept", "symptom_concept"].includes(v.category)).length}</strong><small>存在、缺失、持续时间等</small></div>
         <div class="kpi"><span>中医概念</span><strong>${state.vocab.filter((v) => normalizeDomainClient(v.domain) === "tcm" || String(v.category).startsWith("tcm_")).length}</strong><small>证候判定谓词</small></div>
       </div>
-      ${panel("概念词汇", table(["编码", "中文名称", "英文名称", "类别", "执行器", "说明", "状态", "操作"], filtered.map((item) => `
-        <tr><td class="mono">${esc(item.code)}</td><td><strong>${esc(item.name_cn)}</strong></td><td>${esc(item.name_en || "-")}</td><td><span class="badge">${esc(item.category)}</span></td><td class="mono">${esc(item.evaluator_type)}</td><td><div class="quote">${esc(item.description)}</div></td><td>${item.is_active ? '<span class="badge active">启用</span>' : '<span class="badge retired">停用</span>'}</td><td><div class="actions"><button class="btn sm" data-concept-edit="${esc(item.code)}">编辑</button><button class="btn sm" data-concept-usage="${esc(item.code)}">引用</button><button class="btn sm danger" data-concept-delete="${esc(item.code)}">删除</button></div></td></tr>`
+      ${panel("抽象概念词典", table(["编码", "中文名称", "识别别名", "英文名称", "类别", "执行器", "说明", "状态", "操作"], filtered.map((item) => `
+        <tr><td class="mono">${esc(item.code)}</td><td><strong>${esc(item.name_cn)}</strong></td><td>${esc((item.aliases || []).join(" / "))}</td><td>${esc(item.name_en || "-")}</td><td><span class="badge">${esc(item.category)}</span></td><td class="mono">${esc(item.evaluator_type)}</td><td><div class="quote">${esc(item.description)}</div></td><td>${item.is_active ? '<span class="badge active">启用</span>' : '<span class="badge retired">停用</span>'}</td><td><div class="actions"><button class="btn sm" data-concept-edit="${esc(item.code)}">编辑</button><button class="btn sm" data-concept-usage="${esc(item.code)}">引用</button><button class="btn sm danger" data-concept-delete="${esc(item.code)}">删除</button></div></td></tr>`
       )), `<div class="actions"><button id="newConcept" class="btn primary">新增概念</button><input id="vocabSearch" class="field" placeholder="搜索编码或名称" value="${esc(state.vocabSearch)}"><select id="vocabCategory"><option value="">全部类别</option>${categories.map((v) => `<option value="${v}" ${category === v ? "selected" : ""}>${v}</option>`).join("")}</select></div>`, "概念是规则、图谱、模板和医院标准之间的公共判断语言")}
     `;
+    $("#entityVocabSelector").onchange = (event) => { state.entityVocabType = event.target.value; renderEntityVocab(); };
     $("#newConcept").onclick = () => openConceptEditor(null);
     $("#vocabSearch").oninput = (event) => { state.vocabSearch = event.target.value; renderVocab(); };
     $("#vocabCategory").onchange = (event) => { state.vocabCategory = event.target.value; renderVocab(); };
-    content.querySelectorAll("[data-concept-edit]").forEach((button) => button.onclick = () => openConceptEditor(state.vocab.find((item) => item.code === button.dataset.conceptEdit)));
-    content.querySelectorAll("[data-concept-usage]").forEach((button) => button.onclick = () => openConceptUsage(button.dataset.conceptUsage));
-    content.querySelectorAll("[data-concept-delete]").forEach((button) => button.onclick = async () => {
+    pageEl.querySelectorAll("[data-concept-edit]").forEach((button) => button.onclick = () => openConceptEditor(state.vocab.find((item) => item.code === button.dataset.conceptEdit)));
+    pageEl.querySelectorAll("[data-concept-usage]").forEach((button) => button.onclick = () => openConceptUsage(button.dataset.conceptUsage));
+    pageEl.querySelectorAll("[data-concept-delete]").forEach((button) => button.onclick = async () => {
       const code = button.dataset.conceptDelete;
       const usage = await api(`/api/vocab/${code}/usage`);
       const count = Object.values(usage.usage).reduce((sum, value) => sum + value, 0);
@@ -1977,13 +2213,15 @@
   function openConceptEditor(item, isNew = false) {
     const value = item || { code: "", name_cn: "", name_en: "", category: "lab_concept", description: "", evaluator_type: "static_threshold", is_active: true };
     isNew = isNew || !item;
-    const categories = ["lab_concept", "exam_concept", "symptom_concept"];
-    const evaluators = ["static_threshold", "uln_multiplier", "dynamic_trend", "qualitative", "finding_exists", "duration_check"];
+    const categories = [...new Set(["lab_concept", "exam_concept", "symptom_concept", ...state.vocab.map((v) => v.category), value.category])];
+    const evaluators = [...new Set(["static_threshold", "uln_multiplier", "dynamic_trend", "qualitative", "finding_exists", "duration_check", "observation_present", ...state.vocab.map((v) => v.evaluator_type), value.evaluator_type])];
     $("#editorBody").innerHTML = `
-      <h3>${isNew ? "新增概念词汇" : "编辑概念词汇"}</h3>
+      <h3>${isNew ? "新增抽象概念" : "编辑抽象概念"}</h3>
       <div class="form-grid">
         <div class="field"><label>概念编码</label><input name="code" value="${esc(value.code)}" ${!isNew ? "readonly" : ""}></div>
         <div class="field"><label>中文名称</label><input name="name_cn" value="${esc(value.name_cn)}"></div>
+        <div class="field wide"><label>识别别名（每行一个，支持正则）</label><textarea name="aliases">${esc((value.aliases || []).join("\n"))}</textarea></div>
+        <div class="field"><label>适用领域</label><select name="domain">${["western", "tcm", "shared"].map((v) => `<option value="${v}" ${(value.domain || "western") === v ? "selected" : ""}>${({ western: "西医", tcm: "中医", shared: "共享" })[v]}</option>`).join("")}</select></div>
         <div class="field"><label>英文名称</label><input name="name_en" value="${esc(value.name_en)}"></div>
         <div class="field"><label>类别</label><select name="category">${categories.map((v) => `<option value="${v}" ${value.category === v ? "selected" : ""}>${v}</option>`).join("")}</select></div>
         <div class="field"><label>推理执行器</label><select name="evaluator_type">${evaluators.map((v) => `<option value="${v}" ${value.evaluator_type === v ? "selected" : ""}>${v}</option>`).join("")}</select></div>
@@ -1991,10 +2229,13 @@
         <div class="field wide"><label>说明</label><input name="description" value="${esc(value.description)}"></div>
         <div class="field wide muted">具体阈值不在概念中配置；图谱和规则只引用这里的抽象概念编码。</div>
       </div>`;
+    $("#editorSave").hidden = false;
+    $("#editorSave").textContent = "保存";
     const dialog = $("#editorDialog"); dialog.showModal();
     $("#editorSave").onclick = async () => {
       const form = $("#editorBody");
       const payload = Object.fromEntries([...form.querySelectorAll("input,select,textarea")].map((input) => [input.name, input.value]));
+      payload.aliases = payload.aliases.split(/\r?\n/).map((v) => v.trim()).filter(Boolean);
       payload.is_active = payload.is_active === "true";
       try {
         await (isNew ? api("/api/vocab", { json: payload }) : api(`/api/vocab/${value.code}`, { method: "PUT", json: payload }));
@@ -2070,7 +2311,7 @@
       state.guidePackageId = result.package.package_id;
       const failed = result.package.checks.filter((item) => item.status === "failed").length;
       toast(failed ? `知识包已生成，但有 ${failed} 项预检失败；请到知识包页处理` : `知识包已生成：${result.summary.rule_count} 条候选规则；请到知识包页审核`);
-      navigate("packages");
+      navigate("packages", { reload: true });
     } catch (error) { toast(error.message, true); }
   }
 
@@ -2106,17 +2347,17 @@
       }[status] || status);
     };
     const packageConfirmed = selected && (isImported(selected) || selected.status === "reviewed");
-    content.innerHTML = `
+    pageEl.innerHTML = `
       <div class="pipeline">
         <div class="step done"><strong>1 审核预检</strong><span>查看自动检查与问题明细</span></div>
         <div class="step ${packageConfirmed ? "done" : ""}"><strong>2 确认知识包</strong><span>核对目标、模板和候选内容</span></div>
         <div class="step ${isImported(selected) ? "done" : "pending"}"><strong>3 导入图谱与草稿规则</strong><span>一次性入库，不自动启用</span></div>
-        <div class="step pending"><strong>4 规则管理启用</strong><span>人工审核后逐条启用</span></div>
+        <div class="step pending"><strong>4 诊疗依据及规则审核</strong><span>人工审核后逐条启用</span></div>
       </div>
       ${panel("指南知识包", table(["知识包 / 指南", "目标证候/诊断", "候选内容", "预检", "状态", "更新时间", "操作"], state.guidePackages.map((item) => {
         const check = item.check_summary || {};
         return `<tr><td><strong>${esc(item.package_id)}</strong><div class="muted">${esc(item.doc_title)}</div><div>${badge(normalizeDomainClient(item.domain))}</div></td><td class="mono">${esc(item.target_disease_code)}</td><td>${item.entity_count} 实体${item.syndrome_count ? `（证候 ${item.syndrome_count}）` : ""}<br>${item.relation_count} 关系 / ${item.rule_count} 规则</td><td>${check.passed || 0} 通过 / ${check.warning || 0} 提醒 / ${check.failed || 0} 失败</td><td><span class="badge ${esc(item.status)}">${esc(packageStatusLabel(item))}</span></td><td class="nowrap">${esc(formatTime(item.updated_at))}</td><td><div class="actions"><button class="btn sm" data-package-detail="${esc(item.package_id)}">查看 / 审核</button></div></td></tr>`;
-      })), '<button id="refreshPackages" class="btn primary">刷新列表</button>', "先审核预检，再在详情中一次性导入图谱和草稿规则；导入不会启用规则")}
+      })), '<button id="refreshPackages" class="btn primary">刷新列表</button>', "预检后导入图谱及待审诊疗依据；在审核台通过依据审核后，才能生成规则草稿")}
       ${selected ? `
         <div class="result-banner ${isImported(selected) ? "ok" : selected.status === "failed" ? "error" : "warning"}">
           <strong>${esc(selected.doc_title)}</strong> / ${esc(selected.package_id)} 状态：${esc(packageStatusLabel(selected))} ${badge(normalizeDomainClient(selected.domain))}
@@ -2264,7 +2505,7 @@
       } catch (error) { toast(error.message, true); }
     });
     $("#refreshPackages").onclick = renderGuidePackages;
-    content.querySelectorAll("[data-package-detail]").forEach((button) => button.onclick = () => {
+    pageEl.querySelectorAll("[data-package-detail]").forEach((button) => button.onclick = () => {
       state.guidePackageId = button.dataset.packageDetail;
       renderGuidePackages();
     });
@@ -2333,7 +2574,7 @@
     });
     $("#importSelectedPackage")?.addEventListener("click", () => importGuidePackage(selected.package_id));
     $("#reimportPackage")?.addEventListener("click", () => importGuidePackage(selected.package_id, true));
-    $("#goRules")?.addEventListener("click", () => navigate("rules"));
+    $("#goRules")?.addEventListener("click", () => navigate("rules", { reload: true }));
     $("#genTestCase")?.addEventListener("click", async () => {
       try {
         const result = await api(`/api/guide-packages/${selected.package_id}/generate-test-case`, { json: {} });
@@ -2354,8 +2595,123 @@
       const ruleErrors = result.rules?.errors?.length || 0;
       toast(ruleErrors ? `导入完成，但 ${ruleErrors} 条规则失败，请查看知识包详情` : "导入完成：规则已保存为草稿，请到规则管理启用", Boolean(ruleErrors));
       state.guidePackageId = packageId;
+      markStale("dashboard", "graph", "graphVisual", "review", "rules");
       renderGuidePackages();
     } catch (error) { toast(error.message, true); }
+  }
+
+  async function renderGraphVisual() {
+    const graphs = await api("/api/kg/graphs");
+    if (!graphs.length) { pageEl.innerHTML = '<div class="empty">暂无知识图谱，请先导入指南。</div>'; return; }
+    const filename = graphs.some((g) => g.graph_filename === state.visualGraphFilename)
+      ? state.visualGraphFilename : graphs[0].graph_filename;
+    state.visualGraphFilename = filename;
+    const graph = await api(`/api/kg/graph?graph_filename=${encodeURIComponent(filename)}`);
+    if (state.route !== "graphVisual") return;
+    pageEl.innerHTML = panel("图谱选择", `<div class="field"><label for="visualGraphSelect">知识图谱</label>
+      <select id="visualGraphSelect">${graphs.map((g) => `<option value="${esc(g.graph_filename)}" ${g.graph_filename === filename ? "selected" : ""}>${esc(g.graph_filename)}</option>`).join("")}</select></div>`)
+      + panel("图谱可视", '<div id="kgGraphView" class="kg-view-mount"></div>', "", "仅展示审核通过的实体；关系及两端实体均通过后才显示连线。支持中心实体聚焦、拖拽与缩放", true);
+    $("#visualGraphSelect").onchange = (event) => {
+      state.visualGraphFilename = event.target.value;
+      window.CdssGraphView?.destroy?.();
+      renderGraphVisual().catch((error) => toast(error.message, true));
+    };
+    if (window.CdssGraphView) {
+      window.CdssGraphView.destroy?.();
+      window.CdssGraphView.mount($("#kgGraphView"), graph, {
+        graphFilename: filename, profile: graph.profile, reviewedOnly: true,
+        anchorTypes: graph.profile?.anchor_types || ["disease"],
+        domain: graph.profile?.domain || graph.domain || "western",
+      });
+    }
+  }
+
+  async function renderGraphClear() {
+    const graphs = await api("/api/kg/graphs");
+    if (!graphs.length) { pageEl.innerHTML = '<div class="empty">暂无可清除的知识图谱。</div>'; return; }
+    const filename = graphs.some((g) => g.graph_filename === state.clearGraphFilename)
+      ? state.clearGraphFilename : graphs[0].graph_filename;
+    state.clearGraphFilename = filename;
+    pageEl.innerHTML = panel("选择清除范围", `
+      <div class="field"><label for="clearGraphSelect">目标图谱</label><select id="clearGraphSelect">${graphs.map((g) => `<option value="${esc(g.graph_filename)}" ${g.graph_filename === filename ? "selected" : ""}>${esc(g.graph_filename)}</option>`).join("")}</select></div>
+      <div class="inline-controls">
+        <label><input type="checkbox" id="clearGraphContent" checked> 清空图谱内容（实体、关系、证据及图谱内溯源）</label>
+        <label><input type="checkbox" id="clearGraphRules" checked> 删除绑定此图谱的全部规则</label>
+      </div>
+      <p>清除范围包含草稿、已审核、已启用、已拒绝和已失效的数据，不按审核状态保留。</p>
+      <p>多个指南汇入同一图谱时，将清除该图谱中所有指南汇入的所选内容。</p>
+      <p>保留指南 PDF、解析结果、知识包、共享词典、模板、医院标准及审核历史。图谱保留为空图谱；被删规则保留历史快照。</p>
+      <button id="clearPreviewBtn" class="btn">预览清除范围</button>
+    `) + panel("清除预览", '<div id="clearPreviewBody">请先选择范围并预览。</div><button id="clearExecuteBtn" class="btn danger" hidden>执行清除</button>');
+    let previewPayload = null;
+    const executeButton = $("#clearExecuteBtn");
+    const previewBody = $("#clearPreviewBody");
+    const previewButton = $("#clearPreviewBtn");
+    const selectedPayload = () => ({
+      graph_filename: $("#clearGraphSelect").value,
+      clear_graph: $("#clearGraphContent").checked,
+      clear_rules: $("#clearGraphRules").checked,
+    });
+    const invalidate = () => {
+      previewPayload = null;
+      executeButton.hidden = true;
+      previewBody.textContent = "清除范围已变更，请重新预览。";
+      state.clearGraphFilename = $("#clearGraphSelect").value;
+    };
+    ["#clearGraphSelect", "#clearGraphContent", "#clearGraphRules"].forEach((id) => $(id).addEventListener("change", invalidate));
+    previewButton.onclick = async () => {
+      const payload = selectedPayload();
+      previewPayload = null;
+      executeButton.hidden = true;
+      if (!payload.clear_graph && !payload.clear_rules) return toast("至少勾选一项清除内容", true);
+      previewButton.disabled = true;
+      try {
+        const preview = await api("/api/kg/clear", { json: { ...payload, dry_run: true } });
+        if (state.route !== "graphClear" || JSON.stringify(payload) !== JSON.stringify(selectedPayload())) return;
+        previewPayload = payload;
+        previewBody.innerHTML = `<p>目标图谱：<strong>${esc(preview.graph_filename)}</strong></p>
+          ${payload.clear_graph ? `<p>将清空实体 ${preview.node_count} 个、关系 ${preview.relation_count} 条，以及该图谱的其他内容。</p>` : '<p>保留图谱内容。</p>'}
+          ${payload.clear_rules ? `<p>将删除关联规则 ${preview.rule_ids.length} 条（包含已审核、已启用规则）。</p><div class="mono">${preview.rule_ids.map(esc).join("、") || "无关联规则"}</div>` : '<p>保留关联规则。</p>'}`;
+        executeButton.hidden = false;
+      } catch (error) { toast(error.message, true); }
+      finally { previewButton.disabled = false; }
+    };
+    executeButton.onclick = async () => {
+      if (!previewPayload || JSON.stringify(previewPayload) !== JSON.stringify(selectedPayload())) return invalidate();
+      const payload = { ...previewPayload };
+      const typed = prompt(`将清除 ${payload.graph_filename} 的所选内容，包含已审核数据。请输入完整图谱文件名确认：`);
+      if ((typed || "").trim() !== payload.graph_filename) return toast("文件名不匹配，已取消", true);
+      executeButton.disabled = true;
+      previewButton.disabled = true;
+      try {
+        const result = await api("/api/kg/clear", { json: { ...payload, dry_run: false } });
+        previewPayload = null;
+        executeButton.hidden = true;
+        state.reviewGraphOptions = null;
+        previewBody.innerHTML = `<p>清除完成：实体 ${payload.clear_graph ? result.node_count : 0} 个、关系 ${payload.clear_graph ? result.relation_count : 0} 条、规则 ${result.cleared_rules} 条。</p>
+          <p>备份：${result.backups.map(esc).join("、") || "无"}</p><p>指南原文、解析结果等资料已保留。</p>`;
+        toast("图谱清除完成");
+        markStale("dashboard", "graph", "graphVisual", "review", "rules");
+      } catch (error) { toast(error.message, true); }
+      finally { executeButton.disabled = false; previewButton.disabled = false; }
+    };
+  }
+
+  function approvedKnowledgeGraph(graph) {
+    const nodes = Object.values(graph.nodes || {}).filter(node => node.review_status === "active");
+    const ids = new Set(nodes.map(node => node.id));
+    const relations = Object.values(graph.relations || {}).filter(relation => relation.review_status === "active"
+      && ids.has(relation.source_node_id) && ids.has(relation.target_node_id));
+    const diseaseCodes = new Set(nodes.filter(node => node.node_type === "disease").map(node => node.code));
+    const evidences = (graph.evidences || []).filter(item => item.review_status === "active");
+    const evidenceIds = new Set(evidences.map(item => item.id));
+    const disease_evidence = (graph.disease_evidence || []).filter(item => item.review_status === "active"
+      && diseaseCodes.has(item.disease_code) && evidenceIds.has(item.evidence_id));
+    const refs = new Set([...nodes, ...relations, ...evidences].flatMap(item => item.source_refs || []));
+    return { ...graph, nodes, relations, evidences, disease_evidence,
+      diseases: (graph.diseases || []).filter(item => diseaseCodes.has(item.code)),
+      sources: (graph.sources || []).filter(item => refs.has(item.chunk_id)),
+    };
   }
 
   async function renderGraph(options = {}) {
@@ -2365,7 +2721,7 @@
     if (!state.graphs.some((item) => item.graph_filename === state.graphFilename)) {
       state.graphFilename = state.graphs.find((item) => item.graph_filename === "KG-GENERIC_GUIDELINE_V1.json")?.graph_filename || state.graphs[0]?.graph_filename || "stemi_graph.json";
     }
-    const graph = await api(`/api/kg/graph?graph_filename=${encodeURIComponent(state.graphFilename)}`);
+    const graph = approvedKnowledgeGraph(await api(`/api/kg/graph?graph_filename=${encodeURIComponent(state.graphFilename)}`));
     state.graph = graph;
     const semanticNodes = Object.values(graph.nodes || {});
     const semanticRelations = Object.values(graph.relations || {});
@@ -2579,23 +2935,14 @@
       </tr>`,
     }));
 
-    content.innerHTML = `
+    pageEl.innerHTML = `
       ${panel("图谱选择", `
         <div class="inline-controls">
           <div class="field"><label>知识图谱</label><select id="graphSelector">${state.graphs.map((item) => `<option value="${esc(item.graph_filename)}" ${item.graph_filename === state.graphFilename ? "selected" : ""}>${esc(item.graph_filename)}</option>`).join("")}</select></div>
           <div class="field"><label>审核人</label><input id="reviewerName" value="${esc(localStorage.getItem("cdssReviewer") || "")}" placeholder="姓名"></div>
         </div>
-      `, "", "不同疾病指南可入不同图谱；规则、推理和同步检查按规则所属图谱执行")}
-      ${panel("危险操作（测试用）", `
-        <div class="inline-controls">
-          <div class="field"><label>目标图谱</label><select id="clearGraphSelect"><option value="">加载中…</option></select></div>
-          <label><input type="checkbox" id="clearGraphContent" checked> 图谱内容</label>
-          <label><input type="checkbox" id="clearGraphRules" checked> 关联规则</label>
-          <button id="clearPreviewBtn" class="btn">预览清除范围</button>
-          <button id="clearExecuteBtn" class="btn danger" hidden>确认清除</button>
-        </div>
-        <div id="clearPreviewBody" class="muted">先预览再执行；执行前自动备份（.bak-日期-manual-clear），被删规则保留历史快照。</div>
-      `, "", "清空所选图谱的内容和/或该图谱名下的规则，方便重新导入测试；引用该图谱的推理与审核数据会失效")}
+      `, "", "仅展示审核通过的知识；关系及两端实体均通过后才显示。待审、拒绝、失效及待复核内容请到审核台处理。")}
+      <div class="actions"><button id="openGraphVisual" class="btn">打开图谱可视</button><button id="openGraphClear" class="btn">图谱清除</button></div>
       <div class="grid c4">
         <div class="kpi"><span>疾病</span><strong>${graph.diseases.length}</strong></div>
         <div class="kpi"><span>证据</span><strong>${graph.evidences.length}</strong></div>
@@ -2605,7 +2952,7 @@
         <div class="kpi"><span>关联</span><strong>${diseaseLinks.length}</strong></div>
         <div class="kpi"><span>指南出处</span><strong>${graph.sources.length}</strong></div>
       </div>
-      ${panel("图谱可视化", `<div id="kgGraphView" class="kg-view-mount"></div>`, "", "点击节点查看详情；可按中心疾病聚焦，拖拽节点和空白区域，滚轮缩放", true)}
+
       ${pagedPanel({
         key: "relations",
         title: "语义关系",
@@ -2693,61 +3040,13 @@
         placeholder: "搜索文档、章节、引文…",
       })}
     `;
-    const graphMount = document.getElementById("kgGraphView");
-    if (graphMount && window.CdssGraphView) {
-      window.CdssGraphView.destroy?.();
-      window.CdssGraphView.mount(graphMount, graph, {
-        defaultCenterCode: "",
-        graphFilename: state.graphFilename,
-        profile: graph.profile,
-        anchorTypes: graph.profile?.anchor_types || ["disease"],
-        domain: graph.profile?.domain || "western",
-      });
-    }
     ["relations", "paths", "nodes", "evidences", "treatmentPlans", "links", "sources"].forEach(bindPagedTable);
     $("#graphSelector").onchange = (e) => { state.graphFilename = e.target.value; renderGraph(); };
     $("#reviewerName").onchange = (event) => {
       localStorage.setItem("cdssReviewer", event.target.value.trim());
     };
-    api("/api/kg/graphs").then((graphs) => {
-      const sel = $("#clearGraphSelect");
-      if (!sel) return;
-      sel.innerHTML = graphs.map((item) => `<option value="${esc(item.graph_filename)}" ${item.graph_filename === state.graphFilename ? "selected" : ""}>${esc(item.graph_filename)}</option>`).join("");
-    });
-    $("#clearPreviewBtn").onclick = async () => {
-      try {
-        const payload = {
-          graph_filename: $("#clearGraphSelect").value,
-          clear_graph: $("#clearGraphContent").checked,
-          clear_rules: $("#clearGraphRules").checked,
-          dry_run: true,
-        };
-        if (!payload.clear_graph && !payload.clear_rules) return toast("至少勾选一项清除内容", true);
-        const preview = await api("/api/kg/clear", { json: payload });
-        const ruleList = preview.rule_ids.length
-          ? `（${preview.rule_ids.slice(0, 8).join("、")}${preview.rule_ids.length > 8 ? " 等" : ""}）`
-          : "";
-        $("#clearPreviewBody").innerHTML = `将清除 <strong>${esc(preview.graph_filename)}</strong>：节点 ${preview.node_count}、关系 ${preview.relation_count}、规则 ${preview.rule_ids.length} 条${ruleList}`;
-        $("#clearExecuteBtn").hidden = false;
-      } catch (error) { toast(error.message, true); }
-    };
-    $("#clearExecuteBtn").onclick = async () => {
-      const filename = $("#clearGraphSelect").value;
-      const typed = prompt(`此操作将清除 ${filename} 的勾选内容（执行前自动备份）。请输入图谱文件名确认：`);
-      if ((typed || "").trim() !== filename) return toast("文件名不匹配，已取消", true);
-      try {
-        const result = await api("/api/kg/clear", {
-          json: {
-            graph_filename: filename,
-            clear_graph: $("#clearGraphContent").checked,
-            clear_rules: $("#clearGraphRules").checked,
-            dry_run: false,
-          },
-        });
-        toast(`已清除：节点 ${result.node_count} / 关系 ${result.relation_count} / 规则 ${result.cleared_rules}；备份 ${result.backups.join("、") || "无"}`);
-        renderGraph();
-      } catch (error) { toast(error.message, true); }
-    };
+    $("#openGraphVisual").onclick = () => { state.visualGraphFilename = state.graphFilename; navigate("graphVisual", { reload: true }); };
+    $("#openGraphClear").onclick = () => { state.clearGraphFilename = state.graphFilename; navigate("graphClear", { reload: true }); };
 
     const currentReviewer = () => {
       const value = ($("#reviewerName")?.value || "").trim();
@@ -2767,6 +3066,7 @@
           json: { action, reviewer: currentReviewer(), note },
         });
         toast("节点审核状态已更新");
+        markStale("dashboard", "review", "rules");
         renderGraph({ preserveTableState: true });
       } catch (error) { toast(error.message, true); }
     };
@@ -2797,6 +3097,7 @@
           },
         });
         toast("关系审核状态已更新");
+        markStale("dashboard", "review", "rules");
         renderGraph({ preserveTableState: true });
       } catch (error) { toast(error.message, true); }
     };
@@ -2812,7 +3113,7 @@
           ${openImported ? '<div class="result-banner warning">该条目来自开放抽取（模板外类型或词库外实体）。确认无误后请「通过」审核，并建议加入实体词典，供后续解析直接命中。</div>' : ""}
           <h4>指南溯源</h4>
           <div class="quote">${esc((detail.node.source_refs || []).join("；") || "-")}</div>
-          <h4>依赖规则（${rules.length}）</h4>
+          <h4>引用本实体的推理规则（${rules.length}）</h4>
           ${table(["规则", "状态", "依赖状态"], rules.map((rule) => `<tr><td class="mono">${esc(rule.rule_id)}</td><td>${reviewBadge(rule.status)}</td><td>${esc(rule.dependency_status || "-")}</td></tr>`))}
           <div class="actions">
             <button class="btn sm primary" id="nodeAddVocab">加入实体词典</button>
@@ -2840,7 +3141,7 @@
       } catch (error) { toast(error.message, true); }
     };
 
-    content.onclick = (event) => {
+    pageEl.onclick = (event) => {
       const nodeButton = event.target.closest("[data-review-node]");
       if (nodeButton) {
         submitNodeReview(nodeButton.dataset.reviewNode, nodeButton.dataset.reviewAction);
@@ -2859,7 +3160,7 @@
   async function renderTcmGraph() {
     const graphs = await api("/api/kg/graphs?domain=tcm");
     if (!graphs.length) {
-      content.innerHTML = panel(
+      pageEl.innerHTML = panel(
         "中医图谱",
         '<div class="empty">尚未导入中医知识图谱。请先在「指南导入」选择中医模板并生成知识包，或在「知识包」导入。</div>',
       );
@@ -2873,7 +3174,7 @@
     const nodes = Array.isArray(graph.nodes) ? graph.nodes : Object.values(graph.nodes || {});
     const relations = Array.isArray(graph.relations) ? graph.relations : Object.values(graph.relations || {});
     if (!nodes.length) {
-      content.innerHTML = panel(
+      pageEl.innerHTML = panel(
         "中医图谱",
         '<div class="empty">该图谱当前为空。请先在「指南导入」上传中医指南，选择中医模板，生成并导入知识包后，证候、舌脉、治法与方药节点会显示在这里。</div>',
         "",
@@ -2918,7 +3219,7 @@
       });
     });
 
-    content.innerHTML = `
+    pageEl.innerHTML = `<div class="actions"><button id="openTcmGraphVisual" class="btn">打开图谱可视</button><button id="openTcmGraphClear" class="btn">图谱清除</button></div>
       ${panel("图谱选择", `
         <div class="inline-controls">
           <div class="field"><label>中医知识图谱</label><select id="tcmGraphSelector">${graphs.map((item) => `<option value="${esc(item.graph_filename)}" ${item.graph_filename === state.tcmGraphFilename ? "selected" : ""}>${esc(item.graph_filename)}（证候 ${item.syndromes || 0}）</option>`).join("")}</select></div>
@@ -2934,7 +3235,7 @@
         <div class="kpi"><span>中药</span><strong>${count("herb")}</strong></div>
         <div class="kpi"><span>语义关系</span><strong>${relations.length}</strong></div>
       </div>
-      ${panel("图谱可视化", '<div id="kgGraphView" class="kg-view-mount"></div>', "", "证候为中心，左侧症状/舌脉，右侧治法/方剂/中药；可按证候聚焦", true)}
+
       ${panel("辨证链路", table(["证候", "关系", "症状/舌象/脉象/病机", "指南溯源"], observationRelations.map((relation) => `
         <tr>
           <td>${label(relation.source_node_id)}</td>
@@ -2947,7 +3248,7 @@
         <tr>
           <td>${esc(typeLabel(node.node_type))}</td>
           <td><strong>${esc(node.name)}</strong></td>
-          <td class="mono">${esc(node.code || "-")}</td>
+          <td class="mono">${esc(node.code || "编码缺失，需补充")}</td>
           <td class="mono">${esc(Object.entries(node.attributes || {}).map(([key, value]) => `${key}=${value}`).join("；") || "-")}</td>
           <td class="mono">${esc((node.source_refs || []).join(" / ") || "-")}</td>
         </tr>`)), "", "节点编码与实体词典、解析模板、规则条件共用同一语义")}
@@ -2961,16 +3262,8 @@
       ${panel("指南出处", table(["文档 / 章节", "页行", "引文"], (graph.sources || []).map((source) => `
         <tr><td><strong>${esc(source.doc_title)}</strong><div class="muted">${esc(source.section)}</div></td><td class="mono nowrap">p${source.page_start}:l${source.line_start}-${source.line_end}</td><td><div class="quote">${esc(source.quote)}</div></td></tr>`)))}
     `;
-    const graphMount = document.getElementById("kgGraphView");
-    if (graphMount && window.CdssGraphView) {
-      window.CdssGraphView.destroy?.();
-      window.CdssGraphView.mount(graphMount, graph, {
-        graphFilename: state.tcmGraphFilename,
-        profile,
-        anchorTypes: profile.anchor_types || ["syndrome", "disease"],
-        domain: "tcm",
-      });
-    }
+    $("#openTcmGraphVisual").onclick = () => { state.visualGraphFilename = state.tcmGraphFilename; navigate("graphVisual", { reload: true }); };
+    $("#openTcmGraphClear").onclick = () => { state.clearGraphFilename = state.tcmGraphFilename; navigate("graphClear", { reload: true }); };
     $("#tcmGraphSelector").onchange = (event) => {
       state.tcmGraphFilename = event.target.value;
       renderTcmGraph();
@@ -3097,7 +3390,12 @@
       { name: "exam_name", label: "检查名称", placeholder: "12导联心电图" },
       { name: "finding_code", label: "发现编码", placeholder: "ST_CONVEX_ELEVATION" },
       { name: "finding_name", label: "发现名称", placeholder: "ST段弓背向上抬高" },
-      { name: "present", label: "是否存在", type: "select", options: [{ value: "true", label: "存在" }, { value: "false", label: "不存在" }] },
+      { name: "present", label: "是否存在", type: "select", options: [{ value: "", label: "未判定" }, { value: "true", label: "存在" }, { value: "false", label: "不存在" }] },
+      { name: "value", label: "检查测量值", type: "number", step: "any" },
+      { name: "unit", label: "测量单位", placeholder: "填写报告中的单位" },
+      { name: "category", label: "分级/定性结果", placeholder: "填写结构化结果" },
+      { name: "method", label: "检查方法", placeholder: "与本院标准一致" },
+      { name: "report_text", label: "报告原文（供查阅）", placeholder: "原文不会自动判定为阳性" },
       { name: "detail_summary", label: "细节描述", placeholder: "II III aVF 导联抬高 0.3mV" },
     ],
     vitals: [
@@ -3107,7 +3405,7 @@
     ],
   };
   function readCaseMatrix(kind, mapper) {
-    return [...content.querySelectorAll(`.matrix-row[data-kind="${kind}"]`)].map((row) => {
+    return [...pageEl.querySelectorAll(`.matrix-row[data-kind="${kind}"]`)].map((row) => {
       const raw = {};
       row.querySelectorAll("[data-case-field]").forEach((input) => { raw[input.dataset.caseField] = input.value; });
       return mapper(raw);
@@ -3140,7 +3438,9 @@
       exam_findings: readCaseMatrix("exam_findings", (raw) => ({
         exam_code: raw.exam_code.trim().toUpperCase(), exam_name: raw.exam_name.trim(),
         finding_code: raw.finding_code.trim().toUpperCase(), finding_name: raw.finding_name.trim(),
-        present: raw.present === "true", detail: raw.detail_summary.trim() ? { summary: raw.detail_summary.trim() } : null,
+        present: raw.present === "" ? null : raw.present === "true", value: numberValue(raw.value), unit: raw.unit.trim(),
+        category: raw.category.trim() || null, method: raw.method.trim(), report_text: raw.report_text.trim(),
+        detail: raw.detail_summary.trim() ? { summary: raw.detail_summary.trim() } : null,
       })),
       vitals: readCaseMatrix("vitals", (raw) => ({
         vital_code: raw.vital_code.trim(), value: numberValue(raw.value), unit: raw.unit.trim(),
@@ -3190,9 +3490,9 @@
   }
 
   // ==== 审核台：专业化条目显示 + 主从详情面板 ====
-  const REVIEW_TYPE_LABELS = { graph_node: "节点", graph_relation: "关系", rule: "规则", package: "知识包" };
+  const REVIEW_TYPE_LABELS = { graph_node: "实体", graph_relation: "关系", rule: "规则", package: "知识包" };
   const REVIEW_TABS = [
-    ["graph", "待审图谱"], ["relations", "关系审核"], ["bydisease", "按疾病分组"], ["rules", "待审规则"], ["blocked", "被阻断"],
+    ["bydisease", "疾病审核工作台"], ["graph", "实体审核"], ["relations", "关系审核"], ["bases", "诊疗依据审核"], ["rules", "规则审核"], ["blocked", "被阻断"],
     ["stale", "待复核"], ["active", "已通过"], ["orphan", "孤儿条目"],
     ["dupes", "疑似重复"],
     ["audit", "审核记录"],
@@ -3329,17 +3629,25 @@
     } else {
       throw new Error("该条目类型暂不支持单条审核操作");
     }
+    // 审核动作影响概览统计、图谱节点状态与规则队列
+    markStale("dashboard", "graph", "graphVisual", "rules");
   }
 
   async function quickReview(item, action) {
     try {
       if (action === "approve" && relationEndpointBlocked(item)) {
-        toast("该关系的端点节点尚未全部「已通过」，请先审核两端节点", true);
+        const sourcePending = item.source_status !== "active";
+        const nodeId = sourcePending ? item.source_node_id : item.target_node_id;
+        toast("该关系的端点尚未通过，已为您打开待审实体", true);
+        if (nodeId) await loadReviewDetail({
+          item_type: "graph_node", node_id: nodeId,
+          graph_filename: item.graph_filename, status: sourcePending ? item.source_status : item.target_status,
+        });
         return;
       }
       await submitReviewAction(item, action, "");
       toast(`${ACTION_DONE_LABELS[action] || "已处理"}：${reviewItemTitle(item)}`);
-      renderReviewCenter();
+      await renderReviewCenter();
     } catch (error) { toast(error.message, true); }
   }
 
@@ -3497,7 +3805,7 @@
   // 溯源引用 "DOC-xxx_p3_l100-20" → { docId, page, start, end }；生成器会把
   // l100-120 截成 l100-20（end 丢首位），end < start 时按 start 前缀补全位数。
   function parseSourceRef(ref) {
-    const match = /^([A-Za-z0-9-]+)_p(\d+)_l(\d+)-(\d+)$/.exec(String(ref || ""));
+    const match = /^([A-Za-z0-9-]+)_p(\d+)_l(\d+)-(\d+)(?:_part\d+)?$/.exec(String(ref || ""));
     if (!match) return null;
     const start = Number(match[3]);
     let end = Number(match[4]);
@@ -3587,12 +3895,14 @@
         <div class="related-list">${visible}${hidden}</div>
       </div>`;
     };
-    return section("作为源", asSource, true) + section("作为目标", asTarget, false);
+    return section("从本实体出发的关系", asSource, true) + section("指向本实体的关系", asTarget, false);
   }
 
   async function nodeDetailHtml(item) {
     const detail = await api(`/api/kg/nodes/${encodeURIComponent(item.node_id)}?graph_filename=${encodeURIComponent(item.graph_filename)}`);
     const node = detail.node || {};
+    item.status = node.review_status || item.status || "draft";
+    item.name = node.name || item.name;
     const rules = detail.dependents?.rules || [];
     let historyHtml = "";
     if (item.status === "stale") {
@@ -3601,28 +3911,34 @@
     const refsHtml = (node.source_refs || []).length ? await sourceRefsHtml(node.source_refs) : "";
     const relatedHtml = relatedItemsHtml(detail, item);
     return `
+      <div class="detail-section"><h4>实体审核重点</h4><p>逐项核对名称、类型、编码、属性和出处；有值不代表医学含义已经正确。</p></div>
       <div class="detail-section endpoint-meta">
-        <div><span class="muted">类型</span><strong>${esc(typeName[node.node_type] || node.node_type || "-")}</strong></div>
+        <div><span class="muted">名称</span><strong>${esc(node.name || "名称缺失，需补充")}</strong></div>
+        <div><span class="muted">类型</span><strong>${esc(typeName[node.node_type] || node.node_type || "类型缺失，需补充")}</strong></div>
         <div><span class="muted">编码</span><span class="mono">${esc(node.code || "-")}</span></div>
       </div>
-      ${refsHtml ? `<div class="detail-section"><h4>指南溯源</h4>${refsHtml}</div>` : ""}
+      <div class="detail-section"><h4>出处（指南原文与上下文）</h4>${refsHtml || '<div class="result-banner warning">出处缺失：尚无指南引用，不能仅凭实体名称确认其依据，请补充原文定位。</div>'}${refsHtml && !(node.source_refs || []).some(parseSourceRef) ? '<div class="result-banner warning">现有出处引用无法解析到页行，尚不能核对原文上下文，请补充或修复定位。</div>' : ""}</div>
       ${relatedHtml}
       ${(node.attribute_violations || []).length ? `<div class="detail-section"><h4>属性校验待复核（${node.attribute_violations.length}）</h4>${table(["属性", "问题"], node.attribute_violations.map((v) => `<tr><td class="mono">${esc(v.attribute_code)}</td><td>${esc(v.issue || "-")}</td></tr>`))}</div>` : ""}
-      <div class="detail-section"><h4>属性</h4>${attrTableHtml(node.attributes)}</div>
+      <div class="detail-section"><h4>属性（核对完整性与原文一致性）</h4>${Object.keys(node.attributes || {}).length ? attrTableHtml(node.attributes) : '<div class="muted">尚无已提取属性。请核对模板要求及原文；属性为空不直接等于实体识别错误。</div>'}</div>
       ${historyHtml}
-      <div class="detail-section"><h4>依赖规则（${rules.length}）</h4>${dependentRuleTable(rules)}</div>
+      <div class="detail-section"><h4>引用本实体的推理规则（${rules.length}）</h4>${dependentRuleTable(rules)}</div>
       <div class="detail-section"><h4>审核记录</h4>${auditListHtml(detail.audit)}</div>`;
   }
 
   async function relationDetailHtml(item) {
     const detail = await api(`/api/kg/relations/${encodeURIComponent(item.item_id)}?graph_filename=${encodeURIComponent(item.graph_filename)}`);
     const relation = detail.relation || {};
+    item.status = relation.review_status || item.status || "draft";
+    item.source_status = detail.source?.status || "missing";
+    item.target_status = detail.target?.status || "missing";
     const endpointCard = (endpoint, role) => `
       <div class="endpoint-card">
         <div class="muted endpoint-role">${esc(role)}</div>
         <strong>${esc(endpoint.name)}</strong>
         <div class="mono muted">${esc(endpoint.code || endpoint.node_id)}</div>
         <div>${miniStatus(endpoint.status)}</div>
+        ${endpoint.status !== "active" && endpoint.node_id && endpoint.status !== "missing" ? `<button class="btn sm primary" data-relation-endpoint="${esc(endpoint.node_id)}" data-endpoint-status="${esc(endpoint.status)}">前往审核此实体</button>` : ""}
       </div>`;
     let historyHtml = "";
     if (item.status === "stale") {
@@ -3630,17 +3946,20 @@
     }
     const rulesInfo = detail.rules || { total: 0, items: [] };
     return `
-      <div class="detail-section">
+      <div class="detail-section"><h4>关系审核重点</h4><p>核对关联对象、关系方向、医学含义、关系属性及出处；端点通过不代表这条关系成立。</p></div>
+      ${item.source_status !== "active" || item.target_status !== "active" ? '<div class="result-banner warning">端点未通过：请点击下方对应实体的“前往审核此实体”，审核通过后再返回关系审核。</div>' : ""}
+      <div class="detail-section"><h4>关联对象与方向</h4>
         <div class="relation-flow">
-          ${endpointCard(detail.source, "源节点")}
+          ${endpointCard(detail.source, "起点实体（关系从这里出发）")}
           <div class="relation-arrow"><span class="rel-name">${esc(relationLabel(item))}</span><span class="mono muted">${esc(item.relation_code)}</span></div>
-          ${endpointCard(detail.target, "目标节点")}
+          ${endpointCard(detail.target, "终点实体（关系指向这里）")}
         </div>
       </div>
+      <div class="detail-section"><h4>医学含义（需对照原文确认）</h4><div class="quote">${esc(detail.source?.name || "起点缺失")} → ${esc(relationLabel({ ...item, ...relation }) || "关系含义未定义")} → ${esc(detail.target?.name || "终点缺失")}</div><p class="muted">核对该陈述是否准确、方向是否正确，是否遗漏适用条件或否定含义；关系名称本身不是审核结论。</p></div>
       <div class="detail-section"><h4>关系属性</h4>${attrTableHtml(relation.attributes)}</div>
-      ${(relation.source_refs || []).length ? `<div class="detail-section"><h4>指南溯源</h4>${await sourceRefsHtml(relation.source_refs)}</div>` : ""}
+      <div class="detail-section"><h4>出处（指南原文与上下文）</h4>${(relation.source_refs || []).length ? await sourceRefsHtml(relation.source_refs) : '<div class="result-banner warning">出处缺失：请补充支持该关系及方向的原文。</div>'}</div>
       ${historyHtml}
-      <div class="detail-section"><h4>依赖规则（${rulesInfo.total}）</h4>${dependentRuleTable(rulesInfo.items)}</div>
+      <div class="detail-section"><h4>引用本关系的推理规则（${rulesInfo.total}）</h4>${dependentRuleTable(rulesInfo.items)}</div>
       <div class="detail-section"><h4>审核记录</h4>${auditListHtml(detail.audit)}</div>`;
   }
 
@@ -3651,33 +3970,61 @@
       api(`/api/rules/${encodeURIComponent(item.rule_id)}/history`),
     ]);
     const refs = deps.references || [];
-    const issues = deps.issues || [];
+    const issues = [...new Set([...(deps.issues || []), ...(deps.review_issues || [])])];
+    const blocked = issues.length > 0 || deps.semantic_status === "inconsistent" || deps.dependency_status === "blocked";
+    const condition = rule.conditions || {};
+    const implicitTreatment = rule.rule_type === "treatment" && condition.type === "group" && !(condition.children || []).length && (!condition.operator || condition.operator === "AND");
+    const conditionSummary = implicitTreatment
+      ? "内置前置条件：同一疾病的诊断规则已命中后，才评估此治疗建议。请核对是否还应增加分型、时限或其他限制。"
+      : conditionText(condition);
+    const source = rule.source || {};
+    const conclusion = rule.conclusion || {};
     const historyRows = (history || []).slice(0, 8);
     return `
+      <div class="detail-section" data-rule-approval-blocked="${blocked}"><h4>规则审核重点与检查结果</h4>
+        <button class="btn primary" data-rule-review-edit="${esc(rule.rule_id)}">编辑补充后再审核</button>
+        ${table(["审核重点", "已提供内容 / 待核对事项"], [
+          ["名称、用途与目标", `${rule.name || "名称缺失"}；${clinicalIntentLabel(rule.clinical_intent, rule.rule_type)}；${rule.disease_name || rule.disease_code || "目标缺失"}`],
+          ["条件完整性与组合逻辑", blocked ? "存在阻断项，需补充后再审核，详见下方问题" : "结构及图谱检查未发现阻断；仍须对照原文核对逻辑"],
+          ["适用范围与排除条件", "核对条件树中的人群、阶段、前置条件、时间要求及下方排除疾病；未单独填写不代表没有限制"],
+          ["结论与建议", conclusion.message || conclusion.diagnosis || "结论缺失，需补充"],
+          ["出处与原文", source.quote ? "已提供引文，请核对原文、页行定位及结论是否一致" : "出处缺失：尚无支持本规则的原文引文，请补充"],
+          ["图谱依赖", `${refs.length} 项依赖；核对所有依赖是否已审核通过`],
+          ["医院标准与病例验证", "图谱校验不代表标准覆盖或病例测试已通过，请在标准管理和病历测试中分别验证"],
+        ].map(([label, value]) => `<tr><td><strong>${esc(label)}</strong></td><td>${esc(value)}</td></tr>`))}
+      </div>
       <div class="detail-section endpoint-meta">
-        <div><span class="muted">类型</span><strong>${esc(rule.rule_type || "-")}</strong> ${badge(clinicalIntentLabel(rule.clinical_intent, rule.rule_type))} ${badge(normalizeDomainClient(rule.domain))}</div>
+        <div><span class="muted">名称</span><strong>${esc(rule.name || "名称缺失")}</strong></div>
+        <div><span class="muted">规则编码</span><span class="mono">${esc(rule.rule_id)}</span></div>
+        <div><span class="muted">用途与类型</span>${badge(clinicalIntentLabel(rule.clinical_intent, rule.rule_type))} ${esc(rule.rule_type || "-")} ${badge(normalizeDomainClient(rule.domain))}</div>
         <div><span class="muted">版本</span>v${esc(rule.version ?? "-")} · 优先级 ${esc(rule.priority ?? "-")}</div>
-        <div><span class="muted">目标</span>${esc(rule.disease_name || rule.disease_code || "-")}${rule.disease_code ? ` <span class="mono muted">(${esc(rule.disease_code)})</span>` : ""}</div>
+        <div><span class="muted">目标疾病 / 证候</span>${esc(rule.disease_name || rule.disease_code || "目标缺失")}</div>
         <div><span class="muted">所属图谱</span><span class="mono">${esc(rule.graph_filename || "-")}</span></div>
       </div>
-      <div class="detail-section"><h4>触发条件</h4><div class="quote">${esc(rule.condition_text || "-")}</div><div class="concept-chips">${ruleConceptChips(rule)}</div></div>
-      ${rule.source?.quote ? `<div class="detail-section"><h4>指南溯源</h4>
-        <div class="ref-head"><strong>${esc(rule.source.guideline_title || rule.source.guideline_id || "-")}</strong><span class="muted">${rule.source.page_start ? `第 ${rule.source.page_start} 页` : ""}${rule.source.section ? ` · ${esc(rule.source.section)}` : ""}</span></div>
-        <div class="ref-context"><div class="ref-line hit"><span class="ref-text">${esc(rule.source.quote)}</span></div></div>
-      </div>` : ""}
-      ${issues.length
-        ? `<div class="detail-section"><h4>图谱校验问题</h4><ul class="issue-list">${issues.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul></div>`
-        : '<div class="detail-section"><h4>图谱校验</h4><span class="badge active">语义一致</span></div>'}
-      <div class="detail-section"><h4>图谱依赖（${refs.length}）</h4>${refs.length ? table(["类型", "条目", "状态"], refs.map((ref) => `<tr><td>${ref.kind === "node" ? "节点" : "关系"}</td><td class="mono">${esc(ref.kind === "node" ? ref.node_id : `${ref.source_node_id} ─${ref.relation_code}→ ${ref.target_node_id}`)}</td><td>${ref.status === "active" ? '<span class="badge active">已通过</span>' : miniStatus(ref.status)}</td></tr>`)) : '<div class="muted">无图谱依赖</div>'}</div>
-      <div class="detail-section"><h4>版本历史${(history || []).length ? `（${history.length}）` : ""}</h4>${historyRows.length ? table(["版本", "时间", "操作", "操作人"], historyRows.map((row) => `<tr><td>#${esc(row.seq)}</td><td class="nowrap muted">${esc(formatTime(row.timestamp))}</td><td>${esc(row.action || "-")}</td><td>${esc(row.actor || "-")}</td></tr>`)) : '<div class="muted">暂无版本历史</div>'}</div>`;
+      <div class="detail-section"><h4>条件与组合逻辑（且 / 或 / 非 / 评分）</h4><div class="quote">${esc(conditionSummary)}</div><div class="concept-chips">${ruleConceptChips(rule)}</div></div>
+      <div class="detail-section"><h4>适用范围与排除条件</h4><p>适用人群、疾病分型、前置诊断及时间要求以条件树为准，请核对是否完整表达指南要求。</p><strong>明确排除的疾病：</strong>${esc((rule.exclusions || []).join("、") || "未单独配置，请对照原文确认是否需要补充")}</div>
+      <div class="detail-section"><h4>结论与建议</h4>${table(["项目", "内容"], [
+        ["结论目标", conclusion.diagnosis], ["提示说明", conclusion.message], ["建议动作", conclusion.action],
+        ["治疗方案", conclusion.treatment_name || conclusion.formula_name], ["置信度", conclusion.confidence],
+      ].map(([key, value]) => `<tr><td>${esc(key)}</td><td>${esc(value || "未填写")}</td></tr>`))}</div>
+      <div class="detail-section"><h4>出处（指南原文与定位）</h4>
+        <div class="ref-head"><strong>${esc(source.guideline_title || source.guideline_id || "指南名称 / 标识缺失")}</strong><span class="muted">第 ${esc(source.page_start || "未定位")} 页 · ${esc(source.line_start || "未定位")}–${esc(source.line_end || "未定位")} 行</span></div>
+        ${source.quote ? `<div class="ref-context"><div class="ref-line hit"><span class="ref-text">${esc(source.quote)}</span></div></div>` : '<div class="result-banner warning">原文引文缺失，请补充支持该判断及结论的指南依据。</div>'}
+      </div>
+      <div class="detail-section"><h4>阻断问题与处理建议</h4>${blocked
+        ? `<div class="result-banner warning">暂不能通过。缺少子条件或必要编码通常属于待补充，应先编辑修订；不要仅因信息不全直接判为医学错误。确认抽取错误、与指南相反或无依据时再拒绝。</div><ul class="issue-list">${issues.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul>`
+        : '<div class="muted">未发现结构或图谱依赖阻断项，不代表医学正确性、标准覆盖和病例验证已经通过。</div>'}
+      </div>
+      <div class="detail-section"><h4>图谱依赖（${refs.length}）</h4>${refs.length ? table(["类型", "条目", "审核状态"], refs.map((ref) => `<tr><td>${ref.kind === "node" ? "实体" : "关系"}</td><td class="mono">${esc(ref.kind === "node" ? ref.node_id : `${ref.source_node_id} ─${ref.relation_code}→ ${ref.target_node_id}`)}</td><td>${ref.status === "active" ? '<span class="badge active">已通过</span>' : miniStatus(ref.status)}</td></tr>`)) : '<div class="muted">无可核对的图谱依赖</div>'}</div>
+      <div class="detail-section"><h4>版本历史${history?.length ? `（${history.length}）` : ""}</h4>${historyRows.length ? table(["版本", "时间", "操作", "操作人"], historyRows.map((row) => `<tr><td>#${esc(row.seq)}</td><td>${esc(formatTime(row.timestamp))}</td><td>${esc(row.action || "-")}</td><td>${esc(row.actor || "-")}</td></tr>`)) : '<div class="muted">暂无版本历史</div>'}</div>`;
   }
 
   let reviewDetailToken = 0;
   function markSelectedRow() {
-    content.querySelectorAll(".review-row").forEach((row) => {
+    pageEl.querySelectorAll(".review-row").forEach((row) => {
       row.classList.toggle("selected", row.dataset.reviewKey === state.reviewSelectedKey);
     });
-    const row = content.querySelector(`.review-row[data-review-key="${CSS.escape(state.reviewSelectedKey)}"]`);
+    const row = pageEl.querySelector(`.review-row[data-review-key="${CSS.escape(state.reviewSelectedKey)}"]`);
     row?.scrollIntoView({ block: "nearest" });
   }
   async function loadReviewDetail(item) {
@@ -3695,6 +4042,27 @@
       else body = '<div class="empty">该条目类型暂不支持详情展示</div>';
       if (token !== reviewDetailToken) return;
       mount.innerHTML = `${detailHeadHtml(item)}${detailActionsHtml(item)}<div class="detail-body">${body}</div>`;
+      // Related details may be outside the filtered queue. Act on this detail's
+      // item, rather than looking it up in state.reviewItems.
+      mount.querySelectorAll("[data-detail-action]").forEach((button) => button.onclick = async (event) => {
+        event.stopPropagation();
+        const action = button.dataset.detailAction;
+        if (action === "reject" || action === "retire") { openReasonDialog(item, action); return; }
+        button.disabled = true;
+        const label = button.textContent;
+        button.textContent = "提交中…";
+        try { await quickReview(item, action); }
+        finally { button.disabled = false; button.textContent = label; }
+      });
+      if (mount.querySelector('[data-rule-approval-blocked="true"]')) {
+        mount.querySelectorAll('[data-detail-action="approve"]').forEach((button) => {
+          button.disabled = true; button.title = "存在阻断问题，请先编辑补充后再审核";
+        });
+      }
+      mount.querySelectorAll("[data-rule-review-edit]").forEach((button) => button.onclick = async () => {
+        try { openRuleEditor(await api(`/api/rules/${encodeURIComponent(button.dataset.ruleReviewEdit)}`), { reviewRevision: true }); }
+        catch (error) { toast(error.message, true); }
+      });
       mount.querySelectorAll(".ref-chip[data-ref]").forEach((chip) => chip.onclick = async () => {
         chip.disabled = true;
         const wrap = document.createElement("div");
@@ -3703,6 +4071,12 @@
       });
       mount.querySelectorAll("[data-related-node]").forEach((btn) => btn.onclick = () => {
         loadReviewDetail({ item_type: "graph_node", node_id: btn.dataset.relatedNode, graph_filename: item.graph_filename, status: "" });
+      });
+      mount.querySelectorAll("[data-relation-endpoint]").forEach((btn) => btn.onclick = () => {
+        loadReviewDetail({
+          item_type: "graph_node", node_id: btn.dataset.relationEndpoint,
+          graph_filename: item.graph_filename, status: btn.dataset.endpointStatus || "",
+        });
       });
       mount.querySelectorAll("[data-related-relation]").forEach((btn) => btn.onclick = () => {
         loadReviewDetail({
@@ -3726,7 +4100,7 @@
   }
 
   async function bulkReview(action) {
-    let selected = [...content.querySelectorAll("[data-review-select]:checked")]
+    let selected = [...pageEl.querySelectorAll("[data-review-select]:checked")]
       .map((input) => state.reviewItems.find((item) => reviewItemKey(item) === input.dataset.reviewSelect))
       .filter(Boolean);
     if (!selected.length) { toast("请先勾选条目", true); return; }
@@ -3758,13 +4132,14 @@
       const detail = firstError
         ? `；首个失败：${typeof firstError.error === "string" ? firstError.error : JSON.stringify(firstError.error)}`
         : "";
+      markStale("graphVisual");
       toast(`批量完成：成功 ${result.succeeded}，失败 ${result.failed}${detail}`, result.failed > 0);
       renderReviewCenter();
     } catch (error) { toast(error.message, true); }
   }
 
   function bindReviewTabs() {
-    content.querySelectorAll("[data-review-tab]").forEach((button) => button.onclick = () => {
+    pageEl.querySelectorAll("[data-review-tab]").forEach((button) => button.onclick = () => {
       state.reviewTab = button.dataset.reviewTab;
       state.reviewSelectedKey = "";
       renderReviewCenter();
@@ -3782,7 +4157,7 @@
 
   function bindDupeMerge(graphFilename) {
     if (!graphFilename) return;
-    content.querySelectorAll("[data-dupe-merge]").forEach((button) => button.onclick = async () => {
+    pageEl.querySelectorAll("[data-dupe-merge]").forEach((button) => button.onclick = async () => {
       const groupEl = button.closest(".dupe-group");
       const checked = groupEl.querySelector("input[type=radio]:checked");
       if (!checked) { toast("请选择保留节点", true); return; }
@@ -3806,10 +4181,198 @@
     });
   }
 
+  function reviewCategoriesHtml() {
+    return `<div class="grid c4">${[
+      ["graph", "1 · 实体审核", "核对名称、类型、编码、属性及出处"],
+      ["relations", "2 · 关系审核", "核对连接对象、方向、关系含义及出处"],
+      ["bases", "3 · 诊疗依据审核", "核对条件组合、适用范围、排除条件和原文；通过后生成规则草稿"],
+      ["rules", "4 · 规则审核", "核对执行逻辑、依赖及病例验证；审核后启用"],
+    ].map(([key, title, description]) => `<button class="btn ${state.reviewTab === key ? "primary" : ""}" data-review-tab="${key}" style="white-space:normal;text-align:left;display:block;padding:12px"><strong>${title}</strong><div style="font-weight:normal;margin-top:6px">${description}</div></button>`).join("")}</div>`;
+  }
+
+  async function renderClinicalBases() {
+    await loadBase();
+    const graphs = await api("/api/kg/graphs");
+    const filename = state.reviewFilters.graph || graphs[0]?.graph_filename || "";
+    state.reviewFilters.graph = filename;
+    const result = filename ? await api(`/api/review/bases?graph_filename=${encodeURIComponent(filename)}`) : { items: [] };
+    const diseaseCode = state.basisDiseaseCode || "";
+    const visibleBases = result.items.filter((basis) => !diseaseCode || basis.specification.disease_code === diseaseCode);
+    const tabHtml = REVIEW_TABS.map(([key, label]) => `<button class="review-tab ${key === "bases" ? "active" : ""}" data-review-tab="${key}">${label}</button>`).join("");
+    pageEl.innerHTML = `<div class="review-tabs">${tabHtml}</div>${reviewCategoriesHtml()}
+      <div class="result-banner">已有 ${visibleBases.length} 份候选依据${diseaseCode ? `（疾病 ${esc(diseaseCode)}）` : ""}。候选已保留解析条件、结论和原文；图谱审核状态自动复用，无须重新录入。核对组合逻辑后，点击“确认依据并生成待审规则”。${diseaseCode ? '<button class="btn sm" id="allDiseaseBases">查看全部疾病</button>' : ""}</div>
+      ${panel("诊疗依据审核", `<p>审核对象是一组完整的诊疗判断，不是单个实体或一条关系。实体与关系通过审核后，还须确认组合逻辑及适用条件；只有通过的依据组才能生成规则草稿。</p>
+        <div class="inline-controls"><div class="field"><label>知识图谱</label><select id="basisGraph">${graphs.map((g) => `<option value="${esc(g.graph_filename)}" ${filename === g.graph_filename ? "selected" : ""}>${esc(g.graph_filename)}</option>`).join("")}</select></div>
+        <button class="btn" id="prepareBases" ${filename ? "" : "disabled"}>整理已有候选为待审依据</button><button class="btn primary" id="newClinicalBasis" ${filename ? "" : "disabled"}>新增诊疗依据</button></div>
+        <p class="muted">整理操作读取此图谱的知识包候选和已有规则，不猜测实体连线的且/或关系，不修改或停用已有规则。</p>`)}
+      ${panel("诊疗依据组", table(["名称 / 指南", "审核状态", "生成前检查", "操作"], visibleBases.map((basis) => `<tr><td><strong>${esc(basis.name)}</strong><div>${esc(basis.specification.source?.guideline_title || "-")}</div></td><td>${reviewBadge(basis.validation.status)}</td><td>${basis.validation.issues.length ? esc(basis.validation.issues.join("；")) : "图谱依赖完整，待人工核对逻辑"}${basis.generated_rule_id ? `<div>已生成：${esc(basis.generated_rule_id)}</div>` : ""}</td><td>${basis.generated_rule_id ? `<button class="btn primary" data-basis-revise="${esc(basis.basis_id)}" title="依据最新已审关联创建修订依据，旧规则保持不变">更新并重新生成待审规则</button>` : `<button class="btn primary" data-basis-edit="${esc(basis.basis_id)}" title="先沿用已审核关联补全缺失条件，再打开编辑器">按已审图谱补全并编辑</button>`}<button class="btn" data-basis-detail="${esc(basis.basis_id)}">审核详情</button></td></tr>`)))}
+      <div id="basisDetail"></div>`;
+    if (diseaseCode) {
+      pageEl.querySelectorAll("[data-basis-detail]").forEach((button) => {
+        const basis = result.items.find((item) => item.basis_id === button.dataset.basisDetail);
+        if (basis.specification.disease_code !== diseaseCode) button.closest("tr").hidden = true;
+      });
+      $("#allDiseaseBases").onclick = () => { state.basisDiseaseCode = ""; renderClinicalBases(); };
+    }
+    bindReviewTabs();
+    $("#basisGraph").onchange = (event) => { state.reviewFilters.graph = event.target.value; renderClinicalBases(); };
+    $("#newClinicalBasis").onclick = () => openRuleEditor(null, { clinicalBasis: true, onSave: (specification) => api(`/api/review/bases?graph_filename=${encodeURIComponent(filename)}`, { json: { specification, scope_summary: "" } }) });
+    $("#prepareBases").onclick = async () => {
+      try { await api(`/api/review/bases/prepare?graph_filename=${encodeURIComponent(filename)}`, { json: {} }); await renderClinicalBases(); }
+      catch (error) { toast(error.message, true); }
+    };
+    pageEl.querySelectorAll("[data-basis-edit]").forEach((button) => button.onclick = async () => {
+      const basis = result.items.find((item) => item.basis_id === button.dataset.basisEdit);
+      await openCompletedBasisEditor(basis, filename, basis.scope_summary || "", button);
+    });
+    pageEl.querySelectorAll("[data-basis-revise]").forEach((button) => button.onclick = async () => {
+      button.disabled = true;
+      button.textContent = "正在汇总最新关联…";
+      try {
+        const result = await api(`/api/review/bases/${encodeURIComponent(button.dataset.basisRevise)}/revise-from-reviewed-graph?graph_filename=${encodeURIComponent(filename)}`, { json: {} });
+        toast(`已创建修订依据并带入 ${result.used.length} 个已审条件，请核对后生成新待审规则`);
+        await renderClinicalBases();
+        await showClinicalBasis(result.basis, filename);
+      } catch (error) { toast(error.message, true); button.disabled = false; button.textContent = "更新并重新生成待审规则"; }
+    });
+    pageEl.querySelectorAll("[data-basis-detail]").forEach((button) => button.onclick = () => showClinicalBasis(result.items.find((g) => g.basis_id === button.dataset.basisDetail), filename));
+  }
+
+  async function openCompletedBasisEditor(basis, filename, scopeSummary, button = null) {
+    const endpoint = `/api/review/bases/${encodeURIComponent(basis.basis_id)}`;
+    const oldLabel = button?.textContent;
+    if (button) { button.disabled = true; button.textContent = "正在整理已审关联…"; }
+    try {
+      const completed = await api(endpoint + `/complete-from-reviewed-graph?graph_filename=${encodeURIComponent(filename)}`, { json: {} });
+      const prepared = completed.basis || basis;
+      if (completed.changed) {
+        toast(`已从审核通过的关联补入 ${completed.used.length} 个候选条件，请核对且／或组合`);
+      } else {
+        toast(completed.reason || "现有条件已完整，已保留原配置");
+      }
+      openRuleEditor(prepared.specification, {
+        clinicalBasis: true,
+        onSave: (specification) => api(endpoint + `?graph_filename=${encodeURIComponent(filename)}`, {
+          method: "PUT", json: { specification, scope_summary: scopeSummary },
+        }),
+      });
+      if (completed.candidates?.length) {
+        const notice = document.createElement("div");
+        notice.className = "result-banner warning";
+        notice.innerHTML = `<strong>已审关联候选（${completed.candidates.length} 项）</strong><p>以下项目已自动关联。请对照原文确定哪些属于诊断条件及其且／或关系；尚未加入执行条件。</p><div>${completed.candidates.map((candidate) => esc(conditionText(candidate))).join("；")}</div>`;
+        $("#editorBody").prepend(notice);
+      }
+      if (completed.treatment_links) {
+        const links = completed.treatment_links;
+        const notice = document.createElement("div");
+        notice.className = "result-banner";
+        notice.innerHTML = `<strong>已自动关联的治疗图谱</strong><p>治疗项目：${esc(links.items.map((item) => item.name || item.code).join("、") || "当前依据未关联到已审方案项目")}</p><p>疾病关联检查检验（待核对是否适用于本方案）：${esc(links.investigations.map((item) => item.name || item.code).join("、") || "暂无")}</p><p>这些项目无需重复录入诊断条件。请核对原文中的适用人群、阶段及禁忌限制。</p>`;
+        $("#editorBody").prepend(notice);
+      }
+    } catch (error) {
+      toast(error.message, true);
+    } finally {
+      if (button) { button.disabled = false; button.textContent = oldLabel; }
+    }
+  }
+
+  async function showClinicalBasis(basis, filename) {
+    const labels = { entities: "实体与关系：目标、条件对象和语义链路正确", logic: "组合逻辑：且/或/非、满足数量、评分和时间要求符合原文", scope: "适用与排除：已完整写入可执行条件及 exclusions，不只是填写下方说明", source: "指南依据：原文、页行定位、适用版本和结论含义一致" };
+    const spec = basis.specification;
+    const source = spec.source || {};
+    const context = source.chunk_id ? await sourceRefsHtml([source.chunk_id]) : "";
+    $("#basisDetail").innerHTML = panel(basis.name, `
+      ${basis.generated_rule_id ? '<button id="basisReviseLogic" class="btn primary">更新并重新生成待审规则</button>' : '<button id="basisEditLogic" class="btn primary" title="先沿用已审核关联补全缺失条件，再打开编辑器">按已审图谱补全并编辑</button>'}
+      <h4>条件逻辑</h4><div class="quote">${esc(conditionText(spec.conditions))}</div>
+      <h4>结论及排除条件</h4><pre>${esc(JSON.stringify({ conclusion: spec.conclusion, exclusions: spec.exclusions || [] }, null, 2))}</pre>
+      <h4>指南原文</h4><div>${esc(source.guideline_title || source.guideline_id || "-")} · 第 ${esc(source.page_start || "-")} 页 · ${esc(source.line_start || "-")}–${esc(source.line_end || "-")} 行</div><div class="quote">${esc(source.quote || "缺少引文，不能通过")}</div>${context}
+      <h4>生成前检查</h4>${basis.validation.issues.length ? `<div class="result-banner warning">${esc(basis.validation.issues.join("；"))}</div>` : '<div class="result-banner ok">依赖实体和关系均已通过；仍需人工核对以下四类内容。</div>'}
+      <h4>沿用的图谱审核结果</h4><p class="muted">已通过项不需要重审。候选可能还引用“检验／检查 → 诊断依据”等后续链路，未必都在疾病的直接关联中。</p>
+      ${table(["依赖", "状态", "操作"], (basis.validation.references || []).map((ref, index) => `<tr><td class="mono">${esc(ref.kind === "node" ? ref.node_id : `${ref.source_node_id} → ${RELATION_LABELS[ref.relation_code] || ref.relation_code} → ${ref.target_node_id}`)}</td><td>${miniStatus(ref.status)}</td><td>${ref.status !== "active" ? `<button class="btn sm" data-basis-dependency="${index}">查看并补审</button>` : "已沿用"}</td></tr>`))}
+      <h4>适用范围核对说明</h4><textarea id="basisScope" rows="3" ${basis.generated_rule_id ? "readonly" : ""}>${esc(basis.scope_summary || "")}</textarea>
+      <p class="muted">本说明仅作审核记录。实际限制必须体现在下方结构化条件中；无额外范围限制时也请明确说明。</p>
+      <details><summary>结构化诊疗条件（修改后必须先保存，再重新审核）</summary><textarea id="basisSpec" rows="20" class="mono" style="width:100%" ${basis.generated_rule_id ? "readonly" : ""}>${esc(JSON.stringify(spec, null, 2))}</textarea></details>
+      <div class="field"><label>审核人</label><input id="basisReviewer" value="${esc(localStorage.getItem("cdssReviewer") || "")}"></div>
+      ${Object.entries(labels).map(([key, label]) => `<div><label><input type="checkbox" data-basis-check="${key}"> ${esc(label)}</label></div>`).join("")}
+      <div class="field"><label>审核意见（退回时必填）</label><textarea id="basisNote"></textarea></div>
+      <div class="actions"><button id="basisSave" class="btn" ${basis.generated_rule_id ? "disabled" : ""}>保存待审依据</button><button id="basisApprove" class="btn primary">确认依据通过</button><button id="basisReject" class="btn">退回修订</button><button id="basisGenerate" class="btn primary" ${basis.validation.status === "active" && !basis.validation.issues.length ? "" : "disabled"}>生成规则草稿</button></div>`);
+    const endpoint = `/api/review/bases/${encodeURIComponent(basis.basis_id)}`;
+    pageEl.querySelectorAll("[data-basis-dependency]").forEach((button) => button.onclick = async () => {
+      try {
+        const ref = basis.validation.references[Number(button.dataset.basisDependency)];
+        const item = ref.kind === "node"
+          ? { ...ref, item_type: "graph_node", graph_filename: filename }
+          : { ...ref, item_type: "graph_relation", graph_filename: filename, item_id: `${ref.source_node_id}|${ref.relation_code}|${ref.target_node_id}` };
+        state.reviewTab = ref.kind === "node" ? "graph" : "relations";
+        state.reviewQuery = "";
+        state.reviewFilters = { graph: filename, sourceDoc: "", nodeType: "", relationCode: "", itemType: "", clinicalIntent: "" };
+        await renderReviewCenter();
+        await loadReviewDetail(item);
+        $("#reviewDetail")?.scrollIntoView({ block: "start" });
+      } catch (error) { toast(error.message, true); }
+    });
+    if ($("#basisEditLogic")) $("#basisEditLogic").onclick = async () => {
+      const scopeSummary = $("#basisScope").value;
+      await openCompletedBasisEditor(basis, filename, scopeSummary, $("#basisEditLogic"));
+    };
+    if ($("#basisReviseLogic")) $("#basisReviseLogic").onclick = async () => {
+      const button = $("#basisReviseLogic");
+      button.disabled = true; button.textContent = "正在汇总最新关联…";
+      try {
+        const result = await api(endpoint + `/revise-from-reviewed-graph?graph_filename=${encodeURIComponent(filename)}`, { json: {} });
+        toast(`已创建修订依据并带入 ${result.used.length} 个已审条件，请重新审核`);
+        await renderClinicalBases();
+        await showClinicalBasis(result.basis, filename);
+      } catch (error) { toast(error.message, true); button.disabled = false; button.textContent = "更新并重新生成待审规则"; }
+    };
+    const query = `?graph_filename=${encodeURIComponent(filename)}`;
+    const changed = () => $("#basisScope").value !== (basis.scope_summary || "") || $("#basisSpec").value !== JSON.stringify(spec, null, 2);
+    const run = (id, action) => $(id).onclick = async () => { try { await action(); await renderClinicalBases(); } catch (error) { toast(error.message, true); } };
+    run("#basisSave", () => api(endpoint + query, { method: "PUT", json: { specification: JSON.parse($("#basisSpec").value), scope_summary: $("#basisScope").value } }));
+    const review = async (action) => {
+      const reviewer = $("#basisReviewer").value.trim();
+      localStorage.setItem("cdssReviewer", reviewer);
+      const checks = Object.fromEntries([...pageEl.querySelectorAll("[data-basis-check]")].map((input) => [input.dataset.basisCheck, input.checked]));
+      if (changed()) {
+        if (action !== "approve") throw new Error("内容已修改，请先保存，再审核");
+        await api(endpoint + query, { method: "PUT", json: { specification: JSON.parse($("#basisSpec").value), scope_summary: $("#basisScope").value } });
+      }
+      return api(endpoint + "/review" + query, { json: { action, reviewer, note: $("#basisNote").value, checks } });
+    };
+    $("#basisApprove").textContent = "确认依据并生成待审规则";
+    $("#basisApprove").onclick = async () => {
+      const button = $("#basisApprove");
+      button.disabled = true;
+      button.textContent = "正在校验并生成…";
+      try {
+        await review("approve");
+        const generated = await api(endpoint + "/generate" + query, { json: {} });
+        toast(`已生成待审规则：${generated.rule_id}`);
+        state.reviewTab = "rules";
+        state.reviewQuery = generated.rule_id;
+        state.reviewFilters = { graph: filename, sourceDoc: "", nodeType: "", relationCode: "", itemType: "", clinicalIntent: "" };
+        markStale("rules", "dashboard");
+        await renderReviewCenter();
+      } catch (error) {
+        toast(error.message, true);
+        button.disabled = false;
+        button.textContent = "确认依据并生成待审规则";
+      }
+    };
+    run("#basisReject", () => review("reject"));
+    run("#basisGenerate", async () => {
+      if (changed()) throw new Error("内容已修改，请先保存并重新审核");
+      const generated = await api(endpoint + "/generate" + query, { json: {} });
+      toast(`规则 ${generated.rule_id} 已进入草稿，须在规则审核中验证后启用`);
+    });
+    $("#basisDetail").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   async function renderReviewCenter() {
     // 节点/关系详情的属性表依赖模板契约渲染中文名，直接进入审核台时也需加载模板数据。
     await loadExtractionSettings();
-    const tab = state.reviewTab || "graph";
+    const tab = state.reviewTab || "bydisease";
+    if (tab === "bases") { await renderClinicalBases(); return; }
     if (tab === "bydisease") { await renderByDisease(); return; }
     const reviewer = localStorage.getItem("cdssReviewer") || "";
     const query = (state.reviewQuery || "").trim();
@@ -3905,7 +4468,7 @@
         <td>${esc(row.reviewer || "-")}</td>
         <td>${esc(row.note || "-")}</td>
       </tr>`);
-      content.innerHTML = `<div class="review-tabs">${tabHtml}</div>
+      pageEl.innerHTML = `<div class="review-tabs">${tabHtml}</div>${reviewCategoriesHtml()}
         ${panel("审核记录", table(["时间", "类型", "条目", "动作", "状态变化", "审核人", "意见"], auditRows), "", "全量审核动作的追加式日志；拒绝原因码会记录在意见前缀 [原因码] 中")}`;
       bindReviewTabs();
       return;
@@ -3933,7 +4496,7 @@
               </label>`).join("")}</div>
             <div class="actions"><button class="btn sm primary" data-dupe-merge>合并为一</button></div>
           </div>`).join("") || '<div class="empty">未检测到同类型同名重复</div>');
-      content.innerHTML = `<div class="review-tabs">${tabHtml}</div>
+      pageEl.innerHTML = `<div class="review-tabs">${tabHtml}</div>${reviewCategoriesHtml()}
         <div class="review-list" style="max-width:none">
           <div class="review-toolbar compact review-filterbar">
             <select id="reviewFilterGraph" title="按目的图谱筛选">
@@ -3978,8 +4541,8 @@
         <td class="nowrap muted">${esc(shortTime(item.updated_at))}</td>
       </tr>`;
     });
-    content.innerHTML = `
-      <div class="review-tabs">${tabHtml}</div>
+    pageEl.innerHTML = `
+      <div class="review-tabs">${tabHtml}</div>${reviewCategoriesHtml()}
       ${reviewProgressHtml(queue.summary)}
       ${truncated}
       ${tab === "relations" ? relationMatrixHtml(items) : ""}
@@ -4082,16 +4645,16 @@
       renderReviewCenter();
     });
     const selectionCount = () => {
-      const count = content.querySelectorAll("[data-review-select]:checked").length;
+      const count = pageEl.querySelectorAll("[data-review-select]:checked").length;
       const el = $("#reviewSelectionCount");
       if (el) el.textContent = `已选 ${count} 条`;
     };
     $("#reviewSelectAll")?.addEventListener("change", (event) => {
-      content.querySelectorAll("[data-review-select]").forEach((input) => { input.checked = event.target.checked; });
+      pageEl.querySelectorAll("[data-review-select]").forEach((input) => { input.checked = event.target.checked; });
       selectionCount();
     });
-    content.querySelectorAll("[data-review-select]").forEach((input) => input.addEventListener("change", selectionCount));
-    content.onclick = (event) => {
+    pageEl.querySelectorAll("[data-review-select]").forEach((input) => input.addEventListener("change", selectionCount));
+    pageEl.onclick = (event) => {
       const actionButton = event.target.closest("[data-detail-action]");
       if (actionButton) {
         const item = state.reviewItems.find((entry) => reviewItemKey(entry) === state.reviewSelectedKey);
@@ -4108,7 +4671,7 @@
         if (item) loadReviewDetail(item);
       }
     };
-    content.querySelectorAll("[data-review-bulk]").forEach((button) => button.onclick = () => bulkReview(button.dataset.reviewBulk));
+    pageEl.querySelectorAll("[data-review-bulk]").forEach((button) => button.onclick = () => bulkReview(button.dataset.reviewBulk));
     bindReviewTabs();
     const selected = items.find((item) => reviewItemKey(item) === state.reviewSelectedKey);
     if (selected) loadReviewDetail(selected);
@@ -4118,33 +4681,54 @@
   async function renderByDisease() {
     const tab = state.reviewTab || "graph";
     const filters = state.reviewFilters || {};
-    const graphName = filters.graph || state.graphFilename || "";
+    if (state.reviewGraphOptions == null) {
+      try { state.reviewGraphOptions = await api("/api/kg/graphs"); }
+      catch (error) { toast(`加载图谱列表失败：${error.message}`, true); }
+    }
+    const graphOptions = state.reviewGraphOptions || [];
+    const graphName = filters.graph || state.graphFilename || graphOptions[0]?.graph_filename || "";
     state.byDisease = state.byDisease || { subject: "", search: "", composing: false };
     // 重渲染会重建搜索框，先记录焦点与光标，渲染后恢复（防抖过滤不打断输入）
     state.byDisease.composing = false;
-    const prevSearch = content.querySelector("#byDiseaseSearch");
+    const prevSearch = pageEl.querySelector("#byDiseaseSearch");
     const searchHadFocus = Boolean(prevSearch && document.activeElement === prevSearch);
     const searchSelection = searchHadFocus
       ? { start: prevSearch.selectionStart, end: prevSearch.selectionEnd }
       : null;
     const tabHtml = REVIEW_TABS.map(([key, label]) => `<button class="review-tab ${tab === key ? "active" : ""}" data-review-tab="${key}">${label}</button>`).join("");
+    const graphFilterHtml = `<div class="field"><label for="byDiseaseGraphFilter">知识图谱</label>
+      <select id="byDiseaseGraphFilter">
+        <option value="" ${!graphName ? "selected" : ""} disabled>请选择图谱</option>
+        ${graphName && !graphOptions.some((g) => g.graph_filename === graphName) ? `<option value="${esc(graphName)}" selected>${esc(graphName)}</option>` : ""}
+        ${graphOptions.map((g) => `<option value="${esc(g.graph_filename)}" ${g.graph_filename === graphName ? "selected" : ""}>${esc(g.graph_filename)}</option>`).join("")}
+      </select></div>`;
+    const bindGraphFilter = () => {
+      $("#byDiseaseGraphFilter")?.addEventListener("change", (event) => {
+        state.reviewFilters = { ...(state.reviewFilters || {}), graph: event.target.value };
+        state.byDisease.subject = "";
+        renderByDisease();
+      });
+    };
     if (!graphName) {
-      content.innerHTML = `<div class="review-tabs">${tabHtml}</div><div class="empty">按疾病分组视图按单图谱展示，请先在筛选中选择目的图谱。</div>`;
+      pageEl.innerHTML = `<div class="review-tabs">${tabHtml}</div>${reviewCategoriesHtml()}${graphFilterHtml}<div class="empty">按疾病分组视图按单图谱展示，请先在筛选中选择目的图谱。</div>`;
       bindReviewTabs();
+      bindGraphFilter();
       return;
     }
+    state.reviewFilters = { ...filters, graph: graphName };
     let groups;
     try {
       groups = await api(`/api/kg/relations/groups?graph_filename=${encodeURIComponent(graphName)}&subject_type=disease`);
     } catch (error) {
-      content.innerHTML = `<div class="review-tabs">${tabHtml}</div><div class="empty">加载分组失败：${esc(error.message)}</div>`;
+      pageEl.innerHTML = `<div class="review-tabs">${tabHtml}</div>${reviewCategoriesHtml()}${graphFilterHtml}<div class="empty">加载分组失败：${esc(error.message)}</div>`;
       bindReviewTabs();
+      bindGraphFilter();
       return;
     }
     const search = (state.byDisease.search || "").trim().toLowerCase();
     const subjects = (groups.subjects || []).filter((s) => !search || `${s.name} ${s.code}`.toLowerCase().includes(search));
-    const hint = filters.graph ? "" : `<div class="muted trunc-note">按疾病分组视图按单图谱展示，当前：${esc(graphName)}</div>`;
-    content.innerHTML = `<div class="review-tabs">${tabHtml}</div>${hint}
+    const hint = `<div class="result-banner"><strong>疾病审核工作台</strong><p>1. 确认疾病与关联实体 → 2. 审核关系 → 3. 按场景核对用途和依据 → 4. 生成并验证规则。已有审核结果自动沿用。</p>当前图谱：${esc(graphName)}</div>`;
+    pageEl.innerHTML = `<div class="review-tabs">${tabHtml}</div>${reviewCategoriesHtml()}${graphFilterHtml}${hint}
       <div class="by-disease-layout">
         <div class="subject-list">
           <input id="byDiseaseSearch" type="search" value="${esc(state.byDisease.search || "")}" placeholder="搜索疾病 / 证候 / 编码…">
@@ -4157,6 +4741,7 @@
         </div>
       </div>`;
     bindReviewTabs();
+    bindGraphFilter();
     const searchInput = $("#byDiseaseSearch");
     if (searchInput) {
       let searchTimer = null;
@@ -4190,7 +4775,7 @@
         }
       }
     }
-    content.querySelectorAll(".subject-card").forEach((card) => card.onclick = () => loadByDiseaseCard(card.dataset.subject));
+    pageEl.querySelectorAll(".subject-card").forEach((card) => card.onclick = () => loadByDiseaseCard(card.dataset.subject));
     if (state.byDisease.subject && subjects.some((s) => s.node_id === state.byDisease.subject)) {
       await loadByDiseaseCard(state.byDisease.subject);
     } else {
@@ -4215,7 +4800,7 @@
     const filters = state.reviewFilters || {};
     const graphName = filters.graph || state.graphFilename || "";
     state.byDisease.subject = nodeId;
-    content.querySelectorAll(".subject-card").forEach((card) => card.classList.toggle("selected", card.dataset.subject === nodeId));
+    pageEl.querySelectorAll(".subject-card").forEach((card) => card.classList.toggle("selected", card.dataset.subject === nodeId));
     const mount = $("#byDiseaseCard");
     if (!mount) return;
     mount.innerHTML = '<div class="empty">加载知识卡片…</div>';
@@ -4236,9 +4821,74 @@
     const subject = detail.subject || {};
     mount.innerHTML = `
       ${detailHeadHtml({ item_type: "graph_node", node_id: nodeId, name: subject.display_name || subject.name || nodeId, code: subject.code || "", status: subject.review_status || "draft", graph_filename: detail.graph_filename || graphName, node_type: subject.node_type || "" })}
+      <button class="btn" data-disease-review>第 1 步：核对疾病名称、分型与出处</button>
       <div class="detail-sub mono muted">出边 ${detail.totals?.total ?? 0} 条 · 待审 ${detail.totals?.pending ?? 0} · 可疑 ${detail.totals?.suspect ?? 0}</div>
-      ${sections.map((section) => diseaseSectionHtml(section)).join("") || '<div class="empty">该节点没有出边关系</div>'}`;
+      <div class="result-banner"><strong>本疾病的审核顺序</strong><p>先核对下方实体与关系，再在场景区整理诊断、治疗和用药依据。</p><button class="btn" data-disease-bases>查看本疾病全部诊疗依据</button></div>
+      ${diseaseEndpointReviewHtml([...state.byDiseaseItems.values()], detail.graph_filename || graphName)}
+      ${sections.map((section) => diseaseSectionHtml(section)).join("") || '<div class="empty">该节点没有出边关系</div>'}
+      <div id="diseaseScenarioWorkbench" class="detail-section"><div class="empty">正在整理场景依据…</div></div>`;
     bindByDiseaseCardActions(mount);
+    const sceneMount = mount.querySelector("#diseaseScenarioWorkbench");
+    try {
+      await window.mountScenarioWorkbench(sceneMount, {
+        api, esc, graphFilename: graphName, diseaseCode: subject.code, relationLabels: RELATION_LABELS,
+        sourceRefBlock, parseSourceRef, fetchRefLines, refDocTitle,
+        openBasis: async (basisId) => {
+          state.basisDiseaseCode = subject.code;
+          state.reviewTab = "bases";
+          await renderClinicalBases();
+          const result = await api(`/api/review/bases?graph_filename=${encodeURIComponent(graphName)}`);
+          const basis = result.items.find((item) => item.basis_id === basisId);
+          if (basis) await showClinicalBasis(basis, graphName);
+        },
+      });
+    } catch (error) { sceneMount.textContent = `场景加载失败：${error.message}`; }
+  }
+
+  function diseaseEndpointReviewHtml(items, graphFilename) {
+    const endpoints = new Map();
+    items.forEach((item) => {
+      for (const side of ["source", "target"]) {
+        const id = item[`${side}_node_id`];
+        const status = item[`${side}_status`] || "missing";
+        if (id && status !== "active") endpoints.set(id, {
+          item_type: "graph_node", node_id: id, graph_filename: graphFilename,
+          name: item[`${side}_name`] || id, node_type: item[`${side}_node_type`] || "", status,
+        });
+      }
+    });
+    state.byDiseaseEndpoints = endpoints;
+    return `<div class="detail-section" id="diseaseEndpointReview"><h4>第 1 步：核对关系涉及的实体</h4>
+      <p>关系连接两个实体。请先确认疾病、症状、检查等实体识别正确，再审核它们之间的医学关系。实体通过不会自动通过关系。</p>
+      ${endpoints.size ? `<div class="actions"><label><input type="checkbox" data-endpoint-select-all> 全选可审核实体</label><span class="muted" data-endpoint-selection-count>已选 0 项</span></div>${table(["选择", "尚未通过的实体", "实体类型", "状态", "核对"], [...endpoints.values()].map((item, index) => `<tr><td><input type="checkbox" data-endpoint-select="${esc(item.node_id)}" ${["draft", "stale"].includes(item.status) ? "" : "disabled"}></td><td>${esc(item.name)}</td><td><span class="type-chip">${esc(typeName[item.node_type] || item.node_type || "类型缺失，请核对")}</span></td><td>${miniStatus(item.status)}</td><td><button class="btn sm" data-endpoint-detail="${index}">查看实体原文与属性</button></td></tr>`))}<button class="btn sm primary" data-endpoint-approve>通过勾选的实体</button>` : '<div class="result-banner ok">相关实体均已通过，可直接审核下方关系。</div>'}
+      <h4>第 2 步：审核下方关系</h4><p>核对关系的方向、医学含义和原文后，可批量通过本组关系。</p></div>`;
+  }
+
+  async function openEndpointSource(item, trigger) {
+    const dialog = document.createElement("dialog");
+    dialog.className = "dialog endpoint-source-dialog";
+    dialog.setAttribute("aria-label", "实体原文与属性");
+    dialog.innerHTML = `<div class="endpoint-source-head"><h3>${esc(item.name || item.node_id)} · 原文与属性</h3><button type="button" class="btn" data-source-close autofocus>关闭</button></div><div class="endpoint-source-body"><div class="empty">正在加载指南原文…</div></div>`;
+    document.body.append(dialog);
+    dialog.querySelector("[data-source-close]").onclick = () => dialog.close();
+    dialog.addEventListener("close", () => { dialog.remove(); trigger?.focus({ preventScroll: true }); }, { once: true });
+    dialog.showModal();
+    const body = dialog.querySelector(".endpoint-source-body");
+    try {
+      const detail = await api(`/api/kg/nodes/${encodeURIComponent(item.node_id)}?graph_filename=${encodeURIComponent(item.graph_filename)}`);
+      const node = detail.node || {};
+      const refs = await sourceRefsHtml(node.source_refs || []);
+      if (!dialog.open) return;
+      body.innerHTML = `<div class="detail-section"><h4>实体信息</h4><strong>${esc(node.name || item.name || item.node_id)}</strong><div class="muted">实体类型：${esc(typeName[node.node_type] || node.node_type || "类型缺失，请核对")} · 编码：${esc(node.code || "-")}</div></div><div class="detail-section"><h4>指南原文与上下文</h4>${refs || '<div class="muted">暂无原文引用，请补充出处后核对。</div>'}</div><div class="detail-section"><h4>实体属性</h4>${attrTableHtml(node.attributes)}</div>`;
+      body.querySelectorAll(".ref-chip[data-ref]").forEach((button) => button.onclick = async () => {
+        button.disabled = true;
+        try {
+          const wrap = document.createElement("div");
+          wrap.innerHTML = await sourceRefBlock(button.dataset.ref);
+          button.replaceWith(...wrap.childNodes);
+        } catch (error) { button.disabled = false; toast(error.message, true); }
+      });
+    } catch (error) { if (dialog.open) body.textContent = `原文加载失败：${error.message}`; }
   }
 
   function diseaseSectionHtml(section) {
@@ -4255,8 +4905,8 @@
         <span class="mono muted">${esc(section.relation_code)}</span>
         <span class="muted">${section.total} 条 · 待审 ${pending.length}</span>
         <div class="actions">
-          ${pending.length ? `<button class="btn sm primary" data-section-action="approve" data-section-key="${esc(section.section_key)}">整组通过</button>
-          <button class="btn sm danger" data-section-action="reject" data-section-key="${esc(section.section_key)}">整组拒绝</button>` : '<span class="muted">无待审</span>'}
+          ${pending.length ? `<button class="btn sm primary" data-section-action="approve" data-section-key="${esc(section.section_key)}">批量通过本组关系</button>
+          <button class="btn sm danger" data-section-action="reject" data-section-key="${esc(section.section_key)}">批量拒绝本组关系</button>` : '<span class="muted">无待审</span>'}
         </div>
       </div>
       <table><tbody>${relItems.map((item) => diseaseRelationRowHtml(item)).join("")}</tbody></table>
@@ -4273,8 +4923,8 @@
         <span class="mono muted">${esc(nested.relation_code)}</span>
         <span class="muted">${nested.total} 条 · 待审 ${pending.length}</span>
         <div class="actions">
-          ${pending.length ? `<button class="btn sm primary" data-section-action="approve" data-section-key="${esc(nested.section_key)}">整组通过</button>
-          <button class="btn sm danger" data-section-action="reject" data-section-key="${esc(nested.section_key)}">整组拒绝</button>` : ""}
+          ${pending.length ? `<button class="btn sm primary" data-section-action="approve" data-section-key="${esc(nested.section_key)}">批量通过本组关系</button>
+          <button class="btn sm danger" data-section-action="reject" data-section-key="${esc(nested.section_key)}">批量拒绝本组关系</button>` : ""}
         </div>
       </div>
       <table><tbody>${(nested.items || []).map((item) => diseaseRelationRowHtml(item)).join("")}</tbody></table>
@@ -4316,10 +4966,65 @@
   }
 
   function bindByDiseaseCardActions(mount) {
+    mount.onchange = (event) => {
+      if (!event.target.matches("[data-endpoint-select-all], [data-endpoint-select]")) return;
+      const inputs = [...mount.querySelectorAll("[data-endpoint-select]:not(:disabled)")];
+      const all = mount.querySelector("[data-endpoint-select-all]");
+      if (event.target.matches("[data-endpoint-select-all]")) {
+        inputs.forEach((input) => { input.checked = event.target.checked; });
+      }
+      const count = inputs.filter((input) => input.checked).length;
+      if (all) {
+        all.checked = inputs.length > 0 && count === inputs.length;
+        all.indeterminate = count > 0 && count < inputs.length;
+      }
+      const summary = mount.querySelector("[data-endpoint-selection-count]");
+      if (summary) summary.textContent = `已选 ${count} / ${inputs.length} 项`;
+    };
     const refresh = async () => {
       await renderByDisease();
     };
     mount.onclick = async (event) => {
+      if (event.target.closest("[data-disease-review]")) {
+        const item = { item_type: "graph_node", node_id: state.byDisease.subject, graph_filename: state.reviewFilters.graph };
+        state.reviewTab = "graph";
+        await renderReviewCenter();
+        await loadReviewDetail(item);
+        return;
+      }
+      if (event.target.closest("[data-disease-bases]")) {
+        try {
+          const detail = await api(`/api/kg/nodes/${encodeURIComponent(state.byDisease.subject)}?graph_filename=${encodeURIComponent(state.reviewFilters.graph)}`);
+          state.basisDiseaseCode = detail.node?.code || "";
+          state.reviewTab = "bases";
+          await renderClinicalBases();
+        } catch (error) { toast(error.message, true); }
+        return;
+      }
+      const endpointDetail = event.target.closest("[data-endpoint-detail]");
+      if (endpointDetail) {
+        const item = [...(state.byDiseaseEndpoints?.values() || [])][Number(endpointDetail.dataset.endpointDetail)];
+        if (!item) return;
+        await openEndpointSource(item, endpointDetail);
+        return;
+      }
+      const approveEndpoints = event.target.closest("[data-endpoint-approve]");
+      if (approveEndpoints) {
+        const selected = [...mount.querySelectorAll("[data-endpoint-select]:checked")]
+          .map((input) => state.byDiseaseEndpoints.get(input.dataset.endpointSelect)).filter(Boolean);
+        if (!selected.length) { toast("请先查看并勾选确认正确的实体", true); return; }
+        approveEndpoints.disabled = true;
+        approveEndpoints.textContent = "提交中…";
+        try {
+          const result = await api("/api/review/bulk", { json: { items: selected.map(itemPayload), action: "approve", reviewer: reviewReviewer(), note: "按疾病查看：人工核对后通过勾选实体" } });
+          const failure = (result.results || []).find((entry) => !entry.ok);
+          toast(`实体审核：成功 ${result.succeeded}，失败 ${result.failed}${failure ? `；${JSON.stringify(failure.error)}` : ""}`, result.failed > 0);
+          markStale("dashboard", "graph", "graphVisual", "rules");
+          await loadByDiseaseCard(state.byDisease.subject);
+        } catch (error) { toast(error.message, true); }
+        finally { approveEndpoints.disabled = false; approveEndpoints.textContent = "通过勾选的实体"; }
+        return;
+      }
       const single = event.target.closest("[data-rel-action]");
       if (single) {
         const item = state.byDiseaseItems?.get(single.dataset.relId);
@@ -4328,7 +5033,8 @@
         if (action === "reject" || action === "retire") { openReasonDialog(item, action); return; }
         try {
           if (action === "approve" && relationEndpointBlocked(item)) {
-            toast("该关系的端点节点尚未全部「已通过」，请先审核两端节点", true);
+            $("#diseaseEndpointReview")?.scrollIntoView({ block: "start" });
+            toast("请先完成上方第 1 步：查看并勾选尚未通过的实体，然后再审核这条关系", true);
             return;
           }
           await submitReviewAction(item, action, "");
@@ -4346,9 +5052,10 @@
         if (action === "reject") { openReasonDialog({ multi: pending }, "reject"); return; }
         const blocked = pending.filter(relationEndpointBlocked);
         if (blocked.length) {
+          $("#diseaseEndpointReview")?.scrollIntoView({ block: "start" });
           const rest = pending.length - blocked.length;
           const proceed = confirm(
-            `${blocked.length} 条关系的端点节点还不是「已通过」，直接提交会被拒绝。` +
+            `${blocked.length} 条关系涉及尚未通过的实体。请在上方「第 1 步」查看并勾选实体，通过后再审核关系。` +
             (rest ? `\n\n确定后仅提交其余 ${rest} 条；` : "\n\n当前没有可提交条目；") + "取消则不做操作。"
           );
           if (!proceed) return;
@@ -4362,6 +5069,7 @@
             reviewer: reviewReviewer(),
             note: "",
           }});
+          markStale("graphVisual");
           toast(`整组完成：成功 ${result.succeeded}，失败 ${result.failed}`, result.failed > 0);
           await refresh();
         } catch (error) { toast(error.message, true); }
@@ -4404,7 +5112,7 @@
     const inconsistentIds = new Set(
       (state.ruleSync?.rules || []).filter((item) => item.semantic_status !== "consistent").map((item) => item.rule_id)
     );
-    content.innerHTML = panel("规则列表", table(["规则 / 结论", "目标证候/诊断", "条件逻辑", "关联概念", "图谱语义", "图谱依赖", "所属图谱", "优先级", "状态", "操作"], visibleRules.map((r) => {
+    pageEl.innerHTML = panel("规则列表", table(["规则 / 结论", "目标证候/诊断", "条件逻辑", "关联概念", "图谱语义", "图谱依赖", "所属图谱", "优先级", "状态", "操作"], visibleRules.map((r) => {
       const disease = graph.diseases.find((d) => d.code === r.disease_code);
       const dependency = r.dependency_summary || {};
       const dependencyTone = dependency.blocked ? "danger" : (dependency.total && dependency.active === dependency.total ? "active" : "draft");
@@ -4425,11 +5133,11 @@
       const approveDepsButton = dependency.blocked
         ? `<button class="btn sm primary" data-rule-approve-deps="${esc(r.rule_id)}">补审依赖</button>`
         : "";
-      return `<tr><td><strong>${esc(r.name)}</strong><div class="mono muted">${esc(r.rule_id)} v${r.version}</div><div>${badge(r.rule_type || "diagnosis")} ${badge(clinicalIntentLabel(r.clinical_intent, r.rule_type))} ${badge(normalizeDomainClient(r.domain))}</div></td><td>${esc(disease ? disease.name_cn : r.disease_name || r.disease_code)}</td><td><div class="quote">${esc(conditionText(r.conditions))}</div></td><td>${ruleConceptChips(r)}</td><td>${ruleSyncBadge(r.rule_id)}</td><td>${dependencyCell}</td><td class="mono muted">${esc(r.graph_filename || "stemi_graph.json")}</td><td>${r.priority}</td><td>${reviewBadge(r.status)}</td><td><div class="actions">${completeButton}${approveDepsButton}<button class="btn sm" data-rule-edit="${esc(r.rule_id)}">编辑</button><button class="btn sm" data-rule-history="${esc(r.rule_id)}">历史</button><button class="btn sm" data-rule-status="${esc(r.rule_id)}" data-rule-action="${ruleAction.action}">${ruleAction.label}</button><button class="btn sm danger" data-rule-delete="${esc(r.rule_id)}">删除</button></div></td></tr>`;
-    })), `<span class="nowrap">${domainFilter}${clinicalIntentFilter}${diseaseFilter}${syncStatus}<span id="engineChip" class="nowrap"></span><button id="ruleWizard" class="btn primary">规则向导</button><button id="completeConditions" class="btn">批量补全条件</button><button id="activateConsistent" class="btn">批量启用一致规则</button><button id="newRule" class="btn primary">新建规则</button></span>`, "条件引用概念词汇，执行时按患者所属医院解析标准；启用前检查疾病、实体、概念链路和图谱审核状态");
+      return `<tr><td><strong>${esc(r.name)}</strong><div class="mono muted">${esc(r.rule_id)} v${r.version}</div><div>${badge(r.rule_type || "diagnosis")} ${badge(clinicalIntentLabel(r.clinical_intent, r.rule_type))} ${badge(normalizeDomainClient(r.domain))}</div></td><td>${esc(disease ? disease.name_cn : r.disease_name || r.disease_code)}</td><td><div class="quote">${esc(conditionText(r.conditions))}</div></td><td>${ruleConceptChips(r)}</td><td>${ruleSyncBadge(r.rule_id)}</td><td>${dependencyCell}</td><td class="mono muted">${esc(r.graph_filename || "stemi_graph.json")}</td><td>${r.priority}</td><td>${reviewBadge(r.status)}</td><td><div class="actions">${completeButton}${approveDepsButton}<button class="btn sm" data-rule-edit="${esc(r.rule_id)}">编辑补充后再审核</button><button class="btn sm" data-rule-history="${esc(r.rule_id)}">历史</button><button class="btn sm" data-rule-status="${esc(r.rule_id)}" data-rule-action="${ruleAction.action}">${ruleAction.label}</button><button class="btn sm danger" data-rule-delete="${esc(r.rule_id)}">删除</button></div></td></tr>`;
+    })), `<span class="nowrap">${domainFilter}${clinicalIntentFilter}${diseaseFilter}${syncStatus}<span id="engineChip" class="nowrap"></span><button id="ruleWizard" class="btn primary">规则向导</button><button id="completeConditions" class="btn">批量补全条件</button><button id="activateConsistent" class="btn">批量启用一致规则</button><button id="newRule" class="btn primary">新建规则</button></span>`);
     $("#newRule").onclick = () => openRuleEditor(null);
     $("#ruleWizard").onclick = () => openRuleWizard();
-    renderEngineChip(content.querySelector("#engineChip"));
+    renderEngineChip(pageEl.querySelector("#engineChip"));
     $("#activateConsistent").onclick = async () => {
       if (!confirm("将启用当前筛选范围内图谱语义一致且通过质量检查的草稿规则，确认继续？")) return;
       try {
@@ -4455,7 +5163,7 @@
         renderRules();
       } catch (error) { toast(error.message, true); }
     };
-    content.querySelectorAll("[data-rule-complete]").forEach((button) => button.onclick = async () => {
+    pageEl.querySelectorAll("[data-rule-complete]").forEach((button) => button.onclick = async () => {
       try {
         const result = await api(`/api/rules/${encodeURIComponent(button.dataset.ruleComplete)}/complete-conditions`, {
           json: { reviewer: localStorage.getItem("cdssReviewer") || "未署名" },
@@ -4478,8 +5186,8 @@
       state.ruleDisease = "";
       renderRules();
     };
-    content.querySelectorAll("[data-rule-edit]").forEach((b) => b.onclick = () => openRuleEditor(state.rules.find((r) => r.rule_id === b.dataset.ruleEdit)));
-    content.querySelectorAll("[data-rule-status]").forEach((b) => b.onclick = async () => {
+    pageEl.querySelectorAll("[data-rule-edit]").forEach((b) => b.onclick = () => openRuleEditor(state.rules.find((r) => r.rule_id === b.dataset.ruleEdit), { reviewRevision: true }));
+    pageEl.querySelectorAll("[data-rule-status]").forEach((b) => b.onclick = async () => {
       try {
         await api(`/api/rules/${encodeURIComponent(b.dataset.ruleStatus)}/review`, {
           json: {
@@ -4488,7 +5196,8 @@
           },
         });
         toast("状态已更新");
-        render();
+        markStale("dashboard", "review");
+        reload();
       } catch (error) { toast(error.message, true); }
     });
     const approveRuleDependencies = async (ruleId) => {
@@ -4508,11 +5217,11 @@
         renderRules();
       } catch (error) { toast(error.message, true); }
     };
-    content.querySelectorAll("[data-rule-approve-deps]").forEach((button) => button.onclick = () => {
+    pageEl.querySelectorAll("[data-rule-approve-deps]").forEach((button) => button.onclick = () => {
       if (!confirm("将自动通过该规则的全部待审依赖（先节点后关系；被拒绝/失效/缺失项会跳过并提示），并恢复被阻断的规则。确认继续？")) return;
       approveRuleDependencies(button.dataset.ruleApproveDeps);
     });
-    content.querySelectorAll("[data-rule-deps]").forEach((button) => {
+    pageEl.querySelectorAll("[data-rule-deps]").forEach((button) => {
       button.onclick = async () => {
         try {
           const result = await api(`/api/rules/${encodeURIComponent(button.dataset.ruleDeps)}/graph-dependencies`);
@@ -4546,37 +5255,50 @@
         } catch (error) { toast(error.message, true); }
       };
     });
-    content.querySelectorAll("[data-rule-delete]").forEach((b) => b.onclick = async () => {
+    pageEl.querySelectorAll("[data-rule-delete]").forEach((b) => b.onclick = async () => {
       if (!confirm("确认删除该规则？")) return;
-      await api(`/api/rules/${b.dataset.ruleDelete}`, { method: "DELETE" }); toast("规则已删除"); render();
+      await api(`/api/rules/${b.dataset.ruleDelete}`, { method: "DELETE" }); toast("规则已删除"); markStale("dashboard", "review"); reload();
     });
-    content.querySelectorAll("[data-rule-history]").forEach((button) => {
+    pageEl.querySelectorAll("[data-rule-history]").forEach((button) => {
       button.onclick = () => openRuleHistory(button.dataset.ruleHistory);
     });
   }
 
   // 条件树编辑器的字典（跨弹窗缓存一次）
   let editorDictPromise = null;
-  function loadEditorDict() {
+  function mergeConditionEntries(shared, graphEntries) {
+    const byCode = new Map();
+    [...(shared || []), ...(graphEntries || [])].forEach((item) => {
+      if (!item?.code) return;
+      const previous = byCode.get(item.code) || {};
+      byCode.set(item.code, { ...previous, ...item, name: item.name || item.name_cn || previous.name || item.code });
+    });
+    return [...byCode.values()];
+  }
+
+  async function loadEditorDict(graphFilename = "") {
+    const kinds = ["disease", "syndrome", "lab", "symptom", "exam", "exam_finding", "medication", "tongue", "pulse", "sign", "constitution"];
     if (!editorDictPromise) {
-      editorDictPromise = Promise.all([
-        api("/api/vocab/entities/disease").catch(() => []),
-        api("/api/vocab/entities/syndrome").catch(() => []),
-        api("/api/vocab/entities/lab").catch(() => []),
-        api("/api/vocab/entities/symptom").catch(() => []),
-        api("/api/vocab/entities/exam").catch(() => []),
-        api("/api/vocab/entities/exam_finding").catch(() => []),
-      ]).then(([diseases, syndromes, labs, symptoms, exams, findings]) => ({
-        disease: diseases || [],
-        syndrome: syndromes || [],
-        lab: labs || [],
-        symptom: symptoms || [],
-        exam: exams || [],
-        exam_finding: findings || [],
-        lab_concept: (state.vocab || []).filter((item) => item.category === "lab_concept"),
-      }));
+      editorDictPromise = Promise.all(kinds.map((kind) => api(`/api/vocab/entities/${kind}`).catch(() => [])))
+        .then((items) => Object.fromEntries(kinds.map((kind, index) => [kind, items[index] || []])));
     }
-    return editorDictPromise;
+    const shared = await editorDictPromise;
+    const dict = Object.fromEntries(Object.entries(shared).map(([key, entries]) => [key, [...entries]]));
+    dict.exam_concept = (state.vocab || []).filter((item) => item.is_active !== false && (["finding_exists", "static_threshold", "qualitative"].includes(item.evaluator_type) || item.category === "severity"));
+    dict.lab_concept = (state.vocab || []).filter((item) => item.category === "lab_concept" && item.is_active !== false);
+    if (graphFilename) {
+      try {
+        const graph = await api(`/api/kg/graph?graph_filename=${encodeURIComponent(graphFilename)}`);
+        const nodes = Array.isArray(graph.nodes) ? graph.nodes : Object.values(graph.nodes || {});
+        kinds.forEach((kind) => {
+          dict[kind] = mergeConditionEntries(dict[kind], nodes.filter((node) => node.node_type === kind));
+        });
+        dict.exam_finding = mergeConditionEntries(dict.exam_finding, (graph.evidences || [])
+          .filter((entry) => entry.finding_code)
+          .map((entry) => ({ code: entry.finding_code, name: entry.description || entry.finding_code, exam_code: entry.exam_code })));
+      } catch (error) { toast(`当前图谱项目加载失败，暂使用共享词典：${error.message}`, true); }
+    }
+    return dict;
   }
 
   const CT_LEAF_LABELS = {
@@ -4585,28 +5307,30 @@
     attribute: "属性",
   };
 
-  function openRuleEditor(rule) {
+  function openRuleEditor(rule, options = {}) {
     const base = rule || { rule_id: `CUSTOM-${Date.now()}`, version: 1, domain: "western", anchor_type: "disease", rule_type: "diagnosis", clinical_intent: "diagnosis_confirmation", name: "", disease_code: "", disease_name: "", priority: 50, status: "draft", department: "心血管内科", conditions: { type: "group", operator: "AND", children: [] }, conclusion: { diagnosis: "", confidence: "medium", message: "", action: "" }, source: {}, exclusions: [], tags: [] };
     const ruleTypes = ["diagnosis", "treatment", "contraindication", "monitoring", "tcm_pattern", "tcm_treatment", "tcm_prescription", "tcm_contraindication"];
     const selectedIntent = base.clinical_intent || defaultClinicalIntent(base.rule_type);
     $("#editorBody").innerHTML = `
-      <h3>${rule ? "编辑规则" : "新建规则"}</h3>
+      <h3>${options.clinicalBasis ? (rule ? "编辑诊疗依据" : "新增诊疗依据") : (rule ? "编辑规则" : "新建规则")}</h3>
       <div class="form-grid">
-        <div class="field"><label>规则 ID</label><input name="rule_id" value="${esc(base.rule_id)}" ${rule ? "readonly" : ""}></div>
+        <div class="field"><label>${options.clinicalBasis ? "依据编号" : "规则 ID"}</label><input name="rule_id" value="${esc(base.rule_id)}" ${rule ? "readonly" : ""}></div>
         <div class="field"><label>名称</label><input name="name" value="${esc(base.name)}"></div>
         <div class="field"><label>领域</label><select name="domain"><option value="western" ${normalizeDomainClient(base.domain) === "western" ? "selected" : ""}>西医</option><option value="tcm" ${normalizeDomainClient(base.domain) === "tcm" ? "selected" : ""}>中医</option></select></div>
-        <div class="field"><label>规则类型</label><select name="rule_type">${ruleTypes.map((type) => `<option value="${type}" ${base.rule_type === type ? "selected" : ""}>${type}</option>`).join("")}</select></div>
+        <div class="field"><label>${options.clinicalBasis ? "诊疗依据类型" : "规则类型"}</label><select name="rule_type">${ruleTypes.map((type) => `<option value="${type}" ${base.rule_type === type ? "selected" : ""}>${type}</option>`).join("")}</select></div>
         <div class="field"><label>临床用途</label><select name="clinical_intent">${CLINICAL_INTENT_OPTIONS.map(([value, label]) => `<option value="${value}" ${selectedIntent === value ? "selected" : ""}>${esc(label)}</option>`).join("")}</select></div>
         <div class="field"><label>锚点类型</label><select name="anchor_type"><option value="disease" ${base.anchor_type === "disease" ? "selected" : ""}>疾病</option><option value="syndrome" ${base.anchor_type === "syndrome" ? "selected" : ""}>证候</option></select></div>
         <div class="field"><label>目标编码（疾病/证候）</label><input name="disease_code" value="${esc(base.disease_code)}"></div>
         <div class="field"><label>目标名称</label><input name="disease_name" value="${esc(base.disease_name)}"></div>
-        <div class="field"><label>状态</label><select name="status">${["draft", "testing", "active", "retired"].map((s) => `<option value="${s}" ${base.status === s ? "selected" : ""}>${s}</option>`).join("")}</select></div>
+        <div class="field"><label>状态</label><select name="status" ${options.clinicalBasis || options.reviewRevision ? "disabled" : ""}>${["draft", "testing", "active", "retired"].map((s) => `<option value="${s}" ${base.status === s ? "selected" : ""}>${s}</option>`).join("")}</select></div>
         <div class="field"><label>优先级</label><input name="priority" type="number" value="${base.priority}"></div>
         <div class="field"><label>科室</label><input name="department" value="${esc(base.department || "")}"></div>
         <div class="field"><label>置信度</label><select name="confidence">${["high", "medium", "low"].map((s) => `<option value="${s}" ${base.conclusion.confidence === s ? "selected" : ""}>${s}</option>`).join("")}</select></div>
         <div class="field half"><label>提示</label><input name="message" value="${esc(base.conclusion.message)}"></div>
         <div class="field half"><label>动作</label><input name="action" value="${esc(base.conclusion.action || "")}"></div>
-        <div class="field wide"><label>条件树 <span id="drlBadge"></span><button type="button" id="treeModeToggle" class="btn sm ct-toggle">JSON 模式</button></label><div id="conditionTreeHost" class="condition-tree"></div><textarea name="conditions" class="code" hidden>${esc(JSON.stringify(base.conditions, null, 2))}</textarea><div id="drlPreview" class="drl-preview" hidden><pre></pre></div></div>
+        ${base.rule_type === "treatment" ? `<div class="field wide"><label>已带入的治疗方案与项目</label><div class="result-banner"><strong>${esc(base.conclusion?.treatment_name || "尚未关联具体治疗方案")}</strong><div class="mono">${esc(base.conclusion?.treatment_plan_id || "")}</div>${(base.conclusion?.treatment_items || []).length ? table(["项目", "类型", "编码"], base.conclusion.treatment_items.map((item) => `<tr><td>${esc(item.name || item.code)}</td><td>${esc(typeName[item.entity_type] || item.entity_type || "-")}</td><td>${esc(item.code)}</td></tr>`)) : '<p>当前依据没有已带入的治疗项目。请核对是否已关联治疗方案，以及方案和项目的关系是否审核通过。</p>'}<p>${esc(base.conclusion?.message || "")}</p></div><div class="result-banner warning">下方条件树表示“什么情况下使用本方案”，上方治疗项目表示“执行什么”。子条件为空时，执行引擎仅在同一疾病诊断规则命中后评估此方案；如原文有分型、人群、阶段或禁忌限制，仍须在条件中明确表达。</div></div>` : ""}
+        <div class="field wide"><label>${base.rule_type === "treatment" ? "治疗适用条件" : "条件树"} <span id="drlBadge"></span><button type="button" id="treeModeToggle" class="btn sm ct-toggle">JSON 模式</button></label><div id="conditionTreeHost" class="condition-tree"></div><textarea name="conditions" class="code" hidden>${esc(JSON.stringify(base.conditions, null, 2))}</textarea><div id="drlPreview" class="drl-preview" hidden><pre></pre></div></div>
+        <div class="field wide"><label>排除疾病编码（逗号分隔）</label><input name="exclusions" value="${esc((base.exclusions || []).join(","))}"></div>
         <div class="field wide"><label>条件引用概念</label><div id="ruleConceptCheck" class="actions">${ruleConceptChips(base)}</div></div>
         <div class="field wide"><label>结论扩展 JSON（中医治法/方剂/中药）</label><textarea name="conclusion_extra" class="code">${esc(JSON.stringify({ ...base.conclusion, diagnosis: undefined, confidence: undefined, message: undefined, action: undefined }, null, 2))}</textarea></div>
         <div class="field wide"><label>溯源 JSON</label><textarea name="source" class="code">${esc(JSON.stringify(base.source || {}, null, 2))}</textarea></div>
@@ -4621,6 +5345,7 @@
     let editorDict = null;
     let drlTimer = null;
     let canvasSelectedPath = [];
+    let multiSelection = null;
 
     const fieldWidgetHtml = (node, field, path, readonly) => {
       const key = ctree.pathKey(path);
@@ -4630,12 +5355,16 @@
       }
       const common = `data-ct-field="${field.key}" data-path="${key}" data-widget="${field.widget}"`;
       if (field.widget === "dict") {
-        const items = (editorDict && editorDict[field.dict]) || [];
-        const options = ['<option value="">请选择…</option>'].concat(items.map((item) => {
+        const dictionary = field.dict === "observation" ? node.observation_type : field.dict;
+        const items = ((editorDict && editorDict[dictionary]) || []).filter((item) =>
+          field.key !== "finding_code" || !node.exam_code || !item.exam_code || item.exam_code === node.exam_code);
+        const currentOnly = value && !items.some((item) => item.code === value)
+          ? `<option value="${esc(value)}" selected>${esc(value)}（当前编码，未在可选项目中找到）</option>` : "";
+        const options = ['<option value="">请选择…</option>', currentOnly].concat(items.map((item) => {
           const name = item.name || item.name_cn || item.code;
           return `<option value="${esc(item.code)}" ${value === item.code ? "selected" : ""}>${esc(name)}（${esc(item.code)}）</option>`;
         }));
-        return `<select ${common}>${options.join("")}</select>`;
+        return `<div class="ct-dict-picker"><select ${common}>${options.join("")}</select>${!readonly && field.key !== "exam_code" ? `<button type="button" class="btn sm" data-ct-multi-open="${esc(field.key)}" data-path="${key}">多选</button>` : ""}</div>`;
       }
       if (field.widget === "enum") {
         const options = ['<option value="">--</option>'].concat((field.options || []).map((opt) =>
@@ -4699,7 +5428,9 @@
         if (ctree.READONLY_TYPES.includes(walker.type)) { readonly = true; break; }
       }
       if (node.type === "group") {
-        return `<div class="ct-detail-title">条件组${path.length ? ` #${path.join(".")}` : "（根）"}</div>
+        const multi = ctree.fieldSelectionInfo(node);
+        const multiHtml = multi ? `<div class="ct-detail-hint">${esc(multi.field.label)}已选 ${multi.values.length} 项 · ${node.operator === "AND" ? "全部满足" : "任一满足"}</div><button type="button" class="btn sm" data-ct-multi-open="${esc(multi.field.key)}" data-path="${ctree.pathKey(path)}">修改多选项目</button>` : "";
+        return `<div class="ct-detail-title">条件组${path.length ? ` #${path.join(".")}` : "（根）"}</div>${multiHtml}
           <div class="ct-detail-row"><em>组合方式</em>${opSelectHtml(node, path, readonly)}</div>
           <div class="ct-detail-tools">${groupToolsHtml(node, path, readonly)}</div>
           <div class="ct-detail-hint">把画布上的卡片拖进该组即可加入子条件。</div>`;
@@ -4714,16 +5445,41 @@
         return `<div class="ct-detail-title">${esc(CT_LEAF_LABELS[node.type] || node.type)} ${badge}</div><div class="ct-detail-sub">${esc(node.label || ctree.treeToText(node))}</div>`;
       }
       const fields = (ctree.LEAF_FIELDS[node.type] || []).map((field) =>
-        `<div class="ct-detail-row"><em>${esc(field.label)}</em>${fieldWidgetHtml(node, field, path, false)}</div>`).join("");
+        `<div class="ct-detail-row"><em>${esc(field.dict === "observation" ? (typeName[node.observation_type] || "观察项目") : field.label)}</em>${fieldWidgetHtml(node, field, path, false)}</div>`).join("");
       return `<div class="ct-detail-title">条件详情</div>
         <div class="ct-detail-row"><em>条件类型</em>${kindSelectHtml(node, path, false)}</div>
         ${fields}
         <div class="ct-detail-tools">${leafToolsHtml(node, path, false)}</div>`;
     };
 
+    const renderMultiPicker = () => {
+      const panel = $("#ctDetail");
+      panel.querySelector(".ct-multi-picker")?.remove();
+      if (!multiSelection) { panel.classList.remove("ct-multi-open"); return; }
+      const selected = multiSelection.selected;
+      const items = mergeConditionEntries(multiSelection.items, [...selected].filter((code) => !multiSelection.items.some((item) => item.code === code)).map((code) => ({ code, name: `${code}（当前项目）` })));
+      panel.classList.add("ct-multi-open");
+      panel.scrollTop = 0;
+      panel.insertAdjacentHTML("beforeend", `<div class="ct-multi-picker">
+        <div class="ct-multi-heading"><div><span class="ct-multi-eyebrow">项目选择</span><h4>多选${esc(multiSelection.field.label)}</h4></div><button type="button" class="ct-multi-back" data-ct-multi-cancel aria-label="返回条件详情">返回</button></div>
+        <div class="ct-multi-search"><span aria-hidden="true">⌕</span><input type="search" data-ct-multi-search placeholder="搜索名称或编码" aria-label="搜索多选项目"></div>
+        <div class="ct-multi-list-head"><span>可选项目 · ${items.length}</span><span class="ct-multi-count" data-ct-multi-count>已选 ${selected.size} 项</span></div>
+        <div class="ct-multi-options">${items.map((item) => `<label class="ct-multi-option" data-ct-multi-option data-search="${esc(`${item.name || item.name_cn || ""} ${item.code} ${(item.aliases || []).join(" ")}`.toLowerCase())}"><input type="checkbox" data-ct-multi-choice value="${esc(item.code)}" ${selected.has(item.code) ? "checked" : ""}><span class="ct-multi-term"><span class="ct-multi-name">${esc(item.name || item.name_cn || item.code)}</span><span class="ct-multi-code">${esc(item.code)}</span></span></label>`).join("")}
+          <div class="ct-multi-empty" data-ct-multi-empty ${items.length ? "hidden" : ""}>没有匹配的项目</div></div>
+        <div class="ct-multi-footer"><div class="ct-multi-mode-title">这些项目之间的关系</div><div class="ct-multi-modes">
+          <label class="ct-multi-mode"><input type="radio" name="ctMultiMode" data-ct-multi-operator value="AND" ${multiSelection.operator === "AND" ? "checked" : ""}><span><strong>全部满足</strong><small>且 · AND</small></span></label>
+          <label class="ct-multi-mode"><input type="radio" name="ctMultiMode" data-ct-multi-operator value="OR" ${multiSelection.operator === "OR" ? "checked" : ""}><span><strong>任一满足</strong><small>或 · OR</small></span></label></div>
+          <div class="ct-multi-note">多个项目须选择组合方式，其他参数沿用当前条件。</div>
+          <div class="ct-multi-actions"><button type="button" class="btn" data-ct-multi-cancel>取消</button><button type="button" class="btn primary" data-ct-multi-apply ${!selected.size || (selected.size > 1 && !multiSelection.operator) ? "disabled" : ""}>确认选择</button></div>
+        </div></div>`);
+      panel.querySelector("[data-ct-multi-search]").focus();
+    };
+
     const renderDetail = () => {
       const panel = $("#ctDetail");
       if (!panel) return;
+      multiSelection = null;
+      panel.classList.remove("ct-multi-open");
       panel.innerHTML = detailHtml(ctree.getNode(editorTree, canvasSelectedPath), canvasSelectedPath);
     };
 
@@ -4785,7 +5541,11 @@
         host.innerHTML = '<div class="ct-empty">字典加载中…</div>';
         return;
       }
-      host.innerHTML = '<div class="ctc-layout"><div class="ctc-mount"></div><div class="ct-detail" id="ctDetail"></div></div>';
+      // Constrain the containing field as well as the canvas: an auto-sized
+      // grid track otherwise inherits the SVG world's intrinsic width.
+      host.closest(".field").style.gridTemplateColumns = "minmax(0, 1fr)";
+      host.innerHTML = '<div class="ctc-layout" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,380px);width:100%;min-width:0;overflow:hidden"><div class="ctc-mount" style="min-width:0;overflow:hidden"></div><div class="ct-detail" id="ctDetail" style="min-width:0;width:100%;box-sizing:border-box;overflow:auto"></div></div>';
+      if (window.innerWidth <= 1000) host.firstElementChild.style.gridTemplateColumns = "minmax(0,1fr)";
       canvasApi.render(host.querySelector(".ctc-mount"), editorTree, {
         selectedPath: canvasSelectedPath,
         labels: CT_LEAF_LABELS,
@@ -4816,22 +5576,75 @@
     };
 
     const host = $("#conditionTreeHost");
-    host.onchange = (event) => {
+    const handleConditionChange = (event) => {
       const target = event.target;
       const path = ctree.parsePathKey(target.dataset.path);
+      if (target.matches("[data-ct-multi-choice]")) {
+        if (!multiSelection) return;
+        if (target.checked) multiSelection.selected.add(target.value); else multiSelection.selected.delete(target.value);
+        $("#ctDetail [data-ct-multi-count]").textContent = `已选 ${multiSelection.selected.size} 项`;
+        $("#ctDetail [data-ct-multi-apply]").disabled = !multiSelection.selected.size || (multiSelection.selected.size > 1 && !multiSelection.operator);
+        return;
+      }
+      if (target.matches("[data-ct-multi-operator]")) {
+        if (multiSelection) {
+          multiSelection.operator = target.value;
+          $("#ctDetail [data-ct-multi-apply]").disabled = !multiSelection.selected.size;
+        }
+        return;
+      }
       if (target.matches("[data-ct-op]")) {
         mutate(() => ctree.updateNode(editorTree, path, { operator: target.value, label: null }));
       } else if (target.matches("[data-ct-kind]")) {
-        mutate(() => ctree.replaceNode(editorTree, path, ctree.newLeaf(target.value)));
+        const kind = target.value;
+        if (ctree.getNode(editorTree, path)?.type === kind) { renderDetail(); return; }
+        mutate(() => ctree.replaceNode(editorTree, path, ctree.newLeaf(kind)));
       } else if (target.matches("[data-ct-field]")) {
         const widget = target.dataset.widget;
         let value = target.value;
         if (widget === "number") value = target.value === "" ? null : Number(target.value);
         else if (widget === "bool") value = target.checked;
-        mutate(() => ctree.updateNode(editorTree, path, { [target.dataset.ctField]: value, label: null }));
+        const patch = { [target.dataset.ctField]: value, label: null };
+        if (target.dataset.ctField === "observation_type") patch.code = null;
+        if (target.dataset.ctField === "exam_code") patch.finding_code = null;
+        mutate(() => ctree.updateNode(editorTree, path, patch));
       }
     };
+    host.onchange = handleConditionChange;
+    // Native select controls can emit input before change; update dependent fields immediately.
+    host.oninput = (event) => {
+      if (event.target.matches("[data-ct-multi-search]")) {
+        const query = event.target.value.trim().toLowerCase();
+        let visibleCount = 0;
+        host.querySelectorAll("[data-ct-multi-option]").forEach((option) => { option.hidden = !option.dataset.search.includes(query); if (!option.hidden) visibleCount += 1; });
+        host.querySelector("[data-ct-multi-empty]").hidden = visibleCount > 0;
+        return;
+      }
+      if (event.target.matches('[data-ct-kind], [data-ct-field="observation_type"], [data-ct-field="exam_code"]')) handleConditionChange(event);
+    };
     host.onclick = (event) => {
+      const multiButton = event.target.closest("[data-ct-multi-open], [data-ct-multi-apply], [data-ct-multi-cancel]");
+      if (multiButton) {
+        if (multiButton.hasAttribute("data-ct-multi-cancel")) { multiSelection = null; renderMultiPicker(); return; }
+        if (multiButton.hasAttribute("data-ct-multi-apply")) {
+          if (!multiSelection) return;
+          const selection = multiSelection;
+          mutate(() => ctree.replaceNode(editorTree, selection.path,
+            ctree.combineFieldSelection(selection.node, selection.field.key, [...selection.selected], selection.operator)));
+          return;
+        }
+        const path = ctree.parsePathKey(multiButton.dataset.path);
+        const current = ctree.getNode(editorTree, path);
+        const existing = ctree.fieldSelectionInfo(current);
+        const node = existing?.node || current;
+        const field = (ctree.LEAF_FIELDS[node.type] || []).find((item) => item.key === multiButton.dataset.ctMultiOpen);
+        if (!field) return;
+        const dict = field.dict === "observation" ? node.observation_type : field.dict;
+        const items = ((editorDict && editorDict[dict]) || []).filter((item) => field.key !== "finding_code" || !node.exam_code || !item.exam_code || item.exam_code === node.exam_code);
+        multiSelection = { node, field, path, items, selected: new Set(existing?.values || (node[field.key] ? [node[field.key]] : [])), operator: existing?.operator || "" };
+        renderMultiPicker();
+        return;
+      }
       const button = event.target.closest("[data-ct-act]");
       if (!button) return;
       const action = button.dataset.ctAct;
@@ -4877,7 +5690,7 @@
 
     conditionsField.value = ctree.treeToJson(editorTree);
     renderTree();
-    loadEditorDict().then((dict) => {
+    loadEditorDict(base.graph_filename || (options.clinicalBasis ? state.reviewFilters.graph : state.graphFilename)).then((dict) => {
       editorDict = dict;
       if ($("#editorDialog").open && treeMode) { renderTree(); scheduleDrlPreview(); }
     }).catch(() => {
@@ -4907,6 +5720,7 @@
           priority: Number(form.querySelector("[name=priority]").value),
           department: form.querySelector("[name=department]").value,
           conditions,
+          exclusions: form.querySelector("[name=exclusions]").value.split(/[,，]/).map((v) => v.trim()).filter(Boolean),
           source,
           conclusion: {
             ...conclusionExtra,
@@ -4916,9 +5730,16 @@
             action: form.querySelector("[name=action]").value,
           },
         };
+        if (options.reviewRevision) payload.status = "draft";
+        if (options.onSave) {
+          payload.status = "draft";
+          await options.onSave(payload);
+          dialog.close(); toast("诊疗依据已保存，须重新核对并审核");
+          await renderClinicalBases(); return;
+        }
         if (rule) await api(`/api/rules/${rule.rule_id}`, { method: "PUT", json: payload });
         else await api("/api/rules", { json: payload });
-        dialog.close(); toast("规则已保存"); render();
+        dialog.close(); toast("规则已保存"); markStale("dashboard", "review", "graph"); reload();
       } catch (error) { toast(error.message, true); }
     };
     $("#editorCancel").onclick = () => dialog.close();
@@ -5142,95 +5963,140 @@
     });
   }
 
+  function collectStandardForm() {
+    const value = (id) => $(id)?.value ?? "";
+    const number = (id) => value(id) === "" ? null : Number(value(id));
+    const type = value("#stdType") || "lab";
+    return { hospital_id: state.hospitalId, item_type: type,
+      lab_code: type === "lab" ? value("#stdLabCode").trim() : "", lab_name: type === "lab" ? value("#stdLabName").trim() : "",
+      exam_code: type === "exam" ? value("#stdLabCode").trim() : "", exam_name: type === "exam" ? value("#stdLabName").trim() : "",
+      finding_code: type === "exam" ? value("#stdFindingCode").trim() : "", finding_name: type === "exam" ? value("#stdFindingName").trim() : "",
+      concept_code: value("#stdConcept"), interpretation_type: value("#stdMode") || "auto",
+      operator: value("#stdOperator") || ">", threshold_value: number("#stdThreshold"), threshold_upper: number("#stdUpper"),
+      threshold_unit: value("#stdUnit").trim(), uln_multiplier: number("#stdUln"),
+      accepted_values: value("#stdAccepted").split(/[,，;；\n]+/).map((item) => item.trim()).filter(Boolean),
+      method: value("#stdMethod").trim(), ref_source: value("#stdRefSource") || "STATIC",
+      context_gender: value("#stdGender") || null, context_age_min: number("#stdAgeMin"), context_age_max: number("#stdAgeMax"),
+      effective_from: value("#stdFrom"), effective_to: value("#stdTo") || null, source_note: value("#stdNote").trim(), status: "draft",
+    };
+  }
+
   async function renderStandards() {
     await loadBase();
-    const hospital = state.hospitalId || (state.hospitals[0] && state.hospitals[0].hospital_id) || "";
+    const hospital = state.hospitalId || state.hospitals[0]?.hospital_id || "";
     state.hospitalId = hospital;
-    state.standards = hospital ? await api(`/api/standards/${hospital}`) : [];
-    const labRequirements = new Map();
-    const collectLabRequirements = (node) => {
-      if (!node || typeof node !== "object") return;
-      if (node.type === "lab_concept" && node.lab_code && node.concept_code) {
-        labRequirements.set(`${node.lab_code}:${node.concept_code}`, {
-          lab_code: node.lab_code,
-          concept_code: node.concept_code,
-        });
-      }
-      (node.children || []).forEach(collectLabRequirements);
-    };
-    state.rules
-      .filter((rule) => normalizeDomainClient(rule.domain) === "western")
-      .forEach((rule) => collectLabRequirements(rule.conditions));
-    const activeStandardKeys = new Set(state.standards
-      .filter((standard) => standard.status === "active")
-      .map((standard) => `${standard.lab_code}:${standard.concept_code}`));
-    const requiredStandards = [...labRequirements.values()]
-      .sort((a, b) => `${a.lab_code}:${a.concept_code}`.localeCompare(`${b.lab_code}:${b.concept_code}`, "zh-Hans-CN"));
-    const missingStandardCount = requiredStandards.filter(
-      (item) => !activeStandardKeys.has(`${item.lab_code}:${item.concept_code}`)
-    ).length;
-    const editing = state.standardEditIndex >= 0 ? state.standards[state.standardEditIndex] : null;
-    const formValue = (field, fallback = "") => {
-      const value = editing && editing[field] !== null && editing[field] !== undefined ? editing[field] : fallback;
-      return esc(value);
-    };
-    content.innerHTML = `
-      ${panel("医院上下文", `
-        <div class="inline-controls">
-          <div class="field"><label>当前医院</label><select id="hospitalSelect">${state.hospitals.map((h) => `<option value="${esc(h.hospital_id)}" ${h.hospital_id === hospital ? "selected" : ""}>${esc(h.hospital_id)}（${h.standard_count}）</option>`).join("")}</select></div>
-          <div class="field"><label>新医院 ID</label><input id="newHospital" placeholder="例如 MY_HOSPITAL"></div>
-          <button id="loadNewHospital" class="btn">切换 / 创建</button>
-        </div>
-      `, "", "每家医院可维护不同检验标准；规则仍然只引用概念")}
-      ${panel("规则标准覆盖", requiredStandards.length ? table(["检验", "抽象概念", "覆盖状态"], requiredStandards.map((item) => {
-        const covered = activeStandardKeys.has(`${item.lab_code}:${item.concept_code}`);
-        return `<tr><td class="mono">${esc(item.lab_code)}</td><td>${esc(conceptName(item.concept_code))}</td><td>${covered ? '<span class="badge active">已覆盖</span>' : '<span class="badge danger">缺失</span>'}</td></tr>`;
-      })) : '<div class="empty">当前没有规则引用检验标准。</div>', "", missingStandardCount ? `当前医院缺少 ${missingStandardCount} 项规则所需标准` : "当前医院规则引用的检验概念均已覆盖")}
-      ${panel(editing ? `编辑标准 #${state.standardEditIndex + 1}` : "新增标准", `
-        <div class="form-grid">
-          <div class="field"><label>检验编码</label><input id="stdLabCode" value="${formValue("lab_code")}" placeholder="MYO"></div>
-          <div class="field"><label>检验名称</label><input id="stdLabName" value="${formValue("lab_name")}"></div>
-          <div class="field"><label>抽象概念</label><select id="stdConcept">${state.vocab.filter((v) => v.category === "lab_concept").map((v) => `<option value="${v.code}" ${editing && editing.concept_code === v.code ? "selected" : ""}>${v.name_cn} / ${v.code}</option>`).join("")}</select></div>
-          <div class="field"><label>操作符</label><select id="stdOperator">${[">", ">=", "<", "<=", "="].map((op) => `<option value="${op}" ${editing && editing.operator === op ? "selected" : ""}>${op}</option>`).join("")}</select></div>
-          <div class="field"><label>阈值</label><input id="stdThreshold" type="number" step="0.001" value="${editing && editing.threshold_value != null ? editing.threshold_value : ""}"></div>
-          <div class="field"><label>单位</label><input id="stdUnit" value="${formValue("threshold_unit", "ng/mL")}"></div>
-          <div class="field"><label>ULN 倍数</label><input id="stdUln" type="number" step="0.1" value="${editing && editing.uln_multiplier != null ? editing.uln_multiplier : ""}"></div>
-          <div class="field"><label>标准来源</label><select id="stdRefSource"><option value="STATIC">STATIC</option><option value="LIS_REALTIME">LIS_REALTIME</option></select></div>
-          <div class="field"><label>适用性别</label><select id="stdGender"><option value="">不限</option><option value="M">男</option><option value="F">女</option></select></div>
-          <div class="field"><label>年龄下限</label><input id="stdAgeMin" type="number" value="${editing && editing.context_age_min != null ? editing.context_age_min : ""}"></div>
-          <div class="field"><label>年龄上限</label><input id="stdAgeMax" type="number" value="${editing && editing.context_age_max != null ? editing.context_age_max : ""}"></div>
-          <div class="field"><label>状态</label><select id="stdStatus">${["active", "draft", "retired"].map((s) => `<option value="${s}" ${editing && editing.status === s ? "selected" : ""}>${s}</option>`).join("")}</select></div>
-          <div class="field wide"><label>说明</label><input id="stdNote" value="${formValue("source_note")}"></div>
-        </div>
-        <div class="actions"><button id="stdSave" class="btn primary">${editing ? "保存修改" : "新增标准"}</button>${editing ? '<button id="stdCancel" class="btn ghost">取消编辑</button>' : ""}</div>
-      `)}
-      ${panel(`${hospital || "未选择医院"} 标准列表`, table(["检验", "抽象概念", "判定标准", "上下文", "版本", "状态", "操作"], state.standards.map((s, i) => `<tr><td><strong>${esc(s.lab_name || s.lab_code)}</strong><div class="mono">${esc(s.lab_code)}</div></td><td>${esc(conceptName(s.concept_code))}</td><td class="mono">${s.threshold_value != null ? `${esc(s.operator)}${s.threshold_value} ${esc(s.threshold_unit)}` : "-"}${s.uln_multiplier ? `<div>ULN×${s.uln_multiplier}</div>` : ""}</td><td>${s.context_gender || "不限"} ${s.context_age_min || s.context_age_max ? `${s.context_age_min || "-"}~${s.context_age_max || "-"}` : ""}</td><td>v${s.version}</td><td>${badge(s.status)}</td><td><div class="actions"><button class="btn sm" data-std-edit="${i}">编辑</button><button class="btn sm" data-std-active="${i}">启用</button><button class="btn sm danger" data-std-delete="${i}">删除</button></div></td></tr>`)))}
+    const [rows, coverage] = hospital ? await Promise.all([api(`/api/standards/${encodeURIComponent(hospital)}`), api(`/api/standards/${encodeURIComponent(hospital)}/coverage`)]) : [[], { items: [] }];
+    state.standards = rows;
+    const editing = state.standardEditIndex >= 0 ? rows[state.standardEditIndex] : null;
+    const form = state.pendingStandard || editing || { item_type: "lab", interpretation_type: "auto", concept_code: "ELEVATED" };
+    const exam = form.item_type === "exam";
+    const mode = form.interpretation_type || (exam ? "presence" : "auto");
+    const concept = state.vocab.find((item) => item.code === form.concept_code);
+    const numeric = mode === "numeric" || (mode === "auto" && ["static_threshold", "uln_multiplier"].includes(concept?.evaluator_type));
+    const concepts = state.vocab.filter((item) => item.is_active !== false && (exam
+      ? ["finding_exists", "static_threshold", "qualitative"].includes(item.evaluator_type) || item.category === "severity"
+      : item.category === "lab_concept"));
+    if (form.concept_code && !concepts.some((item) => item.code === form.concept_code)) {
+      concepts.unshift({ code: form.concept_code, name_cn: "当前概念（请核对字典）" });
+    }
+    const field = (key, fallback = "") => esc(form[key] ?? fallback);
+    const statusLabels = { missing: "缺失", inactive: "待启用", incomplete: "参数不完整 / 已失效", limited: "适用范围有限", available: "存在可用配置", structured: "按输入形式判定", guideline: "指南明确条件" };
+    const readiness = coverage.items || [];
+    const examItems = new Map(Object.values(state.terms.exam).map((item) => [item.code, item]));
+    const findingItems = new Map(Object.values(state.terms.exam_finding).map((item) => [item.code, item]));
+    readiness.filter((item) => item.item_type === "exam").forEach((item) => {
+      if (!examItems.has(item.exam_code)) examItems.set(item.exam_code, { code: item.exam_code, name: item.exam_code });
+      if (!findingItems.has(item.finding_code)) findingItems.set(item.finding_code, { code: item.finding_code, name: item.finding_code });
+    });
+    const standardDescription = (row) => row.interpretation_type === "categorical" ? `满足值：${(row.accepted_values || []).join("、")}`
+      : row.interpretation_type === "presence" ? "使用明确的存在 / 不存在结果"
+      : row.uln_multiplier ? `参考上限 × ${row.uln_multiplier}` : row.threshold_value != null ? `${row.operator} ${row.threshold_value}${row.threshold_upper != null ? ` ～ ${row.threshold_upper}` : ""} ${row.threshold_unit || ""}` : "按概念执行器判定";
+    pageEl.innerHTML = `
+      ${panel("医院与判定范围", `<div class="inline-controls"><div class="field"><label>当前医院</label><select id="hospitalSelect">${state.hospitals.map((item) => `<option value="${esc(item.hospital_id)}" ${item.hospital_id === hospital ? "selected" : ""}>${esc(item.hospital_id)}</option>`).join("")}${hospital && !state.hospitals.some((item) => item.hospital_id === hospital) ? `<option selected>${esc(hospital)}</option>` : ""}</select></div><div class="field"><label>新医院 ID</label><input id="newHospital"></div><button id="loadNewHospital" class="btn">切换 / 创建</button></div><p>上方检查规则和待审依据需要哪些判定；下方维护本院如何判定。指南明确的条件优先保留在规则中，不用医院参考范围替换。</p>`)}
+      ${pagedPanel({ key: "standard-requirements", title: "规则所需判定标准", headers: ["对象", "项目 / 发现", "判定概念", "配置状态", "关联规则 / 依据", "操作"],
+        description: "包含直接条件、图谱证据和必要子条件；区分已启用规则、草稿及待审诊疗依据。存在配置不代表全部患者均适用。",
+        items: readiness.map((item, index) => ({ text: `${item.lab_code || item.exam_code} ${item.finding_code || ""} ${conceptName(item.concept_code)} ${item.references.map((ref) => ref.name).join(" ")}`, values: { type: item.item_type },
+          html: `<tr><td>${item.item_type === "exam" ? "检查" : "检验"}</td><td class="mono">${esc(item.lab_code || item.exam_code)}${item.finding_code ? `<div>${esc(item.finding_code)}</div>` : ""}</td><td>${esc(conceptName(item.concept_code))}</td><td><strong>${esc(statusLabels[item.status])}</strong><div class="muted">${esc(item.message)}</div></td><td>${item.references.map((ref) => `<div>${esc(ref.category)} · ${esc(ref.name)}</div>`).join("")}</td><td><button class="btn sm" data-standard-requirement="${index}">${item.standard_indices.length ? "查看配置" : "配置标准"}</button></td></tr>` })),
+        filters: [{ key: "type", label: "对象", options: [{ value: "lab", label: "检验" }, { value: "exam", label: "检查" }] }], emptyText: "尚无规则或待审依据引用检查、检验条件" })}
+      <div class="actions"><button id="newExamStandard" class="btn primary">新增检查标准</button><button id="newLabStandard" class="btn">新增检验标准</button></div>
+      ${panel(editing ? "编辑本院判定标准（保存后重新启用）" : "新增本院判定标准", `<div class="form-grid" id="standardForm">
+        <div class="field"><label>对象类型</label><select id="stdType"><option value="lab" ${exam ? "" : "selected"}>检验</option><option value="exam" ${exam ? "selected" : ""}>检查</option></select></div>
+        ${exam ? `<div class="field"><label>选择检查项目</label><select id="stdExamPicker"><option value="">请选择检查项目…</option>${[...examItems.values()].map((item) => `<option value="${esc(item.code)}" ${form.exam_code === item.code ? "selected" : ""}>${esc(item.name || item.code)} (${esc(item.code)})</option>`).join("")}</select></div><div class="field"><label>选择检查发现 / 测量指标</label><select id="stdFindingPicker"><option value="">请选择指标…</option>${[...findingItems.values()].map((item) => `<option value="${esc(item.code)}" ${form.finding_code === item.code ? "selected" : ""}>${esc(item.name || item.code)} (${esc(item.code)})</option>`).join("")}</select><small>来自实体词典及规则引用；需确认该指标属于所选检查。未收录的指标可在下方手工填写编码和名称。</small></div>` : ""}
+        <div class="field"><label>${exam ? "检查" : "检验"}项目编码</label><input id="stdLabCode" value="${field(exam ? "exam_code" : "lab_code")}"></div><div class="field"><label>项目名称</label><input id="stdLabName" value="${field(exam ? "exam_name" : "lab_name")}"></div>
+        ${exam ? `<div class="field"><label>检查发现编码</label><input id="stdFindingCode" value="${field("finding_code")}"></div><div class="field"><label>检查发现名称</label><input id="stdFindingName" value="${field("finding_name")}"></div>` : ""}
+        <div class="field"><label>判定概念</label><select id="stdConcept">${concepts.map((item) => `<option value="${esc(item.code)}" ${form.concept_code === item.code ? "selected" : ""}>${esc(item.name_cn)} / ${esc(item.code)}</option>`).join("")}</select></div>
+        <div class="field"><label>判定方式</label><select id="stdMode">${(exam ? [["numeric", "数值比较"], ["categorical", "分级 / 定性结果"], ["presence", "明确存在 / 不存在"]] : [["auto", "按检验概念执行器"]]).map(([key, label]) => `<option value="${key}" ${mode === key ? "selected" : ""}>${label}</option>`).join("")}</select></div>
+        ${numeric ? `<div class="field"><label>比较方式</label><select id="stdOperator">${[">", ">=", "<", "<=", "=", "BETWEEN", "OUTSIDE"].map((op) => `<option value="${op}" ${(form.operator || ">") === op ? "selected" : ""}>${({ BETWEEN: "在闭区间内", OUTSIDE: "在区间外" })[op] || esc(op)}</option>`).join("")}</select></div><div class="field"><label>阈值 / 下界</label><input id="stdThreshold" type="number" step="any" value="${field("threshold_value")}"></div><div class="field"><label>上界（范围比较时）</label><input id="stdUpper" type="number" step="any" value="${field("threshold_upper")}"></div><div class="field"><label>单位（无量纲填写 1）</label><input id="stdUnit" value="${field("threshold_unit")}"></div>` : ""}
+        ${!exam && concept?.evaluator_type === "uln_multiplier" ? `<div class="field"><label>正常上限倍数</label><input id="stdUln" type="number" step="any" value="${field("uln_multiplier")}"></div>` : ""}
+        ${mode === "categorical" ? `<div class="field wide"><label>满足该概念的结果编码 / 等级（逗号分隔，精确匹配）</label><input id="stdAccepted" value="${esc((form.accepted_values || []).join(","))}"></div>` : ""}
+        <div class="field"><label>适用方法（留空不限）</label><input id="stdMethod" value="${field("method")}" ${exam ? "" : "disabled"}></div><div class="field"><label>参考来源</label><select id="stdRefSource"><option value="STATIC" ${form.ref_source !== "LIS_REALTIME" ? "selected" : ""}>固定配置</option><option value="LIS_REALTIME" ${form.ref_source === "LIS_REALTIME" ? "selected" : ""}>患者检验参考范围</option></select></div>
+        <div class="field"><label>适用性别</label><select id="stdGender">${[["", "不限"], ["M", "男"], ["F", "女"]].map(([key, label]) => `<option value="${key}" ${(form.context_gender || "") === key ? "selected" : ""}>${label}</option>`).join("")}</select></div>
+        <div class="field"><label>年龄下限</label><input id="stdAgeMin" type="number" value="${field("context_age_min")}"></div><div class="field"><label>年龄上限</label><input id="stdAgeMax" type="number" value="${field("context_age_max")}"></div><div class="field"><label>生效日期</label><input id="stdFrom" type="date" value="${field("effective_from")}"></div><div class="field"><label>失效日期</label><input id="stdTo" type="date" value="${field("effective_to")}"></div>
+        <div class="field wide"><label>来源与判定依据</label><input id="stdNote" value="${field("source_note")}" placeholder="维护来源、适用范围或引用依据"></div></div>
+        <p class="muted">保存为草稿，启用前校验参数。分级须提供结构化结果；原始报告文字不会自动判为阳性。单位不一致时不自动换算。</p><div class="actions"><button id="stdSave" class="btn primary">保存草稿</button><button id="stdCancel" class="btn">取消编辑</button></div>`)}
+      ${panel(`${hospital || "未选择医院"} · 本院判定标准配置`, table(["对象", "项目 / 发现", "概念", "判定方式与参数", "适用范围", "版本 / 状态", "操作"], rows.map((row, index) => `<tr><td>${row.item_type === "exam" ? "检查" : "检验"}</td><td>${esc(row.lab_name || row.exam_name || row.lab_code || row.exam_code)}${row.finding_code ? `<div>${esc(row.finding_name || row.finding_code)}</div>` : ""}</td><td>${esc(conceptName(row.concept_code))}</td><td>${esc(standardDescription(row))}</td><td>${esc(row.context_gender || "不限性别")} · 年龄 ${esc(row.context_age_min ?? "不限")}～${esc(row.context_age_max ?? "不限")}<div>${esc(row.method || "不限方法")}</div></td><td>v${row.version || 1} ${badge(row.status)}</td><td><div class="actions"><button class="btn sm" data-std-edit="${index}">编辑</button><button class="btn sm" data-std-active="${index}">校验并启用</button><button class="btn sm danger" data-std-delete="${index}">删除</button></div></td></tr>`)))}
     `;
-    $("#hospitalSelect").onchange = (e) => { state.hospitalId = e.target.value; state.standardEditIndex = -1; renderStandards(); };
-    $("#loadNewHospital").onclick = () => { const id = $("#newHospital").value.trim().toUpperCase(); if (!id) return toast("请输入医院 ID", true); state.hospitalId = id; state.standardEditIndex = -1; toast("已切换，新增标准后医院将自动创建"); renderStandards(); };
-    $("#stdSave").onclick = saveStandard;
-    const cancel = $("#stdCancel"); if (cancel) cancel.onclick = () => { state.standardEditIndex = -1; renderStandards(); };
-    content.querySelectorAll("[data-std-edit]").forEach((b) => b.onclick = () => { state.standardEditIndex = Number(b.dataset.stdEdit); renderStandards(); });
-    content.querySelectorAll("[data-std-active]").forEach((b) => b.onclick = async () => { await api(`/api/standards/${hospital}/${b.dataset.stdActive}/activate`, { method: "POST" }); toast("标准已启用"); renderStandards(); });
-    content.querySelectorAll("[data-std-delete]").forEach((b) => b.onclick = async () => { if (!confirm("确认删除该标准？")) return; await api(`/api/standards/${hospital}/${b.dataset.stdDelete}`, { method: "DELETE" }); toast("标准已删除"); state.standardEditIndex = -1; renderStandards(); });
+    bindPagedTable("standard-requirements");
+    const reset = () => { state.pendingStandard = null; state.standardEditIndex = -1; };
+    const openNewStandard = async (type) => {
+      reset();
+      state.pendingStandard = { item_type: type, interpretation_type: type === "exam" ? "presence" : "auto", concept_code: type === "exam" ? "PRESENT" : "ELEVATED" };
+      await renderStandards();
+      $("#standardForm")?.closest(".panel")?.scrollIntoView({ block: "start" });
+    };
+    $("#newExamStandard").onclick = () => openNewStandard("exam").catch((error) => toast(error.message, true));
+    $("#newLabStandard").onclick = () => openNewStandard("lab").catch((error) => toast(error.message, true));
+    if (exam) {
+      $("#stdExamPicker").onchange = (event) => {
+        const item = examItems.get(event.target.value);
+        if (item) { $("#stdLabCode").value = item.code; $("#stdLabName").value = item.name || item.code; }
+      };
+      $("#stdFindingPicker").onchange = (event) => {
+        const item = findingItems.get(event.target.value);
+        if (item) { $("#stdFindingCode").value = item.code; $("#stdFindingName").value = item.name || item.code; }
+      };
+    }
+    $("#hospitalSelect").onchange = (event) => { state.hospitalId = event.target.value; reset(); renderStandards(); };
+    $("#loadNewHospital").onclick = () => { const id = $("#newHospital").value.trim().toUpperCase(); if (!id) return; state.hospitalId = id; reset(); renderStandards(); };
+    $("#stdType").onchange = (event) => { const type = event.target.value; state.pendingStandard = { item_type: type, interpretation_type: type === "exam" ? "presence" : "auto", concept_code: type === "exam" ? "PRESENT" : "ELEVATED" }; state.standardEditIndex = -1; renderStandards(); };
+    ["#stdMode", "#stdConcept"].forEach((id) => $(id).onchange = () => { state.pendingStandard = collectStandardForm(); renderStandards(); });
+    $("#stdSave").onclick = () => saveStandard().catch((error) => toast(error.message, true));
+    $("#stdCancel").onclick = () => { reset(); renderStandards(); };
+    // Delegate to the page: filtering and pagination replace requirement buttons.
+    pageEl.onclick = async (event) => {
+      const button = event.target.closest("[data-std-edit], [data-standard-requirement]");
+      if (!button) return;
+      try {
+        if (button.hasAttribute("data-std-edit")) {
+          state.pendingStandard = null;
+          state.standardEditIndex = Number(button.dataset.stdEdit);
+        } else {
+          const requirement = readiness[Number(button.dataset.standardRequirement)];
+          state.standardEditIndex = requirement.standard_indices[0] ?? -1;
+          state.pendingStandard = state.standardEditIndex >= 0 ? null : { ...requirement, interpretation_type: requirement.item_type === "exam" ? "presence" : "auto" };
+        }
+        await renderStandards();
+        const form = $("#standardForm");
+        form?.closest(".panel")?.scrollIntoView({ block: "start", behavior: "instant" });
+        $("#stdLabCode")?.focus({ preventScroll: true });
+        toast(state.standardEditIndex >= 0 ? "已打开配置，可编辑后保存草稿" : "已打开标准配置，请补充判定参数");
+      } catch (error) { toast(error.message, true); }
+    };
+    pageEl.querySelectorAll("[data-std-active]").forEach((button) => button.onclick = async () => { try { await api(`/api/standards/${hospital}/${button.dataset.stdActive}/activate`, { method: "POST" }); toast("标准已启用"); markStale("dashboard"); renderStandards(); } catch (error) { toast(error.message, true); } });
+    pageEl.querySelectorAll("[data-std-delete]").forEach((button) => button.onclick = async () => { if (!confirm("确认删除此标准？")) return; try { await api(`/api/standards/${hospital}/${button.dataset.stdDelete}`, { method: "DELETE" }); reset(); markStale("dashboard"); renderStandards(); } catch (error) { toast(error.message, true); } });
   }
 
   async function saveStandard() {
-    const hospital = state.hospitalId; if (!hospital) return toast("请先选择医院", true);
-    const num = (id) => { const v = $(id).value; return v === "" ? null : Number(v); };
-    const payload = {
-      hospital_id: hospital, lab_code: $("#stdLabCode").value.trim().toUpperCase(), lab_name: $("#stdLabName").value.trim(),
-      concept_code: $("#stdConcept").value, operator: $("#stdOperator").value, threshold_value: num("#stdThreshold"),
-      threshold_unit: $("#stdUnit").value.trim(), uln_multiplier: num("#stdUln"), ref_source: $("#stdRefSource").value,
-      context_gender: $("#stdGender").value || null, context_age_min: num("#stdAgeMin"), context_age_max: num("#stdAgeMax"),
-      status: $("#stdStatus").value, source_note: $("#stdNote").value.trim(), version: 1,
-    };
-    if (!payload.lab_code) return toast("检验编码必填", true);
+    if (!state.hospitalId) throw new Error("请先选择医院");
+    const payload = collectStandardForm();
+    if (!(payload.item_type === "exam" ? payload.exam_code && payload.finding_code : payload.lab_code)) throw new Error("请填写项目编码，检查还须填写发现编码");
+    if (!payload.concept_code) throw new Error("请选择判定概念");
     const editing = state.standards[state.standardEditIndex];
-    if (editing) payload.version = editing.version + 1;
-    if (state.standardEditIndex >= 0) await api(`/api/standards/${hospital}/${state.standardEditIndex}`, { method: "PUT", json: payload });
-    else await api(`/api/standards/${hospital}`, { json: payload });
-    state.standardEditIndex = -1; toast("标准已保存"); renderStandards();
+    payload.version = editing ? (editing.version || 1) + 1 : 1;
+    if (editing) await api(`/api/standards/${state.hospitalId}/${state.standardEditIndex}`, { method: "PUT", json: payload });
+    else await api(`/api/standards/${state.hospitalId}`, { json: payload });
+    state.pendingStandard = null; state.standardEditIndex = -1;
+    toast("已保存草稿，请校验并启用"); await renderStandards();
   }
 
   async function renderInference() {
@@ -5263,7 +6129,7 @@
       </div>`;
     const narrativeField = (id, label, value, rows = 3) => `<div class="field wide"><label>${esc(label)}</label><textarea id="${id}" class="narrative" rows="${rows}">${esc(value || "")}</textarea></div>`;
     const selectedCase = state.demoCases.find((item) => item.case_id === state.demoCaseId);
-    content.innerHTML = `
+    pageEl.innerHTML = `
       ${panel("模拟病历测试", '<div class="readonly-value">结构化病历会转换为 PatientSnapshot；医院阈值只在执行层解析。</div>', `
         <span class="muted" id="caseSavedAtText">${state.caseSavedAt ? `保存于 ${esc(state.caseSavedAt)}` : "未保存"}</span>
         <button id="saveCase" class="btn">保存病历</button>
@@ -5367,7 +6233,7 @@
       "",
       description,
     );
-    content.innerHTML = `
+    pageEl.innerHTML = `
       ${panel("中医辨证运行", `
         <div class="inline-controls">
           <button id="tcmRunBtn" class="btn primary">运行辨证</button>
@@ -5618,23 +6484,20 @@
       const patient = await api("/api/inference/demo-patient");
       return `命中 ${(await api("/api/inference/run", { json: { patient } })).conclusion_count} 条`;
     });
-    content.innerHTML = panel("页面自检结果", table(["检查项", "结果", "状态"], checks.map(([name, detail, ok]) => `<tr><td>${esc(name)}</td><td>${esc(detail)}</td><td>${ok ? '<span class="badge ok">通过</span>' : '<span class="badge danger" data-smoke-failure="1">失败</span>'}</td></tr>`))) + content.innerHTML;
+    const host = pageRegistry.get("dashboard")?.el;
+    if (host) host.insertAdjacentHTML("afterbegin", panel("页面自检结果", table(["检查项", "结果", "状态"], checks.map(([name, detail, ok]) => `<tr><td>${esc(name)}</td><td>${esc(detail)}</td><td>${ok ? '<span class="badge ok">通过</span>' : '<span class="badge danger" data-smoke-failure="1">失败</span>'}</td></tr>`))));
     toast(checks.some((c) => !c[2]) ? "自检发现失败项" : "自检全部通过", checks.some((c) => !c[2]));
   }
 
+  $("#dialogTopClose").onclick = () => $("#editorDialog").close();
   document.querySelectorAll(".nav-item").forEach((button) => button.onclick = () => navigate(button.dataset.route));
-  $("#refreshBtn").onclick = () => render();
-  $("#smokeTestBtn").onclick = () => { state.route = "dashboard"; document.querySelectorAll(".nav-item").forEach((b) => b.classList.toggle("active", b.dataset.route === "dashboard")); runSmokeTest(); };
+  $("#refreshBtn").onclick = () => reload();
+  $("#smokeTestBtn").onclick = async () => { await navigate("dashboard", { reload: true }); runSmokeTest(); };
   content.addEventListener("click", (event) => {
     const vocabDetail = event.target.closest("[data-vocab-detail]");
     if (vocabDetail) {
-      state.route = "vocab";
       state.vocabSearch = vocabDetail.dataset.vocabDetail;
-      document.querySelectorAll(".nav-item").forEach((button) => button.classList.toggle("active", button.dataset.route === "vocab"));
-      const [title, desc] = titles.vocab;
-      $("#pageTitle").textContent = title;
-      $("#pageDesc").textContent = desc;
-      render();
+      navigate("vocab", { reload: true });
       return;
     }
     const quick = event.target.closest("[data-quick]"); if (!quick) return;
@@ -5660,7 +6523,7 @@
     } else if (currentIndex < 0) {
       return;
     } else if (event.key === "x" || event.key === "X") {
-      const input = content.querySelector(`[data-review-select="${CSS.escape(reviewItemKey(items[currentIndex]))}"]`);
+      const input = pageEl.querySelector(`[data-review-select="${CSS.escape(reviewItemKey(items[currentIndex]))}"]`);
       if (input) {
         input.checked = !input.checked;
         input.dispatchEvent(new Event("change"));
@@ -5671,10 +6534,16 @@
       openReasonDialog(items[currentIndex], "reject");
     }
   });
+  // hash 路由：刷新/前进后退后停留在对应页面（navigate 用 location.hash 写入会触发本事件，route 相同时跳过）
+  window.addEventListener("hashchange", () => {
+    const route = location.hash.replace(/^#/, "");
+    if (pageRenderers[route] && route !== state.route) navigate(route);
+  });
   (async function init() {
     try { await api("/api/health"); $("#apiStatus").textContent = "服务已连接"; $(".status-dot").classList.add("online"); }
     catch (_) { $("#apiStatus").textContent = "服务不可用"; $(".status-dot").classList.add("offline"); }
-    navigate("dashboard");
+    const initial = location.hash.replace(/^#/, "");
+    navigate(pageRenderers[initial] ? initial : "dashboard");
   })();
 })();
 

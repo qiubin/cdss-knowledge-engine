@@ -50,10 +50,24 @@
     return Array.isArray(value) ? value : Object.values(value || {});
   }
 
+  function reviewedPayload(payload, sourceGraph = payload) {
+    const approved = asArray(sourceGraph.nodes).filter(node => node?.review_status === "active");
+    const ids = new Set(approved.map(node => node.id));
+    const key = edge => JSON.stringify([edge.source_node_id, edge.relation_code, edge.target_node_id]);
+    const edges = new Set(asArray(sourceGraph.relations).filter(edge => edge?.review_status === "active"
+      && ids.has(edge.source_node_id) && ids.has(edge.target_node_id)).map(key));
+    const nodes = asArray(payload.nodes).filter(node => ids.has(node.id));
+    const visibleIds = new Set(nodes.map(node => node.id));
+    const relations = asArray(payload.relations).filter(edge => edges.has(key(edge))
+      && visibleIds.has(edge.source_node_id) && visibleIds.has(edge.target_node_id));
+    return { ...payload, nodes, relations, total_nodes: approved.length, total_relations: edges.size };
+  }
+
   // Build a subgraph from the JSON graph already loaded by the page.  This is
   // the zero-dependency fallback used when Neo4j is not running; its traversal
   // mirrors the server's depth/limit neighbourhood query.
   function localPayload(graph, options = {}) {
+    if (options.reviewedOnly) graph = reviewedPayload(graph);
     const profile = graph.profile || {};
     const anchorTypes = new Set(
       options.anchorTypes || profile.anchor_types || ["disease"]
@@ -150,7 +164,9 @@
         if (!Array.isArray(payload.nodes) || !payload.nodes.length) {
           throw new Error("Neo4j 图谱为空");
         }
-        return { ...payload, engine: "neo4j" };
+        const visible = options.reviewedOnly ? reviewedPayload(payload, localGraph) : payload;
+        if (options.reviewedOnly && !visible.nodes.length) throw new Error("Neo4j 尚无已审核实体，使用当前审核结果");
+        return { ...visible, engine: "neo4j" };
       } catch (error) {
         return {
           ...localPayload(localGraph, options),
@@ -167,6 +183,7 @@
   function create(container, graph, options = {}) {
     if (!container) return null;
     destroy();
+    if (options.reviewedOnly) graph = reviewedPayload(graph);
 
     const graphFilename = options.graphFilename || graph.graph_filename || "KG-GENERIC_GUIDELINE_V1.json";
     const localGraph = graph;
@@ -441,11 +458,11 @@
         container.querySelector("#kgBrowser").dataset.url = payload.browser_url;
       }
       if (!state.loadedNodes.length) {
-        setStatus(`${engineLabel()} 图谱为空；请先导入指南或选择其他图谱。`, "error");
+        setStatus(options.reviewedOnly ? "当前范围暂无已审核通过的实体，请先审核或选择其他中心实体。" : `${engineLabel()} 图谱为空；请先导入指南或选择其他图谱。`, "error");
         infoEl.className = "kgviz-info empty-info";
         infoEl.innerHTML = `
           <p><strong>${escapeHtml(engineLabel())} 图谱为空。</strong></p>
-          <p>请先在“指南导入”生成知识包，或切换其他图谱后刷新。</p>
+          <p>${options.reviewedOnly ? "请先到审核台通过实体；关系及两端实体均通过后才会显示连线。" : "请先在“指南导入”生成知识包，或切换其他图谱后刷新。"}</p>
         `;
       } else if (state.engine === "json") {
         setStatus("Neo4j 不可用，已加载本地 JSON 图谱；节点可拖动，滚轮可缩放。", "ok");
@@ -457,6 +474,7 @@
     function localOptions() {
       return {
         graphFilename: state.graphFilename,
+        reviewedOnly: Boolean(options.reviewedOnly),
         centerCode: state.centerCode,
         depth: state.depth,
         limit: state.maxNodes,

@@ -5,13 +5,14 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ConceptDefinition(BaseModel):
     """A single concept in the vocabulary."""
     code: str
     name_cn: str
+    aliases: List[str] = Field(default_factory=list)
     name_en: str = ""
     category: str  # lab_concept / exam_concept / symptom_concept / tcm_*_concept
     description: str = ""

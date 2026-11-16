@@ -43,7 +43,15 @@ class ConceptVocabularyRepository:
         if not self.path.exists():
             return []
         data = json.loads(self.path.read_text(encoding="utf-8"))
-        return data if isinstance(data, list) else []
+        items = data if isinstance(data, list) else []
+        legacy_path = self.path.parent / "entities" / "concept.json"
+        legacy = json.loads(legacy_path.read_text(encoding="utf-8")) if legacy_path.exists() else []
+        by_code = {item.get("code"): item for item in legacy if isinstance(item, dict)}
+        for item in items:
+            if "aliases" not in item:
+                previous = by_code.get(item.get("code"), {})
+                item["aliases"] = list(dict.fromkeys([previous.get("name") or item.get("name_cn", ""), *previous.get("aliases", [])]))
+        return items
 
     def _write(self, items: List[Dict[str, Any]]) -> None:
         self.path.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")

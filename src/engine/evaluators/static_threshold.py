@@ -35,11 +35,12 @@ class StaticThresholdEvaluator(BaseEvaluator):
         if lab is None or lab.value is None:
             return EvaluationResult(matched=False, evidence_description=f"{standard.lab_code} 无检验数据")
 
-        op_fn = self.OPERATORS.get(standard.operator)
-        if op_fn is None:
-            return EvaluationResult(matched=False, evidence_description=f"不支持的操作符: {standard.operator}")
-
-        matched = op_fn(lab.value, standard.threshold_value)
+        from .exam_interpretation import compare_numeric, same_unit
+        if standard.threshold_unit and not same_unit(lab.unit, standard.threshold_unit):
+            return EvaluationResult(False, evidence_description="检验结果与标准单位不一致，尚未完成换算", detail={"evaluation_status": "unknown"})
+        matched = compare_numeric(lab.value, standard.operator, standard.threshold_value, standard.threshold_upper)
+        if matched is None:
+            return EvaluationResult(False, evidence_description="阈值或操作符未正确配置", detail={"evaluation_status": "unknown"})
         unit = standard.threshold_unit or lab.unit
         return EvaluationResult(
             matched=matched,

@@ -151,6 +151,10 @@ def _inference_result(
     diagnostics = _rule_diagnostics(
         rules, domain, sorted(graph_clients)
     )
+    native_engine = getattr(engine, "_native", engine)
+    diagnostics["undetermined_conditions"] = getattr(native_engine, "evaluation_issues", [])
+    if diagnostics["undetermined_conditions"]:
+        diagnostics["reasons"].append(f"{len(diagnostics['undetermined_conditions'])} 项条件无法判断，请核对标准、适用范围、单位及原始结果；不能作为阴性结果")
     if not conclusions:
         if diagnostics["active_diagnosis_rules"]:
             diagnostics["reasons"].append(

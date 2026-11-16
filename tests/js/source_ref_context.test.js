@@ -38,3 +38,9 @@ test("parseSourceRef 非法输入返回 null", () => {
   assert.strictEqual(parseSourceRef("not-a-ref"), null);
   assert.strictEqual(parseSourceRef(undefined), null);
 });
+
+test("parseSourceRef 支持分块引用的 part 后缀", () => {
+  assert.deepStrictEqual(parseSourceRef("DOC-1d41bcdc_p1_l1-517_part5"), {
+    docId: "DOC-1d41bcdc", page: 1, start: 1, end: 517,
+  });
+});

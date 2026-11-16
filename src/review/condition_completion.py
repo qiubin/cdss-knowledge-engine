@@ -17,6 +17,42 @@ def _as_list(value: Any) -> List[Any]:
     return value if isinstance(value, list) else list((value or {}).values())
 
 
+def collect_reviewed_treatment_links(graph, specification):
+    """Read reviewed treatment content without inventing eligibility criteria."""
+    nodes = {item.get("id"): item for item in _as_list(graph.get("nodes"))}
+    relations = _as_list(graph.get("relations"))
+    disease_code = specification.get("disease_code")
+    anchors = {key for key, item in nodes.items() if item.get("node_type") == "disease"
+               and item.get("code") == disease_code}
+    def approved(edge):
+        return (edge.get("review_status") == "active"
+                and nodes.get(edge.get("source_node_id"), {}).get("review_status") == "active"
+                and nodes.get(edge.get("target_node_id"), {}).get("review_status") == "active")
+    plan_code = (specification.get("conclusion") or {}).get("treatment_plan_id")
+    plans, investigations, items = [], [], []
+    for edge in relations:
+        if edge.get("source_node_id") not in anchors or not approved(edge):
+            continue
+        node = nodes[edge["target_node_id"]]
+        if edge.get("relation_code") == "DISEASE_HAS_TREATMENT_PLAN":
+            plans.append(node)
+        elif edge.get("relation_code") in {"DISEASE_HAS_EXAM", "DISEASE_HAS_LAB"}:
+            investigations.append({"code": node.get("code"), "name": node.get("name"),
+                                   "entity_type": node.get("node_type"), "source_refs": node.get("source_refs") or []})
+    selected = {node["id"] for node in plans if node.get("code") == plan_code}
+    for edge in relations:
+        if edge.get("source_node_id") not in selected or not approved(edge):
+            continue
+        if edge.get("relation_code") not in {"TREATMENT_PLAN_INCLUDES_MEDICATION", "TREATMENT_PLAN_INCLUDES_INTERVENTION"}:
+            continue
+        node = nodes[edge["target_node_id"]]
+        item = {"code": node.get("code"), "name": node.get("name"), "entity_type": node.get("node_type")}
+        if item not in items:
+            items.append(item)
+    return {"plans": [{"code": node.get("code"), "name": node.get("name")} for node in plans],
+            "items": items, "investigations": investigations}
+
+
 def _evidence_to_condition(evidence: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     dtype = str(evidence.get("data_type") or "")
     if dtype == "lab" and evidence.get("lab_code") and evidence.get("concept_code"):
@@ -42,6 +78,7 @@ def collect_disease_evidence_conditions(
     graph: Dict[str, Any],
     disease_code: str,
     vocab=None,
+    approved_only: bool = False,
 ) -> Dict[str, Any]:
     """Collect probe-verified conditions from the disease's evidence chain."""
     from src.api.routes.rules import GraphSemanticChecker
@@ -56,6 +93,29 @@ def collect_disease_evidence_conditions(
         str(item.get("id")): item for item in _as_list(graph.get("evidences"))
         if isinstance(item, dict) and item.get("id")
     }
+    # Older imports contain reviewed graph edges without the flat evidence map.
+    nodes = {item.get("id"): item for item in _as_list(graph.get("nodes"))}
+    anchors = {key for key, item in nodes.items()
+               if item.get("node_type") == "disease" and str(item.get("code")) == disease_code}
+    for relation in _as_list(graph.get("relations")):
+        if relation.get("source_node_id") not in anchors:
+            continue
+        target = nodes.get(relation.get("target_node_id"), {})
+        code = str(target.get("code") or "")
+        relation_code = relation.get("relation_code")
+        evidence = None
+        if relation_code == "DISEASE_HAS_SYMPTOM" and code:
+            evidence = {"data_type": "symptom", "symptom_code": code}
+        elif relation_code == "DISEASE_HAS_DIAGNOSTIC_EVIDENCE" and code:
+            lab_code, separator, concept = code.partition(":")
+            if separator and any(n.get("node_type") == "lab" and n.get("code") == lab_code for n in nodes.values()):
+                evidence = {"data_type": "lab", "lab_code": lab_code, "concept_code": concept}
+            else:
+                evidence = {"data_type": "exam_finding", "finding_code": code}
+        if evidence:
+            evidence_id = "graph:" + str(target.get("id"))
+            evidence_index[evidence_id] = {**evidence, "id": evidence_id}
+            links.append({"disease_code": disease_code, "evidence_id": evidence_id})
     links.sort(key=lambda link: (
         not bool(link.get("required")),
         -(float(link.get("weight") or 0)),
@@ -89,10 +149,16 @@ def collect_disease_evidence_conditions(
             "conditions": {"type": "group", "operator": "OR", "children": [candidate]},
         }
         result = GraphSemanticChecker(graph).check_rule(probe_rule)
-        if result.get("semantic_status") != "consistent":
+        if result.get("semantic_status") != "consistent" or (
+            approved_only and result.get("dependency_status") != "passed"
+        ):
             skipped.append({
                 "evidence_id": evidence.get("id"),
-                "reason": "; ".join((result.get("issues") or ["图谱语义不一致"])[:2]),
+                "reason": (
+                    "关联实体或关系尚未全部审核通过"
+                    if approved_only and result.get("dependency_status") != "passed"
+                    else "; ".join((result.get("issues") or ["图谱语义不一致"])[:2])
+                ),
             })
             continue
         seen.add(key)
@@ -181,6 +247,7 @@ def complete_rule_conditions(
     rule: Dict[str, Any],
     graph: Dict[str, Any],
     vocab=None,
+    approved_only: bool = False,
 ) -> Dict[str, Any]:
     """Fill in concept conditions for rules that have none.
 
@@ -191,7 +258,9 @@ def complete_rule_conditions(
     if not disease_code:
         return {"changed": False, "reason": "规则缺少目标疾病/证候编码"}
 
-    collected = collect_disease_evidence_conditions(graph, disease_code, vocab)
+    collected = collect_disease_evidence_conditions(
+        graph, disease_code, vocab, approved_only=approved_only
+    )
     if not (collected["symptoms"] or collected["objective"]):
         return {
             "changed": False,
@@ -203,15 +272,33 @@ def complete_rule_conditions(
     new_conditions = _transform(conditions, collected)
     if new_conditions is None:
         new_conditions = conditions
+    if approved_only and new_conditions:
+        # Keep authored logic intact; append new candidates in a separate group
+        # for explicit human confirmation rather than losing reviewed edges.
+        def contains(node, candidate):
+            if not isinstance(node, dict):
+                return False
+            if all(node.get(key) == value for key, value in candidate.items()):
+                return True
+            return any(contains(child, candidate) for field in ("children", "required_children")
+                       for child in node.get(field) or [])
+        missing = []
+        for candidate in [*collected["symptoms"], *collected["objective"]]:
+            if not contains(new_conditions, candidate):
+                missing.append(candidate)
+        # An association supplies a candidate, never a new mandatory clause.
+        # Preserve the authored Boolean tree until the reviewer chooses logic.
     if new_conditions == conditions:
         return {
             "changed": False,
             "reason": "规则条件无需补全（不完整叶子的图谱证据不足以生成条件）",
             "skipped": collected["skipped"],
+            "candidates": missing if approved_only else [],
         }
     return {
         "changed": True,
         "conditions": new_conditions,
         "used": collected["used"],
         "skipped": collected["skipped"],
+        "candidates": missing if approved_only and new_conditions else [],
     }

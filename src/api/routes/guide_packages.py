@@ -1069,18 +1069,9 @@ async def import_package(package_id: str, request: GuidePackageImportRequest):
         _save_package(package)
         raise
 
-    rule_result = await import_rules(RuleImportRequest(
-        rules=candidate_rules,
-        graph_filename=package.get("graph_filename", ""),
-    ))
-    rule_ids = {item.get("rule_id") for item in candidate_rules}
-    all_rules = json.loads((ROOT / "data" / "rules" / "managed_rules.json").read_text(encoding="utf-8"))
-    package_rules = [item for item in all_rules if item.get("rule_id") in rule_ids]
-    try:
-        sync_result = check_rule_sync(package_rules)
-    except HTTPException as exc:
-        sync_result = {"total": 0, "consistent_count": 0, "inconsistent_count": 0, "rules": [], "error": str(exc.detail)}
-
+    # Keep candidate conditions as unreviewed clinical specifications in the graph.
+    rule_result = {"imported": 0, "replaced": 0, "errors": [], "pending_basis_count": len(candidate_rules)}
+    sync_result = {"total": 0, "consistent_count": 0, "inconsistent_count": 0, "rules": []}
     package["checks"] = _build_checks(package)
     package["import_result"] = {
         "imported_at": _now(),
@@ -1090,10 +1081,7 @@ async def import_package(package_id: str, request: GuidePackageImportRequest):
         "rules": {**rule_result, "sync_check": sync_result},
         "error": "",
     }
-    if not rule_result.get("errors") and sync_result.get("inconsistent_count", 1) == 0:
-        package["status"] = "ready_for_test"
-    else:
-        package["status"] = "imported"
+    package["status"] = "imported"
 
     # 自动生成一份阳性测试病历，供「病历测试」页即时验证（失败不阻断导入）。
     test_case = None
@@ -1120,7 +1108,7 @@ async def import_package(package_id: str, request: GuidePackageImportRequest):
         "rules": {**rule_result, "sync_check": sync_result},
         "test_case": test_case,
         "checks": package["checks"],
-        "remaining_action": "请在规则管理中人工审核并逐条启用",
+        "remaining_action": "请在审核台完成实体、关系与诊疗依据审核，通过后生成规则草稿，再审核启用",
     }
 
 

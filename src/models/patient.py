@@ -34,7 +34,12 @@ class ExamFinding(BaseModel):
     exam_name: str = ""
     finding_code: str
     finding_name: str = ""
-    present: bool = True
+    present: Optional[bool] = True
+    value: Optional[float] = None
+    unit: str = ""
+    category: Optional[str] = None
+    method: str = ""
+    report_text: str = ""
     detail: Optional[Dict[str, Any]] = None  # e.g. {"leads": ["II","III","aVF"], "magnitude_mv": 0.3}
     performed_at: Optional[datetime] = None
 

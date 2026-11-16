@@ -29,6 +29,7 @@ from src.vocab.cascade import (
 from src.vocab.entity_classification import classify_entries
 from src.vocab.entity_vocabulary import EntityVocabularyRepository, graph_usage
 from src.vocab.reference_vocabulary import (
+    REFERENCE_CATALOGS,
     ReferenceBundleRepository,
     ReferenceVocabularyRepository,
     import_reference_catalog,
@@ -60,7 +61,7 @@ def _template_references() -> Dict[str, List[Dict[str, str]]]:
     return references
 
 
-ICD10_CODE_PATTERN = re.compile(r"^[A-Z][0-9]{2}(\.[0-9A-Z]{1,4})?$")
+ICD10_CODE_PATTERN = re.compile(r"^[A-Z][0-9]{2}(\.[0-9A-Z]{1,7})?$")
 
 
 def _parse_entry(raw: Dict, code: str = "", is_new: bool = False) -> TemplateEntityEntry:
@@ -107,6 +108,85 @@ icd10_reference = ReferenceVocabularyRepository("icd10")
 term_candidates = TerminologyCandidateRepository()
 hospital_mappings = HospitalTerminologyMappingRepository()
 icd10_bundles = ReferenceBundleRepository()
+
+
+def _catalog_repository(catalog: str) -> ReferenceVocabularyRepository:
+    if catalog not in REFERENCE_CATALOGS:
+        raise HTTPException(404, "不支持的标准术语分类")
+    return ReferenceVocabularyRepository(catalog)
+
+
+def _reference_active(item: Dict, active: List[TemplateEntityEntry]) -> bool:
+    return any(
+        entry.code == item.get("code") or entry.name == item.get("name")
+        or (entry.standard_system and entry.standard_code
+            and entry.standard_system.upper() == str(item.get("standard_system") or "").upper()
+            and entry.standard_code == item.get("standard_code"))
+        or any(mapping.get("system") == item.get("standard_system") and mapping.get("code") == item.get("standard_code")
+               for mapping in entry.standard_mappings)
+        for entry in active
+    )
+
+
+@router.get("/reference/catalogs")
+async def list_reference_catalogs():
+    return [{"catalog": key, **config, **_catalog_repository(key).metadata(),
+             "count": len(_catalog_repository(key).entries())} for key, config in REFERENCE_CATALOGS.items()]
+
+
+@router.get("/reference/catalogs/{catalog}")
+async def search_reference_catalog(catalog: str, q: str = "", limit: int = 50):
+    repository = _catalog_repository(catalog)
+    active = EntityVocabularyRepository(REFERENCE_CATALOGS[catalog]["entity_type"]).list()
+    return {**repository.metadata(), "items": [
+        {**TemplateEntityEntry(**item).model_dump(), "in_active_dictionary": _reference_active(item, active)}
+        for item in repository.search(q, max(1, min(limit, 200)))
+    ]}
+
+
+@router.post("/reference/catalogs/{catalog}/activate")
+async def activate_reference_catalog(catalog: str, payload: Dict):
+    reference = _catalog_repository(catalog)
+    codes = payload.get("codes")
+    if not isinstance(codes, list) or not codes or len(codes) > 200:
+        raise HTTPException(400, "请选择 1 至 200 个术语编码")
+    target_type = REFERENCE_CATALOGS[catalog]["entity_type"]
+    repository = EntityVocabularyRepository(target_type)
+    active = repository.list()
+    imported, skipped = [], []
+    for raw_code in codes:
+        code = str(raw_code or "").strip()
+        item = reference.find(code)
+        if item is None:
+            skipped.append({"code": code, "reason": "参考库中不存在"})
+        elif _reference_active(item, active):
+            skipped.append({"code": code, "reason": "编码、标准映射或同名术语已在活跃字典中"})
+        else:
+            entry = repository.save(_validate_entry(target_type, TemplateEntityEntry(**item)), is_new=True)
+            active.append(entry)
+            imported.append(entry.model_dump())
+    return {"imported": imported, "skipped": skipped, "imported_count": len(imported), "skipped_count": len(skipped)}
+
+
+@router.post("/reference/catalogs/{catalog}/import")
+async def upload_reference_catalog(
+    catalog: str, file: UploadFile = File(...), version: str = Form(""), source: str = Form(""),
+    mode: str = Form("merge"), dry_run: bool = Form(True),
+):
+    repository = _catalog_repository(catalog)
+    content = await file.read()
+    if len(content) > 20 * 1024 * 1024:
+        raise HTTPException(413, "标准术语文件最大 20MB")
+    try:
+        metadata, entries = parse_reference_catalog(content, file.filename or "")
+        if not dry_run and not (version.strip() or metadata.get("version")):
+            raise ValueError("正式导入必须填写标准版本")
+        if not dry_run and not (source.strip() or metadata.get("source")):
+            raise ValueError("正式导入必须填写数据来源")
+        return import_reference_catalog(repository, entries, metadata=metadata, version=version.strip(),
+            source=source.strip(), mode=mode, dry_run=dry_run)
+    except (UnicodeDecodeError, ValueError) as error:
+        raise HTTPException(422, str(error))
 
 
 @router.get("/reference/icd10")
@@ -259,7 +339,7 @@ async def terminology_summary():
     mappings = hospital_mappings.list()
     return {
         "active_entities": len(active_diseases),
-        "reference_terms": len(reference_entries),
+        "reference_terms": len(reference_entries) + sum(len(_catalog_repository(key).entries()) for key in REFERENCE_CATALOGS),
         "pending_candidates": sum(item.get("status") == "pending" for item in candidates),
         "approved_mappings": sum(item.get("status") == "approved" for item in mappings),
     }
@@ -475,6 +555,10 @@ async def remap_entity_code(entity_type: str, code: str, payload: Dict):
 
 
 def _parse_concept(raw: Dict, code: str = "", is_new: bool = False) -> ConceptDefinition:
+    if code and "aliases" not in raw:
+        existing = vocabulary.find(code)
+        if existing is not None:
+            raw = {**raw, "aliases": existing.aliases}
     if code and raw.get("code") != code:
         raise HTTPException(400, "请求路径与概念编码不一致；修改编码请新建概念")
     try:

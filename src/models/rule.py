@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -92,6 +92,7 @@ class RuleCondition(BaseModel):
     # For exam_finding type
     exam_code: Optional[str] = None
     finding_code: Optional[str] = None
+    standard_required: bool = False
 
     # For symptom type
     symptom_code: Optional[str] = None
@@ -135,6 +136,7 @@ class Rule(BaseModel):
     rule_type: str = "diagnosis"  # diagnosis / treatment / contraindication / monitoring / tcm_*
     # Fine-grained purpose, independent from target and broad execution stage.
     clinical_intent: str = ""
+    diagnosis_prerequisite: Optional[Literal["confirmed", "suspected"]] = None
     name: str = ""
     disease_code: str
     disease_name: str = ""

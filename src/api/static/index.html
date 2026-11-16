@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CDSS 知识引擎</title>
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-  <link rel="stylesheet" href="/static/style.css?v=20261111ctc">
+  <link rel="stylesheet" href="/static/style.css?v=20261115scenarios">
 </head>
 <body>
   <div class="app">
@@ -28,6 +28,8 @@
           <div class="nav-group-title">知识审核</div>
           <button class="nav-item" data-route="review">审核台</button>
           <button class="nav-item" data-route="graph">知识图谱</button>
+          <button class="nav-item" data-route="graphVisual">图谱可视</button>
+          <button class="nav-item" data-route="graphClear">图谱清除</button>
           <button class="nav-item" data-route="tcmGraph">中医图谱</button>
           <button class="nav-item" data-route="rules">规则管理</button>
         </div>
@@ -35,7 +37,6 @@
           <div class="nav-group-title">词典与标准</div>
           <button class="nav-item" data-route="templates">解析模板</button>
           <button class="nav-item" data-route="entityVocab">实体词典</button>
-          <button class="nav-item" data-route="vocab">概念词汇</button>
           <button class="nav-item" data-route="standards">标准管理</button>
         </div>
         <div class="nav-group">
@@ -61,11 +62,13 @@
           <button id="refreshBtn" class="btn ghost">刷新</button>
         </div>
       </header>
+      <nav id="pagetabs" class="pagetabs" aria-label="已打开页签"></nav>
       <section id="content" class="content" aria-live="polite"></section>
     </main>
   </div>
 
   <dialog id="editorDialog" class="dialog">
+    <div class="dialog-topbar"><span>查看 / 编辑</span><button type="button" id="dialogTopClose" class="btn ghost" aria-label="关闭弹出窗口">× 关闭</button></div>
     <form id="editorForm" method="dialog">
       <div id="editorBody"></div>
       <div class="dialog-actions">
@@ -77,10 +80,11 @@
 
   <div id="toast" class="toast"></div>
   <script src="/static/vendor/vis-network.min.js?v=20261107neo"></script>
-  <script src="/static/graph-view.js?v=20261113graphlabels"></script>
+  <script src="/static/graph-view.js?v=20261115reviewed-graph"></script>
   <script src="/static/rule-wizard.js?v=20261111wizard"></script>
-  <script src="/static/condition-tree-editor.js?v=20261111desc"></script>
+  <script src="/static/condition-tree-editor.js?v=20261115exam-standards"></script>
   <script src="/static/condition-tree-canvas.js?v=20261111layout"></script>
-  <script src="/static/app.js?v=20261113unify"></script>
+  <script src="/static/scenario-workbench.js?v=20261115scenarios"></script>
+  <script src="/static/app.js?v=20261115scenarios"></script>
 </body>
 </html>

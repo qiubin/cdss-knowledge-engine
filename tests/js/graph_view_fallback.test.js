@@ -38,6 +38,32 @@ const SAMPLE_GRAPH = {
   ],
 };
 
+test("reviewed graph hides pending nodes, pending edges and approved edges with pending endpoints", async () => {
+  const view = loadGraphView();
+  const graph = {
+    nodes: [
+      { id: "A", code: "A", node_type: "disease", review_status: "active" },
+      { id: "B", node_type: "lab", review_status: "active" },
+      { id: "C", node_type: "symptom", review_status: "draft" },
+      { id: "D", node_type: "lab" },
+    ],
+    relations: [
+      { source_node_id: "A", target_node_id: "B", relation_code: "OK", review_status: "active" },
+      { source_node_id: "A", target_node_id: "B", relation_code: "PENDING", review_status: "draft" },
+      { source_node_id: "A", target_node_id: "C", relation_code: "BLOCKED", review_status: "active" },
+    ],
+  };
+  const local = view.localPayload(graph, { reviewedOnly: true });
+  assert.deepEqual(Array.from(local.nodes, x => x.id).sort(), ["A", "B"]);
+  assert.deepEqual(Array.from(local.relations, x => x.relation_code), ["OK"]);
+  // Neo4j can retain outdated review states; current JSON is authoritative.
+  const stale = { ...graph, nodes: graph.nodes.map(x => ({ ...x, review_status: "active" })),
+    relations: graph.relations.map(x => ({ ...x, review_status: "active" })) };
+  const remote = await view.loadPayload("/test", graph, { reviewedOnly: true }, async () => ({ ok: true, json: async () => stale }));
+  assert.deepEqual(Array.from(remote.nodes, x => x.id).sort(), ["A", "B"]);
+  assert.deepEqual(Array.from(remote.relations, x => x.relation_code), ["OK"]);
+});
+
 test("localPayload picks the most connected anchor as center and expands one level", () => {
   const view = loadGraphView();
   const payload = view.localPayload(SAMPLE_GRAPH, {

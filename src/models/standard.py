@@ -1,7 +1,7 @@
 """Lab interpretation standard - hospital-specific reference thresholds."""
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, List, Literal
 
 from pydantic import BaseModel, Field
 
@@ -14,7 +14,16 @@ class LabInterpretationStandard(BaseModel):
     """
     id: Optional[int] = None
     hospital_id: str
-    lab_code: str
+    item_type: Literal["lab", "exam"] = "lab"
+    exam_code: str = ""
+    exam_name: str = ""
+    finding_code: str = ""
+    finding_name: str = ""
+    interpretation_type: Literal["auto", "numeric", "categorical", "presence"] = "auto"
+    accepted_values: List[str] = Field(default_factory=list)
+    method: str = ""
+    threshold_upper: Optional[float] = None
+    lab_code: str = ""
     lab_name: str = ""
     concept_code: str  # ELEVATED / DECREASED / ABOVE_ULN_1 / etc.
     operator: str = ">"  # > < >= <= = BETWEEN IN

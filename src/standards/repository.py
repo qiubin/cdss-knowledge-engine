@@ -60,28 +60,31 @@ class JsonStandardRepository(StandardRepository):
         """Find the best matching standard, preferring more specific context matches."""
         candidates = []
         for s in standards:
-            if s.status != "active":
+            from .validation import effective
+            if s.status != "active" or not effective(s):
                 continue
             if s.concept_code != concept_code:
                 continue
             # Context matching
-            if s.context_gender and context_gender and s.context_gender != context_gender:
+            if s.context_gender and s.context_gender != context_gender:
                 continue
-            if s.context_age_min and context_age and context_age < s.context_age_min:
+            if s.context_age_min is not None and (context_age is None or context_age < s.context_age_min):
                 continue
-            if s.context_age_max and context_age and context_age > s.context_age_max:
+            if s.context_age_max is not None and (context_age is None or context_age > s.context_age_max):
                 continue
             # Specificity score: more context constraints = more specific = higher priority
-            specificity = 0
+            specificity = 2 if s.method else 0
             if s.context_gender:
                 specificity += 1
-            if s.context_age_min or s.context_age_max:
+            if s.context_age_min is not None or s.context_age_max is not None:
                 specificity += 1
             candidates.append((specificity, s))
 
         if not candidates:
             return None
-        candidates.sort(key=lambda x: -x[0])
+        candidates.sort(key=lambda x: (-x[0], -x[1].version))
+        if len(candidates) > 1 and candidates[0][0] == candidates[1][0] and candidates[0][1].version == candidates[1][1].version:
+            return None
         return candidates[0][1]
 
     def get_active(
@@ -93,8 +96,17 @@ class JsonStandardRepository(StandardRepository):
         context_age: Optional[int] = None,
     ) -> Optional[LabInterpretationStandard]:
         standards = self._cache.get(hospital_id, [])
-        matching = [s for s in standards if s.lab_code == lab_code]
+        matching = [s for s in standards if s.item_type == "lab" and s.lab_code == lab_code]
         return self._find_matching(matching, concept_code, context_gender, context_age)
+
+    def get_exam_active(self, hospital_id, exam_code, finding_code, concept_code="PRESENT", context_gender=None, context_age=None, method=""):
+        rows = [row for row in self._cache.get(hospital_id, []) if row.item_type == "exam" and row.exam_code == exam_code
+                and row.finding_code == finding_code and (not row.method or row.method == method)]
+        return self._find_matching(rows, concept_code, context_gender, context_age)
+
+    def has_exam_standard(self, hospital_id, exam_code, finding_code, concept_code="PRESENT"):
+        return any(row.item_type == "exam" and row.exam_code == exam_code and row.finding_code == finding_code
+                   and row.concept_code == concept_code for row in self._cache.get(hospital_id, []))
 
     def list_for_hospital(self, hospital_id: str) -> List[LabInterpretationStandard]:
         return self._cache.get(hospital_id, [])

@@ -79,6 +79,38 @@ async def list_all_standards():
     }
 
 
+@router.get("/{hospital_id}/coverage")
+async def standards_coverage(hospital_id: str):
+    from .rules import _load_all_rules
+    from src.standards.coverage import build_coverage
+    root = STANDARDS_DIR.parent
+    graphs = {}
+    specs = [(rule, "已启用规则" if rule.get("status") == "active" else "规则草稿/待复核")
+             for rule in _load_all_rules() if rule.get("status", "draft") not in {"retired", "rejected"}]
+    for path in (root / "kg").glob("*.json"):
+        graph = json.loads(path.read_text(encoding="utf-8"))
+        graphs[path.name] = graph
+        specs.extend(({**basis["specification"], "graph_filename": path.name}, "待审诊疗依据")
+                     for basis in graph.get("clinical_bases", []) if basis.get("status") not in {"retired", "rejected"})
+    return build_coverage(hospital_id, _load_hospital(hospital_id), specs, graphs)
+
+
+def parse_configuration(standard):
+    from src.models.standard import LabInterpretationStandard
+    try: return {**standard, **LabInterpretationStandard(**standard).model_dump()}
+    except Exception as error: raise HTTPException(422, str(error))
+
+
+def validate_configuration(standard):
+    from src.models.standard import LabInterpretationStandard
+    from src.standards.validation import standard_issues
+    try: parsed = LabInterpretationStandard(**standard).model_dump()
+    except Exception as error: raise HTTPException(422, str(error))
+    issues = standard_issues(parsed)
+    if issues: raise HTTPException(422, "；".join(issues))
+    return {**standard, **parsed}
+
+
 @router.get("/{hospital_id}")
 async def get_hospital_standards(hospital_id: str):
     return _load_hospital(hospital_id)
@@ -93,6 +125,7 @@ async def add_standard(hospital_id: str, standard: Dict[str, Any]):
     standard.setdefault("version", 1)
     standard.setdefault("ref_source", "STATIC")
     standard.setdefault("operator", ">")
+    standard = parse_configuration(standard)
     items.append(standard)
     _save_hospital(hospital_id, items)
     return standard
@@ -104,6 +137,9 @@ async def update_standard(hospital_id: str, index: int, standard: Dict[str, Any]
     if index < 0 or index >= len(items):
         raise HTTPException(404, "标准条目未找到")
     standard["hospital_id"] = hospital_id
+    standard["status"] = "draft"
+    standard["version"] = max(int(standard.get("version") or 1), int(items[index].get("version") or 1) + 1)
+    standard = parse_configuration(standard)
     items[index] = standard
     _save_hospital(hospital_id, items)
     return standard
@@ -124,19 +160,15 @@ async def activate_standard(hospital_id: str, index: int):
     items = _load_hospital(hospital_id)
     if index < 0 or index >= len(items):
         raise HTTPException(404)
+    items[index] = validate_configuration(items[index])
     items[index]["status"] = "active"
     selected = items[index]
     # Keep one active interpretation for the same hospital/lab/concept/context.
     for item in items:
         if item is selected:
             continue
-        if (
-            item.get("lab_code") == selected.get("lab_code")
-            and item.get("concept_code") == selected.get("concept_code")
-            and item.get("context_gender") == selected.get("context_gender")
-            and item.get("context_age_min") == selected.get("context_age_min")
-            and item.get("context_age_max") == selected.get("context_age_max")
-        ):
+        from src.standards.validation import standard_identity
+        if standard_identity(item) == standard_identity(selected):
             item["status"] = "retired"
     _save_hospital(hospital_id, items)
     return items[index]

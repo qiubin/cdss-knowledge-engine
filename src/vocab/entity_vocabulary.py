@@ -31,7 +31,17 @@ class EntityVocabularyRepository:
         self.path = directory / f"{entity_type}.json"
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
+    def _concept_repository(self):
+        if self.entity_type == "concept" and (self.directory.parent / "concepts.json").exists():
+            from src.vocab.repository import ConceptVocabularyRepository
+            return ConceptVocabularyRepository(self.directory.parent / "concepts.json")
+        return None
+
     def _read(self) -> List[dict]:
+        concepts = self._concept_repository()
+        if concepts is not None:
+            return [{"code": item.code, "name": item.name_cn, "aliases": item.aliases,
+                     "domain": item.domain} for item in concepts.list() if item.is_active]
         if not self.path.exists():
             return []
         data = json.loads(self.path.read_text(encoding="utf-8"))
@@ -51,6 +61,11 @@ class EntityVocabularyRepository:
         return TemplateEntityEntry(**item) if item else None
 
     def save(self, entry: TemplateEntityEntry, is_new: bool = False) -> TemplateEntityEntry:
+        concepts = self._concept_repository()
+        if concepts is not None:
+            concept = concepts.get(entry.code)
+            concepts.save(concept.model_copy(update={"name_cn": entry.name, "aliases": entry.aliases}))
+            return entry
         items = self._read()
         index = next((i for i, item in enumerate(items) if item.get("code") == entry.code), -1)
         if is_new and index >= 0:
@@ -66,6 +81,9 @@ class EntityVocabularyRepository:
         return entry
 
     def delete(self, code: str) -> dict:
+        concepts = self._concept_repository()
+        if concepts is not None:
+            return concepts.delete(code)
         items = self._read()
         remaining = [item for item in items if item.get("code") != code]
         if len(remaining) == len(items):
@@ -74,6 +92,8 @@ class EntityVocabularyRepository:
         return {"deleted": code}
 
     def remap_code(self, old_code: str, new_code: str) -> dict:
+        if self._concept_repository() is not None:
+            raise HTTPException(422, "抽象概念编码不可直接修改，请新增概念并迁移引用")
         items = self._read()
         if not any(item.get("code") == old_code for item in items):
             raise HTTPException(404, f"共享词表 {self.entity_type} 中不存在编码 {old_code}")

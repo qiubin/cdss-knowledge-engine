@@ -620,7 +620,7 @@ async def run_auto_pipeline(
 
     rules, rule_warnings = _normalize_rules(
         raw_rules, entities, chunks, resolver, doc_id, doc_title,
-        graph_filename, auto_activate,
+        graph_filename, False,
     )
     warnings.extend(rule_warnings)
 
@@ -650,7 +650,7 @@ async def run_auto_pipeline(
             "disease_code": disease_code,
             "disease_name": disease_name or disease_code,
             "priority": 40,
-            "status": "active" if auto_activate else "draft",
+            "status": "draft",
             "graph_filename": graph_filename,
             "conditions": {"type": "group", "operator": "AND", "children": []},
             "conclusion": {
@@ -689,17 +689,18 @@ async def run_auto_pipeline(
     # Import graph and rules.
     if controller is not None:
         controller.finalizing = True
-        await controller.checkpoint(stage="写入图谱与规则（不可中断）")
+        await controller.checkpoint(stage="写入图谱与待审诊疗依据（不可中断）")
     from ..api.routes.kg import GraphImportRequest, import_graph, normalize_graph_filename
 
     graph_filename = normalize_graph_filename(graph_filename)
     graph_path = root / "kg" / graph_filename
     graph_path.parent.mkdir(parents=True, exist_ok=True)
-    graph_path.write_text(json.dumps({
-        "schema_version": 1, "domain": "western", "anchor_types": ["disease"],
-        "diseases": [], "evidences": [], "disease_evidence": [], "sources": [],
-        "nodes": [], "relations": [],
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    if not graph_path.exists():
+        graph_path.write_text(json.dumps({
+            "schema_version": 1, "domain": "western", "anchor_types": ["disease"],
+            "diseases": [], "evidences": [], "disease_evidence": [], "sources": [],
+            "nodes": [], "relations": [],
+        }, ensure_ascii=False, indent=2), encoding="utf-8")
 
     graph_result = await import_graph(GraphImportRequest(
         doc_id=doc_id,
@@ -714,25 +715,7 @@ async def run_auto_pipeline(
         candidate_rules=rules,
     ))
 
-    rules_path = root / "rules" / "managed_rules.json"
-    rules_path.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        all_rules = json.loads(rules_path.read_text(encoding="utf-8")) if rules_path.exists() else []
-    except (OSError, json.JSONDecodeError):
-        all_rules = []
-    kept = [rule for rule in all_rules if not str(rule.get("rule_id") or "").startswith(f"{doc_id}-")]
-    kept.extend(rules)
-    rules_path.write_text(json.dumps(kept, ensure_ascii=False, indent=2), encoding="utf-8")
-    try:
-        from ..review.service import sync_blocked_rules_for_graph
-        sync_blocked_rules_for_graph(
-            graph_filename,
-            graph_dir=root / "kg",
-            rules_path=root / "rules" / "managed_rules.json",
-        )
-    except Exception:
-        pass
-
+    # Rules are deferred until clinical-basis review; existing rules are preserved.
     created_at = datetime.now(timezone.utc).isoformat()
     try:
         from ..api.routes.rules import check_rule_sync
@@ -750,7 +733,8 @@ async def run_auto_pipeline(
         "success": True,
         "graph": graph_result,
         "rules": {
-            "imported": len(rules),
+            "imported": 0,
+            "pending_basis_count": len(rules),
             "replaced": 0,
             "errors": [],
             "sync_check": sync_result,

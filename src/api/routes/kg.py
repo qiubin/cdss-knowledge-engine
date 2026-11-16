@@ -1224,6 +1224,8 @@ async def import_graph(request: GraphImportRequest):
     same_name_merges = graph.pop("_same_name_merges", 0)
     if same_name_merges:
         warnings.append(f"同名实体自动合并 {same_name_merges} 处候选码")
+    from src.review.clinical_basis import stage_bases
+    stage_bases(graph, request.candidate_rules, graph_filename)
     _save_graph(graph, graph_filename)
     try:
         from src.review.service import sync_blocked_rules_for_graph
@@ -1405,15 +1407,15 @@ def clear_graph_and_rules(
     relations = graph.get("relations") or []
     preview = {
         "graph_filename": filename,
-        "node_count": len(nodes),
-        "relation_count": len(relations),
-        "rule_ids": [rule.get("rule_id", "") for rule in matched],
+        "node_count": len(nodes) if request.clear_graph else 0,
+        "relation_count": len(relations) if request.clear_graph else 0,
+        "rule_ids": [rule.get("rule_id", "") for rule in matched] if request.clear_rules else [],
         "dry_run": True,
     }
     if request.dry_run:
         return preview
 
-    stamp = time.strftime("%Y%m%d")
+    stamp = time.strftime("%Y%m%d-%H%M%S") + f"-{time.time_ns()}"
     backups: List[str] = []
 
     if request.clear_graph:

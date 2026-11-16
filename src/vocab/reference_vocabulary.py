@@ -18,10 +18,19 @@ from typing import Any, Dict, List, Optional
 ROOT = Path(__file__).parent.parent.parent
 REFERENCE_VOCAB_DIR = ROOT / "data" / "vocab" / "reference"
 REFERENCE_BUNDLE_PATH = REFERENCE_VOCAB_DIR / "icd10_bundles.json"
-ICD10_CODE_PATTERN = re.compile(r"^[A-Z][0-9]{2}(\.[0-9A-Z]{1,4})?$")
+ICD10_CODE_PATTERN = re.compile(r"^[A-Z][0-9]{2}(\.[0-9A-Z]{1,7})?$")
+# Source dictionaries also carry morphology, dual and local extension codes.
+SOURCE_DISEASE_CODE_PATTERN = re.compile(r"(?=.{3,64}$)(?=.*[0-9])[A-Z][A-Z0-9.+*/ -]*")
 
-CATALOG_CODE_FIELDS = ("code", "疾病编码", "诊断编码", "ICD-10编码", "icd10_code")
-CATALOG_NAME_FIELDS = ("name", "疾病名称", "诊断名称", "标准名称", "name_cn")
+REFERENCE_CATALOGS = {
+    "exam": {"label": "检查", "entity_type": "exam", "standard": "LOINC"},
+    "lab": {"label": "检验", "entity_type": "lab", "standard": "LOINC"},
+    "medication": {"label": "药品", "entity_type": "medication", "standard": "ATC"},
+    "surgery": {"label": "手术", "entity_type": "intervention", "standard": "ICD-9-CM-3"},
+}
+
+CATALOG_CODE_FIELDS = ("code", "编码", "检查编码", "检验编码", "药品编码", "手术编码", "疾病编码", "诊断编码", "ICD-10编码", "icd10_code")
+CATALOG_NAME_FIELDS = ("name", "名称", "检查名称", "检验名称", "药品名称", "手术名称", "疾病名称", "诊断名称", "标准名称", "name_cn")
 CATALOG_ALIAS_FIELDS = ("aliases", "别名", "同义词", "synonyms")
 
 
@@ -63,7 +72,7 @@ class ReferenceVocabularyRepository:
         for item in self.entries():
             code = str(item.get("code", ""))
             names = [str(item.get("name", ""))] + [str(alias) for alias in item.get("aliases", [])]
-            if code.lower().startswith(lowered) or any(keyword in name for name in names):
+            if code.lower().startswith(lowered) or any(lowered in name.lower() for name in names):
                 matched.append(item)
             if len(matched) >= max(0, limit):
                 break
@@ -125,7 +134,7 @@ def _aliases(raw: Dict[str, Any]) -> List[str]:
 
 
 def parse_reference_catalog(content: bytes, filename: str) -> tuple[Dict[str, Any], List[Dict[str, Any]]]:
-    """Parse an authorized JSON or CSV disease catalogue upload."""
+    """Parse a JSON or CSV reference catalogue upload."""
     suffix = Path(filename or "").suffix.lower()
     text = content.decode("utf-8-sig")
     if suffix == ".csv":
@@ -138,10 +147,10 @@ def parse_reference_catalog(content: bytes, filename: str) -> tuple[Dict[str, An
         if isinstance(payload, dict) and isinstance(payload.get("entries"), list):
             metadata = {key: value for key, value in payload.items() if key != "entries"}
             return metadata, [item for item in payload["entries"] if isinstance(item, dict)]
-    raise ValueError("仅支持 JSON 或 UTF-8 CSV，且文件必须包含疾病条目列表")
+    raise ValueError("仅支持 JSON 或 UTF-8 CSV，且文件必须包含术语条目列表")
 
 
-def validate_reference_entries(raw_entries: List[Dict[str, Any]]) -> Dict[str, Any]:
+def validate_reference_entries(raw_entries: List[Dict[str, Any]], *, standard: str = "icd10", default_system: str = "") -> Dict[str, Any]:
     """Normalize imported rows and return a non-writing validation report."""
     normalized: List[Dict[str, Any]] = []
     errors: List[Dict[str, Any]] = []
@@ -157,27 +166,36 @@ def validate_reference_entries(raw_entries: List[Dict[str, Any]]) -> Dict[str, A
     for index, raw in enumerate(raw_entries, start=1):
         code = _first(raw, CATALOG_CODE_FIELDS).upper()
         name = _first(raw, CATALOG_NAME_FIELDS)
-        if not code or not ICD10_CODE_PATTERN.fullmatch(code):
-            errors.append({"row": index, "code": code, "message": "疾病编码不是有效 ICD-10 格式"})
+        source_attributes = raw.get("attributes") or {}
+        source_extension = isinstance(source_attributes, dict) and source_attributes.get("source_table") == "ZYCDSS.K_ICD10_DICT"
+        valid_code = (ICD10_CODE_PATTERN.fullmatch(code) or (source_extension and SOURCE_DISEASE_CODE_PATTERN.fullmatch(code))) if standard == "icd10" else re.fullmatch(r"[A-Z0-9][A-Z0-9_.:-]{0,127}", code)
+        if not valid_code:
+            errors.append({"row": index, "code": code, "message": "疾病编码不是有效 ICD-10 格式" if standard == "icd10" else "术语编码格式无效"})
             continue
         if not name:
-            errors.append({"row": index, "code": code, "message": "疾病标准名称为空"})
+            errors.append({"row": index, "code": code, "message": "疾病标准名称为空" if standard == "icd10" else "标准名称为空"})
             continue
         if code in seen:
-            errors.append({"row": index, "code": code, "message": "文件内疾病编码重复"})
+            errors.append({"row": index, "code": code, "message": "文件内疾病编码重复" if standard == "icd10" else "文件内术语编码重复"})
             continue
         seen.add(code)
         aliases = [alias for alias in _aliases(raw) if alias != name]
         if not aliases:
             warnings.append({"row": index, "code": code, "message": "未提供别名"})
+        system = "ICD-10" if standard == "icd10" else str(_first(raw, ("standard_system", "编码体系", "标准体系")) or default_system).strip()
+        standard_code = code if standard == "icd10" else str(_first(raw, ("standard_code", "标准编码")) or code).strip()
+        if not system:
+            errors.append({"row": index, "code": code, "message": "缺少编码体系 standard_system"})
+            continue
         normalized.append({
             "code": code,
             "name": name,
             "aliases": aliases,
             "domain": "western",
-            "standard_system": "ICD-10",
-            "standard_code": code,
-            "source": str(raw.get("source") or "ICD-10"),
+            "standard_system": system,
+            "standard_code": standard_code,
+            "source": str(raw.get("source") or system),
+            "attributes": dict(raw.get("attributes") or {}) if isinstance(raw.get("attributes"), dict) else {},
             "specialty": str(raw.get("specialty") or raw.get("专科") or "").strip(),
         })
     return {
@@ -201,8 +219,11 @@ def import_reference_catalog(
     """Validate and optionally merge/replace a reference catalogue."""
     if mode not in {"merge", "replace"}:
         raise ValueError("导入模式必须是 merge 或 replace")
-    report = validate_reference_entries(raw_entries)
     current = repository.load()
+    if repository.standard != "icd10" and metadata and metadata.get("entity_type") not in (None, "", current.get("entity_type")):
+        raise ValueError("文件实体类型与所选参考库不一致")
+    report = validate_reference_entries(raw_entries, standard=repository.standard,
+        default_system=str((metadata or {}).get("standard") or current.get("standard") or ""))
     current_entries = [item for item in current.get("entries", []) if isinstance(item, dict)]
     incoming = report.pop("entries")
     existing_codes = {str(item.get("code") or "").upper() for item in current_entries}
@@ -235,7 +256,8 @@ def import_reference_catalog(
     final_metadata = {
         **existing_metadata,
         **imported_metadata,
-        "standard": "ICD-10",
+        "standard": "ICD-10" if repository.standard == "icd10" else imported_metadata.get("standard") or existing_metadata.get("standard"),
+        "entity_type": existing_metadata.get("entity_type", "disease"),
         "version": version or imported_metadata.get("version") or existing_metadata.get("version") or "",
         "source": source or imported_metadata.get("source") or existing_metadata.get("source") or "",
         "imported_at": date.today().isoformat(),

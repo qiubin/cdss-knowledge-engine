@@ -32,6 +32,8 @@
     exam_finding: [
       { key: "exam_code", label: "检查项目", widget: "dict", dict: "exam", required: true },
       { key: "finding_code", label: "检查发现", widget: "dict", dict: "exam_finding", required: true },
+      { key: "concept_code", label: "判定概念", widget: "dict", dict: "exam_concept" },
+      { key: "standard_required", label: "必须配标准", widget: "bool" },
     ],
     symptom: [
       { key: "symptom_code", label: "症状", widget: "dict", dict: "symptom", required: true },
@@ -51,11 +53,11 @@
       { key: "code", label: "既往史编码", widget: "text", required: true },
     ],
     medication: [
-      { key: "code", label: "用药编码", widget: "text", required: true },
+      { key: "code", label: "用药项目", widget: "dict", dict: "medication", required: true },
     ],
     observation: [
       { key: "observation_type", label: "观察类型", widget: "enum", required: true, options: ["symptom", "tongue", "pulse", "sign", "constitution"] },
-      { key: "code", label: "编码", widget: "text", required: true },
+      { key: "code", label: "观察项目", widget: "dict", dict: "observation", required: true },
       { key: "concept_code", label: "状态", widget: "enum", options: ["PRESENT"], readonly: true },
       { key: "weight", label: "权重", widget: "number" },
       { key: "required", label: "必要", widget: "bool" },
@@ -334,6 +336,34 @@
     return node;
   }
 
+  function combineFieldSelection(node, fieldKey, values, operator) {
+    const field = (LEAF_FIELDS[node.type] || []).find((item) => item.key === fieldKey && item.widget === "dict");
+    if (!field || field.readonly || !SUPPORTED_LEAF_TYPES.includes(node.type)) throw new Error("此条件字段不支持多选");
+    const codes = [...new Set((values || []).map(String).map((value) => value.trim()).filter(Boolean))];
+    if (!codes.length) throw new Error("请至少选择一个项目");
+    if (codes.length > 1 && !["AND", "OR"].includes(operator)) throw new Error("请选择全部满足或任一满足");
+    const children = codes.map((code) => {
+      const child = { ...sanitizeTree(node), [fieldKey]: code };
+      delete child.label;
+      return child;
+    });
+    return children.length === 1 ? children[0] : { type: "group", operator, children };
+  }
+
+  function fieldSelectionInfo(node) {
+    if (node?.type !== "group" || !["AND", "OR"].includes(node.operator) || !node.children?.length) return null;
+    const first = node.children[0];
+    if (!SUPPORTED_LEAF_TYPES.includes(first.type) || !node.children.every((child) => child.type === first.type)) return null;
+    const canonical = (child, key) => JSON.stringify(Object.keys(child).filter((name) => name !== key && name !== "label").sort().map((name) => [name, child[name]]));
+    for (const field of LEAF_FIELDS[first.type] || []) {
+      if (field.widget !== "dict" || field.readonly || field.key === "exam_code") continue;
+      if (node.children.every((child) => child[field.key] && canonical(child, field.key) === canonical(first, field.key))) {
+        return { node: first, field, values: node.children.map((child) => child[field.key]), operator: node.operator };
+      }
+    }
+    return null;
+  }
+
   // ------------------------------------------------------------- serialize
 
   function jsonToTree(text) {
@@ -406,6 +436,8 @@
     SUPPORTED_LEAF_TYPES,
     KNOWN_TYPES,
     LEAF_FIELDS,
+    combineFieldSelection,
+    fieldSelectionInfo,
     sanitizeTree,
     isCompilable,
     compilabilityReason,

@@ -75,7 +75,7 @@ async def fake_llm(_settings, _messages):
 
 
 class AutoPipelineTest(unittest.TestCase):
-    def test_lung_cancer_guideline_builds_graph_and_rules(self):
+    def test_lung_cancer_guideline_builds_graph_and_pending_bases(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         root = Path(tmp.name)
@@ -87,6 +87,20 @@ class AutoPipelineTest(unittest.TestCase):
             (project_root / "data" / "vocab" / "concepts.json").read_text(encoding="utf-8"),
             encoding="utf-8",
         )
+
+        # Keep this test independent of the user's replaceable reference catalogue.
+        from unittest.mock import patch
+        from src.vocab.reference_vocabulary import ReferenceVocabularyRepository
+        reference_dir = root / "reference"
+        reference_dir.mkdir()
+        (reference_dir / "icd10.json").write_text(json.dumps({"entries": [{
+            "code": "C34.9", "name": "肺癌", "aliases": ["肺腺癌"],
+            "standard_system": "ICD-10", "standard_code": "C34.9", "domain": "western",
+        }]}), encoding="utf-8")
+        reference_patch = patch("src.extraction.terminology_resolver.ReferenceVocabularyRepository",
+            side_effect=lambda standard: ReferenceVocabularyRepository(standard, reference_dir))
+        reference_patch.start()
+        self.addCleanup(reference_patch.stop)
 
         original_kg_dir = kg_routes.KG_DIR
         kg_routes.KG_DIR = root / "kg"
@@ -110,8 +124,10 @@ class AutoPipelineTest(unittest.TestCase):
         self.assertTrue(all(rule["status"] == "draft" for rule in result["rules"]))
         graph = json.loads((root / "kg" / result["graph_filename"]).read_text(encoding="utf-8"))
         self.assertIn("ENTITY:disease:C34.9", {node["id"] for node in graph["nodes"]})
-        saved_rules = json.loads((root / "rules" / "managed_rules.json").read_text(encoding="utf-8"))
-        self.assertEqual(len(saved_rules), 2)
+        rules_path = root / "rules" / "managed_rules.json"
+        self.assertFalse(rules_path.exists())
+        self.assertEqual(len(graph["clinical_bases"]), 2)
+        self.assertTrue(all(basis["status"] == "draft" for basis in graph["clinical_bases"]))
         package_path = root / "guide_packages" / f"{result['package_id']}.json"
         self.assertTrue(package_path.exists())
         package = json.loads(package_path.read_text(encoding="utf-8"))

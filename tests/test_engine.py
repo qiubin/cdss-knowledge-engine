@@ -66,11 +66,11 @@ class TestStaticThreshold:
         engine = build_engine()
         ev = EvaluatorFactory.create("static_threshold")
         patient_xm = make_patient(hospital_id="XM_FIRST",
-                                  labs=[LabResult(lab_code="MYO", value=80.0)])
+                                  labs=[LabResult(lab_code="MYO", value=80.0, unit="ng/mL")])
         std_xm = engine.standard_repo.get_active("XM_FIRST", "MYO", "ELEVATED")
         assert ev.evaluate(patient_xm, std_xm).matched is True
         patient_fz = make_patient(hospital_id="FZ_HOSPITAL",
-                                  labs=[LabResult(lab_code="MYO", value=80.0)])
+                                  labs=[LabResult(lab_code="MYO", value=80.0, unit="ng/mL")])
         std_fz = engine.standard_repo.get_active("FZ_HOSPITAL", "MYO", "ELEVATED")
         assert std_fz is not None
         assert std_fz.threshold_value == 85.0
@@ -140,7 +140,7 @@ class TestFullInference:
         return make_patient(
             hospital_id=hospital_id,
             labs=[
-                LabResult(lab_code="MYO", value=120.0),
+                LabResult(lab_code="MYO", value=120.0, unit="ng/mL"),
                 LabResult(lab_code="CTN", value=0.15, reference_high=0.04),
                 LabResult(lab_code="CK_MB", value=12.5, reference_high=5.0),
             ],

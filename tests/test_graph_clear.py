@@ -102,6 +102,45 @@ class ClearGraphAndRulesTest(unittest.TestCase):
         # Graph untouched when clear_graph=False.
         self.assertEqual(len(json.loads((self.kg_dir / "test_graph.json").read_text())["nodes"]), 2)
 
+    def test_preview_respects_selected_scope(self):
+        for clear_graph, clear_rules in ((True, False), (False, True)):
+            with self.subTest(clear_graph=clear_graph, clear_rules=clear_rules):
+                result = clear_graph_and_rules(
+                    self._request(clear_graph=clear_graph, clear_rules=clear_rules),
+                    kg_dir=self.kg_dir, rules_path=self.rules_path, snapshot_dir=self.snapshot_dir,
+                )
+                self.assertEqual(result["node_count"], 2 if clear_graph else 0)
+                self.assertEqual(result["relation_count"], 1 if clear_graph else 0)
+                self.assertEqual(result["rule_ids"], ["R_DROP_1", "R_DROP_2"] if clear_rules else [])
+
+    def test_clear_both_includes_reviewed_data_and_preserves_source_material(self):
+        source_files = [self.root / name for name in ("guideline.pdf", "parsed.json", "package.json", "vocab.json")]
+        for path in source_files:
+            path.write_bytes(b"source-material")
+        graph_path = self.kg_dir / "test_graph.json"
+        graph = json.loads(graph_path.read_text())
+        graph["nodes"][0]["review_status"] = "active"
+        graph["relations"][0]["review_status"] = "active"
+        graph_path.write_text(json.dumps(graph), encoding="utf-8")
+        result = clear_graph_and_rules(
+            self._request(dry_run=False), kg_dir=self.kg_dir,
+            rules_path=self.rules_path, snapshot_dir=self.snapshot_dir,
+        )
+        self.assertEqual(result["cleared_rules"], 2)
+        self.assertEqual(json.loads(graph_path.read_text())["nodes"], [])
+        self.assertEqual(json.loads(graph_path.read_text())["relations"], [])
+        self.assertEqual([r["rule_id"] for r in json.loads(self.rules_path.read_text())], ["R_KEEP"])
+        for path in source_files:
+            self.assertEqual(path.read_bytes(), b"source-material")
+
+    def test_repeated_clear_preserves_each_backup(self):
+        for _ in range(2):
+            clear_graph_and_rules(
+                self._request(dry_run=False, clear_rules=False), kg_dir=self.kg_dir,
+                rules_path=self.rules_path, snapshot_dir=self.snapshot_dir,
+            )
+        self.assertEqual(len(list(self.kg_dir.glob("*.bak-*"))), 2)
+
     def test_clear_nothing_requested_is_rejected(self):
         with self.assertRaises(Exception):
             clear_graph_and_rules(
