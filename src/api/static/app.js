@@ -665,6 +665,7 @@
         <div id="autoResultPanel" class="result-banner ok">
           <strong>自动生成并已入库：${esc(state.autoResult.doc_title || state.autoResult.doc_id)}</strong>
           <div>实体 ${state.autoResult.entity_count} / 关系 ${state.autoResult.relation_count} / 待审诊疗依据 ${state.autoResult.rule_count}/ LOCAL 术语 ${state.autoResult.local_term_count}</div>
+          ${extractionCoverageHtml(state.autoResult.coverage || state.autoResult.metadata?.coverage)}
           <div class="muted">图谱和待审诊疗依据已写入；请在审核台依次审核实体、关系和诊疗依据，通过后生成规则草稿。</div>
           <div class="mono">图谱：${esc(state.autoResult.graph_filename)} · 知识包：${esc(state.autoResult.package_id)}</div>
           <div class="actions"><button id="autoOpenPackage" class="btn sm primary">查看知识包</button><button id="autoOpenGraph" class="btn sm">查看图谱</button><button id="autoOpenRules" class="btn sm">审核诊疗依据</button></div>
@@ -955,6 +956,10 @@
       state.pendingUpload = null;
       if (job.mode === "auto") {
         state.autoResult = job.result || {};
+        state.autoResult.entity_count ??= state.autoResult.entities?.length || 0;
+        state.autoResult.relation_count ??= state.autoResult.relations?.length || 0;
+        state.autoResult.rule_count ??= state.autoResult.rules?.length || 0;
+        state.autoResult.local_term_count ??= state.autoResult.metadata?.local_terms || 0;
         state.guidePackageId = state.autoResult.package_id || state.guidePackageId;
         if (state.route === "import") reload();
         else markStale("import");
@@ -4190,6 +4195,20 @@
     ].map(([key, title, description]) => `<button class="btn ${state.reviewTab === key ? "primary" : ""}" data-review-tab="${key}" style="white-space:normal;text-align:left;display:block;padding:12px"><strong>${title}</strong><div style="font-weight:normal;margin-top:6px">${description}</div></button>`).join("")}</div>`;
   }
 
+  function extractionCoverageHtml(coverage) {
+    if (!coverage) return '<p class="muted">此导入暂无覆盖报告，不能据此认定已完整解析。</p>';
+    return `<div class="result-banner ${coverage.complete ? "ok" : "warning"}"><strong>解析覆盖：${coverage.processed}/${coverage.total} 个片段已处理</strong><p>失败 ${coverage.failed} · 未安排 ${coverage.not_scheduled}。已处理不等于医学内容已完整核对。</p><details><summary>逐章节覆盖明细</summary>${table(["章节", "页码", "状态"], (coverage.items || []).map((item) => `<tr><td>${esc(item.section)}</td><td>${esc(item.page_start)}–${esc(item.page_end)}</td><td>${esc({processed: "已处理", failed: "抽取失败", not_scheduled: "未安排（达到处理上限）"}[item.status] || item.status)}</td></tr>`))}</details></div>`;
+  }
+
+  function clinicalStatementHtml(basis) {
+    const validation = basis.validation || {};
+    const statement = validation.statement || {};
+    const source = validation.provenance || {};
+    const original = basis.specification?.source || {};
+    const pdfLink = original.guideline_id ? `<a class="btn sm" target="_blank" rel="noopener" href="/api/pdf/${encodeURIComponent(original.guideline_id)}/file#page=${encodeURIComponent(original.page_start || 1)}">查看PDF原页（表格／脚注）</a>` : "";
+    return `<div class="statement-review-grid"><section><h4>指南原文核验</h4>${pdfLink}<div class="badge ${source.status === "verified" ? "active" : "danger"}">${source.status === "verified" ? "引文匹配实际页行" : "原文待修复／无法核验"}</div><div class="quote">${esc(source.text || "暂无可核验的实际原文")}</div><p class="muted">文字匹配只证明出处存在，仍须核对医学含义。</p></section><section><h4>临床陈述</h4>${table(["核对内容", "当前值"], [["场景", clinicalIntentLabel(statement.scene)], ["目标", statement.target], ["人群", statement.population], ["分型", statement.subtype], ["阶段", statement.phase], ["例外", (statement.exceptions || []).join("；") || "待核对"], ["推荐等级", statement.recommendation_strength], ["证据等级", statement.evidence_grade], ["适用范围核对", statement.scope_summary || "待填写"]].map(([key, value]) => `<tr><td>${esc(key)}</td><td>${esc(value || "待核对")}</td></tr>`))}<p>${esc(conditionText(statement.conditions))}</p></section><section><h4>需要处理的问题</h4>${(validation.issues || []).map((issue) => `<p class="result-banner warning">${esc(issue)}</p>`).join("") || '<p>结构检查通过；请继续核对临床含义。</p>'}${(statement.missing_information || []).map((item) => `<p>${esc(item)}</p>`).join("")}</section></div>`;
+  }
+
   async function renderClinicalBases() {
     await loadBase();
     const graphs = await api("/api/kg/graphs");
@@ -4197,10 +4216,12 @@
     state.reviewFilters.graph = filename;
     const result = filename ? await api(`/api/review/bases?graph_filename=${encodeURIComponent(filename)}`) : { items: [] };
     const diseaseCode = state.basisDiseaseCode || "";
-    const visibleBases = result.items.filter((basis) => !diseaseCode || basis.specification.disease_code === diseaseCode);
+    const diseaseBases = result.items.filter((basis) => !diseaseCode || basis.specification.disease_code === diseaseCode);
+    const visibleBases = diseaseBases.filter((basis) => !state.basisQualityOnly || basis.validation.issues.length);
     const tabHtml = REVIEW_TABS.map(([key, label]) => `<button class="review-tab ${key === "bases" ? "active" : ""}" data-review-tab="${key}">${label}</button>`).join("");
     pageEl.innerHTML = `<div class="review-tabs">${tabHtml}</div>${reviewCategoriesHtml()}
       <div class="result-banner">已有 ${visibleBases.length} 份候选依据${diseaseCode ? `（疾病 ${esc(diseaseCode)}）` : ""}。候选已保留解析条件、结论和原文；图谱审核状态自动复用，无须重新录入。核对组合逻辑后，点击“确认依据并生成待审规则”。${diseaseCode ? '<button class="btn sm" id="allDiseaseBases">查看全部疾病</button>' : ""}</div>
+      <div class="result-banner ${diseaseBases.some((basis) => basis.validation.issues.length) ? "warning" : "ok"}"><strong>质量复核：${diseaseBases.filter((basis) => basis.validation.issues.length).length} 份存在待处理问题</strong><p>引文须与实际指南页行一致。原有审核记录保留，存在问题时须修正后重新确认。</p><label><input type="checkbox" id="basisQualityOnly" ${state.basisQualityOnly ? "checked" : ""}> 仅显示有问题的依据</label></div>
       ${panel("诊疗依据审核", `<p>审核对象是一组完整的诊疗判断，不是单个实体或一条关系。实体与关系通过审核后，还须确认组合逻辑及适用条件；只有通过的依据组才能生成规则草稿。</p>
         <div class="inline-controls"><div class="field"><label>知识图谱</label><select id="basisGraph">${graphs.map((g) => `<option value="${esc(g.graph_filename)}" ${filename === g.graph_filename ? "selected" : ""}>${esc(g.graph_filename)}</option>`).join("")}</select></div>
         <button class="btn" id="prepareBases" ${filename ? "" : "disabled"}>整理已有候选为待审依据</button><button class="btn primary" id="newClinicalBasis" ${filename ? "" : "disabled"}>新增诊疗依据</button></div>
@@ -4215,6 +4236,7 @@
       $("#allDiseaseBases").onclick = () => { state.basisDiseaseCode = ""; renderClinicalBases(); };
     }
     bindReviewTabs();
+    $("#basisQualityOnly").onchange = (event) => { state.basisQualityOnly = event.target.checked; renderClinicalBases(); };
     $("#basisGraph").onchange = (event) => { state.reviewFilters.graph = event.target.value; renderClinicalBases(); };
     $("#newClinicalBasis").onclick = () => openRuleEditor(null, { clinicalBasis: true, onSave: (specification) => api(`/api/review/bases?graph_filename=${encodeURIComponent(filename)}`, { json: { specification, scope_summary: "" } }) });
     $("#prepareBases").onclick = async () => {
@@ -4235,7 +4257,18 @@
         await showClinicalBasis(result.basis, filename);
       } catch (error) { toast(error.message, true); button.disabled = false; button.textContent = "更新并重新生成待审规则"; }
     });
-    pageEl.querySelectorAll("[data-basis-detail]").forEach((button) => button.onclick = () => showClinicalBasis(result.items.find((g) => g.basis_id === button.dataset.basisDetail), filename));
+    pageEl.querySelectorAll("[data-basis-detail]").forEach((button) => {
+      const basis = result.items.find((item) => item.basis_id === button.dataset.basisDetail);
+      button.onclick = () => showClinicalBasis(basis, filename);
+      const ai = document.createElement("button");
+      ai.className = "btn";
+      ai.textContent = "大模型辅助审核";
+      ai.onclick = () => window.openBasisAiReview(basis, filename, {api, esc, configure: () => navigate("templates", {reload: true}), edit: async () => {
+        if (basis.generated_rule_id) await showClinicalBasis(basis, filename);
+        else await openCompletedBasisEditor(basis, filename, basis.scope_summary || "");
+      }});
+      button.before(ai);
+    });
   }
 
   async function openCompletedBasisEditor(basis, filename, scopeSummary, button = null) {
@@ -4282,6 +4315,7 @@
     const source = spec.source || {};
     const context = source.chunk_id ? await sourceRefsHtml([source.chunk_id]) : "";
     $("#basisDetail").innerHTML = panel(basis.name, `
+      ${clinicalStatementHtml(basis)}
       ${basis.generated_rule_id ? '<button id="basisReviseLogic" class="btn primary">更新并重新生成待审规则</button>' : '<button id="basisEditLogic" class="btn primary" title="先沿用已审核关联补全缺失条件，再打开编辑器">按已审图谱补全并编辑</button>'}
       <h4>条件逻辑</h4><div class="quote">${esc(conditionText(spec.conditions))}</div>
       <h4>结论及排除条件</h4><pre>${esc(JSON.stringify({ conclusion: spec.conclusion, exclusions: spec.exclusions || [] }, null, 2))}</pre>
@@ -5332,7 +5366,10 @@
         <div class="field wide"><label>${base.rule_type === "treatment" ? "治疗适用条件" : "条件树"} <span id="drlBadge"></span><button type="button" id="treeModeToggle" class="btn sm ct-toggle">JSON 模式</button></label><div id="conditionTreeHost" class="condition-tree"></div><textarea name="conditions" class="code" hidden>${esc(JSON.stringify(base.conditions, null, 2))}</textarea><div id="drlPreview" class="drl-preview" hidden><pre></pre></div></div>
         <div class="field wide"><label>排除疾病编码（逗号分隔）</label><input name="exclusions" value="${esc((base.exclusions || []).join(","))}"></div>
         <div class="field wide"><label>条件引用概念</label><div id="ruleConceptCheck" class="actions">${ruleConceptChips(base)}</div></div>
-        <div class="field wide"><label>结论扩展 JSON（中医治法/方剂/中药）</label><textarea name="conclusion_extra" class="code">${esc(JSON.stringify({ ...base.conclusion, diagnosis: undefined, confidence: undefined, message: undefined, action: undefined }, null, 2))}</textarea></div>
+        ${["population", "subtype", "phase", "recommendation_strength", "evidence_grade"].map((key) => `<div class="field half"><label>${esc({population: "适用人群", subtype: "疾病分型", phase: "病程／治疗阶段", recommendation_strength: "推荐等级（按原文）", evidence_grade: "证据等级（按原文）"}[key])}</label><input name="context_${key}" value="${esc(base.clinical_context?.[key] || "")}" placeholder="原文未说明时留空，核对时明确记录"></div>`).join("")}
+        <div class="field half"><label>例外与禁忌说明（每行一项，实际限制还须写入条件）</label><textarea name="context_exceptions">${esc((base.clinical_context?.exceptions || []).join("\n"))}</textarea></div>
+        <div class="field half"><label>待补信息（核对解决后移除，每行一项）</label><textarea name="context_missing">${esc((base.clinical_context?.missing_information || []).join("\n"))}</textarea></div>
+        <div class="field wide"><label>结论扩展 JSON（治疗方案／中医治法／方剂／中药）</label><textarea name="conclusion_extra" class="code">${esc(JSON.stringify({ ...base.conclusion, diagnosis: undefined, confidence: undefined, message: undefined, action: undefined }, null, 2))}</textarea></div>
         <div class="field wide"><label>溯源 JSON</label><textarea name="source" class="code">${esc(JSON.stringify(base.source || {}, null, 2))}</textarea></div>
       </div>`;
     const dialog = $("#editorDialog"); dialog.showModal();
@@ -5720,6 +5757,11 @@
           priority: Number(form.querySelector("[name=priority]").value),
           department: form.querySelector("[name=department]").value,
           conditions,
+          clinical_context: {
+            ...Object.fromEntries(["population", "subtype", "phase", "recommendation_strength", "evidence_grade"].map((key) => [key, form.querySelector(`[name="context_${key}"]`).value.trim()])),
+            exceptions: form.querySelector('[name="context_exceptions"]').value.split("\n").map((item) => item.trim()).filter(Boolean),
+            missing_information: form.querySelector('[name="context_missing"]').value.split("\n").map((item) => item.trim()).filter(Boolean),
+          },
           exclusions: form.querySelector("[name=exclusions]").value.split(/[,，]/).map((v) => v.trim()).filter(Boolean),
           source,
           conclusion: {
@@ -6133,6 +6175,7 @@
       ${panel("模拟病历测试", '<div class="readonly-value">结构化病历会转换为 PatientSnapshot；医院阈值只在执行层解析。</div>', `
         <span class="muted" id="caseSavedAtText">${state.caseSavedAt ? `保存于 ${esc(state.caseSavedAt)}` : "未保存"}</span>
         <button id="saveCase" class="btn">保存病历</button>
+        <label><input type="checkbox" id="inferenceDraftMode"> 测试候选规则（包含草稿，仅供核对）</label>
         <button id="runInference" class="btn primary">保存并执行推荐</button>
       `)}
       ${panel("选择模拟病历", `
@@ -6208,7 +6251,9 @@
       const record = saveCaseRecord(false);
       const patient = buildPatientSnapshot(record);
       $("#patientJson").value = JSON.stringify(patient, null, 2);
-      state.inferenceResult = await api("/api/inference/run", { json: { patient } });
+      const testMode = !!$("#inferenceDraftMode")?.checked;
+      state.inferenceResult = await api("/api/inference/run", { json: { patient, test_mode: testMode } });
+      if (testMode) toast("当前是候选规则测试，结果不代表已发布的诊疗建议");
       toast(`保存完成，疑似诊断推荐 ${state.inferenceResult.conclusion_count} 条`);
       renderInferenceResult();
     } catch (error) { toast(error.message, true); }
@@ -6451,6 +6496,7 @@
 
   function renderInferenceResult() {
     const result = state.inferenceResult; const box = $("#inferResult"); if (!box || !result) return;
+    box.dataset.testMode = String(!!result.test_mode);
     const diagnosisList = result.diagnosis_conclusions || result.conclusions.filter((c) => c.rule_type !== "treatment");
     const treatmentList = result.treatment_conclusions || result.conclusions.filter((c) => c.rule_type === "treatment");
     const diagnostics = result.diagnostics || {};

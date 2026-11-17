@@ -38,6 +38,8 @@ async def _run_template_job(
 
     config = ExtractionConfigRepository().load()
     parsed = parse_pdf(file_path, doc_id)
+    _persist_doc({"doc_id": doc_id, "doc_title": doc_title, "parsed": parsed,
+                  "file_path": str(file_path), "uploaded_at": _now()})
     await controller.checkpoint(stage="模板抽取", done=0, total=1)
     template = extraction_templates.get(template_id)
     extraction_mode = "llm" if mode == "template-llm" else "local"
@@ -86,14 +88,19 @@ async def _run_auto_job(
     graph_filename: str, auto_activate: bool,
 ) -> Dict[str, Any]:
     """一键自动作业体：镜像 auto_import.auto_import 的 pipeline 调用。"""
-    from .pdf import parse_pdf
+    from .pdf import parse_pdf, _persist_doc, _now
     parsed = parse_pdf(file_path, doc_id)
+    _persist_doc({"doc_id": doc_id, "doc_title": doc_title, "parsed": parsed,
+                  "file_path": str(file_path), "uploaded_at": _now()})
     result = await run_auto_pipeline(
         parsed["chunks"], doc_id, doc_title,
         ExtractionConfigRepository().load(),
         graph_filename=graph_filename, auto_activate=auto_activate,
         controller=controller,
     )
+    _persist_doc({"doc_id": doc_id, "doc_title": doc_title, "parsed": parsed,
+                  "file_path": str(file_path), "uploaded_at": _now(),
+                  "extraction": {"metadata": result.get("metadata") or {}, "warnings": result.get("warnings") or []}})
     return result  # run_auto_pipeline 的返回 dict 即结果摘要
 
 

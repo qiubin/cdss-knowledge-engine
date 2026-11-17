@@ -111,6 +111,7 @@ async def auto_import(
             term for term in result["terms"] if term.get("standard_system") == "LOCAL"
         ]),
         "checks": result["checks"],
+        "coverage": result["metadata"].get("coverage"),
         "warnings": result["warnings"],
         "graph_result": result["graph_result"],
     }

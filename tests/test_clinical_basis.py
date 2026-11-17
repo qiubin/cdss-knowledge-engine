@@ -21,6 +21,11 @@ def env(tmp_path, monkeypatch):
     path = directory / "REVIEW-TEST.json"
     path.write_text(json.dumps(graph, ensure_ascii=False), encoding="utf-8")
     service = ReviewService(directory, rules, tmp_path / "audit.jsonl")
+    uploads = tmp_path / "uploads"
+    uploads.mkdir()
+    (uploads / "DOC-TEST.parsed.json").write_text(json.dumps({"parsed": {"lines": [
+        {"page": 1, "line": 1, "text": "测试症状作为判断依据"},
+        {"page": 1, "line": 2, "text": "核对原文"}]}}), encoding="utf-8")
     monkeypatch.setattr(api, "service", service)
     return service, path, rules, graph["clinical_bases"][0]["basis_id"]
 

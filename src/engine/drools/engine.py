@@ -56,6 +56,7 @@ class DroolsRuleEngine:
         patient: PatientSnapshot,
         department: Optional[str] = None,
         include_draft_patterns: bool = False,
+        include_draft_rules: bool = False,
     ) -> List[Conclusion]:
         self._fallback = False
         self.last_fallback_reason = ""
@@ -63,6 +64,7 @@ class DroolsRuleEngine:
             return self._native._run_stages(
                 patient, department, include_draft_patterns,
                 matcher=self._guarded_stage_match,
+                include_draft_rules=include_draft_rules,
             )
         except DroolsClientError as exc:
             if not self._fail_over_native:
@@ -71,7 +73,8 @@ class DroolsRuleEngine:
             self.last_fallback_reason = str(exc)
             logger.warning("Drools sidecar unavailable, falling back to native: %s", exc)
             return self._native.run(patient, department=department,
-                                    include_draft_patterns=include_draft_patterns)
+                                    include_draft_patterns=include_draft_patterns,
+                                    include_draft_rules=include_draft_rules)
 
     def _guarded_stage_match(self, stage_rules, patient):
         if self._fallback:

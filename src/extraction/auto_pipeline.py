@@ -77,6 +77,7 @@ def _auto_prompt(group: List[Dict[str, Any]], doc_title: str) -> List[Dict[str, 
             "line_start": chunk.get("line_start"),
             "line_end": chunk.get("line_end"),
             "text": chunk.get("text", ""),
+            "tables": chunk.get("tables") or [],
         }
         for chunk in group
     ]
@@ -120,6 +121,14 @@ def _auto_prompt(group: List[Dict[str, Any]], doc_title: str) -> List[Dict[str, 
         "用 attributes.sequence 标注顺序（从 1 开始），attributes.entry 写进入条件，"
         "attributes.exit 写转段/结束条件；全周期路径本身抽为 care_pathway 实体。"
         "每条实体和规则必须带原文页码、行号和引文；不得遗漏溯源。"
+        "先识别每条完整临床陈述，再从该陈述展开实体、关系与规则。"
+        "区分背景、致病因素、诊断依据、治疗建议、禁忌和监测；同段出现不等于推荐关系。"
+        "每条规则必须携带clinical_context对象，字段为population（适用人群）、subtype（分型）、"
+        "phase（阶段）、exceptions（例外列表）、recommendation_strength（推荐等级）、"
+        "evidence_grade（证据等级）、missing_information（缺失信息列表）。"
+        "未知内容留空并列入missing_information，不得推测剂量、阈值、且或逻辑和禁忌。"
+        "原文限定条件必须写入conditions，不能只写在说明中。"
+        "quote必须逐字来自所标页行，保留完整推荐及限定语；缺少出处时留空，不得回填其他段落。"
         "规则条件优先使用同一章节内的证据，不要把无关章节的检查/症状拼进同一规则。"
     )
     user = {
@@ -178,6 +187,22 @@ def _auto_prompt(group: List[Dict[str, Any]], doc_title: str) -> List[Dict[str, 
     return [
         {"role": "system", "content": system},
         {"role": "user", "content": json.dumps(user, ensure_ascii=False)},
+    ]
+
+
+def _statement_prompt(group, doc_title):
+    return [
+        {"role": "system", "content": (
+            "阶段一：只抽取完整临床陈述，不生成编码、图谱或可执行规则。输出JSON对象{statements:[]}. "
+            "每条陈述字段：statement_id、disease_name、scene、population、subtype、phase、"
+            "criteria（原文判断逻辑）、recommendation、exceptions（列表）、recommendation_strength、"
+            "evidence_grade、missing_information（列表）、source（chunk_id/page_start/page_end/line_start/line_end/quote）。"
+            "区分背景病因、诊断标准、治疗推荐、禁忌与监测；不能将导致疾病的治疗误标为推荐治疗。"
+            "一条陈述只对应一个适用人群与临床目的，保留否定、例外、阈值、时间和限定语。"
+            "scene使用suspected_diagnosis/diagnosis_confirmation/treatment_recommendation/treatment_selection/"
+            "contraindication_check/monitoring_plan等临床用途。quote逐字引用原文，不补造医学判断，未知留空并列待补信息。"
+            "没有临床建议的背景段可以返回空列表。")},
+        {"role": "user", "content": json.dumps({"doc_title": doc_title, "chunks": group}, ensure_ascii=False)},
     ]
 
 
@@ -296,7 +321,7 @@ def _normalize_rules(
         conditions = _normalize_condition(conditions, by_name, by_code)
         labels.annotate(conditions)
         source = raw.get("source") if isinstance(raw.get("source"), dict) else {}
-        chunk = chunk_map.get(str(source.get("chunk_id") or "")) or (chunks[0] if chunks else {})
+        chunk = chunk_map.get(str(source.get("chunk_id") or "")) or {}
         source = {
             "guideline_id": doc_id,
             "guideline_title": doc_title,
@@ -306,7 +331,7 @@ def _normalize_rules(
             "page_end": source.get("page_end") or chunk.get("page_end"),
             "line_start": source.get("line_start") or chunk.get("line_start"),
             "line_end": source.get("line_end") or chunk.get("line_end"),
-            "quote": str(source.get("quote") or chunk.get("text", ""))[:220],
+            "quote": str(source.get("quote") or ""),
         }
         conclusion = raw.get("conclusion") if isinstance(raw.get("conclusion"), dict) else {}
         conclusion = {
@@ -318,7 +343,7 @@ def _normalize_rules(
         if rule_type == "treatment" and not conclusion.get("treatment_plan_id"):
             conclusion.update({
                 "conclusion_type": "treatment",
-                "treatment_plan_id": f"TP-{doc_id}-{disease_code}",
+                "treatment_plan_id": f"TP-{doc_id}-{disease_code}-{index:03d}",
                 "treatment_name": str(conclusion.get("treatment_name") or f"{disease_name or disease_code}治疗方案"),
                 "treatment_items": list(conclusion.get("treatment_items") or []),
             })
@@ -329,7 +354,7 @@ def _normalize_rules(
                 break
             except (TypeError, ValueError):
                 continue
-        status = "active" if auto_activate and confidence >= DEFAULT_ACTIVE_CONFIDENCE else "draft"
+        status = "draft"  # Model confidence never authorizes publication.
         rule = {
             **raw,
             "rule_id": str(raw.get("rule_id") or f"{doc_id}-AUTO-{index:03d}"),
@@ -344,6 +369,8 @@ def _normalize_rules(
             "status": status,
             "graph_filename": graph_filename,
             "conditions": conditions,
+            "clinical_context": raw.get("clinical_context") if isinstance(raw.get("clinical_context"), dict) else {
+                "missing_information": ["适用人群、分型和阶段尚未结构化，请对照原文核对"]},
             "condition_text": labels.summarize(conditions),
             "conclusion": conclusion,
             "source": source,
@@ -445,7 +472,12 @@ async def run_auto_pipeline(
     raw_rules: List[Dict[str, Any]] = []
     raw_plans: List[Dict[str, Any]] = []
     warnings: List[str] = []
+    if auto_activate:
+        warnings.append("自动启用参数仅为兼容保留；所有候选仍须人工审核后发布")
     succeeded = 0
+    completed_chunks = set()
+    scheduled_chunks = {chunk["chunk_id"] for group in groups for chunk in group}
+    statement_records = []
 
     def merge_payload(payload: Dict[str, Any]) -> None:
         raw_entities.extend(payload.get("entities") or [])
@@ -454,7 +486,56 @@ async def run_auto_pipeline(
         raw_plans.extend(payload.get("treatment_plans") or [])
 
     async def call_group(chunk_group: List[Dict[str, Any]]) -> Dict[str, Any]:
-        return await call(settings, _auto_prompt(chunk_group, doc_title))
+        extracted = await call(settings, _statement_prompt(chunk_group, doc_title))
+        statements = extracted.get("statements")
+        if not isinstance(statements, list):
+            # Retain older provider output as review-only candidates, never
+            # silently certify it as a successfully structured statement.
+            warnings.append(f"片段 {chunk_group[0]['chunk_id']} 未返回临床陈述结构，仅保留待复核候选")
+            for rule in extracted.get("rules") or []:
+                context = rule.setdefault("clinical_context", {})
+                context.setdefault("missing_information", []).append("临床陈述结构未生成，须重新核对人群、逻辑与建议")
+            return extracted
+        if not statements:
+            return {"entities": [], "relations": [], "rules": [], "treatment_plans": []}
+        chunk_ids = {chunk["chunk_id"] for chunk in chunk_group}
+        indexed = {}
+        for index, statement in enumerate(statements):
+            if not isinstance(statement, dict):
+                continue
+            statement = dict(statement)
+            statement["statement_id"] = f"{doc_id}:{chunk_group[0]['chunk_id']}:S{index + 1}"
+            indexed[statement["statement_id"]] = statement
+        messages = _auto_prompt(chunk_group, doc_title)
+        payload = json.loads(messages[1]["content"])
+        payload["clinical_statements"] = list(indexed.values())
+        payload["instruction"] = "阶段二：仅从这些临床陈述生成实体、关系、规则。每条规则必须携带clinical_statement_id，条件和建议不能超出该陈述；保留限定条件，不自行猜测组合逻辑。"
+        messages[1]["content"] = json.dumps(payload, ensure_ascii=False)
+        if controller is not None:
+            await controller.checkpoint(stage="临床陈述编译为图谱与规则")
+        compiled = await call(settings, messages)
+        for rule in compiled.get("rules") or []:
+            statement = indexed.get(rule.get("clinical_statement_id"))
+            if not statement:
+                rule.setdefault("clinical_context", {}).setdefault("missing_information", []).append("规则未绑定有效临床陈述，请重新核对")
+                continue
+            rule["clinical_context"] = {key: statement.get(key) for key in (
+                "population", "subtype", "phase", "exceptions", "recommendation_strength", "evidence_grade", "missing_information")}
+            rule["source"] = statement.get("source") or {}
+            if rule["source"].get("chunk_id") not in chunk_ids:
+                rule["clinical_context"]["missing_information"] = [*(rule["clinical_context"].get("missing_information") or []), "陈述原文不在当前片段中"]
+            rule["clinical_intent"] = statement.get("scene") or rule.get("clinical_intent")
+            treatment_scenes = {"treatment_recommendation", "treatment_selection", "dose_adjustment"}
+            kind = RULE_TYPE_ALIASES.get(str(rule.get("rule_type") or ""), rule.get("rule_type"))
+            if (kind == "treatment" and statement.get("scene") not in treatment_scenes) or (
+                    kind == "diagnosis" and statement.get("scene") in treatment_scenes):
+                rule["clinical_context"]["missing_information"] = [*(rule["clinical_context"].get("missing_information") or []), "临床陈述场景与规则类型不一致"]
+            from src.review.quality import normalized
+            cited = next((chunk for chunk in chunk_group if chunk["chunk_id"] == rule["source"].get("chunk_id")), {})
+            if not normalized(rule["source"].get("quote")) or normalized(rule["source"].get("quote")) not in normalized(cited.get("text")):
+                rule["clinical_context"]["missing_information"] = [*(rule["clinical_context"].get("missing_information") or []), "临床陈述引文不匹配当前片段"]
+        statement_records.extend(indexed.values())
+        return compiled
 
     total_groups = len(groups)
     for index, group in enumerate(groups):
@@ -477,6 +558,7 @@ async def run_auto_pipeline(
                 for chunk in group:
                     try:
                         split_payloads.append(await call_group([chunk]))
+                        completed_chunks.add(chunk["chunk_id"])
                     except Exception:
                         continue
             if split_payloads:
@@ -493,6 +575,7 @@ async def run_auto_pipeline(
             warnings.append(f"片段 {group[0]['chunk_id']} LLM 失败: {message[:180]}")
             continue
         merge_payload(payload)
+        completed_chunks.update(chunk["chunk_id"] for chunk in group)
         succeeded += 1
     if not succeeded:
         raise LLMError("大模型没有成功解析任何片段，请检查地址/API Key/模型配置")
@@ -508,7 +591,8 @@ async def run_auto_pipeline(
             continue
         chunk = chunk_map.get(str(raw.get("chunk_id") or ""))
         if chunk is None:
-            chunk = chunks[0] if chunks else {}
+            warnings.append("实体引用了未知片段，已跳过该候选，不能用首段补造出处")
+            continue
         if not chunk:
             continue
         entity_type = normalize_type(str(raw.get("entity_type") or ""))
@@ -543,7 +627,7 @@ async def run_auto_pipeline(
             "page": page,
             "line_start": line_start,
             "line_end": line_end,
-            "quote": str(raw.get("quote") or chunk.get("text", ""))[:220],
+            "quote": str(raw.get("quote") or ""),
             "confidence": max(0.0, min(1.0, entity_confidence)),
         })
 
@@ -554,7 +638,10 @@ async def run_auto_pipeline(
         if not isinstance(raw, dict):
             continue
         chunk_id = str(raw.get("chunk_id") or "")
-        chunk = chunk_map.get(chunk_id) or (chunks[0] if chunks else {})
+        chunk = chunk_map.get(chunk_id) or {}
+        if not chunk:
+            warnings.append("关系引用了未知片段，已跳过该候选，不能用首段补造出处")
+            continue
         source_type = normalize_type(str(raw.get("source_type") or raw.get("source_entity_type") or ""))
         target_type = normalize_type(str(raw.get("target_type") or raw.get("target_entity_type") or ""))
         source_code = _resolve_code(
@@ -593,7 +680,7 @@ async def run_auto_pipeline(
             "page": _clamp(raw.get("page"), chunk.get("page_start", 1), chunk.get("page_end", 1), chunk.get("page_start", 1)),
             "line_start": _clamp(raw.get("line_start"), chunk.get("line_start", 1), chunk.get("line_end", 1), chunk.get("line_start", 1)),
             "line_end": _clamp(raw.get("line_end"), raw.get("line_start") or 1, chunk.get("line_end", 1), chunk.get("line_start", 1)),
-            "quote": str(raw.get("quote") or chunk.get("text", ""))[:220],
+            "quote": str(raw.get("quote") or ""),
             "confidence": 0.7,
         })
 
@@ -603,15 +690,16 @@ async def run_auto_pipeline(
         graph_filename += ".json"
 
     # Attach plan data from the LLM plan list to matching treatment rules.
-    plan_by_disease = {
-        str(plan.get("disease_name") or ""): plan
-        for plan in raw_plans if isinstance(plan, dict)
-    }
     for raw in raw_rules:
         if not isinstance(raw, dict) or RULE_TYPE_ALIASES.get(str(raw.get("rule_type") or ""), raw.get("rule_type")) != "treatment":
             continue
         disease = str(raw.get("disease_name") or "")
-        plan = plan_by_disease.get(disease)
+        candidates = [plan for plan in raw_plans if isinstance(plan, dict)
+                      and plan.get("disease_name") == disease
+                      and ((raw.get("clinical_statement_id") and plan.get("clinical_statement_id") == raw["clinical_statement_id"])
+                           or (not raw.get("clinical_statement_id") and plan.get("chunk_id")
+                               and plan.get("chunk_id") == (raw.get("source") or {}).get("chunk_id")))]
+        plan = candidates[0] if len(candidates) == 1 else None
         if plan:
             conclusion = raw.setdefault("conclusion", {})
             conclusion.setdefault("treatment_plan_id", plan.get("plan_id"))
@@ -653,6 +741,8 @@ async def run_auto_pipeline(
             "status": "draft",
             "graph_filename": graph_filename,
             "conditions": {"type": "group", "operator": "AND", "children": []},
+            "clinical_statement_id": str(plan.get("clinical_statement_id") or ""),
+            "clinical_context": {"missing_information": ["此方案尚未绑定完整适用条件，请对照原文核对"]},
             "conclusion": {
                 "diagnosis": disease_code,
                 "confidence": "medium",
@@ -671,16 +761,14 @@ async def run_auto_pipeline(
                 "page_end": plan.get("page") or 1,
                 "line_start": plan.get("line_start") or 1,
                 "line_end": plan.get("line_end") or 1,
-                "quote": str(plan.get("quote") or "")[:220],
+                "quote": str(plan.get("quote") or ""),
             },
             "tags": ["auto-generated", "treatment", doc_id],
         })
 
     diseases = [entity for entity in entities if entity.get("entity_type") == "disease"]
     if not diseases:
-        resolved = resolver.resolve("disease", doc_title, doc_id=doc_id)
-        diseases = [{**resolved, "chunk_id": chunks[0]["chunk_id"] if chunks else "", "page": 1, "line_start": 1, "line_end": 1, "quote": doc_title, "confidence": 0.5}]
-        entities.append(diseases[0])
+        raise LLMError("未抽取到有原文定位的疾病实体，不能用文档标题虚构疾病入口；请检查解析覆盖与模型输出")
     target_code = max(
         diseases,
         key=lambda item: sum(1 for e in diseases if e.get("code") == item.get("code")),
@@ -741,7 +829,14 @@ async def run_auto_pipeline(
         },
         "error": "",
     }
+    from src.review.quality import coverage_report
+    coverage = coverage_report(chunks, completed_chunks, scheduled_chunks)
+    if not coverage["complete"]:
+        warnings.append(f"解析覆盖不完整：共 {coverage['total']} 个片段，已处理 {coverage['processed']}，失败 {coverage['failed']}，未安排 {coverage['not_scheduled']}；请查看覆盖报告")
     metadata = {
+        "coverage": coverage,
+        "clinical_statements": statement_records,
+        "clinical_statement_count": len(statement_records),
         "mode": "auto",
         "provider": settings.get("provider", "openai_compatible"),
         "model": settings.get("model"),

@@ -45,6 +45,11 @@ def inventory(graph, disease_code):
                       "relation_code": key[1], "node_type": target.get("node_type"), "code": target.get("code"),
                       "approved": passed, "fingerprint": fingerprint, "source_refs": edge.get("source_refs") or [],
                       "target_node": target, "source_node": source})
+        clinical_condition = target.get("node_type") in {"symptom", "diagnostic_evidence"}
+        items[-1]["suggested_role"] = "condition" if clinical_condition else "recommendation"
+        items[-1]["suggested_scenes"] = (["suspected_diagnosis", "diagnosis_confirmation"] if clinical_condition else
+            ["treatment_recommendation", "treatment_selection"] if target.get("node_type") in {"medication", "intervention", "treatment_plan"} else
+            ["suspected_diagnosis", "diagnosis_confirmation", "treatment_recommendation", "treatment_selection"])
     return items
 
 
@@ -75,6 +80,7 @@ class Prepare(BaseModel):
     reviewer: str
     name: str = ""
     diagnosis_prerequisite: Literal["confirmed", "suspected"] = "confirmed"
+    clinical_context: dict = Field(default_factory=dict)
 
 
 def condition_for(item):
@@ -143,7 +149,8 @@ def prepare(request: Prepare, graph_filename: str):
                 conditions={"type": "group", "operator": request.operator, "children": conditions},
                 conclusion={"diagnosis": request.disease_code, "message": name,
                             "treatment_items": recommendations}, source=source,
-                diagnosis_prerequisite=request.diagnosis_prerequisite if treatment else None).model_dump()
+                diagnosis_prerequisite=request.diagnosis_prerequisite if treatment else None,
+                clinical_context=request.clinical_context).model_dump()
     stage_bases(graph, [spec], filename)
     basis = next(item for item in graph["clinical_bases"] if item["specification"] == spec)
     if basis.get("scenario_review"):

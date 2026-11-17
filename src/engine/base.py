@@ -22,4 +22,5 @@ class RuleEngine(Protocol):
         patient: PatientSnapshot,
         department: Optional[str] = None,
         include_draft_patterns: bool = False,
+        include_draft_rules: bool = False,
     ) -> List[Conclusion]: ...

@@ -20,6 +20,10 @@ def scenario_env(tmp_path, monkeypatch):
     rules = tmp_path / "rules.json"
     rules.write_text("[]", encoding="utf-8")
     service = ReviewService(graph_dir, rules, tmp_path / "audit.jsonl")
+    uploads = tmp_path / "uploads"
+    uploads.mkdir()
+    (uploads / "DOC-TEST.parsed.json").write_text(json.dumps({"parsed": {"lines": [
+        {"page": 1, "line": 1, "text": "测试原文"}, {"page": 1, "line": 2, "text": "测试适用范围"}]}}), encoding="utf-8")
     monkeypatch.setattr(scenarios, "service", service)
     monkeypatch.setattr(clinical_basis, "service", service)
     return service, path, rules
@@ -90,12 +94,13 @@ def test_reviewed_treatment_content_is_output_not_a_condition(scenario_env):
     assert json.loads(scenario_env[2].read_text(encoding="utf-8"))[0]["diagnosis_prerequisite"] == "confirmed"
 
 
-@pytest.mark.parametrize("intent,status,expected", [
-    ("suspected_diagnosis", "active", False),
-    ("diagnosis_confirmation", "active", True),
-    ("diagnosis_confirmation", "draft", False),
+@pytest.mark.parametrize("intent,status,test_mode,expected", [
+    ("suspected_diagnosis", "active", False, False),
+    ("diagnosis_confirmation", "active", False, True),
+    ("diagnosis_confirmation", "draft", False, False),
+    ("diagnosis_confirmation", "draft", True, True),
 ])
-def test_treatment_requires_selected_diagnosis_state(intent, status, expected):
+def test_treatment_requires_selected_diagnosis_state(intent, status, test_mode, expected):
     from types import SimpleNamespace
     from src.models.rule import Rule
     from tests.test_engine import build_engine, make_patient
@@ -107,5 +112,5 @@ def test_treatment_requires_selected_diagnosis_state(intent, status, expected):
                      conclusion={"diagnosis": "I21.0"})
     engine = build_engine()
     engine.rule_repo = SimpleNamespace(list_all=lambda: [diagnosis, treatment])
-    result = engine._run_stages(make_patient(), matcher=lambda rules, patient: {rule.rule_id: ([], {}) for rule in rules})
+    result = engine._run_stages(make_patient(), include_draft_rules=test_mode, matcher=lambda rules, patient: {rule.rule_id: ([], {}) for rule in rules})
     assert ("TX" in [item.rule_id for item in result]) == expected

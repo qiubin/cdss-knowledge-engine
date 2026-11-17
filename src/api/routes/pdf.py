@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from ...extraction.models import ExtractionTemplate
@@ -139,6 +140,9 @@ def parse_pdf(file_path: Path, doc_id: str) -> Dict[str, Any]:
 
     doc = fitz.open(str(file_path))
     lines = []
+    image_only_pages = []
+    tables = []
+    layout_warnings = []
     for page_num, page in enumerate(doc, start=1):
         blocks = page.get_text("dict")["blocks"]
         line_in_page = 0
@@ -156,12 +160,29 @@ def parse_pdf(file_path: Path, doc_id: str) -> Dict[str, Any]:
                     "text": text,
                     "bbox": [round(v, 1) for v in line["bbox"]],
                 })
+        if line_in_page == 0 and any(block.get("type") == 1 for block in blocks):
+            image_only_pages.append(page_num)
+        if hasattr(page, "find_tables"):
+            try:
+                found = page.find_tables()
+                for index, table in enumerate(found.tables):
+                    tables.append({"table_id": f"{doc_id}:p{page_num}:t{index + 1}", "page": page_num,
+                                   "bbox": list(table.bbox), "rows": table.extract(),
+                                   "review_required": True})
+            except Exception:
+                layout_warnings.append(f"第{page_num}页表格结构提取失败，请查看PDF原页")
+        elif page_num == 1:
+            layout_warnings.append("当前PDF组件未提供表格提取能力，请对照PDF原页核对表格")
     total_pages = doc.page_count
     doc.close()
 
     ocr_used = False
     if not lines:
         lines = _ocr_pdf_lines(file_path)
+        ocr_used = True
+    elif image_only_pages:
+        lines.extend(_ocr_pdf_lines(file_path, page_numbers=set(image_only_pages)))
+        lines.sort(key=lambda item: (item["page"], item["line"]))
         ocr_used = True
 
     # Aggregate into chunks by section
@@ -180,6 +201,8 @@ def parse_pdf(file_path: Path, doc_id: str) -> Dict[str, Any]:
         chunks.append(_build_chunk(doc_id, current_section, current_lines))
 
     chunks = _split_long_chunks(chunks)
+    for chunk in chunks:
+        chunk["tables"] = [table for table in tables if chunk.get("page_start", 1) <= table["page"] <= chunk.get("page_end", 1)]
 
     return {
         "doc_id": doc_id,
@@ -188,10 +211,17 @@ def parse_pdf(file_path: Path, doc_id: str) -> Dict[str, Any]:
         "lines": lines,
         "chunks": chunks,
         "ocr_used": ocr_used,
+        "tables": tables,
+        "reading_quality": {"image_only_pages": image_only_pages,
+                            "pages_with_text": sorted({line["page"] for line in lines}),
+                            "pages_without_text": sorted(set(range(1, total_pages + 1)) - {line["page"] for line in lines}),
+                            "layout_review_required": True,
+                            "layout_warnings": layout_warnings,
+                            "note": "表格、流程图及脚注仍需对照PDF核对，文字提取成功不等于版面结构完整"},
     }
 
 
-def _ocr_pdf_lines(file_path: Path) -> List[Dict[str, Any]]:
+def _ocr_pdf_lines(file_path: Path, page_numbers=None) -> List[Dict[str, Any]]:
     """OCR fallback for PDFs without a text layer (outlined fonts or scans)."""
     try:
         import cv2
@@ -208,6 +238,8 @@ def _ocr_pdf_lines(file_path: Path) -> List[Dict[str, Any]]:
     doc = fitz.open(str(file_path))
     lines: List[Dict[str, Any]] = []
     for page_num, page in enumerate(doc, start=1):
+        if page_numbers is not None and page_num not in page_numbers:
+            continue
         try:
             pix = page.get_pixmap(dpi=150)
             img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)
@@ -457,6 +489,16 @@ async def get_import_logs(limit: int = 100):
         except json.JSONDecodeError:
             continue
     return rows[-max(1, int(limit)):][::-1]
+
+
+@router.get("/{doc_id}/file")
+async def get_pdf_file(doc_id: str):
+    if not re.fullmatch(r"DOC-[A-Za-z0-9-]+", doc_id):
+        raise HTTPException(422, "指南标识无效")
+    path = UPLOAD_DIR / f"{doc_id}.pdf"
+    if not path.is_file():
+        raise HTTPException(404, "原始PDF不可用，请恢复该指南文件")
+    return FileResponse(path, media_type="application/pdf", headers={"Content-Disposition": "inline"})
 
 
 @router.get("/{doc_id}/lines")

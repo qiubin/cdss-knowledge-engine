@@ -15,6 +15,15 @@ from src.engine import settings as engine_settings
 def settings_path(tmp_path, monkeypatch):
     path = tmp_path / "engine.json"
     monkeypatch.setattr(engine_settings, "SETTINGS_PATH", path)
+    repository = inference_routes.JsonRuleRepository
+    def isolated_repository(directory):
+        from src.models.rule import Rule
+        repo = repository(str(project_root / "tests" / "fixtures" / "rules"))
+        repo.save_rule(Rule(rule_id="TEST-COMPILABLE", disease_code="I21.0", status="active",
+                            conditions={"type": "symptom", "symptom_code": "DIAPHORESIS"},
+                            conclusion={"diagnosis": "I21.0"}))
+        return repo
+    monkeypatch.setattr(inference_routes, "JsonRuleRepository", isolated_repository)
     return path
 
 

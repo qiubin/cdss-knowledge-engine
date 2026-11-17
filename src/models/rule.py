@@ -137,6 +137,8 @@ class Rule(BaseModel):
     # Fine-grained purpose, independent from target and broad execution stage.
     clinical_intent: str = ""
     diagnosis_prerequisite: Optional[Literal["confirmed", "suspected"]] = None
+    clinical_context: Dict[str, Any] = Field(default_factory=dict)
+    clinical_statement_id: str = ""
     name: str = ""
     disease_code: str
     disease_name: str = ""

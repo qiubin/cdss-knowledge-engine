@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from fastapi import HTTPException
 from src.models.rule import Rule
 from src.review.metadata import node_content_hash, relation_content_hash
+from src.review.quality import verify_source, statement_for
 
 CHECKS = ("entities", "logic", "scope", "source")
 def now():
@@ -43,6 +44,8 @@ def stage_bases(graph, candidates, graph_filename):
 def check_basis(service, filename, graph, basis):
     issues = []
     spec = basis["specification"]
+    if (spec.get("clinical_context") or {}).get("missing_information"):
+        issues.append("临床陈述仍有待补信息，请在编辑器中补全并核对后移除待补项")
     try:
         Rule(**spec)
     except Exception as error:
@@ -74,12 +77,14 @@ def check_basis(service, filename, graph, basis):
     if not implicit_treatment:
         walk(root)
     source = spec.get("source") if isinstance(spec.get("source"), dict) else {}
+    provenance = verify_source(source, service.graph_dir.parent / "uploads")
+    issues.extend(provenance["issues"])
     if not source.get("guideline_id") or not str(source.get("quote") or "").strip():
         issues.append("缺少指南标识或原文引文")
     if not source.get("page_start") or not source.get("line_start") or not source.get("line_end"):
         issues.append("缺少原文页码或行号定位")
-    if source.get("line_start") and source.get("line_end") and source["line_end"] < source["line_start"]:
-        issues.append("原文行号范围倒置")
+    # verify_source validates page-aware ranges: a later page may legitimately
+    # end at a smaller line number than the first page starts.
     try:
         sync = service._sync([{**spec, "graph_filename": filename}])["rules"][0]
     except Exception as error:
@@ -125,7 +130,8 @@ def check_basis(service, filename, graph, basis):
     fingerprint = digest([spec, basis.get("scope_summary"), snapshots, evidences, links, scenario])
     changed = bool(basis.get("approved_fingerprint") and basis["approved_fingerprint"] != fingerprint)
     return {"issues": list(dict.fromkeys(issues)), "references": refs, "fingerprint": fingerprint,
-            "status": "stale" if changed and basis.get("status") == "active" else basis.get("status", "draft"), "changed": changed}
+            "provenance": provenance, "statement": statement_for(spec, basis.get("scope_summary") or ""),
+            "status": "stale" if (changed or issues) and basis.get("status") == "active" else basis.get("status", "draft"), "changed": changed}
 
 
 def get_basis(graph, basis_id):

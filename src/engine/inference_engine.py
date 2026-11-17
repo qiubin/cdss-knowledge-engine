@@ -85,11 +85,13 @@ class InferenceEngine:
         patient: PatientSnapshot,
         department: Optional[str] = None,
         include_draft_patterns: bool = False,
+        include_draft_rules: bool = False,
     ) -> List[Conclusion]:
         """Run domain-staged inference with the native matcher."""
         return self._run_stages(
             patient, department, include_draft_patterns,
             matcher=self._native_match_stage,
+            include_draft_rules=include_draft_rules,
         )
 
     def _eval_rule_with_graph(
@@ -132,6 +134,7 @@ class InferenceEngine:
         department: Optional[str] = None,
         include_draft_patterns: bool = False,
         matcher=None,
+        include_draft_rules: bool = False,
     ) -> List[Conclusion]:
         """Staged inference.  ``matcher(stage_rules, patient)`` returns
         ``{rule_id: (traces, weighted_detail)}`` for the rules that matched;
@@ -170,7 +173,7 @@ class InferenceEngine:
                     rule for rule in all_rules
                     if rule.rule_type in stage.rule_types
                 ]
-            allowed_status = {"active", "draft"} if stage.draft_allowed else {"active"}
+            allowed_status = {"active", "draft", "testing"} if include_draft_rules else {"active"}
             if include_draft_patterns and stage.rule_types == ("tcm_pattern",):
                 # A test run may exercise candidate diagnosis rules, but this
                 # does not change their persisted status.
@@ -193,7 +196,7 @@ class InferenceEngine:
 
             # Scenario-generated treatments explicitly choose which diagnosis
             # state authorizes them; suspected findings must not imply confirmed.
-            stage_rules = [rule for rule in stage_rules if not rule.diagnosis_prerequisite or (rule.status == "active" and any(
+            stage_rules = [rule for rule in stage_rules if not rule.diagnosis_prerequisite or ((rule.status == "active" or include_draft_rules) and any(
                 conclusion.disease_code == rule.disease_code
                 and conclusion.rule_type == "diagnosis"
                 and (conclusion.clinical_intent == "diagnosis_confirmation"

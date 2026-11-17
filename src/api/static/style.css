@@ -1028,6 +1028,15 @@ tr:last-child td { border-bottom: 0; }
   content: "•"; color: var(--accent); margin-left: 6px; font-size: 12px;
 }
 .scenario-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.ai-basis-dialog { width: min(1100px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; }
+.ai-basis-body { padding: 18px; }
+.ai-basis-body .quote { white-space: pre-wrap; overflow-wrap: anywhere; }
+.ai-finding { padding: 14px; margin: 12px 0; border: 1px solid var(--line); border-radius: 8px; }
+.statement-review-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.statement-review-grid section { min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+.statement-review-grid .quote { max-height: 420px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+#inferResult[data-test-mode="true"]::before { content: "候选规则测试结果：包含未发布内容，仅供校对"; display: block; padding: 14px; background: var(--warn-soft); color: var(--warn); margin-bottom: 14px; }
+@media (max-width: 1200px) { .statement-review-grid { grid-template-columns: minmax(0, 1fr); } }
 .scenario-basis { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .scenario-basis strong { flex: 1 1 220px; }
 .scenario-table { max-height: 420px; overflow: auto; margin: 14px 0; }

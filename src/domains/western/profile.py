@@ -87,7 +87,7 @@ WESTERN_PROFILE = DomainProfile(
         InferenceStage(
             name="treatment",
             rule_types=("treatment",),
-            description="仅在疾病已命中时评估的治疗建议（草稿亦可）",
+            description="疾病命中后评估已发布治疗建议；候选规则仅在显式测试模式执行",
             draft_allowed=True,
         ),
     ),

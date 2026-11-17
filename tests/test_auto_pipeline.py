@@ -31,6 +31,13 @@ def make_chunk() -> dict:
 
 
 async def fake_llm(_settings, _messages):
+    if "阶段一：" in _messages[0]["content"]:
+        return {"statements": [{"statement_id": "S1", "disease_name": "肺腺癌", "scene": "diagnosis_confirmation",
+            "population": "肺腺癌待评估患者", "subtype": "", "phase": "诊断阶段", "exceptions": [],
+            "missing_information": [], "source": {"chunk_id": "c1", "page_start": 1, "line_start": 1,
+            "line_end": 4, "quote": "肺腺癌患者可表现为咳嗽"}}]}
+    input_payload = json.loads(_messages[1]["content"])
+    statement_id = input_payload["clinical_statements"][0]["statement_id"]
     return {
         "entities": [
             {"entity_type": "disease", "name": "肺腺癌", "code": "C34.9", "aliases": ["肺癌"], "chunk_id": "c1", "page": 1, "line_start": 1, "line_end": 2, "quote": "肺腺癌", "confidence": 0.95},
@@ -46,6 +53,7 @@ async def fake_llm(_settings, _messages):
         "rules": [
             {
                 "rule_id": "CASE-DX",
+                "clinical_statement_id": statement_id,
                 "rule_type": "diagnosis",
                 "disease_name": "肺腺癌",
                 "conditions": {"type": "group", "operator": "AND", "children": [
@@ -58,6 +66,7 @@ async def fake_llm(_settings, _messages):
             },
             {
                 "rule_id": "CASE-TX",
+                "clinical_statement_id": statement_id,
                 "rule_type": "treatment",
                 "disease_name": "肺腺癌",
                 "conditions": {"type": "group", "operator": "AND", "children": []},
@@ -121,6 +130,10 @@ class AutoPipelineTest(unittest.TestCase):
         self.assertTrue(any(entity_type == "symptom" and code.startswith("LOCAL-SYM-") for entity_type, code in codes))
         self.assertTrue((root / "kg" / result["graph_filename"]).exists())
         self.assertEqual(len(result["rules"]), 2)
+        self.assertTrue(result["metadata"]["coverage"]["complete"])
+        self.assertEqual(result["metadata"]["coverage"]["processed"], 1)
+        self.assertEqual(result["metadata"]["clinical_statement_count"], 1)
+        self.assertTrue(all(rule.get("clinical_statement_id") for rule in result["rules"]))
         self.assertTrue(all(rule["status"] == "draft" for rule in result["rules"]))
         graph = json.loads((root / "kg" / result["graph_filename"]).read_text(encoding="utf-8"))
         self.assertIn("ENTITY:disease:C34.9", {node["id"] for node in graph["nodes"]})

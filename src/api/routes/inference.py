@@ -28,6 +28,7 @@ class InferenceRequest(BaseModel):
     patient: Dict[str, Any]
     department: Optional[str] = None
     domain: Optional[str] = None
+    test_mode: bool = False
 
 
 class InferenceTestCaseRequest(BaseModel):
@@ -98,7 +99,7 @@ async def run_inference(request: InferenceRequest):
         patient = PatientSnapshot(**request.patient)
     except Exception as e:
         raise HTTPException(422, f"患者数据格式错误: {str(e)}")
-    return _inference_result(patient, request.domain or "western", request.department)
+    return _inference_result(patient, request.domain or "western", request.department, test_mode=request.test_mode)
 
 
 def _inference_result(
@@ -106,6 +107,7 @@ def _inference_result(
     domain: str,
     department: Optional[str] = None,
     include_draft_patterns: bool = False,
+    test_mode: bool = False,
 ):
 
     vocab = ConceptVocabulary()
@@ -113,6 +115,18 @@ def _inference_result(
     kg = JsonGraphClient(str(ROOT / "data" / "kg" / "stemi_graph.json"))
     standards = JsonStandardRepository(str(ROOT / "data" / "standards"))
     rules = JsonRuleRepository(str(ROOT / "data" / "rules"))
+    skipped_rules = []
+    if not test_mode:
+        from .rules import _ensure_clinical_basis
+        for rule in rules.list_all():
+            if rule.status != "active":
+                continue
+            try:
+                _ensure_clinical_basis(rule.model_dump())
+            except HTTPException as error:
+                skipped_rules.append({"rule_id": rule.rule_id, "reason": str(error.detail)})
+                # In-memory exclusion only; preserve persisted approval history.
+                rules.save_rule(rule.model_copy(update={"status": "blocked"}))
 
     graph_clients: Dict[str, JsonGraphClient] = {}
 
@@ -132,10 +146,12 @@ def _inference_result(
         rules, kg, standards, vocab, graph_factory,
         domain=domain,
     )
+    run_options = {"include_draft_rules": True} if test_mode else {}
     conclusions = engine.run(
         patient,
         department=department,
         include_draft_patterns=include_draft_patterns,
+        **run_options,
     )
 
     all_conclusions = [c.model_dump() for c in conclusions]
@@ -153,6 +169,9 @@ def _inference_result(
     )
     native_engine = getattr(engine, "_native", engine)
     diagnostics["undetermined_conditions"] = getattr(native_engine, "evaluation_issues", [])
+    diagnostics["quality_blocked_rules"] = skipped_rules
+    if skipped_rules:
+        diagnostics["reasons"].append(f"{len(skipped_rules)} 条已启用规则的依据需要复核，本次未执行")
     if diagnostics["undetermined_conditions"]:
         diagnostics["reasons"].append(f"{len(diagnostics['undetermined_conditions'])} 项条件无法判断，请核对标准、适用范围、单位及原始结果；不能作为阴性结果")
     if not conclusions:
@@ -166,6 +185,7 @@ def _inference_result(
             diagnostics["reasons"].append("治疗阶段未触发：需要先命中同一疾病的诊断规则")
     return {
         "patient_id": patient.patient_id,
+        "test_mode": bool(test_mode or include_draft_patterns),
         "hospital_id": patient.hospital_id,
         "domain": domain,
         "engine": engine.describe(),

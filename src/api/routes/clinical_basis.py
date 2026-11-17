@@ -8,6 +8,11 @@ from src.models.rule import Rule
 from src.review.service import ReviewService
 from src.review.clinical_basis import CHECKS, stage_bases, check_basis, get_basis, require_approved, now
 from src.review.condition_completion import build_condition_tree, collect_disease_evidence_conditions, collect_reviewed_treatment_links, complete_rule_conditions
+from src.review.ai_review import Advice, messages_for, explain_model_error
+from src.review.clinical_basis import digest
+from src.extraction.repository import ExtractionConfigRepository
+from src.llm import chat_json, LLMError, resolve_api_key
+import httpx
 
 router = APIRouter(prefix="/api/review/bases", tags=["clinical-basis-review"])
 service = ReviewService()
@@ -32,6 +37,90 @@ def list_bases(graph_filename: str):
     filename, graph = load(graph_filename)
     return {"items": [{**basis, "validation": check_basis(service, filename, graph, basis)}
                       for basis in graph.get("clinical_bases", [])]}
+
+
+@router.get("/quality-report")
+def quality_report(graph_filename: str):
+    filename, graph = load(graph_filename)
+    items = []
+    for basis in graph.get("clinical_bases", []):
+        validation = check_basis(service, filename, graph, basis)
+        items.append({"basis_id": basis["basis_id"], "name": basis.get("name"),
+                      "status": validation["status"], "issues": validation["issues"],
+                      "source_status": validation["provenance"]["status"]})
+    return {"total": len(items), "needs_review": sum(bool(item["issues"]) for item in items),
+            "verified_sources": sum(item["source_status"] == "verified" for item in items), "items": items}
+
+
+def ai_report_path(filename, basis_id):
+    return service.audit_path.parent / "ai_reviews" / (digest([filename, basis_id]) + ".json")
+
+
+@router.get("/{basis_id}/ai-review")
+def get_ai_review(basis_id: str, graph_filename: str):
+    filename, graph = load(graph_filename)
+    basis = get_basis(graph, basis_id)
+    path = ai_report_path(filename, basis_id)
+    if not path.is_file():
+        return {"report": None}
+    try:
+        report = json.loads(path.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return {"report": None}
+    validation = check_basis(service, filename, graph, basis)
+    report["stale"] = (report.get("fingerprint") != validation["fingerprint"]
+                       or report.get("source_status") != validation["provenance"]["status"]
+                       or report.get("source_text_hash") != digest(validation["provenance"].get("text") or "")
+                       or report.get("review_context_hash") != digest([validation["issues"], validation["references"]]))
+    return {"report": report}
+
+
+@router.post("/{basis_id}/ai-review")
+async def request_ai_review(basis_id: str, graph_filename: str):
+    filename, graph = load(graph_filename)
+    basis = get_basis(graph, basis_id)
+    validation = check_basis(service, filename, graph, basis)
+    settings = ExtractionConfigRepository().load().get("llm") or {}
+    try:
+        configured_key = resolve_api_key(settings)
+    except LLMError as error:
+        raise HTTPException(422, explain_model_error(error))
+    if not configured_key:
+        raise HTTPException(422, "未配置模型API Key：请前往“解析模板 → 解析服务”填写API Key、服务地址和模型，保存并测试连接后重试")
+    if not str(settings.get("model") or "").strip():
+        raise HTTPException(422, "未配置模型名称：请前往“解析模板 → 解析服务”填写并保存")
+    try:
+        raw = await chat_json(settings, messages_for(basis, validation), max_tokens=4096)
+        advice = Advice(**raw).model_dump()
+    except LLMError as error:
+        raise HTTPException(502, explain_model_error(error))
+    except httpx.TimeoutException:
+        raise HTTPException(504, "模型请求超时，请稍后重试，或在解析服务中调整超时时间")
+    except httpx.RequestError:
+        raise HTTPException(502, "无法连接模型服务，请检查网络、服务地址和代理设置")
+    except (ValueError, TypeError):
+        raise HTTPException(502, "模型未返回完整的审核建议，请重试")
+    # The model cannot override deterministic evidence/dependency failures.
+    if validation["provenance"]["status"] != "verified":
+        advice["assessment"] = "insufficient_evidence"
+    elif validation["issues"] and advice["assessment"] == "no_obvious_issue":
+        advice["assessment"] = "needs_revision"
+    report = {"advice": advice, "model": settings.get("model") or "", "created_at": now(),
+              "fingerprint": validation["fingerprint"], "source_status": validation["provenance"]["status"],
+              "automated_issues": validation["issues"], "source_text_hash": digest(validation["provenance"].get("text") or ""),
+              "review_context_hash": digest([validation["issues"], validation["references"]]),
+              "stale": False}
+    _, current_graph = load(filename)
+    current = check_basis(service, filename, current_graph, get_basis(current_graph, basis_id))
+    report["stale"] = (current["fingerprint"] != report["fingerprint"]
+                       or digest(current["provenance"].get("text") or "") != report["source_text_hash"]
+                       or current["provenance"]["status"] != report["source_status"]
+                       or digest([current["issues"], current["references"]]) != report["review_context_hash"])
+    if not report["stale"]:
+        path = ai_report_path(filename, basis_id)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    return {"report": report}
 
 @router.post("")
 def create_basis(request: BasisEdit, graph_filename: str):
