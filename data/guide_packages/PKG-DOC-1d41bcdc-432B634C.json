@@ -15663,5 +15663,25 @@
     "error": ""
   },
   "created_at": "2026-11-12T07:39:22.338369+00:00",
-  "updated_at": "2026-11-12T07:52:35.971899+00:00"
+  "updated_at": "2026-11-13T16:12:08.087670+00:00",
+  "item_review": {
+    "entity:disease:CAND-SEPTIC-SHOCK": {
+      "status": "approved",
+      "reviewed_by": "未署名",
+      "reviewed_at": "2026-11-13T16:12:08.087112+00:00",
+      "note": ""
+    },
+    "entity:disease:CAND-SEPSIS": {
+      "status": "draft",
+      "reviewed_by": "未署名",
+      "reviewed_at": "2026-11-13T16:12:05.407906+00:00",
+      "note": ""
+    },
+    "entity:disease:CAND-ARDS": {
+      "status": "draft",
+      "reviewed_by": "未署名",
+      "reviewed_at": "2026-11-13T16:12:04.807515+00:00",
+      "note": ""
+    }
+  }
 }

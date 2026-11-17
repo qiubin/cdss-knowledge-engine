@@ -1,0 +1,33 @@
+{
+  "label": "药品",
+  "entity_type": "medication",
+  "standard": "ATC",
+  "version": "trial-2026-11-14",
+  "source": "公开来源核对的试用子集；中文名称为本项目译名",
+  "scope": "仅供搜索选用，非完整国家临床版。选用后加入活跃字典；不自动改写现有编码。",
+  "description": "ATC 药物分类条目，不代表具体厂家、规格或国家药品标识。",
+  "entries": [
+    {
+      "code": "B01AC06",
+      "name": "乙酰水杨酸（抗血小板用途）",
+      "aliases": [
+        "阿司匹林（抗血小板用途）"
+      ],
+      "domain": "western",
+      "standard_system": "ATC",
+      "standard_code": "B01AC06",
+      "source": "https://atcddd.fhi.no/atc_ddd_index/?code=B01AC06&showdescription=no"
+    },
+    {
+      "code": "C10AA05",
+      "name": "阿托伐他汀",
+      "aliases": [
+        "atorvastatin"
+      ],
+      "domain": "western",
+      "standard_system": "ATC",
+      "standard_code": "C10AA05",
+      "source": "https://atcddd.fhi.no/atc_ddd_index/?code=C10AA05&showdescription=no"
+    }
+  ]
+}

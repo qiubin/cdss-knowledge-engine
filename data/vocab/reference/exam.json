@@ -1,0 +1,34 @@
+{
+  "label": "检查",
+  "entity_type": "exam",
+  "standard": "LOINC",
+  "version": "trial-2026-11-14",
+  "source": "公开来源核对的试用子集；中文名称为本项目译名",
+  "scope": "仅供搜索选用，非完整国家临床版。选用后加入活跃字典；不自动改写现有编码。",
+  "description": "检查报告概念，不等同于院内收费项目。",
+  "entries": [
+    {
+      "code": "11524-6",
+      "name": "心电图检查报告",
+      "aliases": [
+        "ECG报告",
+        "EKG报告"
+      ],
+      "domain": "western",
+      "standard_system": "LOINC",
+      "standard_code": "11524-6",
+      "source": "https://loinc.org/11524-6"
+    },
+    {
+      "code": "11522-0",
+      "name": "超声心动图报告",
+      "aliases": [
+        "心脏超声报告"
+      ],
+      "domain": "western",
+      "standard_system": "LOINC",
+      "standard_code": "11522-0",
+      "source": "https://dicom.nema.org/MEDICAL/dicom/2017c/output/chtml/part16/chapter_H.html"
+    }
+  ]
+}

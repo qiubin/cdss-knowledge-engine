@@ -1,0 +1,77 @@
+{
+  "label": "检验",
+  "entity_type": "lab",
+  "standard": "LOINC",
+  "version": "trial-2026-11-14",
+  "source": "公开来源核对的试用子集；中文名称为本项目译名",
+  "scope": "仅供搜索选用，非完整国家临床版。选用后加入活跃字典；不自动改写现有编码。",
+  "description": "须核对标本、方法及量纲，不能只按中文简称映射。",
+  "entries": [
+    {
+      "code": "718-7",
+      "name": "全血血红蛋白质量浓度",
+      "aliases": [
+        "血红蛋白浓度"
+      ],
+      "domain": "western",
+      "standard_system": "LOINC",
+      "standard_code": "718-7",
+      "source": "https://loinc.org/718-7"
+    },
+    {
+      "code": "6690-2",
+      "name": "全血白细胞计数（自动法）",
+      "aliases": [
+        "自动白细胞计数"
+      ],
+      "domain": "western",
+      "standard_system": "LOINC",
+      "standard_code": "6690-2",
+      "source": "https://loinc.org/6690-2"
+    },
+    {
+      "code": "777-3",
+      "name": "全血血小板计数（自动法）",
+      "aliases": [
+        "自动血小板计数"
+      ],
+      "domain": "western",
+      "standard_system": "LOINC",
+      "standard_code": "777-3",
+      "source": "https://hcup-us.ahrq.gov/datainnovations/clinicalcontentenhancementtoolkit/hi26.pdf"
+    },
+    {
+      "code": "2160-0",
+      "name": "血清或血浆肌酐质量浓度",
+      "aliases": [
+        "血清肌酐质量浓度"
+      ],
+      "domain": "western",
+      "standard_system": "LOINC",
+      "standard_code": "2160-0",
+      "source": "https://hcup-us.ahrq.gov/datainnovations/clinicalcontentenhancementtoolkit/hi26.pdf"
+    },
+    {
+      "code": "2345-7",
+      "name": "血清或血浆葡萄糖质量浓度",
+      "aliases": [
+        "血糖质量浓度"
+      ],
+      "domain": "western",
+      "standard_system": "LOINC",
+      "standard_code": "2345-7",
+      "source": "https://hcup-us.ahrq.gov/datainnovations/clinicalcontentenhancementtoolkit/hi26.pdf"
+    },
+    {
+      "code": "2823-3",
+      "name": "血清或血浆钾物质的量浓度",
+      "aliases": [
+        "血钾浓度"
+      ],
+      "domain": "western",
+      "standard_system": "LOINC",
+      "standard_code": "2823-3",
+      "source": "https://hcup-us.ahrq.gov/datainnovations/clinicalcontentenhancementtoolkit/hi26.pdf"
+    }
+  ]
+}

@@ -70,6 +70,15 @@
       "description": "由知识包自动生成的阳性测试病例（中国 常见先天性心脏病经皮介入治疗指南2021），满足规则 DR-VSD-OCCLUSION-001 的条件。",
       "default": false,
       "category": "室间隔缺损"
+    },
+    {
+      "case_id": "auto-doc-17c428b4",
+      "file": "auto_doc-17c428b4_patient.json",
+      "name": "心力衰竭 · 自动测试病例",
+      "domain": "western",
+      "description": "68 岁男性，劳力性气短、乏力、心悸，BNP 显著升高，超声心动图左室肥厚，冠脉造影陈旧性梗死灶，肌钙蛋白轻度升高。按《中国心力衰竭诊断和治疗指南2024》诊断条件构造，命中疑似诊断规则 RULE-CB-c2dfb6fea4508795be17-R3。",
+      "default": false,
+      "category": "心力衰竭"
     }
   ]
 }
