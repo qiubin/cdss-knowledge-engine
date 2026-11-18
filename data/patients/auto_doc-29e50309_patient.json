@@ -1,0 +1,36 @@
+{
+  "patient_id": "DEMO-DOC-29e50309",
+  "hospital_id": "XM_FIRST",
+  "age": 58,
+  "gender": "M",
+  "labs": [],
+  "exam_findings": [
+    {
+      "exam_code": "GENETIC_TEST",
+      "exam_name": "GENETIC_TEST",
+      "finding_code": "CAND-EVIDENCE-MAPK-VARIANT",
+      "finding_name": "CAND-EVIDENCE-MAPK-VARIANT",
+      "present": true
+    },
+    {
+      "exam_code": "GENETIC_TEST",
+      "exam_name": "GENETIC_TEST",
+      "finding_code": "LV_HYPERTROPHY",
+      "finding_name": "左室肥厚",
+      "present": true
+    },
+    {
+      "exam_code": "GENETIC_TEST",
+      "exam_name": "GENETIC_TEST",
+      "finding_code": "CAND-EVIDENCE-EXTRACARDIAC",
+      "finding_name": "CAND-EVIDENCE-EXTRACARDIAC",
+      "present": true
+    }
+  ],
+  "symptoms": [],
+  "observations": [],
+  "vitals": [],
+  "past_history": [],
+  "current_medications": [],
+  "clinical_attributes": {}
+}
