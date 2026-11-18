@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(osascript -e 'tell app \"System Events\" to restart')",
+      "Bash(./start-api.sh)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8001/)",
+      "Bash(curl -s http://127.0.0.1:8001/api/health)",
+      "Bash(curl -s http://127.0.0.1:8001/health)",
+      "Bash(curl -s http://127.0.0.1:8001/api/engine/settings)",
+      "Bash(curl -s -o /dev/null -w \"rules:%{http_code}\\\\n\" http://127.0.0.1:8001/api/rules)",
+      "Bash(curl -s -o /dev/null -w \"drools-sidecar:%{http_code}\\\\n\" http://127.0.0.1:8090/)",
+      "Bash(curl -s http://127.0.0.1:8001/api/engine/config)",
+      "Bash(curl -s http://127.0.0.1:8001/api/engine/status)",
+      "Bash(java -version)",
+      "Bash(/usr/libexec/java_home -V)",
+      "Read(//Library/Java/JavaVirtualMachines/**)"
+    ]
+  }
+}

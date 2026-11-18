@@ -10,6 +10,9 @@ data/extraction/config.json
 .env
 .env.*
 
+# Claude Code 本机个人配置（项目级 .claude/settings.json 入库）
+.claude/settings.local.json
+
 # Generated / archived / copyrighted input data
 data/_reset_archive_*/
 data/uploads/
