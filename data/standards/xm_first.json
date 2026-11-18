@@ -738,5 +738,16 @@
     "version": 1,
     "status": "active",
     "source_note": "定性结果，需 LIS 提供 qualitative 字段"
+  },
+  {
+    "hospital_id": "XM_FIRST",
+    "lab_code": "CAND-BLOOD-LACTATE",
+    "lab_name": "血乳酸（指南候选编码，对应 LACTATE）",
+    "concept_code": "POSITIVE",
+    "ref_source": "STATIC",
+    "effective_from": "2024-01-01",
+    "version": 1,
+    "status": "active",
+    "source_note": "定性阳性，需 LIS 提供 qualitative 字段；指南场景为血乳酸/丙酮酸最小运动量试验阳性，定量判定可按 LACTATE ELEVATED (>2.2 mmol/L) 执行"
   }
 ]
