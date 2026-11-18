@@ -3869,6 +3869,7 @@
         const labels = {
           approve: ["建议通过", "ok"], reject: ["建议拒绝", "danger"],
           revise: ["建议修正", "warning"], insufficient_evidence: ["证据不足", "warning"],
+          precheck: ["模型知识预审：未发现明显问题", "warning"],
         };
         const [label, tone] = labels[result.assessment] || [result.assessment, "warning"];
         const issues = (result.issues || []).map((issue) => `<li><strong>${esc(issue.area || "问题")}</strong>：${esc(issue.problem || "-")}<br><span class="muted">依据：${esc(issue.evidence || "未提供")}</span><br>建议：${esc(issue.suggestion || "人工复核")}</li>`).join("");
@@ -3892,10 +3893,11 @@
         ].filter(Boolean).join("");
         $("#relationAiResult").innerHTML = `
           <div class="result-banner ${tone}"><strong>${esc(label)}</strong><p>${esc(result.summary || "请人工核对")}</p></div>
-          <div class="muted">模型：${esc(result.model || "-")} · 置信度：${confidence} · 原文核验：${result.source_verified ? "已读取指南原文" : "未读取到原文"}</div>
+          <div class="muted">模型：${esc(result.model || "-")} · 置信度：${confidence} · 审核依据：${result.source_verified ? "已读取指南原文" : "模型知识预审，未核验指南原文"}</div>
           ${issues ? `<h4>发现的问题与修正建议</h4><ul class="issue-list">${issues}</ul>` : '<p class="muted">AI 未列出具体问题。</p>'}
           ${correction.length ? `<h4>建议修正</h4><div class="quote">${correction.map(esc).join("<br>")}</div>` : ""}
           ${checklist ? `<h4>人工复核清单</h4><ul>${checklist}</ul>` : ""}
+          ${!result.source_verified ? '<div class="result-banner warning">缺少原文：以下是模型知识预审，不能证明关系来自指定指南。请补充原文并人工核对后再通过。</div>' : ""}
           ${controls ? `<div class="actions">${controls}</div>` : ""}
           <div class="result-banner warning"><strong>仍需人工决定</strong><p>请根据上方建议使用本页的“通过”或“拒绝”；AI 不会替代审核人操作。</p></div>`;
         $("#relationAiResult").querySelector("[data-single-ai-approve]")?.addEventListener("click", async (event) => {
@@ -4008,6 +4010,7 @@
       const labels = {
         approve: ["建议通过", "active"], reject: ["建议拒绝", "rejected"],
         revise: ["建议修正", "stale"], insufficient_evidence: ["证据不足", "draft"],
+        precheck: ["知识预审，原文未核验", "draft"],
       };
       const prompt = $("#batchRelationAiPrompt").value.trim();
       for (let index = 0; index < queue.length; index += 1) {
@@ -4037,6 +4040,7 @@
           let currentResult = result;
           const issueLines = (result.issues || []).map((issue) => `${issue.area || "问题位置"}：${issue.problem || "需复核"}；建议：${issue.suggestion || "人工核对"}`);
           const suggestions = [
+            result.source_verified ? result.summary : "模型知识预审，未核验指南原文；请补充原文并人工核对。" ,
             result.summary,
             ...issueLines,
             result.suggested_statement ? `推荐表述：${result.suggested_statement}` : "",

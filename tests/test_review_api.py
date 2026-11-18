@@ -3,6 +3,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 from urllib.parse import quote
 
 import httpx
@@ -292,7 +293,8 @@ class ReviewApiTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200, response.text)
         payload = response.json()
-        self.assertEqual(payload["assessment"], "insufficient_evidence")
+        self.assertEqual(payload["assessment"], "precheck")
+        self.assertEqual(payload["review_mode"], "model_knowledge")
         self.assertFalse(payload["source_verified"])
         self.assertEqual(payload["suggested_target_name"], "待审症状")
         detail = self.request(
@@ -300,6 +302,28 @@ class ReviewApiTest(unittest.TestCase):
             "/api/kg/relations/ENTITY%3Adisease%3AI21.0%7CDISEASE_HAS_SYMPTOM%7CENTITY%3Asymptom%3ASYM_DRAFT?graph_filename=API-TEST.json",
         ).json()
         self.assertEqual(detail["relation"]["review_status"], "draft")
+
+    def test_relation_source_uses_archived_package_when_upload_is_missing(self):
+        from src.api.routes import guide_packages, pdf
+
+        package_dir = Path(self.tmp.name) / "guide_packages"
+        package_dir.mkdir()
+        (package_dir / "PKG-DOC-archive01.json").write_text(json.dumps({
+            "doc_id": "DOC-archive01",
+            "chunks": [{
+                "chunk_id": "DOC-archive01_p3_l21-4",
+                "text": "first line\nsecond line",
+                "page_numbers": [3, 4],
+                "line_numbers": [21, 4],
+            }],
+        }), encoding="utf-8")
+        with patch.object(guide_packages, "PACKAGE_DIR", package_dir), patch.object(pdf, "_load_doc", return_value=None):
+            excerpts = kg_review._relation_source_excerpts(["DOC-archive01_p3_l21-4"])
+        self.assertEqual(excerpts, [{
+            "source_ref": "DOC-archive01_p3_l21-4",
+            "text": "first line\nsecond line",
+            "origin": "knowledge_package",
+        }])
 
     def test_apply_relation_ai_correction_endpoint(self):
         response = self.request(
