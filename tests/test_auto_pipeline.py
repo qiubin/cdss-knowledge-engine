@@ -162,6 +162,84 @@ class AutoPipelineTest(unittest.TestCase):
         self.assertIn(package["status"], {"ready_for_test", "imported"})
         self.assertTrue(_package_summary(package)["imported"])
 
+    def test_disease_entity_without_name_in_quote_is_rejected(self):
+        """A disease whose quote never mentions the name/alias must not enter
+        the graph. Regression guard for the 线粒体疾病 chapter binding HCM
+        (I42.2) to descriptions of 心肌肥厚."""
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root = Path(tmp.name)
+        (root / "kg").mkdir()
+        (root / "rules").mkdir()
+        (root / "guide_packages").mkdir()
+        (root / "vocab").mkdir()
+        (root / "vocab" / "concepts.json").write_text(
+            (project_root / "data" / "vocab" / "concepts.json").read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+
+        from unittest.mock import patch
+        from src.vocab.reference_vocabulary import ReferenceVocabularyRepository
+        reference_dir = root / "reference"
+        reference_dir.mkdir()
+        (reference_dir / "icd10.json").write_text(json.dumps({"entries": [
+            {"code": "C34.9", "name": "肺癌", "aliases": ["肺腺癌"],
+             "standard_system": "ICD-10", "standard_code": "C34.9", "domain": "western"},
+            {"code": "I42.2", "name": "其他肥厚型心肌病", "aliases": ["肥厚型心肌病", "HCM"],
+             "standard_system": "ICD-10", "standard_code": "I42.2", "domain": "western"},
+        ]}), encoding="utf-8")
+        reference_patch = patch("src.extraction.terminology_resolver.ReferenceVocabularyRepository",
+            side_effect=lambda standard: ReferenceVocabularyRepository(standard, reference_dir))
+        reference_patch.start()
+        self.addCleanup(reference_patch.stop)
+
+        original_kg_dir = kg_routes.KG_DIR
+        kg_routes.KG_DIR = root / "kg"
+        self.addCleanup(setattr, kg_routes, "KG_DIR", original_kg_dir)
+
+        async def mito_llm(_settings, _messages):
+            if "阶段一：" in _messages[0]["content"]:
+                return {"statements": [{"statement_id": "S1", "disease_name": "肺腺癌",
+                    "scene": "diagnosis_confirmation", "population": "", "subtype": "", "phase": "",
+                    "exceptions": [], "missing_information": [],
+                    "source": {"chunk_id": "c1", "page_start": 1, "line_start": 1,
+                    "line_end": 4, "quote": "肺腺癌患者可表现为咳嗽"}}]}
+            return {
+                "entities": [
+                    {"entity_type": "disease", "name": "肺腺癌", "code": "C34.9",
+                     "chunk_id": "c1", "page": 1, "line_start": 1, "line_end": 2,
+                     "quote": "肺腺癌患者可表现为咳嗽", "confidence": 0.95},
+                    # Mislabelled candidate: quote describes 心肌肥厚 in the
+                    # mitochondrial-disease chapter and never names the disease.
+                    {"entity_type": "disease", "name": "其他肥厚型心肌病", "code": "I42.2",
+                     "chunk_id": "c1", "page": 1, "line_start": 3, "line_end": 4,
+                     "quote": "心脏病变见于40%的患者，其中心肌肥厚最常见", "confidence": 0.9},
+                ],
+                "relations": [
+                    {"source_name": "其他肥厚型心肌病", "source_type": "disease",
+                     "target_name": "肺腺癌", "target_type": "disease",
+                     "relation_code": "RELATED_TO", "chunk_id": "c1", "quote": "心脏病变见于40%的患者"},
+                ],
+                "rules": [],
+                "treatment_plans": [],
+            }
+
+        result = asyncio.run(run_auto_pipeline(
+            [make_chunk()],
+            "DOC-MITO",
+            "肥厚型心肌病指南",
+            {"llm": {"max_chunks": 10, "max_chunk_chars": 12000}},
+            llm_call=mito_llm,
+            data_root=root,
+            auto_import_disease=False,
+        ))
+
+        codes = {(entity["entity_type"], entity["code"]) for entity in result["entities"]}
+        self.assertIn(("disease", "C34.9"), codes)
+        self.assertNotIn(("disease", "I42.2"), codes)
+        self.assertFalse(any(relation.get("source_code") == "I42.2" for relation in result["relations"]))
+        self.assertTrue(any("错绑" in warning for warning in result["warnings"]))
+
 
 if __name__ == "__main__":
     unittest.main()

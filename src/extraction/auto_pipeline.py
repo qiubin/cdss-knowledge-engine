@@ -16,6 +16,7 @@ from ..llm import LLMError, chat_json
 from .concept_mapping import CARDIAC_FINDINGS
 from ..models.rule import Rule
 from ..clinical_intent import normalize_clinical_intent
+from ..review.quality import normalized
 from ..terminology.labels import default_labels
 from .terminology_resolver import (
     UNIVERSAL_TYPES,
@@ -536,7 +537,6 @@ async def run_auto_pipeline(
             if (kind == "treatment" and statement.get("scene") not in treatment_scenes) or (
                     kind == "diagnosis" and statement.get("scene") in treatment_scenes):
                 rule["clinical_context"]["missing_information"] = [*(rule["clinical_context"].get("missing_information") or []), "临床陈述场景与规则类型不一致"]
-            from src.review.quality import normalized
             cited = next((chunk for chunk in chunk_group if chunk["chunk_id"] == rule["source"].get("chunk_id")), {})
             if not normalized(rule["source"].get("quote")) or normalized(rule["source"].get("quote")) not in normalized(cited.get("text")):
                 rule["clinical_context"]["missing_information"] = [*(rule["clinical_context"].get("missing_information") or []), "临床陈述引文不匹配当前片段"]
@@ -616,6 +616,27 @@ async def run_auto_pipeline(
             doc_id=doc_id,
             attributes=dict(raw.get("attributes") or {}),
         )
+        entity_quote = str(raw.get("quote") or "")
+        if entity_type == "disease":
+            # The quote must literally mention the disease (by name or any
+            # alias) before the entity may anchor graph relations. A chapter
+            # describing a complication (e.g. 心肌肥厚 inside the 线粒体疾病
+            # section) must not silently bind the guideline's target disease
+            # just because the model named it.
+            mentions = [
+                name,
+                *[str(alias) for alias in (raw.get("aliases") or [])],
+                *[str(alias) for alias in resolved.get("aliases") or []],
+            ]
+            if not any(
+                len(str(mention).strip()) >= 2
+                and normalized(mention) in normalized(entity_quote)
+                for mention in mentions
+            ):
+                warnings.append(
+                    f"疾病候选「{name}」的引文未出现该病名或别名，已跳过，防止错绑：{entity_quote[:60]}"
+                )
+                continue
         key = (entity_type, resolved["code"], chunk["chunk_id"])
         if key in seen:
             continue
