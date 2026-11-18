@@ -7,8 +7,6 @@ import re
 from dataclasses import dataclass
 from typing import Any, Dict, List, Tuple
 
-import hashlib
-
 import httpx
 
 from ..models.rule import Rule
@@ -20,6 +18,7 @@ from .graph_binding import resolve_template_graph_filename
 from ..vocab.entity_vocabulary import resolve_template
 from .disease_discovery import _discovered_disease_entities, _position_for_match
 from .models import ExtractionTemplate, TemplateAttribute, TemplateEntityEntry, TemplateRelation
+from .terminology_resolver import local_code
 
 
 @dataclass
@@ -257,6 +256,15 @@ def _validate_llm_payload(
     List[Dict[str, Any]],      # contraindications
 ]:
     warnings: List[str] = []
+
+    def _integer(value: Any, fallback: int, field: str) -> int:
+        """Tolerate human labels in numeric fields returned by the model."""
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            warnings.append(f"{field} 应为整数，收到 {value!r}，已使用默认值 {fallback}")
+            return fallback
+
     page_corrections = 0
     line_corrections = 0
     ignored_relation_unknown_entity: Dict[str, int] = {}
@@ -267,6 +275,7 @@ def _validate_llm_payload(
     corrected_contraindication_chunks = 0
     ignored_plan_missing_code = 0
     ignored_contraindication_missing_code = 0
+    retained_candidates: Dict[str, int] = {}
     chunk_map = {chunk["chunk_id"]: chunk for chunk in chunks}
 
     def _chunk_for(raw: Dict[str, Any]) -> Tuple[Optional[Dict[str, Any]], bool]:
@@ -322,6 +331,7 @@ def _validate_llm_payload(
 
         code = str(raw.get("concept_code") or raw.get("code") or "")
         entry = entity_index.get((entity_type, code))
+        is_candidate = False
         if not entry:
             candidate = next(
                 (item for item in template.entity_types if item.entity_type == entity_type),
@@ -334,15 +344,17 @@ def _validate_llm_payload(
                 ),
                 None,
             )
-            # A discovery-enabled entity type accepts new names from guideline
-            # text. Generate a stable candidate code and mark it for review.
-            if not entry and candidate and candidate.discovery:
+            # Any entity type declared by the template is structurally valid.
+            # A missing dictionary entry means "terminology pending review",
+            # not "discard this clinical fact". Concepts remain closed because
+            # their evaluator semantics require a known concept code.
+            if not entry and candidate and entity_type != "concept":
                 display_name = str(raw.get("name") or code).strip()
                 if display_name:
-                    stable_code = code or (
-                        "AUTO-" + hashlib.md5(display_name.encode("utf-8")).hexdigest()[:8].upper()
-                    )
+                    stable_code = local_code(entity_type, display_name)
                     entry = TemplateEntityEntry(code=stable_code, name=display_name)
+                    is_candidate = True
+                    retained_candidates[entity_type] = retained_candidates.get(entity_type, 0) + 1
         if not entry:
             warnings.append(f"已忽略模板外实体 {raw.get('name') or code}")
             continue
@@ -407,6 +419,12 @@ def _validate_llm_payload(
             "quote": str(raw.get("quote") or "").strip() or str(chunk.get("text", ""))[:220],
             "confidence": max(0.0, min(1.0, confidence)),
             "attributes": attributes,
+            **({
+                "candidate_status": "pending",
+                "standard_system": "LOCAL",
+                "discovered_from": "llm_candidate",
+                "candidate_original_code": code,
+            } if is_candidate else {}),
         })
 
     validated_relations: List[Dict[str, Any]] = []
@@ -462,13 +480,17 @@ def _validate_llm_payload(
         """
         entity_type = str(entity_type or "")
         code = str(code or "").strip()
-        if not entity_type or not code or not re.fullmatch(r"[A-Za-z0-9_.:\-]+", code):
+        display = str(name or "").strip()
+        if not entity_type or entity_type not in template.allowed_entity_types:
             return None
+        if not code or not re.fullmatch(r"[A-Za-z0-9_.:\-]+", code):
+            if not display or entity_type == "concept":
+                return None
+            code = local_code(entity_type, display)
         key = (entity_type, code)
         if key in accepted_entity_keys:
             return key
         labels = default_labels()
-        display = str(name or "").strip()
         if not display:
             display = (
                 labels.evidence_name(code)
@@ -489,6 +511,8 @@ def _validate_llm_payload(
             "confidence": 0.5,
             "attributes": {},
             "discovered_from": "relation",
+            "candidate_status": "pending",
+            "standard_system": "LOCAL" if code.startswith("LOCAL-") else "",
         }
         entities.append(stub)
         accepted_entity_keys.add(key)
@@ -606,14 +630,14 @@ def _validate_llm_payload(
         normalized = {
             **raw,
             "rule_id": str(raw.get("rule_id") or f"{doc_id}-LLM-{index:03d}"),
-            "version": int(raw.get("version") or 1),
+            "version": _integer(raw.get("version") or 1, 1, "候选规则 version"),
             "domain": domain,
             "anchor_type": anchor_type,
             "disease_code": disease_code,
             "disease_name": str(raw.get("anchor_name") or raw.get("disease_name") or ""),
             "status": "draft",
             "graph_filename": resolve_template_graph_filename(template),
-            "priority": int(raw.get("priority") or 50),
+            "priority": _integer(raw.get("priority") or 50, 50, "候选规则 priority"),
             "source": _rule_source_from_chunk(source, chunk_map, doc_id, doc_title),
             "tags": [tag for tag in tags if tag],
         }
@@ -650,9 +674,15 @@ def _validate_llm_payload(
             or raw.get("treatment_plan_id")
             or ""
         )
+        plan_name = str(raw.get("treatment_plan_name") or raw.get("name") or "").strip()
+        plan_is_candidate = False
         if not plan_code:
-            ignored_plan_missing_code += 1
-            continue
+            if not plan_name:
+                ignored_plan_missing_code += 1
+                continue
+            plan_code = local_code("treatment_plan", plan_name)
+            plan_is_candidate = True
+            retained_candidates["treatment_plan"] = retained_candidates.get("treatment_plan", 0) + 1
         chunk, corrected = _chunk_for(raw)
         if chunk is None:
             warnings.append(f"治疗方案 {plan_code} 引用未知 chunk_id，已忽略")
@@ -661,7 +691,7 @@ def _validate_llm_payload(
             corrected_plan_chunks += 1
         validated_treatment_plans.append({
             "treatment_plan_code": plan_code,
-            "treatment_plan_name": str(raw.get("treatment_plan_name") or raw.get("name") or plan_code),
+            "treatment_plan_name": plan_name or plan_code,
             "priority": str(raw.get("priority") or ""),
             "evidence_level": str(raw.get("evidence_level") or ""),
             "patient_scope": str(raw.get("patient_scope") or ""),
@@ -671,6 +701,8 @@ def _validate_llm_payload(
             "line_start": chunk["line_start"],
             "line_end": chunk["line_end"],
             "quote": str(raw.get("quote") or chunk.get("text", ""))[:220],
+            **({"candidate_status": "pending", "standard_system": "LOCAL"}
+               if plan_is_candidate else {}),
         })
     for index, raw in enumerate(payload.get("suggested_treatment_rules", []), start=1):
         if not isinstance(raw, dict):
@@ -684,7 +716,7 @@ def _validate_llm_payload(
         normalized = {
             **raw,
             "rule_id": str(raw.get("rule_id") or f"{doc_id}-TX-{index:03d}"),
-            "version": int(raw.get("version") or 1),
+            "version": _integer(raw.get("version") or 1, 1, "候选治疗规则 version"),
             "domain": domain,
             "anchor_type": anchor_type,
             "disease_code": disease_code,
@@ -692,7 +724,7 @@ def _validate_llm_payload(
             "rule_type": "treatment",
             "status": "draft",
             "graph_filename": resolve_template_graph_filename(template),
-            "priority": int(raw.get("priority") or 50),
+            "priority": _integer(raw.get("priority") or 50, 50, "候选治疗规则 priority"),
             "source": _rule_source_from_chunk(source, chunk_map, doc_id, doc_title),
             "tags": [tag for tag in tags if tag],
         }
@@ -733,6 +765,14 @@ def _validate_llm_payload(
             or raw.get("contraindication_id")
             or ""
         )
+        plan_name = str(raw.get("treatment_plan_name") or raw.get("plan_name") or "").strip()
+        contraindication_name = str(
+            raw.get("contraindication_name") or raw.get("name") or ""
+        ).strip()
+        if not plan_code and plan_name:
+            plan_code = local_code("treatment_plan", plan_name)
+        if not contraindication_code and contraindication_name:
+            contraindication_code = local_code("contraindication", contraindication_name)
         if not plan_code or not contraindication_code:
             ignored_contraindication_missing_code += 1
             continue
@@ -745,7 +785,7 @@ def _validate_llm_payload(
         validated_contraindications.append({
             "treatment_plan_code": plan_code,
             "contraindication_code": contraindication_code,
-            "contraindication_name": str(raw.get("contraindication_name") or contraindication_code),
+            "contraindication_name": contraindication_name or contraindication_code,
             "chunk_id": chunk["chunk_id"],
             "page": chunk["page_start"],
             "line_start": chunk["line_start"],
@@ -795,6 +835,15 @@ def _validate_llm_payload(
     if ignored_contraindication_missing_code:
         warnings.append(
             f"已忽略 {ignored_contraindication_missing_code} 条缺少治疗方案或禁忌编码的禁忌关系"
+        )
+    if retained_candidates:
+        total = sum(retained_candidates.values())
+        detail = "、".join(
+            f"{entity_type}×{count}"
+            for entity_type, count in sorted(retained_candidates.items())
+        )
+        warnings.append(
+            f"已保留 {total} 个模板词表外实体为待审核候选（{detail}），未丢弃原文证据"
         )
     return entities, validated_rules, validated_relations, warnings, validated_treatment_plans, validated_treatment_rules, validated_contraindications
 
@@ -1068,19 +1117,20 @@ async def extract_llm(
 ) -> ProviderResult:
     settings = config.get("llm", {})
     template = resolve_template(template)
-    max_chunks = int(settings.get("max_chunks", 80))
+    max_chunks_per_group = max(1, int(settings.get("max_chunks", 80)))
     max_chars = int(settings.get("max_chunk_chars", 12000))
-    selected = chunks[:max_chunks]
+    selected = chunks
     warnings: List[str] = []
-    if len(chunks) > len(selected):
-        warnings.append(f"解析限制：仅发送前 {len(selected)} 个片段，可调大 max_chunks")
 
     groups: List[List[Dict[str, Any]]] = []
     current: List[Dict[str, Any]] = []
     size = 0
     for chunk in selected:
         current_size = len(chunk["text"])
-        if current and size + current_size > max_chars:
+        if current and (
+            size + current_size > max_chars
+            or len(current) >= max_chunks_per_group
+        ):
             groups.append(current)
             current, size = [], 0
         current.append(chunk)
@@ -1105,6 +1155,8 @@ async def extract_llm(
     all_treatment_rules: List[Dict[str, Any]] = []
     all_contraindications: List[Dict[str, Any]] = []
     successful_groups = 0
+    completed_chunks = set()
+    scheduled_chunks = {chunk["chunk_id"] for chunk in selected}
 
     def absorb(payload: Dict[str, Any], group_chunks: List[Dict[str, Any]]) -> None:
         (entities, rules, relations, group_warnings,
@@ -1130,9 +1182,10 @@ async def extract_llm(
             payload = await chat_json(settings, _llm_prompt(template, group, doc_title))
             absorb(payload, group)
             successful_groups += 1
-        except (LLMError, KeyError, IndexError, json.JSONDecodeError, ValueError) as error:
+            completed_chunks.update(chunk["chunk_id"] for chunk in group)
+        except (LLMError, KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as error:
             message = str(error)
-            split_payloads: List[Tuple[Dict[str, Any], List[Dict[str, Any]]]] = []
+            split_succeeded = 0
             if len(group) > 1 and any(
                 token in message for token in ("JSON", "截断", "Expecting")
             ):
@@ -1143,17 +1196,24 @@ async def extract_llm(
                         payload = await chat_json(
                             settings, _llm_prompt(template, [chunk], doc_title)
                         )
-                        split_payloads.append((payload, [chunk]))
-                    except (LLMError, KeyError, IndexError, json.JSONDecodeError, ValueError):
+                        # Validate inside the per-chunk guard. Previously raw
+                        # payloads were validated afterwards, so one malformed
+                        # retry (for example priority="首选") escaped the guard
+                        # and failed the whole import.
+                        absorb(payload, [chunk])
+                        split_succeeded += 1
+                        completed_chunks.add(chunk["chunk_id"])
+                    except (LLMError, KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as split_error:
+                        warnings.append(
+                            f"片段 {chunk['chunk_id']} 单独重试失败: {str(split_error)[:180]}"
+                        )
                         continue
-            if split_payloads:
-                for payload, chunk_group in split_payloads:
-                    absorb(payload, chunk_group)
+            if split_succeeded:
                 successful_groups += 1
-                failed = len(group) - len(split_payloads)
+                failed = len(group) - split_succeeded
                 warnings.append(
                     f"片段组 {group[0]['chunk_id']} 输出过大或格式错误，"
-                    f"已按单片段重试成功 {len(split_payloads)}/{len(group)} 个"
+                    f"已按单片段重试成功 {split_succeeded}/{len(group)} 个"
                     + (f"，仍失败 {failed} 个" if failed else "")
                 )
             else:
@@ -1161,6 +1221,13 @@ async def extract_llm(
 
     if not successful_groups:
         raise ValueError("大模型解析没有成功片段，请检查服务配置或查看告警")
+    from src.review.quality import coverage_report
+    coverage = coverage_report(chunks, completed_chunks, scheduled_chunks)
+    if not coverage["complete"]:
+        warnings.append(
+            f"解析覆盖不完整：共 {coverage['total']} 个片段，已处理 {coverage['processed']}，"
+            f"失败 {coverage['failed']}，未安排 {coverage['not_scheduled']}；请查看覆盖报告"
+        )
     dedupe_rules = {rule["rule_id"]: rule for rule in all_rules}
     dedupe_tx_rules = {rule["rule_id"]: rule for rule in all_treatment_rules}
     dedupe_tx_plans = {plan["treatment_plan_code"]: plan for plan in all_treatment_plans}
@@ -1184,6 +1251,7 @@ async def extract_llm(
             "groups_succeeded": successful_groups,
             "chunks_sent": sum(len(group) for group in groups),
             "chunks_total": len(chunks),
+            "coverage": coverage,
         },
     )
 

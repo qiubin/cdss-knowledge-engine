@@ -104,6 +104,10 @@ class ExtractedEntity(BaseModel):
     quote: str = ""
     confidence: float = 0.0
     attributes: Dict[str, Any] = {}
+    candidate_status: str = ""
+    standard_system: str = ""
+    discovered_from: str = ""
+    candidate_original_code: str = ""
 
 
 class ExtractionResult(BaseModel):
@@ -536,9 +540,9 @@ async def get_document_result(doc_id: str):
         total_pages=parsed["total_pages"],
         total_lines=parsed["total_lines"],
         chunks=[ParsedChunk(**c) for c in parsed["chunks"]],
-        entities=[ExtractedEntity(**e) for e in doc["entities"]],
+        entities=[ExtractedEntity(**e) for e in doc.get("entities") or []],
         suggested_relations=doc.get("suggested_relations", []),
-        suggested_rules=doc["suggested_rules"],
+        suggested_rules=doc.get("suggested_rules") or [],
         extraction_mode=extraction.get("mode", "local"),
         domain=extraction.get("domain", "western"),
         template_id=extraction.get("template_id", ""),
@@ -555,7 +559,7 @@ async def get_entities(doc_id: str):
     doc = _load_doc(doc_id)
     if not doc:
         raise HTTPException(404, "文档未找到")
-    return {"doc_id": doc_id, "entities": doc["entities"]}
+    return {"doc_id": doc_id, "entities": doc.get("entities") or []}
 
 
 @router.get("/documents")
@@ -574,7 +578,7 @@ async def list_documents():
             "doc_title": d["doc_title"],
             "total_pages": d["parsed"]["total_pages"],
             "total_lines": d["parsed"]["total_lines"],
-            "entity_count": len(d["entities"]),
+            "entity_count": len(d.get("entities") or []),
             "domain": d.get("extraction", {}).get("domain", "western"),
             "template_id": d.get("extraction", {}).get("template_id", ""),
             "uploaded_at": d["uploaded_at"],

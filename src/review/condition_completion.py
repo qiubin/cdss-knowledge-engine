@@ -243,6 +243,62 @@ def _transform(node: Any, collected: Dict[str, Any]) -> Any:
     return node
 
 
+def normalize_condition_logic(node: Any) -> tuple[Any, bool]:
+    """Repair legacy condition groups without inventing ambiguous logic.
+
+    ``ANY`` is the historical spelling of OR. A one-child group has no real
+    Boolean decision and is collapsed. Multi-child groups with no operator are
+    deliberately left for a short reviewer choice in the UI.
+    """
+    if not isinstance(node, dict):
+        return node, False
+    changed = False
+    normalized = dict(node)
+    children = []
+    for child in node.get("children") or []:
+        fixed, child_changed = normalize_condition_logic(child)
+        children.append(fixed)
+        changed = changed or child_changed
+    if "children" in node:
+        normalized["children"] = children
+    required = []
+    for child in node.get("required_children") or []:
+        fixed, child_changed = normalize_condition_logic(child)
+        required.append(fixed)
+        changed = changed or child_changed
+    if "required_children" in node:
+        normalized["required_children"] = required
+    if normalized.get("type") != "group":
+        return normalized, changed
+    if normalized.get("operator") == "ANY":
+        normalized["operator"] = "OR"
+        changed = True
+    if normalized.get("operator") not in {"AND", "OR", "NOT"} and len(children) == 1:
+        return children[0], True
+    return normalized, changed
+
+
+def unresolved_logic_questions(node: Any, path: str = "conditions") -> List[Dict[str, Any]]:
+    """Describe only Boolean choices that require a clinical reviewer."""
+    if not isinstance(node, dict):
+        return []
+    questions: List[Dict[str, Any]] = []
+    children = node.get("children") or []
+    if (
+        node.get("type") == "group"
+        and node.get("operator") not in {"AND", "OR", "NOT"}
+        and len(children) >= 2
+    ):
+        questions.append({
+            "path": path,
+            "child_count": len(children),
+            "children": children,
+        })
+    for index, child in enumerate(children):
+        questions.extend(unresolved_logic_questions(child, f"{path}.children[{index}]"))
+    return questions
+
+
 def complete_rule_conditions(
     rule: Dict[str, Any],
     graph: Dict[str, Any],
@@ -262,16 +318,32 @@ def complete_rule_conditions(
         graph, disease_code, vocab, approved_only=approved_only
     )
     if not (collected["symptoms"] or collected["objective"]):
+        # No new graph evidence must not lock an already-authored basis out of
+        # the editor. We can still repair harmless legacy syntax and ask only
+        # for genuinely ambiguous Boolean choices.
+        conditions, normalized = normalize_condition_logic(rule.get("conditions"))
+        logic_questions = unresolved_logic_questions(conditions)
+        has_conditions = bool(conditions) and not (
+            isinstance(conditions, dict)
+            and conditions.get("type") == "group"
+            and not (conditions.get("children") or [])
+        )
         return {
-            "changed": False,
+            "changed": normalized,
+            "conditions": conditions,
             "reason": f"图谱中疾病 {disease_code} 没有可映射的诊断证据条件",
             "skipped": collected["skipped"],
+            "logic_questions": logic_questions,
+            "logic_normalized": normalized,
+            "ready": has_conditions,
         }
 
     conditions = rule.get("conditions")
     new_conditions = _transform(conditions, collected)
     if new_conditions is None:
         new_conditions = conditions
+    new_conditions, normalized = normalize_condition_logic(new_conditions)
+    logic_questions = unresolved_logic_questions(new_conditions)
     if approved_only and new_conditions:
         # Keep authored logic intact; append new candidates in a separate group
         # for explicit human confirmation rather than losing reviewed edges.
@@ -294,6 +366,12 @@ def complete_rule_conditions(
             "reason": "规则条件无需补全（不完整叶子的图谱证据不足以生成条件）",
             "skipped": collected["skipped"],
             "candidates": missing if approved_only else [],
+            "logic_questions": logic_questions,
+            "ready": bool(new_conditions) and not (
+                isinstance(new_conditions, dict)
+                and new_conditions.get("type") == "group"
+                and not (new_conditions.get("children") or [])
+            ),
         }
     return {
         "changed": True,
@@ -301,4 +379,11 @@ def complete_rule_conditions(
         "used": collected["used"],
         "skipped": collected["skipped"],
         "candidates": missing if approved_only and new_conditions else [],
+        "logic_questions": logic_questions,
+        "logic_normalized": normalized,
+        "ready": bool(new_conditions) and not (
+            isinstance(new_conditions, dict)
+            and new_conditions.get("type") == "group"
+            and not (new_conditions.get("children") or [])
+        ),
     }

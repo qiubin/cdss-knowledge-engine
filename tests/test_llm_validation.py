@@ -55,6 +55,116 @@ def make_chunks() -> list:
 
 
 class PayloadValidationTest(unittest.TestCase):
+    def test_unknown_allowed_entity_is_retained_as_pending_candidate(self):
+        payload = {
+            "entities": [
+                {
+                    "entity_type": "disease", "name": "高血压", "code": "I10",
+                    "chunk_id": "c1", "page": 1, "line_start": 5, "line_end": 6,
+                },
+                {
+                    "entity_type": "lab", "name": "血乳酸", "code": "",
+                    "chunk_id": "c1", "page": 1, "line_start": 5, "line_end": 6,
+                },
+            ],
+            "suggested_relations": [{
+                "relation_code": "DISEASE_HAS_LAB",
+                "source_type": "disease", "source_code": "I10",
+                "target_type": "lab", "target_name": "血乳酸",
+                "chunk_id": "c1",
+            }],
+            "suggested_rules": [],
+        }
+        entities, _, relations, warnings, *_ = _validate_llm_payload(
+            payload, make_chunks(), make_template(), "DOC", "测试指南"
+        )
+        candidate = next(item for item in entities if item["name"] == "血乳酸")
+        self.assertTrue(candidate["code"].startswith("LOCAL-LAB-"))
+        self.assertEqual(candidate["candidate_status"], "pending")
+        self.assertEqual(len(relations), 1)
+        self.assertEqual(relations[0]["target_code"], candidate["code"])
+        self.assertTrue(any("已保留 1 个模板词表外实体" in item for item in warnings))
+        self.assertFalse(any("已忽略模板外实体 血乳酸" in item for item in warnings))
+
+    def test_relation_only_unknown_name_is_materialized_as_candidate(self):
+        payload = {
+            "entities": [{
+                "entity_type": "disease", "name": "高血压", "code": "I10",
+                "chunk_id": "c1", "page": 1, "line_start": 5, "line_end": 6,
+            }],
+            "suggested_relations": [{
+                "relation_code": "DISEASE_HAS_LAB",
+                "source_type": "disease", "source_code": "I10",
+                "target_type": "lab", "target_name": "新型检验项目",
+                "chunk_id": "c1",
+            }],
+            "suggested_rules": [],
+        }
+        entities, _, relations, _, *_ = _validate_llm_payload(
+            payload, make_chunks(), make_template(), "DOC", "测试指南"
+        )
+        candidate = next(item for item in entities if item["name"] == "新型检验项目")
+        self.assertTrue(candidate["code"].startswith("LOCAL-LAB-"))
+        self.assertEqual(candidate["candidate_status"], "pending")
+        self.assertEqual(relations[0]["target_code"], candidate["code"])
+
+    def test_unnamed_codes_for_treatment_candidates_are_generated(self):
+        payload = {
+            "entities": [{
+                "entity_type": "disease", "name": "高血压", "code": "I10",
+                "chunk_id": "c1", "page": 1, "line_start": 5, "line_end": 6,
+            }],
+            "suggested_relations": [],
+            "suggested_rules": [],
+            "suggested_treatment_plans": [{
+                "treatment_plan_name": "强化降压方案", "chunk_id": "c1",
+            }],
+            "suggested_contraindications": [{
+                "treatment_plan_name": "强化降压方案",
+                "contraindication_name": "严重低血压", "chunk_id": "c1",
+            }],
+        }
+        result = _validate_llm_payload(
+            payload, make_chunks(), make_template(), "DOC", "测试指南"
+        )
+        plan = result[4][0]
+        contraindication = result[6][0]
+        self.assertTrue(plan["treatment_plan_code"].startswith("LOCAL-TP-"))
+        self.assertEqual(plan["candidate_status"], "pending")
+        self.assertEqual(
+            contraindication["treatment_plan_code"], plan["treatment_plan_code"]
+        )
+        self.assertTrue(
+            contraindication["contraindication_code"].startswith("LOCAL-CONTRA-")
+        )
+
+    def test_text_priority_falls_back_instead_of_failing_import(self):
+        payload = {
+            "entities": [{
+                "entity_type": "disease", "name": "高血压", "code": "I10",
+                "chunk_id": "c1", "page": 1, "line_start": 5, "line_end": 6,
+            }],
+            "suggested_relations": [],
+            "suggested_rules": [{
+                "rule_id": "DX-1", "disease_code": "I10", "priority": "首选",
+                "source": {"chunk_id": "c1"},
+            }],
+            "suggested_treatment_plans": [],
+            "suggested_treatment_rules": [{
+                "rule_id": "TX-1", "disease_code": "I10", "priority": "首选",
+                "source": {"chunk_id": "c1"},
+            }],
+            "suggested_contraindications": [],
+        }
+        result = _validate_llm_payload(
+            payload, make_chunks(), make_template(), "DOC", "测试指南"
+        )
+        self.assertEqual(result[1][0]["priority"], 50)
+        self.assertEqual(result[5][0]["priority"], 50)
+        self.assertGreaterEqual(
+            sum("priority 应为整数" in warning for warning in result[3]), 2
+        )
+
     def test_treatment_rule_without_conditions_uses_empty_group(self):
         payload = {
             "entities": [{

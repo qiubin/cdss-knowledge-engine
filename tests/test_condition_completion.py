@@ -8,6 +8,8 @@ from src.review.condition_completion import (
     build_condition_tree,
     collect_disease_evidence_conditions,
     complete_rule_conditions,
+    normalize_condition_logic,
+    unresolved_logic_questions,
 )
 
 
@@ -104,6 +106,34 @@ class BuildTreeTest(unittest.TestCase):
 
 
 class CompleteRuleTest(unittest.TestCase):
+    def test_legacy_any_and_single_child_groups_are_normalized(self):
+        fixed, changed = normalize_condition_logic({
+            "type": "group", "operator": "ANY", "children": [
+                {"type": "symptom", "symptom_code": "A"},
+                {"type": "symptom", "symptom_code": "B"},
+            ],
+        })
+        self.assertTrue(changed)
+        self.assertEqual(fixed["operator"], "OR")
+        single, changed = normalize_condition_logic({
+            "type": "group", "operator": None,
+            "children": [{"type": "symptom", "symptom_code": "A"}],
+        })
+        self.assertTrue(changed)
+        self.assertEqual(single["type"], "symptom")
+
+    def test_ambiguous_multi_condition_group_becomes_reviewer_question(self):
+        conditions = {
+            "type": "group", "operator": None, "children": [
+                {"type": "symptom", "symptom_code": "A"},
+                {"type": "symptom", "symptom_code": "B"},
+            ],
+        }
+        questions = unresolved_logic_questions(conditions)
+        self.assertEqual(len(questions), 1)
+        self.assertEqual(questions[0]["path"], "conditions")
+        self.assertEqual(questions[0]["child_count"], 2)
+
     def test_reviewed_associations_do_not_add_mandatory_clause(self):
         rule = empty_rule()
         rule["conditions"] = {"type": "symptom", "symptom_code": "SYM_TEST"}
@@ -147,6 +177,36 @@ class CompleteRuleTest(unittest.TestCase):
         result = complete_rule_conditions(rule, graph_with_evidence())
         self.assertFalse(result["changed"])
         self.assertTrue(result.get("reason"))
+        self.assertFalse(result["ready"])
+
+    def test_existing_conditions_remain_editable_without_new_graph_evidence(self):
+        rule = empty_rule()
+        rule["disease_code"] = "I99.9"
+        rule["conditions"] = {
+            "type": "group", "operator": None,
+            "children": [
+                {"type": "symptom", "symptom_code": "A"},
+                {"type": "symptom", "symptom_code": "B"},
+            ],
+        }
+        result = complete_rule_conditions(rule, graph_with_evidence())
+        self.assertTrue(result["ready"])
+        self.assertEqual(len(result["logic_questions"]), 1)
+
+    def test_legacy_logic_is_repaired_without_new_graph_evidence(self):
+        rule = empty_rule()
+        rule["disease_code"] = "I99.9"
+        rule["conditions"] = {
+            "type": "group", "operator": "ANY",
+            "children": [
+                {"type": "symptom", "symptom_code": "A"},
+                {"type": "symptom", "symptom_code": "B"},
+            ],
+        }
+        result = complete_rule_conditions(rule, graph_with_evidence())
+        self.assertTrue(result["changed"])
+        self.assertTrue(result["ready"])
+        self.assertEqual(result["conditions"]["operator"], "OR")
 
     def test_existing_incomplete_leaf_replaced_and_consistent(self):
         rule = empty_rule()

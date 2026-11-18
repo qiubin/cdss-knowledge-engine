@@ -14,6 +14,7 @@ sys.path.insert(0, str(project_root))
 from src.api.import_job_manager import ImportController, ImportJob, ImportStopped
 from src.extraction.auto_pipeline import run_auto_pipeline
 from src.extraction.service import extract_llm
+from src.llm import LLMError
 
 
 def _controller() -> ImportController:
@@ -28,6 +29,66 @@ def _chunks(n: int) -> List[Dict[str, Any]]:
 
 
 class ExtractLlmCheckpointTest(unittest.IsolatedAsyncioTestCase):
+    async def test_max_chunks_batches_all_chunks_instead_of_truncating(self):
+        from src.extraction.repository import ExtractionTemplateRepository
+        service = sys.modules["src.extraction.service"]
+        template = ExtractionTemplateRepository().get("GENERIC_GUIDELINE_V1")
+        calls = 0
+
+        async def fake_llm(settings, prompt):
+            nonlocal calls
+            calls += 1
+            return {"entities": [], "suggested_relations": [], "suggested_rules": []}
+
+        original = service.chat_json
+        service.chat_json = fake_llm
+        self.addCleanup(setattr, service, "chat_json", original)
+        result = await extract_llm(
+            _chunks(5), template, "DOC-ALL", "t",
+            {"llm": {"api_key": "TEST_KEY", "base_url": "http://localhost",
+                     "max_chunks": 2, "max_chunk_chars": 100000}},
+        )
+        self.assertEqual(calls, 3)
+        self.assertEqual(result.metadata["chunks_sent"], 5)
+        self.assertEqual(result.metadata["coverage"]["processed"], 5)
+        self.assertTrue(result.metadata["coverage"]["complete"])
+        self.assertFalse(any("仅发送前" in item for item in result.warnings))
+
+    async def test_split_retry_isolates_invalid_chunk(self):
+        from src.extraction.repository import ExtractionTemplateRepository
+        service = sys.modules["src.extraction.service"]
+        template = ExtractionTemplateRepository().get("GENERIC_GUIDELINE_V1")
+        calls = 0
+
+        async def fake_llm(settings, prompt):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise LLMError("大模型响应 JSON 格式错误，输出可能被截断")
+            return {"entities": [], "suggested_relations": [], "suggested_rules": []}
+
+        original_llm = service.chat_json
+        original_validate = service._validate_llm_payload
+        service.chat_json = fake_llm
+
+        def selective_validate(payload, chunks, *args):
+            if chunks[0]["chunk_id"] == "C1":
+                raise ValueError("坏片段")
+            return original_validate(payload, chunks, *args)
+
+        service._validate_llm_payload = selective_validate
+        self.addCleanup(setattr, service, "chat_json", original_llm)
+        self.addCleanup(setattr, service, "_validate_llm_payload", original_validate)
+
+        result = await extract_llm(
+            _chunks(2), template, "DOC-T", "t",
+            {"llm": {"api_key": "TEST_KEY", "base_url": "http://localhost",
+                     "max_chunks": 80, "max_chunk_chars": 10000}},
+        )
+        self.assertEqual(result.entities, [])
+        self.assertTrue(any("单独重试失败" in item for item in result.warnings))
+        self.assertTrue(any("重试成功 1/2" in item for item in result.warnings))
+
     async def test_progress_reported_per_group(self):
         controller = _controller()
         calls: List[Dict[str, int]] = []

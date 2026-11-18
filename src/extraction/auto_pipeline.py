@@ -51,13 +51,16 @@ def _clamp(value: Any, low: int, high: int, fallback: int) -> int:
 
 
 def _chunk_groups(chunks: List[Dict[str, Any]], max_chars: int, max_chunks: int) -> List[List[Dict[str, Any]]]:
-    selected = chunks[:max_chunks]
+    max_chunks_per_group = max(1, int(max_chunks))
     groups: List[List[Dict[str, Any]]] = []
     current: List[Dict[str, Any]] = []
     size = 0
-    for chunk in selected:
+    for chunk in chunks:
         length = len(chunk.get("text", ""))
-        if current and size + length > max_chars:
+        if current and (
+            size + length > max_chars
+            or len(current) >= max_chunks_per_group
+        ):
             groups.append(current)
             current, size = [], 0
         current.append(chunk)
@@ -365,7 +368,10 @@ def _normalize_rules(
             "name": str(raw.get("name") or f"自动生成: {disease_name or disease_code}{rule_type}规则"),
             "disease_code": disease_code,
             "disease_name": disease_name or disease_code,
-            "priority": int(raw.get("priority") or (50 if rule_type == "diagnosis" else 40)),
+            "priority": _clamp(
+                raw.get("priority"), 0, 100,
+                50 if rule_type == "diagnosis" else 40,
+            ),
             "status": status,
             "graph_filename": graph_filename,
             "conditions": conditions,

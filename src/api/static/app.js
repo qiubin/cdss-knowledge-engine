@@ -1023,6 +1023,7 @@
   function renderImportResult() {
     const box = $("#importResult"); if (!box || !state.doc) return;
     const doc = state.doc;
+    const coverage = doc.provider_metadata?.coverage;
     const domain = normalizeDomainClient(doc.extraction?.domain || doc.domain);
     const anchors = doc.entities.filter((e) => domain === "tcm" ? e.entity_type === "syndrome" : e.entity_type === "disease");
     const target = doc.targetDisease || (anchors[0] && anchors[0].code) || "";
@@ -1030,7 +1031,7 @@
     const relationCount = (doc.suggested_relations || []).length;
     const tabs = [["lines", "原文定位"], ["entities", `抽取实体 ${doc.entities.length}`], ["relations", `候选关系 ${relationCount}`], ["rules", `候选规则 ${doc.suggested_rules.length}`]];
     box.innerHTML = `
-      <div class="result-banner ok">${esc(doc.doc_title)} 解析成功：${doc.total_pages} 页，${doc.total_lines} 行，候选规则 ${doc.suggested_rules.length} 条。<div class="muted">方式：${doc.extraction_mode === "llm" ? "大模型解析" : "本地模板解析"}；领域：${domain === "tcm" ? "中医" : "西医"}；模板：${esc(doc.template_name || doc.template_id || "-")}</div></div>
+      <div class="result-banner ok">${esc(doc.doc_title)} 解析成功：${doc.total_pages} 页，${doc.total_lines} 行，候选规则 ${doc.suggested_rules.length} 条。<div class="muted">方式：${doc.extraction_mode === "llm" ? "大模型解析" : "本地模板解析"}；领域：${domain === "tcm" ? "中医" : "西医"}；模板：${esc(doc.template_name || doc.template_id || "-")}${coverage ? `；片段覆盖 ${coverage.processed}/${coverage.total}` : ""}</div></div>
       <div class="pipeline">
         <div class="step done"><strong>1 上传并解析</strong><span>原文定位、实体与候选规则</span></div>
         <div class="step"><strong>2 审核候选内容</strong><span>核对实体、关系和候选规则</span></div>
@@ -1099,7 +1100,7 @@
       if (requestToken !== state.importRequestToken || !lineList) return;
       lineList.innerHTML = table(["页", "行", "正文", "定位"], data.lines.map((l) => `<tr><td>${l.page}</td><td>${l.line}</td><td>${esc(l.text)}</td><td class="mono muted">p${l.page}:l${l.line}</td></tr>`));
     } else if (state.importTab === "entities") {
-      body.innerHTML = table(["类型", "名称", "编码", "页 / 行", "证据引文"], doc.entities.map((e) => `<tr><td>${typeName[e.entity_type] || e.entity_type}</td><td>${esc(e.name)}</td><td class="mono">${esc(e.code || e.concept_code || "-")}</td><td class="nowrap">p${e.page}:l${e.line_start}</td><td><div class="quote">${esc(e.quote)}</div></td></tr>`));
+      body.innerHTML = table(["类型", "名称", "状态", "编码", "页 / 行", "证据引文"], doc.entities.map((e) => `<tr><td>${typeName[e.entity_type] || e.entity_type}</td><td>${esc(e.name)}</td><td>${e.candidate_status === "pending" ? '<span class="badge warn">待术语审核</span>' : '<span class="badge ok">已识别</span>'}</td><td class="mono">${esc(e.code || e.concept_code || "-")}</td><td class="nowrap">p${e.page}:l${e.line_start}</td><td><div class="quote">${esc(e.quote)}</div></td></tr>`));
     } else if (state.importTab === "relations") {
       const relations = doc.suggested_relations || [];
       body.innerHTML = relations.length ? table(["关系", "源实体", "目标实体", "证据概念", "页 / 行", "引文"], relations.map((r) => `
@@ -1176,7 +1177,7 @@
           <div class="field"><label>温度</label><input id="llmTemperature" type="number" step="0.1" min="0" max="2" value="${config.llm.temperature}"></div>
           <div class="field"><label>超时秒数</label><input id="llmTimeout" type="number" min="5" value="${config.llm.timeout_seconds}"></div>
           <div class="field"><label>单次字符上限</label><input id="llmMaxChars" type="number" min="1000" value="${config.llm.max_chunk_chars}"></div>
-          <div class="field"><label>最大片段数</label><input id="llmMaxChunks" type="number" min="1" value="${config.llm.max_chunks}"></div>
+          <div class="field"><label>单批最大片段数（全量分批）</label><input id="llmMaxChunks" type="number" min="1" value="${config.llm.max_chunks}"></div>
         </div>
         <div class="actions"><button id="saveExtraction" class="btn primary">保存解析配置</button><button id="testLlm" class="btn">测试连接</button><button id="clearLlmKey" class="btn ghost">清除 API Key</button></div>
       `, "", "API Key 可保存在本地配置中，也可回退到环境变量；不会回显完整 Key")}
@@ -3706,6 +3707,495 @@
     dialog.showModal();
   }
 
+  async function openNodeNameEditor(item, { startWithAi = false, initialPrompt = "", suggestedName = "" } = {}) {
+    const dialog = $("#editorDialog");
+    const save = $("#editorSave");
+    save.hidden = false;
+    save.textContent = "保存修改";
+    $("#editorBody").innerHTML = '<div class="empty">正在加载实体…</div>';
+    $("#editorCancel").onclick = () => dialog.close();
+    dialog.showModal();
+    try {
+      const detail = await api(`/api/kg/nodes/${encodeURIComponent(item.node_id)}?graph_filename=${encodeURIComponent(item.graph_filename)}`);
+      const node = detail.node || {};
+      $("#editorBody").innerHTML = `
+        <h3>修正实体名称</h3>
+        <div class="result-banner warning"><strong>编码保持不变</strong><p>修改名称后，已通过的实体会回到“待复核”，相关关系也会重新标记为待复核。保存后仍需人工点击通过。</p></div>
+        <div class="field"><label>稳定编码</label><input value="${esc(node.code || node.concept_code || item.node_id)}" readonly></div>
+        <div class="field"><label>当前名称</label><input value="${esc(node.name || item.name || "")}" readonly></div>
+        <div class="field"><label>修正后的中文名称</label><input id="nodeCorrectedName" maxlength="200" value="${esc(suggestedName || node.name || item.name || "")}" placeholder="例如：血乳酸阳性"></div>
+        <div class="detail-section">
+          <h4>让 AI 给出修正建议（可选）</h4>
+          <p class="muted">写明希望如何纠正。AI 只填入候选名称，不会自动保存或通过。</p>
+          <div class="field"><label>提示词</label><textarea id="nodeCorrectionPrompt" maxlength="2000" rows="3" placeholder="例如：结合实体编码和属性，改成规范中文医学名称；保留阳性结果含义">${esc(initialPrompt)}</textarea></div>
+          <button type="button" class="btn" id="nodeAiSuggest">生成修正建议</button>
+          <div id="nodeAiSuggestion" class="muted"></div>
+        </div>
+        <div class="field"><label>修改说明</label><textarea id="nodeCorrectionNote" rows="2" placeholder="例如：英文候选名改为规范中文表述"></textarea></div>`;
+      const suggest = $("#nodeAiSuggest");
+      suggest.onclick = async () => {
+        suggest.disabled = true;
+        suggest.textContent = "AI 修正中…";
+        $("#nodeAiSuggestion").textContent = "正在根据编码、类型和属性生成建议…";
+        try {
+          const result = await api(`/api/kg/nodes/${encodeURIComponent(item.node_id)}/ai-correction?graph_filename=${encodeURIComponent(item.graph_filename)}`, {
+            json: { prompt: $("#nodeCorrectionPrompt").value.trim() },
+          });
+          $("#nodeCorrectedName").value = result.suggested_name;
+          const confidence = Number.isFinite(Number(result.confidence)) ? ` · 置信度 ${Math.round(Number(result.confidence) * 100)}%` : "";
+          $("#nodeAiSuggestion").innerHTML = `<div class="result-banner ${result.needs_human_review ? "warning" : "ok"}"><strong>建议：${esc(result.suggested_name)}</strong><p>${esc(result.reason || "请人工核对后保存")}${confidence}</p></div>`;
+          $("#nodeCorrectedName").focus();
+          $("#nodeCorrectedName").select();
+        } catch (error) {
+          $("#nodeAiSuggestion").textContent = `生成失败：${error.message}`;
+          toast(error.message, true);
+        } finally {
+          suggest.disabled = false;
+          suggest.textContent = "重新生成建议";
+        }
+      };
+      save.onclick = async () => {
+        const name = $("#nodeCorrectedName").value.trim();
+        if (!name) { toast("请填写修正后的实体名称", true); return; }
+        save.disabled = true;
+        save.textContent = "保存中…";
+        try {
+          await api(`/api/kg/nodes/${encodeURIComponent(item.node_id)}?graph_filename=${encodeURIComponent(item.graph_filename)}`, {
+            method: "PUT",
+            json: { name, reviewer: reviewReviewer(), note: $("#nodeCorrectionNote").value.trim() || "人工修正实体名称" },
+          });
+          dialog.close();
+          markStale("dashboard", "graph", "graphVisual", "rules");
+          toast(`实体名称已修改为“${name}”，请重新审核`);
+          await renderReviewCenter();
+        } catch (error) { toast(error.message, true); }
+        finally { save.disabled = false; save.textContent = "保存修改"; }
+      };
+      if (startWithAi) {
+        $("#nodeCorrectionPrompt").focus();
+        $("#nodeCorrectionPrompt").scrollIntoView({ block: "center" });
+      } else {
+        $("#nodeCorrectedName").focus();
+        $("#nodeCorrectedName").select();
+      }
+    } catch (error) {
+      $("#editorBody").innerHTML = `<div class="empty">实体加载失败：${esc(error.message)}</div>`;
+      save.hidden = true;
+    }
+    dialog.onclose = () => {
+      save.hidden = false;
+      save.disabled = false;
+      save.textContent = "保存";
+      dialog.onclose = null;
+    };
+  }
+
+  function relationAiHasCorrection(result) {
+    return Boolean(
+      result?.suggested_source_name || result?.suggested_target_name ||
+      result?.suggested_relation_code || result?.reverse_direction
+    );
+  }
+
+  async function applyRelationAiCorrection(item, result) {
+    const response = await api(`/api/kg/relation-ai-correction?graph_filename=${encodeURIComponent(item.graph_filename)}`, {
+      json: {
+        source_node_id: item.source_node_id,
+        relation_code: item.relation_code,
+        target_node_id: item.target_node_id,
+        reviewer: reviewReviewer(),
+        note: `[AI审核建议] ${result.summary || "采纳结构化修正建议"}`,
+        suggested_source_name: result.suggested_source_name || "",
+        suggested_target_name: result.suggested_target_name || "",
+        suggested_relation_code: result.suggested_relation_code || "",
+        reverse_direction: Boolean(result.reverse_direction),
+      },
+    });
+    if (result.suggested_source_name) item.source_name = result.suggested_source_name;
+    if (result.suggested_target_name) item.target_name = result.suggested_target_name;
+    if (result.reverse_direction) {
+      [item.source_node_id, item.target_node_id] = [item.target_node_id, item.source_node_id];
+      [item.source_name, item.target_name] = [item.target_name, item.source_name];
+      [item.source_status, item.target_status] = [item.target_status, item.source_status];
+      [item.source_node_type, item.target_node_type] = [item.target_node_type, item.source_node_type];
+    }
+    if (result.suggested_relation_code) item.relation_code = result.suggested_relation_code;
+    item.item_id = response.relation_id || item.item_id;
+    item.status = "stale";
+    markStale("dashboard", "graph", "graphVisual", "rules");
+    return response;
+  }
+
+  function openRelationAiReview(item, { initialPrompt = "" } = {}) {
+    const dialog = $("#editorDialog");
+    const save = $("#editorSave");
+    save.hidden = false;
+    save.textContent = "关闭";
+    $("#editorCancel").onclick = () => dialog.close();
+    $("#editorBody").innerHTML = `
+      <h3>AI 审核关系</h3>
+      <div class="quote">${esc(item.source_name || item.source_node_id)} → ${esc(relationLabel(item))} → ${esc(item.target_name || item.target_node_id)}</div>
+      <p class="muted">AI 会核对实体类型、关系方向、医学语义和指南原文。结论仅作建议，不会自动通过、拒绝或修改图谱。</p>
+      <div class="field"><label>补充审核或修正要求（可选）</label><textarea id="relationAiPrompt" maxlength="2000" rows="3" placeholder="例如：重点核对原文是否明确要求开展该检查；将全英文实体名改成规范中文">${esc(initialPrompt)}</textarea></div>
+      <div class="actions"><button type="button" class="btn primary" id="runRelationAiReview">开始 AI 审核</button><button type="button" class="btn danger" id="stopRelationAiReview" hidden>停止</button></div>
+      <div id="relationAiResult" class="detail-section"><div class="muted">尚未开始审核</div></div>`;
+    save.onclick = () => dialog.close();
+    const run = $("#runRelationAiReview");
+    const stop = $("#stopRelationAiReview");
+    let controller = null;
+    stop.onclick = () => {
+      controller?.abort();
+      stop.disabled = true;
+      stop.textContent = "正在停止…";
+    };
+    run.onclick = async () => {
+      controller = new AbortController();
+      run.disabled = true;
+      run.textContent = "AI 审核中…";
+      stop.hidden = false;
+      stop.disabled = false;
+      stop.textContent = "停止";
+      $("#relationAiResult").innerHTML = '<div class="empty">正在核对关系方向、语义和指南原文…</div>';
+      try {
+        const result = await api(`/api/kg/relation-ai-review?graph_filename=${encodeURIComponent(item.graph_filename)}`, {
+          json: {
+            source_node_id: item.source_node_id,
+            relation_code: item.relation_code,
+            target_node_id: item.target_node_id,
+            prompt: $("#relationAiPrompt").value.trim(),
+          },
+          signal: controller.signal,
+        });
+        const labels = {
+          approve: ["建议通过", "ok"], reject: ["建议拒绝", "danger"],
+          revise: ["建议修正", "warning"], insufficient_evidence: ["证据不足", "warning"],
+        };
+        const [label, tone] = labels[result.assessment] || [result.assessment, "warning"];
+        const issues = (result.issues || []).map((issue) => `<li><strong>${esc(issue.area || "问题")}</strong>：${esc(issue.problem || "-")}<br><span class="muted">依据：${esc(issue.evidence || "未提供")}</span><br>建议：${esc(issue.suggestion || "人工复核")}</li>`).join("");
+        const correction = [
+          result.suggested_relation_code ? `关系类型：${result.suggested_relation_code}` : "",
+          result.suggested_direction ? `方向：${result.suggested_direction}` : "",
+          result.reverse_direction ? "结构化操作：反转关系方向" : "",
+          result.suggested_source_name ? `起点实体名称：${result.suggested_source_name}` : "",
+          result.suggested_target_name ? `目标实体名称：${result.suggested_target_name}` : "",
+          result.suggested_statement ? `推荐表述：${result.suggested_statement}` : "",
+        ].filter(Boolean);
+        const checklist = (result.reviewer_checklist || []).map((entry) => `<li>${esc(entry)}</li>`).join("");
+        const confidence = Number.isFinite(Number(result.confidence)) ? `${Math.round(Number(result.confidence) * 100)}%` : "-";
+        const canReject = ["draft", "stale", "active"].includes(item.status || "draft");
+        const canApprove = ["draft", "stale"].includes(item.status || "draft");
+        const endpointsBlocked = relationEndpointBlocked(item);
+        const controls = [
+          canApprove ? `<button type="button" class="btn primary" data-single-ai-approve ${result.assessment === "approve" ? "" : "hidden"} ${endpointsBlocked ? "disabled title=\"请先通过关系两端实体\"" : ""}>${endpointsBlocked ? "端点未通过" : "按建议通过"}</button>` : "",
+          ["reject", "revise", "insufficient_evidence"].includes(result.assessment) && canReject ? `<button type="button" class="btn danger" data-single-ai-reject>${item.status === "active" ? "标记失效" : (result.assessment === "reject" ? "按建议拒绝" : (result.assessment === "insufficient_evidence" ? "因证据不足拒绝" : "拒绝此关系"))}</button>` : "",
+          result.assessment === "revise" && relationAiHasCorrection(result) ? '<button type="button" class="btn primary" data-single-ai-apply>一键应用修正</button>' : "",
+        ].filter(Boolean).join("");
+        $("#relationAiResult").innerHTML = `
+          <div class="result-banner ${tone}"><strong>${esc(label)}</strong><p>${esc(result.summary || "请人工核对")}</p></div>
+          <div class="muted">模型：${esc(result.model || "-")} · 置信度：${confidence} · 原文核验：${result.source_verified ? "已读取指南原文" : "未读取到原文"}</div>
+          ${issues ? `<h4>发现的问题与修正建议</h4><ul class="issue-list">${issues}</ul>` : '<p class="muted">AI 未列出具体问题。</p>'}
+          ${correction.length ? `<h4>建议修正</h4><div class="quote">${correction.map(esc).join("<br>")}</div>` : ""}
+          ${checklist ? `<h4>人工复核清单</h4><ul>${checklist}</ul>` : ""}
+          ${controls ? `<div class="actions">${controls}</div>` : ""}
+          <div class="result-banner warning"><strong>仍需人工决定</strong><p>请根据上方建议使用本页的“通过”或“拒绝”；AI 不会替代审核人操作。</p></div>`;
+        $("#relationAiResult").querySelector("[data-single-ai-approve]")?.addEventListener("click", async (event) => {
+          const button = event.currentTarget;
+          if (relationEndpointBlocked(item)) { toast("请先通过关系两端实体", true); return; }
+          if (!confirm("确认根据 AI 建议通过这条关系？")) return;
+          button.disabled = true;
+          button.textContent = "提交中…";
+          try {
+            await submitReviewAction(item, "approve", `[AI审核建议] ${result.summary || "建议通过"}`);
+            item.status = "active";
+            button.textContent = "已通过";
+          } catch (error) { button.disabled = false; button.textContent = "按建议通过"; toast(error.message, true); }
+        });
+        $("#relationAiResult").querySelector("[data-single-ai-reject]")?.addEventListener("click", async (event) => {
+          const button = event.currentTarget;
+          const action = item.status === "active" ? "retire" : "reject";
+          if (!confirm(`确认根据 AI 建议${action === "retire" ? "标记失效" : "拒绝"}这条关系？`)) return;
+          button.disabled = true;
+          try {
+            const reason = result.assessment === "insufficient_evidence" ? "[证据不足]" : "[AI审核建议]";
+            await submitReviewAction(item, action, `${reason} ${result.summary || "建议拒绝"}`);
+            item.status = action === "retire" ? "retired" : "rejected";
+            button.textContent = action === "retire" ? "已标记失效" : "已拒绝";
+          } catch (error) { button.disabled = false; toast(error.message, true); }
+        });
+        $("#relationAiResult").querySelector("[data-single-ai-apply]")?.addEventListener("click", async (event) => {
+          const button = event.currentTarget;
+          if (!confirm("确认一键应用 AI 给出的实体名称、关系类型及方向修正？应用后关系将回到待复核。")) return;
+          button.disabled = true;
+          button.textContent = "应用中…";
+          try {
+            const applied = await applyRelationAiCorrection(item, result);
+            button.textContent = `已应用 ${applied.changes.length} 项修正`;
+            const approve = $("#relationAiResult").querySelector("[data-single-ai-approve]");
+            if (approve) {
+              approve.hidden = false;
+              approve.disabled = relationEndpointBlocked(item);
+              approve.textContent = relationEndpointBlocked(item) ? "端点未通过" : "通过修正后的关系";
+            }
+          } catch (error) { button.disabled = false; button.textContent = "一键应用修正"; toast(error.message, true); }
+        });
+      } catch (error) {
+        const stopped = error.name === "AbortError";
+        $("#relationAiResult").innerHTML = `<div class="result-banner ${stopped ? "warning" : "danger"}"><strong>${stopped ? "已停止" : "AI 审核失败"}</strong><p>${stopped ? "本次请求已停止，可修改提示词后继续审核。" : esc(error.message)}</p></div>`;
+      } finally {
+        controller = null;
+        run.disabled = false;
+        run.textContent = "重新审核";
+        stop.hidden = true;
+      }
+    };
+    dialog.onclose = () => {
+      save.hidden = false;
+      save.disabled = false;
+      save.textContent = "保存";
+      dialog.onclose = null;
+    };
+    dialog.showModal();
+  }
+
+  function openBatchRelationAiReview(items, sectionName = "本组关系") {
+    const queue = (items || []).filter((item) => item?.source_node_id && item?.target_node_id);
+    if (!queue.length) { toast("本组没有可审核的关系", true); return; }
+    const dialog = $("#editorDialog");
+    const save = $("#editorSave");
+    save.hidden = false;
+    save.textContent = "关闭";
+    $("#editorCancel").onclick = () => dialog.close();
+    $("#editorBody").innerHTML = `
+      <h3>批量 AI 审核：${esc(sectionName)}</h3>
+      <p class="muted">将逐条核对 ${queue.length} 条关系的端点、方向、语义和指南原文。AI 只生成质量报告，不自动改变审核状态。</p>
+      <div class="field"><label>统一审核要求（可选）</label><textarea id="batchRelationAiPrompt" maxlength="2000" rows="3" placeholder="例如：重点检查是否把仅提及的检查误判为必须开展"></textarea></div>
+      <div class="actions"><button type="button" class="btn primary" id="runBatchRelationAi">开始批量审核</button><button type="button" class="btn danger" id="stopBatchRelationAi" hidden>停止</button></div>
+      <div id="batchRelationAiSummary" class="detail-section"><div class="muted">尚未开始审核</div></div>
+      <div class="detail-section"><table><thead><tr><th>关系</th><th>AI 结论</th><th>摘要 / 修正建议</th></tr></thead><tbody>
+        ${queue.map((item, index) => `<tr data-batch-ai-row="${index}"><td>${esc(item.source_name || item.source_node_id)} → ${esc(relationLabel(item))} → ${esc(item.target_name || item.target_node_id)}</td><td class="batch-ai-status">待执行</td><td class="batch-ai-advice muted">-</td></tr>`).join("")}
+      </tbody></table></div>`;
+    save.onclick = () => dialog.close();
+    const run = $("#runBatchRelationAi");
+    const stop = $("#stopBatchRelationAi");
+    let cancelled = false;
+    let stopped = false;
+    let controller = null;
+    const completed = new Set();
+    const counts = { approve: 0, reject: 0, revise: 0, insufficient_evidence: 0, failed: 0 };
+    stop.onclick = () => {
+      stopped = true;
+      controller?.abort();
+      stop.disabled = true;
+      stop.textContent = "正在停止…";
+    };
+    run.onclick = async () => {
+      cancelled = false;
+      stopped = false;
+      if (completed.size === queue.length) {
+        completed.clear();
+        Object.keys(counts).forEach((key) => { counts[key] = 0; });
+        $("#editorBody").querySelectorAll("[data-batch-ai-row]").forEach((row) => {
+          row.querySelector(".batch-ai-status").textContent = "待执行";
+          row.querySelector(".batch-ai-advice").innerHTML = "-";
+          row.querySelector(".batch-ai-advice").classList.add("muted");
+        });
+      }
+      run.disabled = true;
+      save.disabled = true;
+      stop.hidden = false;
+      stop.disabled = false;
+      stop.textContent = "停止";
+      const labels = {
+        approve: ["建议通过", "active"], reject: ["建议拒绝", "rejected"],
+        revise: ["建议修正", "stale"], insufficient_evidence: ["证据不足", "draft"],
+      };
+      const prompt = $("#batchRelationAiPrompt").value.trim();
+      for (let index = 0; index < queue.length; index += 1) {
+        if (completed.has(index)) continue;
+        if (cancelled || stopped || !dialog.open) break;
+        const item = queue[index];
+        const row = $("#editorBody").querySelector(`[data-batch-ai-row="${index}"]`);
+        row.querySelector(".batch-ai-status").textContent = `审核中 ${index + 1}/${queue.length}`;
+        $("#batchRelationAiSummary").innerHTML = `<div class="muted">正在审核 ${index + 1} / ${queue.length} 条，请勿关闭窗口…</div>`;
+        try {
+          controller = new AbortController();
+          const result = await api(`/api/kg/relation-ai-review?graph_filename=${encodeURIComponent(item.graph_filename)}`, {
+            json: {
+              source_node_id: item.source_node_id,
+              relation_code: item.relation_code,
+              target_node_id: item.target_node_id,
+              prompt,
+            },
+            signal: controller.signal,
+          });
+          controller = null;
+          if (cancelled || stopped || !dialog.open) break;
+          counts[result.assessment] = (counts[result.assessment] || 0) + 1;
+          completed.add(index);
+          const [label, status] = labels[result.assessment] || [result.assessment, "draft"];
+          row.querySelector(".batch-ai-status").innerHTML = miniStatus(status).replace(REVIEW_LABELS[status] || status, label);
+          let currentResult = result;
+          const issueLines = (result.issues || []).map((issue) => `${issue.area || "问题位置"}：${issue.problem || "需复核"}；建议：${issue.suggestion || "人工核对"}`);
+          const suggestions = [
+            result.summary,
+            ...issueLines,
+            result.suggested_statement ? `推荐表述：${result.suggested_statement}` : "",
+            result.suggested_relation_code ? `建议关系：${result.suggested_relation_code}` : "",
+            result.suggested_direction ? `建议方向：${result.suggested_direction}` : "",
+            result.suggested_source_name ? `建议起点名称：${result.suggested_source_name}` : "",
+            result.suggested_target_name ? `建议目标名称：${result.suggested_target_name}` : "",
+          ].filter(Boolean);
+          const canReject = ["draft", "stale", "active"].includes(item.status || "draft");
+          const canApprove = ["draft", "stale"].includes(item.status || "draft");
+          const endpointsBlocked = relationEndpointBlocked(item);
+          const actionButtons = [
+            canApprove ? `<button type="button" class="btn sm primary" data-ai-direct-approve ${result.assessment === "approve" ? "" : "hidden"} ${endpointsBlocked ? "disabled title=\"请先通过关系两端实体\"" : ""}>${endpointsBlocked ? "端点未通过" : "按建议通过"}</button>` : "",
+            canReject ? `<button type="button" class="btn sm danger" data-ai-direct-reject ${["reject", "revise", "insufficient_evidence"].includes(result.assessment) ? "" : "hidden"}>${item.status === "active" ? "标记失效" : (result.assessment === "reject" ? "按建议拒绝" : (result.assessment === "insufficient_evidence" ? "因证据不足拒绝" : "拒绝此关系"))}</button>` : "",
+            `<button type="button" class="btn sm primary" data-ai-apply ${result.assessment === "revise" ? "" : "hidden"} ${relationAiHasCorrection(result) ? "" : "disabled"}>${relationAiHasCorrection(result) ? "一键应用修正" : "暂无可执行修正"}</button>`,
+            `<button type="button" class="btn sm" data-ai-refine ${result.assessment === "revise" ? "" : "hidden"}>输入提示词进一步修正</button>`,
+          ].filter(Boolean).join("");
+          const advice = row.querySelector(".batch-ai-advice");
+          advice.innerHTML = `${suggestions.length ? `<ul data-ai-suggestion-list>${suggestions.map((line) => `<li>${esc(line)}</li>`).join("")}</ul>` : '<ul data-ai-suggestion-list><li>请人工复核</li></ul>'}${actionButtons ? `<div class="actions">${actionButtons}</div>` : ""}${result.assessment === "revise" ? '<div data-ai-refine-panel hidden><textarea rows="2" maxlength="2000" placeholder="例如：把全英文名称转换为规范中文，并给出可一键应用的结构化修正"></textarea><button type="button" class="btn sm" data-ai-rerun-one>重新审核本条</button></div>' : ""}`;
+          advice.classList.remove("muted");
+          advice.querySelector("[data-ai-direct-approve]")?.addEventListener("click", async (event) => {
+            const button = event.currentTarget;
+            if (relationEndpointBlocked(item)) { toast("请先通过关系两端实体", true); return; }
+            if (!confirm(`确认根据 AI 建议通过这条关系？\n\n${currentResult.summary || "AI 建议通过"}`)) return;
+            button.disabled = true;
+            button.textContent = "提交中…";
+            try {
+              await submitReviewAction(item, "approve", `[AI审核建议] ${currentResult.summary || "建议通过"}`);
+              item.status = "active";
+              button.textContent = "已通过";
+              row.querySelector(".batch-ai-status").innerHTML = miniStatus("active");
+            } catch (error) {
+              button.disabled = false;
+              button.textContent = "按建议通过";
+              toast(error.message, true);
+            }
+          });
+          advice.querySelector("[data-ai-direct-reject]")?.addEventListener("click", async (event) => {
+            const button = event.currentTarget;
+            const action = item.status === "active" ? "retire" : "reject";
+            const verb = action === "retire" ? "标记失效" : "拒绝";
+            if (!confirm(`确认${verb}这条关系？\n\n${currentResult.summary || "AI 审核建议"}`)) return;
+            button.disabled = true;
+            button.textContent = "提交中…";
+            try {
+              const reason = currentResult.assessment === "insufficient_evidence" ? "[证据不足]" : "[AI审核建议]";
+              await submitReviewAction(item, action, `${reason} ${currentResult.summary || "建议拒绝"}`);
+              item.status = action === "retire" ? "retired" : "rejected";
+              button.textContent = action === "retire" ? "已标记失效" : "已拒绝";
+              toast(`${action === "retire" ? "已失效" : "已拒绝"}：${reviewItemTitle(item)}`);
+            } catch (error) {
+              button.disabled = false;
+              button.textContent = verb;
+              toast(error.message, true);
+            }
+          });
+          advice.querySelector("[data-ai-apply]")?.addEventListener("click", async (event) => {
+            const button = event.currentTarget;
+            if (!relationAiHasCorrection(currentResult)) return;
+            if (!confirm("确认一键应用 AI 给出的全部结构化修正？应用后关系将回到待复核。")) return;
+            button.disabled = true;
+            button.textContent = "应用中…";
+            try {
+              const applied = await applyRelationAiCorrection(item, currentResult);
+              button.textContent = `已应用 ${applied.changes.length} 项修正`;
+              row.querySelector("td").textContent = `${item.source_name || item.source_node_id} → ${relationLabel(item)} → ${item.target_name || item.target_node_id}`;
+              row.querySelector(".batch-ai-status").innerHTML = miniStatus("stale").replace(REVIEW_LABELS.stale, "已修正待复核");
+              const approve = advice.querySelector("[data-ai-direct-approve]");
+              if (approve) {
+                approve.hidden = false;
+                approve.disabled = relationEndpointBlocked(item);
+                approve.textContent = relationEndpointBlocked(item) ? "端点未通过" : "通过修正后的关系";
+              }
+            } catch (error) { button.disabled = false; button.textContent = "一键应用修正"; toast(error.message, true); }
+          });
+          advice.querySelector("[data-ai-refine]")?.addEventListener("click", () => {
+            const panel = advice.querySelector("[data-ai-refine-panel]");
+            panel.hidden = !panel.hidden;
+            if (!panel.hidden) panel.querySelector("textarea").focus();
+          });
+          advice.querySelector("[data-ai-rerun-one]")?.addEventListener("click", async (event) => {
+            const button = event.currentTarget;
+            const panel = advice.querySelector("[data-ai-refine-panel]");
+            const extraPrompt = panel.querySelector("textarea").value.trim();
+            if (!extraPrompt) { toast("请先输入进一步修正要求", true); return; }
+            button.disabled = true;
+            button.textContent = "修正中…";
+            stop.hidden = false;
+            stop.disabled = false;
+            stop.textContent = "停止";
+            stopped = false;
+            controller = new AbortController();
+            try {
+              currentResult = await api(`/api/kg/relation-ai-review?graph_filename=${encodeURIComponent(item.graph_filename)}`, {
+                json: { source_node_id: item.source_node_id, relation_code: item.relation_code, target_node_id: item.target_node_id, prompt: extraPrompt },
+                signal: controller.signal,
+              });
+              const revisedIssues = (currentResult.issues || []).map((issue) => `${issue.area || "问题位置"}：${issue.problem || "需复核"}；建议：${issue.suggestion || "人工核对"}`);
+              const revisedSuggestions = [currentResult.summary, ...revisedIssues, currentResult.suggested_statement ? `推荐表述：${currentResult.suggested_statement}` : "", currentResult.suggested_relation_code ? `建议关系：${currentResult.suggested_relation_code}` : "", currentResult.suggested_direction ? `建议方向：${currentResult.suggested_direction}` : "", currentResult.suggested_source_name ? `建议起点名称：${currentResult.suggested_source_name}` : "", currentResult.suggested_target_name ? `建议目标名称：${currentResult.suggested_target_name}` : ""].filter(Boolean);
+              advice.querySelector("[data-ai-suggestion-list]").innerHTML = revisedSuggestions.map((line) => `<li>${esc(line)}</li>`).join("");
+              const nextLabel = labels[currentResult.assessment] || [currentResult.assessment, "draft"];
+              row.querySelector(".batch-ai-status").innerHTML = miniStatus(nextLabel[1]).replace(REVIEW_LABELS[nextLabel[1]] || nextLabel[1], nextLabel[0]);
+              const approve = advice.querySelector("[data-ai-direct-approve]");
+              if (approve) {
+                approve.hidden = currentResult.assessment !== "approve";
+                approve.disabled = relationEndpointBlocked(item);
+                approve.textContent = relationEndpointBlocked(item) ? "端点未通过" : "按建议通过";
+              }
+              const reject = advice.querySelector("[data-ai-direct-reject]");
+              if (reject) {
+                reject.hidden = !["reject", "revise", "insufficient_evidence"].includes(currentResult.assessment);
+                reject.textContent = item.status === "active" ? "标记失效" : (currentResult.assessment === "reject" ? "按建议拒绝" : (currentResult.assessment === "insufficient_evidence" ? "因证据不足拒绝" : "拒绝此关系"));
+              }
+              const apply = advice.querySelector("[data-ai-apply]");
+              apply.hidden = currentResult.assessment !== "revise";
+              apply.disabled = !relationAiHasCorrection(currentResult);
+              apply.textContent = relationAiHasCorrection(currentResult) ? "一键应用修正" : "暂无可执行修正";
+              const refine = advice.querySelector("[data-ai-refine]");
+              refine.hidden = currentResult.assessment !== "revise";
+              if (currentResult.assessment !== "revise") panel.hidden = true;
+            } catch (error) {
+              if (error.name !== "AbortError") toast(error.message, true);
+            } finally {
+              controller = null;
+              button.disabled = false;
+              button.textContent = "重新审核本条";
+              stop.hidden = true;
+            }
+          });
+        } catch (error) {
+          controller = null;
+          if (cancelled || stopped || !dialog.open || error.name === "AbortError") {
+            row.querySelector(".batch-ai-status").textContent = "已停止";
+            break;
+          }
+          counts.failed += 1;
+          row.querySelector(".batch-ai-status").textContent = "失败";
+          row.querySelector(".batch-ai-advice").textContent = error.message;
+        }
+      }
+      if (cancelled || !dialog.open) return;
+      const finished = completed.size === queue.length;
+      const batchHeading = finished ? "批量 AI 审核完成" : (stopped ? "批量 AI 审核已停止" : "批量 AI 审核未全部完成");
+      $("#batchRelationAiSummary").innerHTML = `<div class="result-banner ${finished && !counts.reject && !counts.revise && !counts.failed ? "ok" : "warning"}"><strong>${batchHeading}</strong><p>已完成 ${completed.size}/${queue.length} · 建议通过 ${counts.approve} · 建议拒绝 ${counts.reject} · 建议修正 ${counts.revise} · 证据不足 ${counts.insufficient_evidence} · 失败 ${counts.failed}</p></div><p class="muted">${finished ? "结果已保留，可直接执行拒绝或一键修正。" : "已完成结果不会丢失，点击继续可从未完成项接着审核。"}</p>`;
+      run.disabled = false;
+      save.disabled = false;
+      stop.hidden = true;
+      run.textContent = finished ? "重新批量审核" : "继续剩余审核";
+    };
+    dialog.onclose = () => {
+      cancelled = true;
+      save.hidden = false;
+      save.disabled = false;
+      save.textContent = "保存";
+      dialog.onclose = null;
+    };
+    dialog.showModal();
+  }
+
   function fieldLabel(key) {
     if (key.startsWith("attributes.")) return `属性·${key.slice("attributes.".length)}`;
     return FIELD_LABELS[key] || key;
@@ -3800,6 +4290,13 @@
   function detailActionsHtml(item) {
     const status = item.status || "draft";
     const buttons = [];
+    if (item.item_type === "graph_node") {
+      buttons.push('<button class="btn sm" data-node-name-edit>修改名称</button>');
+      buttons.push('<button class="btn sm" data-node-name-ai>AI 修正</button>');
+    }
+    if (item.item_type === "graph_relation") {
+      buttons.push('<button class="btn sm" data-relation-ai-review>AI 审核</button>');
+    }
     if (["draft", "stale", "testing", "blocked"].includes(status)) buttons.push('<button class="btn sm primary" data-detail-action="approve">通过</button>');
     if (!["active", "rejected", "retired"].includes(status)) buttons.push('<button class="btn sm danger" data-detail-action="reject">拒绝</button>');
     if (status === "active") buttons.push('<button class="btn sm" data-detail-action="retire">失效</button>');
@@ -4059,6 +4556,9 @@
         try { await quickReview(item, action); }
         finally { button.disabled = false; button.textContent = label; }
       });
+      mount.querySelector("[data-node-name-edit]")?.addEventListener("click", () => openNodeNameEditor(item));
+      mount.querySelector("[data-node-name-ai]")?.addEventListener("click", () => openNodeNameEditor(item, { startWithAi: true }));
+      mount.querySelector("[data-relation-ai-review]")?.addEventListener("click", () => openRelationAiReview(item));
       if (mount.querySelector('[data-rule-approval-blocked="true"]')) {
         mount.querySelectorAll('[data-detail-action="approve"]').forEach((button) => {
           button.disabled = true; button.title = "存在阻断问题，请先编辑补充后再审核";
@@ -4271,6 +4771,56 @@
     });
   }
 
+  function conditionAtLogicPath(specification, path) {
+    let node = specification.conditions;
+    const indexes = [...String(path || "").matchAll(/children\[(\d+)\]/g)].map((match) => Number(match[1]));
+    for (const index of indexes) node = node?.children?.[index];
+    return node;
+  }
+
+  function chooseConditionLogic(question) {
+    return new Promise((resolve) => {
+      const dialog = $("#editorDialog");
+      const save = $("#editorSave");
+      let selected = "";
+      save.hidden = true;
+      $("#editorBody").innerHTML = `
+        <h3>这些条件如何构成判断？</h3>
+        <p class="muted">不需要编辑条件树。请根据指南原文选择最符合医学含义的一项。</p>
+        <div class="detail-section"><ol>${(question.children || []).map((child) => `<li>${esc(conditionText(child))}</li>`).join("")}</ol></div>
+        <div class="actions">
+          <button type="button" class="btn primary" data-logic-choice="AND">必须全部满足（且）</button>
+          <button type="button" class="btn primary" data-logic-choice="OR">满足任意一项（或）</button>
+        </div>
+        <p class="muted">如果原文没有说明组合关系，请取消并补充原文，不要猜测。</p>`;
+      $("#editorCancel").onclick = () => dialog.close();
+      $("#editorBody").querySelectorAll("[data-logic-choice]").forEach((choice) => {
+        choice.onclick = () => {
+          selected = choice.dataset.logicChoice;
+          dialog.close();
+        };
+      });
+      dialog.onclose = () => {
+        save.hidden = false;
+        save.textContent = "保存";
+        dialog.onclose = null;
+        resolve(selected);
+      };
+      dialog.showModal();
+    });
+  }
+
+  async function resolveBasisLogic(specification, questions) {
+    const resolved = JSON.parse(JSON.stringify(specification));
+    for (const question of questions || []) {
+      const operator = await chooseConditionLogic(question);
+      if (!operator) return null;
+      const node = conditionAtLogicPath(resolved, question.path);
+      if (node?.type === "group") node.operator = operator;
+    }
+    return resolved;
+  }
+
   async function openCompletedBasisEditor(basis, filename, scopeSummary, button = null) {
     const endpoint = `/api/review/bases/${encodeURIComponent(basis.basis_id)}`;
     const oldLabel = button?.textContent;
@@ -4283,12 +4833,32 @@
       } else {
         toast(completed.reason || "现有条件已完整，已保留原配置");
       }
-      openRuleEditor(prepared.specification, {
+      if (completed.ready === false && !(completed.logic_questions || []).length) {
+        toast(completed.reason || "当前没有可生成规则的已审诊断条件，请先补充并审核关系", true);
+        return;
+      }
+      const resolvedSpecification = await resolveBasisLogic(
+        prepared.specification, completed.logic_questions || []
+      );
+      if (!resolvedSpecification) {
+        toast("已取消：未修改诊疗依据");
+        return;
+      }
+      if ((completed.logic_questions || []).length) {
+        toast("组合方式已明确，可继续核对中文预览并保存");
+      } else if (completed.logic_normalized) {
+        toast("已自动整理旧版条件结构，可继续核对并保存");
+      }
+      openRuleEditor(resolvedSpecification, {
         clinicalBasis: true,
         onSave: (specification) => api(endpoint + `?graph_filename=${encodeURIComponent(filename)}`, {
           method: "PUT", json: { specification, scope_summary: scopeSummary },
         }),
       });
+      const guidance = document.createElement("div");
+      guidance.className = "result-banner ok";
+      guidance.innerHTML = `<strong>条件已整理完成</strong><p>${(completed.logic_questions || []).length ? "已按你的选择写入且／或关系。" : "系统已整理旧版条件结构。"}请核对下方中文条件预览；内容正确即可保存，不需要编辑 JSON 或条件树。</p>`;
+      $("#editorBody").prepend(guidance);
       if (completed.candidates?.length) {
         const notice = document.createElement("div");
         notice.className = "result-banner warning";
@@ -4894,7 +5464,7 @@
     state.byDiseaseEndpoints = endpoints;
     return `<div class="detail-section" id="diseaseEndpointReview"><h4>第 1 步：核对关系涉及的实体</h4>
       <p>关系连接两个实体。请先确认疾病、症状、检查等实体识别正确，再审核它们之间的医学关系。实体通过不会自动通过关系。</p>
-      ${endpoints.size ? `<div class="actions"><label><input type="checkbox" data-endpoint-select-all> 全选可审核实体</label><span class="muted" data-endpoint-selection-count>已选 0 项</span></div>${table(["选择", "尚未通过的实体", "实体类型", "状态", "核对"], [...endpoints.values()].map((item, index) => `<tr><td><input type="checkbox" data-endpoint-select="${esc(item.node_id)}" ${["draft", "stale"].includes(item.status) ? "" : "disabled"}></td><td>${esc(item.name)}</td><td><span class="type-chip">${esc(typeName[item.node_type] || item.node_type || "类型缺失，请核对")}</span></td><td>${miniStatus(item.status)}</td><td><button class="btn sm" data-endpoint-detail="${index}">查看实体原文与属性</button></td></tr>`))}<button class="btn sm primary" data-endpoint-approve>通过勾选的实体</button>` : '<div class="result-banner ok">相关实体均已通过，可直接审核下方关系。</div>'}
+      ${endpoints.size ? `<div class="actions"><label><input type="checkbox" data-endpoint-select-all> 全选可审核实体</label><span class="muted" data-endpoint-selection-count>已选 0 项</span></div>${table(["选择", "尚未通过的实体", "实体类型", "状态", "核对与处理"], [...endpoints.values()].map((item, index) => `<tr><td><input type="checkbox" data-endpoint-select="${esc(item.node_id)}" ${["draft", "stale"].includes(item.status) ? "" : "disabled"}></td><td>${esc(item.name)}</td><td><span class="type-chip">${esc(typeName[item.node_type] || item.node_type || "类型缺失，请核对")}</span></td><td>${miniStatus(item.status)}</td><td><div class="actions"><button class="btn sm" data-endpoint-detail="${index}">查看原文与属性</button><button class="btn sm" data-endpoint-edit="${index}">修改</button><button class="btn sm" data-endpoint-ai="${index}">AI 修正</button>${["draft", "stale"].includes(item.status) ? `<button class="btn sm danger" data-endpoint-reject="${index}">拒绝</button>` : ""}</div></td></tr>`))}<div class="actions"><button class="btn sm primary" data-endpoint-approve>通过勾选的实体</button><button class="btn sm danger" data-endpoint-reject-selected>拒绝勾选的实体</button></div>` : '<div class="result-banner ok">相关实体均已通过，可直接审核下方关系。</div>'}
       <h4>第 2 步：审核下方关系</h4><p>核对关系的方向、医学含义和原文后，可批量通过本组关系。</p></div>`;
   }
 
@@ -4939,6 +5509,7 @@
         <span class="mono muted">${esc(section.relation_code)}</span>
         <span class="muted">${section.total} 条 · 待审 ${pending.length}</span>
         <div class="actions">
+          ${relItems.length ? `<button class="btn sm" data-section-ai="${esc(section.section_key)}">批量 AI 审核</button>` : ""}
           ${pending.length ? `<button class="btn sm primary" data-section-action="approve" data-section-key="${esc(section.section_key)}">批量通过本组关系</button>
           <button class="btn sm danger" data-section-action="reject" data-section-key="${esc(section.section_key)}">批量拒绝本组关系</button>` : '<span class="muted">无待审</span>'}
         </div>
@@ -4957,6 +5528,7 @@
         <span class="mono muted">${esc(nested.relation_code)}</span>
         <span class="muted">${nested.total} 条 · 待审 ${pending.length}</span>
         <div class="actions">
+          ${(nested.items || []).length ? `<button class="btn sm" data-section-ai="${esc(nested.section_key)}">批量 AI 审核</button>` : ""}
           ${pending.length ? `<button class="btn sm primary" data-section-action="approve" data-section-key="${esc(nested.section_key)}">批量通过本组关系</button>
           <button class="btn sm danger" data-section-action="reject" data-section-key="${esc(nested.section_key)}">批量拒绝本组关系</button>` : ""}
         </div>
@@ -4966,7 +5538,7 @@
   }
 
   function diseaseRelationRowHtml(item) {
-    const actions = [];
+    const actions = [`<button class="btn sm" data-rel-ai="${esc(item.item_id)}">AI 审核</button>`];
     if (["draft", "stale"].includes(item.status)) {
       actions.push(`<button class="btn sm primary" data-rel-action="approve" data-rel-id="${esc(item.item_id)}">通过</button>`);
       actions.push(`<button class="btn sm danger" data-rel-action="reject" data-rel-id="${esc(item.item_id)}">拒绝</button>`);
@@ -4990,6 +5562,18 @@
         (section.containers || []).forEach((container) => (container.sections || []).forEach((nested) => items.push(...(nested.items || []))));
         return items;
       }
+      for (const container of section.containers || []) {
+        for (const nested of container.sections || []) {
+          if (nested.section_key === sectionKey) return [...(nested.items || [])];
+        }
+      }
+    }
+    return [];
+  }
+
+  function collectSectionDirectItems(sectionKey) {
+    for (const section of state.byDiseaseSections || []) {
+      if (section.section_key === sectionKey) return [...(section.items || [])];
       for (const container of section.containers || []) {
         for (const nested of container.sections || []) {
           if (nested.section_key === sectionKey) return [...(nested.items || [])];
@@ -5042,6 +5626,27 @@
         await openEndpointSource(item, endpointDetail);
         return;
       }
+      const endpointEdit = event.target.closest("[data-endpoint-edit], [data-endpoint-ai]");
+      if (endpointEdit) {
+        const index = Number(endpointEdit.dataset.endpointEdit ?? endpointEdit.dataset.endpointAi);
+        const item = [...(state.byDiseaseEndpoints?.values() || [])][index];
+        if (item) await openNodeNameEditor(item, { startWithAi: endpointEdit.hasAttribute("data-endpoint-ai") });
+        return;
+      }
+      const endpointReject = event.target.closest("[data-endpoint-reject]");
+      if (endpointReject) {
+        const item = [...(state.byDiseaseEndpoints?.values() || [])][Number(endpointReject.dataset.endpointReject)];
+        if (item) openReasonDialog(item, "reject");
+        return;
+      }
+      const rejectSelected = event.target.closest("[data-endpoint-reject-selected]");
+      if (rejectSelected) {
+        const selected = [...mount.querySelectorAll("[data-endpoint-select]:checked")]
+          .map((input) => state.byDiseaseEndpoints.get(input.dataset.endpointSelect)).filter(Boolean);
+        if (!selected.length) { toast("请先勾选需要拒绝的实体", true); return; }
+        openReasonDialog({ multi: selected }, "reject");
+        return;
+      }
       const approveEndpoints = event.target.closest("[data-endpoint-approve]");
       if (approveEndpoints) {
         const selected = [...mount.querySelectorAll("[data-endpoint-select]:checked")]
@@ -5057,6 +5662,12 @@
           await loadByDiseaseCard(state.byDisease.subject);
         } catch (error) { toast(error.message, true); }
         finally { approveEndpoints.disabled = false; approveEndpoints.textContent = "通过勾选的实体"; }
+        return;
+      }
+      const relationAi = event.target.closest("[data-rel-ai]");
+      if (relationAi) {
+        const item = state.byDiseaseItems?.get(relationAi.dataset.relAi);
+        if (item) openRelationAiReview(item);
         return;
       }
       const single = event.target.closest("[data-rel-action]");
@@ -5075,6 +5686,13 @@
           toast(`${ACTION_DONE_LABELS[action] || "已处理"}：${reviewItemTitle(item)}`);
           await refresh();
         } catch (error) { toast(error.message, true); }
+        return;
+      }
+      const sectionAi = event.target.closest("[data-section-ai]");
+      if (sectionAi) {
+        const items = collectSectionDirectItems(sectionAi.dataset.sectionAi);
+        const label = items[0] ? relationLabel(items[0]) : "本组关系";
+        openBatchRelationAiReview(items, label);
         return;
       }
       const sectionBtn = event.target.closest("[data-section-action]");

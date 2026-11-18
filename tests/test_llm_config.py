@@ -5,6 +5,7 @@ import json
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 import httpx
@@ -15,6 +16,7 @@ sys.path.insert(0, str(project_root))
 from src.api.routes import templates as template_routes
 from src.extraction.repository import ExtractionConfigRepository
 from src.llm.client import (
+    LLMError,
     ZHIPU_ANTHROPIC_BASE_URL,
     ZHIPU_CODING_BASE_URL,
     anthropic_endpoint_url,
@@ -24,6 +26,7 @@ from src.llm.client import (
     request_headers,
     resolve_api_format,
     resolve_api_key,
+    chat_json,
 )
 from src.api.main import app
 
@@ -89,6 +92,32 @@ class LLMConfigTest(unittest.IsolatedAsyncioTestCase):
             resolve_api_format({"provider": "cc_switch"}),
             "anthropic_messages",
         )
+
+    async def test_anthropic_timeout_has_readable_error(self):
+        class TimeoutClient:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *args):
+                return None
+
+            async def post(self, *args, **kwargs):
+                raise httpx.ReadTimeout("")
+
+        settings = {
+            "provider": "zhipu_anthropic",
+            "api_format": "anthropic_messages",
+            "base_url": ZHIPU_ANTHROPIC_BASE_URL,
+            "model": "test-model",
+            "api_key": "test-key",
+            "timeout_seconds": 120,
+        }
+        with patch("src.llm.client.httpx.AsyncClient", TimeoutClient):
+            with self.assertRaisesRegex(LLMError, "请求超时（120 秒）"):
+                await chat_json(settings, [{"role": "user", "content": "{}"}])
 
     def test_public_config_masks_direct_key(self):
         tmp = tempfile.TemporaryDirectory()

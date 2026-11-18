@@ -9,6 +9,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from src.api.routes.kg import (
     DEFAULT_GRAPH_FILENAME,
+    DEFAULT_RELATION_NAMES,
     KG_DIR,
     _load_graph,
     _save_graph,
@@ -20,8 +21,10 @@ from src.api.routes.rules import (
     _save_all_rules,
     check_rule_sync,
 )
+from src.vocab.entity_vocabulary import EntityVocabularyRepository
 from .audit import AUDIT_PATH, append_audit, load_audit
 from .errors import ReviewError
+from .metadata import node_content_hash, relation_content_hash
 from .precheck import (
     duplicate_relation_pairs,
     load_endpoint_type_map,
@@ -692,6 +695,88 @@ class ReviewService:
         self._persist(filename, previous_graph, graph, previous_rules, rules, audit)
         return {"item": node, "status": target, "affected_rules": affected}
 
+    def update_node_name(
+        self,
+        graph_filename: str,
+        node_id: str,
+        name: str,
+        reviewer: str,
+        note: str = "",
+    ) -> Dict[str, Any]:
+        """Rename an entity without changing its stable code or identifier.
+
+        A reviewed entity becomes stale after a semantic display-name change so
+        the new wording must be explicitly approved. Incident relations and
+        active dependent rules are invalidated by the same safety rule.
+        """
+        filename = normalize_graph_filename(graph_filename)
+        graph = self._load_graph(filename)
+        node = graph["nodes"].get(node_id)
+        if node is None:
+            raise ReviewError("节点不存在", 404)
+        cleaned = str(name or "").strip()
+        if not cleaned:
+            raise ReviewError("实体名称不能为空", 422)
+        if len(cleaned) > 200:
+            raise ReviewError("实体名称不能超过 200 个字符", 422)
+        previous_name = str(node.get("name") or "")
+        if cleaned == previous_name:
+            raise ReviewError("实体名称没有变化", 422)
+
+        previous_graph = copy.deepcopy(graph)
+        previous_rules = self._load_rules()
+        rules = copy.deepcopy(previous_rules)
+        now = _now()
+        current_status = _status(node)
+        target_status = "stale" if current_status == "active" else current_status
+        history = list(node.get("name_history") or [])
+        history.append({
+            "name": previous_name,
+            "changed_at": now,
+            "changed_by": reviewer or "未署名",
+            "note": note,
+        })
+        node.update({
+            "name": cleaned,
+            "display_name": cleaned,
+            "name_history": history[-50:],
+            "review_status": target_status,
+            "reviewed_by": reviewer or "未署名",
+            "reviewed_at": now,
+            "review_note": note,
+            "version": int(node.get("version") or 1) + 1,
+        })
+        node["content_hash"] = node_content_hash(node)
+        if target_status != "active":
+            for relation in graph["relations"].values():
+                if node_id in (relation.get("source_node_id"), relation.get("target_node_id")):
+                    if _status(relation) not in {"rejected", "retired"}:
+                        relation["review_status"] = "stale"
+                        relation["reviewed_at"] = now
+
+        self._save_graph(graph, filename)
+        affected = self._sync_blocked_rules(rules, filename)
+        audit = [{
+            "action": "edit_name",
+            "entity_type": "node",
+            "entity_id": node_id,
+            "graph_filename": filename,
+            "before_status": current_status,
+            "after_status": target_status,
+            "before_name": previous_name,
+            "after_name": cleaned,
+            "reviewer": reviewer or "未署名",
+            "note": note,
+            "affected_rules": affected,
+        }]
+        self._persist(filename, previous_graph, graph, previous_rules, rules, audit)
+        return {
+            "item": node,
+            "status": target_status,
+            "before_name": previous_name,
+            "affected_rules": affected,
+        }
+
     def review_relation(
         self,
         graph_filename: str,
@@ -753,6 +838,166 @@ class ReviewService:
         }]
         self._persist(filename, previous_graph, graph, previous_rules, rules, audit)
         return {"item": relation, "status": target, "affected_rules": affected}
+
+    def apply_relation_correction(
+        self,
+        graph_filename: str,
+        source_node_id: str,
+        relation_code: str,
+        target_node_id: str,
+        reviewer: str,
+        note: str = "",
+        suggested_source_name: str = "",
+        suggested_target_name: str = "",
+        suggested_relation_code: str = "",
+        reverse_direction: bool = False,
+    ) -> Dict[str, Any]:
+        """Atomically apply a reviewed AI correction and return it to stale."""
+        filename = normalize_graph_filename(graph_filename)
+        graph = self._load_graph(filename)
+        old_key = (source_node_id, relation_code, target_node_id)
+        relation = graph["relations"].get(old_key)
+        if relation is None:
+            raise ReviewError("关系不存在", 404)
+        source = graph["nodes"].get(source_node_id)
+        target = graph["nodes"].get(target_node_id)
+        if source is None or target is None:
+            raise ReviewError("关系端点实体不存在", 422)
+
+        source_name = str(suggested_source_name or "").strip()
+        target_name = str(suggested_target_name or "").strip()
+        for value in (source_name, target_name):
+            if len(value) > 200:
+                raise ReviewError("实体名称不能超过 200 个字符", 422)
+        disease_repository = EntityVocabularyRepository("disease")
+        for endpoint, proposed_name, role in (
+            (source, source_name, "起点"), (target, target_name, "目标"),
+        ):
+            if not proposed_name or endpoint.get("node_type") != "disease":
+                continue
+            canonical = disease_repository.find(str(endpoint.get("code") or ""))
+            if canonical and proposed_name != canonical.name:
+                raise ReviewError(
+                    f"{role}疾病编码 {canonical.code} 的标准名称是“{canonical.name}”，"
+                    "关系 AI 不能改写标准 ICD 疾病主数据；请拒绝或重新绑定关系",
+                    422,
+                )
+        new_code = str(suggested_relation_code or relation_code).strip()
+        endpoint_map = load_endpoint_type_map()
+        if new_code != relation_code and new_code not in endpoint_map:
+            raise ReviewError("AI 建议的关系类型不在当前模板中，不能一键应用", 422)
+        new_source_id, new_target_id = (
+            (target_node_id, source_node_id) if reverse_direction
+            else (source_node_id, target_node_id)
+        )
+        new_key = (new_source_id, new_code, new_target_id)
+        if new_key != old_key and new_key in graph["relations"]:
+            raise ReviewError("修正后的关系已存在，请先处理重复关系", 409)
+        changes = []
+        if source_name and source_name != str(source.get("name") or ""):
+            changes.append("source_name")
+        if target_name and target_name != str(target.get("name") or ""):
+            changes.append("target_name")
+        if new_code != relation_code:
+            changes.append("relation_code")
+        if reverse_direction:
+            changes.append("direction")
+        if not changes:
+            raise ReviewError("AI 没有给出可应用的结构化修正", 422)
+
+        previous_graph = copy.deepcopy(graph)
+        previous_rules = self._load_rules()
+        rules = copy.deepcopy(previous_rules)
+        now = _now()
+        audit = []
+
+        def rename_node(node_id: str, node: Dict[str, Any], new_name: str) -> None:
+            old_name = str(node.get("name") or "")
+            if not new_name or new_name == old_name:
+                return
+            history = list(node.get("name_history") or [])
+            history.append({
+                "name": old_name, "changed_at": now,
+                "changed_by": reviewer or "未署名", "note": note,
+            })
+            old_status = _status(node)
+            node.update({
+                "name": new_name,
+                "display_name": new_name,
+                "name_history": history[-50:],
+                # Clicking “apply AI correction” is an explicit human
+                # acceptance of this name change. Keep an already-approved
+                # endpoint active; draft endpoints still require their own review.
+                "review_status": old_status,
+                "reviewed_by": reviewer or "未署名",
+                "reviewed_at": now,
+                "review_note": note,
+                "version": int(node.get("version") or 1) + 1,
+            })
+            node["content_hash"] = node_content_hash(node)
+            audit.append({
+                "action": "apply_ai_name_correction", "entity_type": "node",
+                "entity_id": node_id, "graph_filename": filename,
+                "before_status": old_status, "after_status": _status(node),
+                "before_name": old_name, "after_name": new_name,
+                "reviewer": reviewer or "未署名", "note": note,
+            })
+
+        rename_node(source_node_id, source, source_name)
+        rename_node(target_node_id, target, target_name)
+        old_status = _status(relation)
+        if new_key != old_key:
+            graph["relations"].pop(old_key)
+            graph["relations"][new_key] = relation
+        relation.update({
+            "source_node_id": new_source_id,
+            "relation_code": new_code,
+            "relation_name": DEFAULT_RELATION_NAMES.get(
+                new_code, relation.get("relation_name") or new_code
+            ),
+            "target_node_id": new_target_id,
+            "review_status": "stale",
+            "reviewed_by": reviewer or "未署名",
+            "reviewed_at": now,
+            "review_note": note,
+            "version": int(relation.get("version") or 1) + 1,
+        })
+        relation["content_hash"] = relation_content_hash(relation)
+        # A renamed endpoint changes the clinical statement of every incident edge.
+        renamed_ids = set()
+        if "source_name" in changes:
+            renamed_ids.add(source_node_id)
+        if "target_name" in changes:
+            renamed_ids.add(target_node_id)
+        for edge in graph["relations"].values():
+            if renamed_ids.intersection({
+                str(edge.get("source_node_id") or ""),
+                str(edge.get("target_node_id") or ""),
+            }) and _status(edge) not in {"rejected", "retired"}:
+                edge["review_status"] = "stale"
+                edge["reviewed_at"] = now
+
+        self._save_graph(graph, filename)
+        affected = self._sync_blocked_rules(rules, filename)
+        for record in audit:
+            record["affected_rules"] = affected
+        audit.append({
+            "action": "apply_ai_correction", "entity_type": "relation",
+            "entity_id": _relation_id(old_key), "graph_filename": filename,
+            "before_status": old_status, "after_status": "stale",
+            "before_relation": _relation_id(old_key),
+            "after_relation": _relation_id(new_key),
+            "changes": changes, "reviewer": reviewer or "未署名",
+            "note": note, "affected_rules": affected,
+        })
+        self._persist(filename, previous_graph, graph, previous_rules, rules, audit)
+        return {
+            "item": relation,
+            "status": "stale",
+            "relation_id": _relation_id(new_key),
+            "changes": changes,
+            "affected_rules": affected,
+        }
 
     def bulk_review(
         self,

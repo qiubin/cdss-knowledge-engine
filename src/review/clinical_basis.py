@@ -62,7 +62,7 @@ def check_basis(service, filename, graph, basis):
             if not children:
                 issues.append("条件组没有子条件")
             if condition.get("type") == "group" and condition.get("operator") not in ("AND", "OR", "NOT"):
-                issues.append("条件组合必须明确且/或/非逻辑")
+                issues.append("还差一步：请选择这些条件是全部满足还是任意一项")
             if condition.get("operator") == "NOT" and len(children) != 1:
                 issues.append("非条件组必须且只能包含一个子条件")
             if condition.get("type") == "weighted_group" and condition.get("threshold") is None:

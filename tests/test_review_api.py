@@ -201,6 +201,126 @@ class ReviewApiTest(unittest.TestCase):
         self.assertEqual(first["source"]["name"], "测试病")
         self.assertEqual(first["target"]["node_type"], "symptom")
 
+    def test_update_node_name_endpoint_keeps_stable_code(self):
+        response = self.request(
+            "PUT",
+            "/api/kg/nodes/ENTITY%3Asymptom%3ASYM_DRAFT?graph_filename=API-TEST.json",
+            json={"name": "血乳酸阳性", "reviewer": "张医生", "note": "中文化"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["item"]["name"], "血乳酸阳性")
+        self.assertEqual(response.json()["item"]["code"], "SYM_DRAFT")
+        self.assertEqual(response.json()["status"], "draft")
+        audit = self.request("GET", "/api/review/audit?entity_id=ENTITY:symptom:SYM_DRAFT").json()
+        self.assertEqual(audit["items"][0]["action"], "edit_name")
+
+    def test_ai_correction_returns_suggestion_without_writing_graph(self):
+        original_repo = kg_review.ExtractionConfigRepository
+        original_resolve = kg_review.resolve_api_key
+        original_chat = kg_review.chat_json
+
+        class FakeRepo:
+            def load(self):
+                return {"llm": {"model": "test-model"}}
+
+        async def fake_chat(settings, messages, **kwargs):
+            return {
+                "suggested_name": "血乳酸阳性",
+                "reason": "将英文候选名转换为中文",
+                "confidence": 0.93,
+                "needs_human_review": False,
+            }
+
+        kg_review.ExtractionConfigRepository = FakeRepo
+        kg_review.resolve_api_key = lambda settings: "test-key"
+        kg_review.chat_json = fake_chat
+        self.addCleanup(setattr, kg_review, "ExtractionConfigRepository", original_repo)
+        self.addCleanup(setattr, kg_review, "resolve_api_key", original_resolve)
+        self.addCleanup(setattr, kg_review, "chat_json", original_chat)
+        response = self.request(
+            "POST",
+            "/api/kg/nodes/ENTITY%3Asymptom%3ASYM_DRAFT/ai-correction?graph_filename=API-TEST.json",
+            json={"prompt": "改成规范中文名称"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["suggested_name"], "血乳酸阳性")
+        detail = self.request(
+            "GET", "/api/kg/nodes/ENTITY%3Asymptom%3ASYM_DRAFT?graph_filename=API-TEST.json"
+        ).json()
+        self.assertEqual(detail["node"]["name"], "待审症状")
+
+    def test_relation_ai_review_requires_source_evidence_and_does_not_mutate(self):
+        original_repo = kg_review.ExtractionConfigRepository
+        original_resolve = kg_review.resolve_api_key
+        original_chat = kg_review.chat_json
+
+        class FakeRepo:
+            def load(self):
+                return {"llm": {"model": "test-model"}}
+
+        async def fake_chat(settings, messages, **kwargs):
+            self.assertIn("DISEASE_HAS_SYMPTOM", messages[1]["content"])
+            return {
+                "assessment": "approve",
+                "summary": "关系语义看起来合理",
+                "issues": [],
+                "suggested_relation_code": "",
+                "suggested_direction": "",
+                "suggested_source_name": "",
+                "suggested_target_name": "待审症状",
+                "reverse_direction": False,
+                "suggested_statement": "测试病可见待审症状",
+                "reviewer_checklist": ["核对原文"],
+                "confidence": 0.8,
+            }
+
+        kg_review.ExtractionConfigRepository = FakeRepo
+        kg_review.resolve_api_key = lambda settings: "test-key"
+        kg_review.chat_json = fake_chat
+        self.addCleanup(setattr, kg_review, "ExtractionConfigRepository", original_repo)
+        self.addCleanup(setattr, kg_review, "resolve_api_key", original_resolve)
+        self.addCleanup(setattr, kg_review, "chat_json", original_chat)
+        response = self.request(
+            "POST",
+            "/api/kg/relation-ai-review?graph_filename=API-TEST.json",
+            json={
+                "source_node_id": "ENTITY:disease:I21.0",
+                "relation_code": "DISEASE_HAS_SYMPTOM",
+                "target_node_id": "ENTITY:symptom:SYM_DRAFT",
+                "prompt": "重点核对症状是否为阳性表现",
+            },
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        payload = response.json()
+        self.assertEqual(payload["assessment"], "insufficient_evidence")
+        self.assertFalse(payload["source_verified"])
+        self.assertEqual(payload["suggested_target_name"], "待审症状")
+        detail = self.request(
+            "GET",
+            "/api/kg/relations/ENTITY%3Adisease%3AI21.0%7CDISEASE_HAS_SYMPTOM%7CENTITY%3Asymptom%3ASYM_DRAFT?graph_filename=API-TEST.json",
+        ).json()
+        self.assertEqual(detail["relation"]["review_status"], "draft")
+
+    def test_apply_relation_ai_correction_endpoint(self):
+        response = self.request(
+            "POST",
+            "/api/kg/relation-ai-correction?graph_filename=API-TEST.json",
+            json={
+                "source_node_id": "ENTITY:disease:I21.0",
+                "relation_code": "DISEASE_HAS_SYMPTOM",
+                "target_node_id": "ENTITY:symptom:SYM_DRAFT",
+                "reviewer": "张医生",
+                "note": "采纳 AI 中文名称修正",
+                "suggested_target_name": "规范中文症状",
+            },
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()["changes"], ["target_name"])
+        detail = self.request(
+            "GET", "/api/kg/nodes/ENTITY%3Asymptom%3ASYM_DRAFT?graph_filename=API-TEST.json"
+        ).json()
+        self.assertEqual(detail["node"]["name"], "规范中文症状")
+
     def test_entity_history_endpoint(self):
         import src.review.metadata as metadata
         original_dir = metadata.HISTORY_DIR

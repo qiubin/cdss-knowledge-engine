@@ -13,7 +13,7 @@ sys.path.insert(0, str(project_root))
 
 from src.api.routes import kg as kg_routes
 from src.api.routes.guide_packages import _package_summary
-from src.extraction.auto_pipeline import run_auto_pipeline
+from src.extraction.auto_pipeline import _chunk_groups, run_auto_pipeline
 
 
 def make_chunk() -> dict:
@@ -84,6 +84,19 @@ async def fake_llm(_settings, _messages):
 
 
 class AutoPipelineTest(unittest.TestCase):
+    def test_chunk_group_limit_batches_without_truncating(self):
+        chunks = [
+            {"chunk_id": f"C{i}", "text": "内容", "page_start": 1, "page_end": 1,
+             "line_start": i + 1, "line_end": i + 1}
+            for i in range(5)
+        ]
+        groups = _chunk_groups(chunks, max_chars=100000, max_chunks=2)
+        self.assertEqual([len(group) for group in groups], [2, 2, 1])
+        self.assertEqual(
+            [item["chunk_id"] for group in groups for item in group],
+            [item["chunk_id"] for item in chunks],
+        )
+
     def test_lung_cancer_guideline_builds_graph_and_pending_bases(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)

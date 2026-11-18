@@ -195,10 +195,19 @@ async def _anthropic_chat_json(
     timeout = float(settings.get("timeout_seconds", 120))
 
     async def _post(payload: Dict[str, Any]) -> Dict[str, Any]:
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.post(
-                url, headers=anthropic_headers(settings, api_key), json=payload
-            )
+        try:
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                response = await client.post(
+                    url, headers=anthropic_headers(settings, api_key), json=payload
+                )
+        except httpx.TimeoutException as exc:
+            raise LLMError(
+                f"大模型请求超时（{timeout:g} 秒）@ {url}；"
+                "当前片段将跳过，可减小单次字符上限或稍后重试"
+            ) from exc
+        except httpx.RequestError as exc:
+            detail = str(exc) or type(exc).__name__
+            raise LLMError(f"大模型网络请求失败 @ {url}: {detail}") from exc
         if response.status_code >= 400:
             detail = response.text.strip()[:500] or "(空响应体)"
             request_id = response.headers.get("request-id") or response.headers.get("x-request-id") or ""
@@ -301,36 +310,45 @@ async def chat_json(
     timeout = float(settings.get("timeout_seconds", 120))
     url = endpoint_url(str(settings.get("base_url") or ""))
 
-    async with httpx.AsyncClient(timeout=timeout) as client:
-        response = await client.post(
-            url,
-            headers=request_headers(settings, api_key),
-            json=body,
-        )
-        if response.status_code >= 400:
-            # Some providers reject response_format; retry without it.
-            body.pop("response_format", None)
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
             response = await client.post(
                 url,
                 headers=request_headers(settings, api_key),
                 json=body,
             )
-        if response.status_code >= 400:
-            detail = response.text.strip()[:500] or "(空响应体)"
-            request_id = response.headers.get("x-request-id") or response.headers.get("x-oneapi-request-id") or ""
-            content_type = response.headers.get("content-type", "")
-            server = response.headers.get("server", "")
-            hint = ""
-            if "text/html" in content_type:
-                hint = "；该地址返回网页 HTML，通常是管理控制台而不是 OpenAI 兼容 API，请填写 API endpoint（常见以 /v1 结尾）"
-            elif response.status_code == 502 and not response.text.strip():
-                hint = "；网关上游不可用，或地址/端口指向了网页控制台"
-            suffix = f"，request_id={request_id}" if request_id else ""
-            raise LLMError(
-                f"大模型请求失败 HTTP {response.status_code} @ {url}: {detail}"
-                f"{suffix}，server={server or 'unknown'}{hint}"
-            )
-        data = response.json()
+            if response.status_code >= 400:
+                # Some providers reject response_format; retry without it.
+                body.pop("response_format", None)
+                response = await client.post(
+                    url,
+                    headers=request_headers(settings, api_key),
+                    json=body,
+                )
+    except httpx.TimeoutException as exc:
+        raise LLMError(
+            f"大模型请求超时（{timeout:g} 秒）@ {url}；"
+            "当前片段将跳过，可减小单次字符上限或稍后重试"
+        ) from exc
+    except httpx.RequestError as exc:
+        detail = str(exc) or type(exc).__name__
+        raise LLMError(f"大模型网络请求失败 @ {url}: {detail}") from exc
+    if response.status_code >= 400:
+        detail = response.text.strip()[:500] or "(空响应体)"
+        request_id = response.headers.get("x-request-id") or response.headers.get("x-oneapi-request-id") or ""
+        content_type = response.headers.get("content-type", "")
+        server = response.headers.get("server", "")
+        hint = ""
+        if "text/html" in content_type:
+            hint = "；该地址返回网页 HTML，通常是管理控制台而不是 OpenAI 兼容 API，请填写 API endpoint（常见以 /v1 结尾）"
+        elif response.status_code == 502 and not response.text.strip():
+            hint = "；网关上游不可用，或地址/端口指向了网页控制台"
+        suffix = f"，request_id={request_id}" if request_id else ""
+        raise LLMError(
+            f"大模型请求失败 HTTP {response.status_code} @ {url}: {detail}"
+            f"{suffix}，server={server or 'unknown'}{hint}"
+        )
+    data = response.json()
 
     try:
         content = data["choices"][0]["message"]["content"]

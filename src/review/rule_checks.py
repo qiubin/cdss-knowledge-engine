@@ -18,7 +18,7 @@ def condition_structure_issues(rule):
             return
         if node["type"] == "group":
             if node.get("operator") not in {"AND", "OR", "NOT"}:
-                issues.append("条件组缺少明确的且/或/非组合方式")
+                issues.append("还差一步：请选择这些条件是全部满足还是任意一项")
             if node.get("operator") == "NOT" and len(children) != 1:
                 issues.append("非条件组必须且只能包含一个子条件")
         elif node.get("threshold") is None:

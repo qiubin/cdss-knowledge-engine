@@ -18,3 +18,12 @@ test("clinical basis editor prepares conditions from reviewed graph first", () =
   );
   assert.ok(helper.indexOf("complete-from-reviewed-graph") < helper.indexOf("openRuleEditor"));
 });
+
+test("clinical basis editor resolves logic in plain Chinese before opening the tree", () => {
+  assert.match(source, /这些条件如何构成判断/);
+  assert.match(source, /必须全部满足（且）/);
+  assert.match(source, /满足任意一项（或）/);
+  assert.match(source, /resolveBasisLogic/);
+  assert.match(source, /当前没有可生成规则的已审诊断条件/);
+  assert.match(source, /不需要编辑条件树/);
+});

@@ -236,6 +236,9 @@ def complete_basis_from_reviewed_graph(basis_id: str, graph_filename: str):
         "skipped": result.get("skipped") or [],
         "reason": result.get("reason") or "",
         "candidates": result.get("candidates") or [],
+        "logic_questions": result.get("logic_questions") or [],
+        "logic_normalized": bool(result.get("logic_normalized")),
+        "ready": bool(result.get("ready", True)),
     }
 
 
