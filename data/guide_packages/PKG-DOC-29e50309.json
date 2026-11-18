@@ -1137,19 +1137,6 @@
       "attributes": {}
     },
     {
-      "entity_type": "disease",
-      "name": "其他肥厚型心肌病",
-      "code": "I42.2",
-      "concept_code": "",
-      "chunk_id": "DOC-29e50309_p12_l33-51",
-      "page": 12,
-      "line_start": 36,
-      "line_end": 38,
-      "quote": "心脏病变见于40% 的患者，其中心肌肥厚最常见。早期多表现为左心室壁肥厚",
-      "confidence": 0.9,
-      "attributes": {}
-    },
-    {
       "entity_type": "exam",
       "name": "超声心动图",
       "code": "ECHO",

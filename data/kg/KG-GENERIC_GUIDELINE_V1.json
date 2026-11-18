@@ -293,20 +293,31 @@
       "node_type": "lab",
       "code": "BNP",
       "concept_code": "",
-      "name": "B型钠尿肽",
-      "display_name": "B型钠尿肽（BNP）",
+      "name": "B型利钠肽",
+      "display_name": "B型利钠肽（BNP）",
       "attributes": {},
       "source_refs": [
         "DOC-29e50309_p5_l6-25"
       ],
-      "review_status": "draft",
-      "version": 1,
-      "content_hash": "sha256:8793588d1940e16695415006f1e1d8e0dd2330057690edd6e85343563dfe1095",
+      "review_status": "active",
+      "version": 2,
+      "content_hash": "sha256:ada8285d046bc0193b09185a4983dac8fd82b6c8200939bd7370cd6af0af9180",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "name_history": [
+        {
+          "name": "B型钠尿肽",
+          "changed_at": "2026-11-18T15:54:29.998258+00:00",
+          "changed_by": "丘丘",
+          "note": "人工修正实体名称"
+        }
+      ],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-18T15:54:31.579243+00:00",
+      "review_note": ""
     },
     {
       "id": "ENTITY:lab:CTN",
@@ -2929,54 +2940,79 @@
       "source_refs": [
         "DOC-29e50309_p12_l84-96"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "version": 1,
       "content_hash": "sha256:05a3afa3acacf19b74bd2ce3ea25a9e83d86f6128f154469877885972aa73f93",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-18T15:55:21.259953+00:00",
+      "review_note": ""
     },
     {
       "id": "ENTITY:diagnostic_evidence:CAND-EVIDENCE-MAPK-VARIANT",
       "node_type": "diagnostic_evidence",
       "code": "CAND-EVIDENCE-MAPK-VARIANT",
       "concept_code": "",
-      "name": "CAND-EVIDENCE-MAPK-VARIANT",
-      "display_name": "CAND-EVIDENCE-MAPK-VARIANT",
+      "name": "MAPK基因变异",
+      "display_name": "MAPK基因变异（CAND-EVIDENCE-MAPK-VARIANT）",
       "attributes": {},
       "source_refs": [
         "DOC-29e50309_p12_l84-96"
       ],
       "review_status": "draft",
-      "version": 1,
-      "content_hash": "sha256:29e8e22bf327260a0bc7bbecf351479be35aad7990b60f2df4dc5749229bf919",
+      "version": 2,
+      "content_hash": "sha256:3b1dad8ba88bbbcf55d66532d1620a7493e964bde7f5fb9b22fe015320797106",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "name_history": [
+        {
+          "name": "CAND-EVIDENCE-MAPK-VARIANT",
+          "changed_at": "2026-11-18T15:55:42.538760+00:00",
+          "changed_by": "丘丘",
+          "note": "人工修正实体名称"
+        }
+      ],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-18T15:55:42.538760+00:00",
+      "review_note": "人工修正实体名称"
     },
     {
       "id": "ENTITY:diagnostic_evidence:CAND-EVIDENCE-EXTRACARDIAC",
       "node_type": "diagnostic_evidence",
       "code": "CAND-EVIDENCE-EXTRACARDIAC",
       "concept_code": "",
-      "name": "CAND-EVIDENCE-EXTRACARDIAC",
-      "display_name": "CAND-EVIDENCE-EXTRACARDIAC",
+      "name": "心外证据",
+      "display_name": "心外证据（CAND-EVIDENCE-EXTRACARDIAC）",
       "attributes": {},
       "source_refs": [
         "DOC-29e50309_p12_l84-96"
       ],
       "review_status": "draft",
-      "version": 1,
-      "content_hash": "sha256:b0a841a386392135e0030157d4122c0f9463c12f9b06e9b88670b2620ec2699d",
+      "version": 2,
+      "content_hash": "sha256:02160f96ea04be774d454c410bf8288bb03c1e12160b35bf23f7d9cdba876ce3",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "name_history": [
+        {
+          "name": "CAND-EVIDENCE-EXTRACARDIAC",
+          "changed_at": "2026-11-18T15:56:03.027593+00:00",
+          "changed_by": "丘丘",
+          "note": "人工修正实体名称"
+        }
+      ],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-18T15:56:03.027593+00:00",
+      "review_note": "人工修正实体名称"
     },
     {
       "id": "ENTITY:symptom:CAND-SYN-FAINT",
@@ -3006,20 +3042,31 @@
       "node_type": "diagnostic_evidence",
       "code": "BNP:ABNORMAL",
       "concept_code": "ABNORMAL",
-      "name": "B型钠尿肽异常",
-      "display_name": "B型钠尿肽异常（BNP:ABNORMAL）",
+      "name": "B型钠尿肽（BNP）异常",
+      "display_name": "B型钠尿肽（BNP）异常（BNP:ABNORMAL）",
       "attributes": {},
       "source_refs": [
         "DOC-29e50309_p5_l6-25"
       ],
-      "review_status": "draft",
-      "version": 1,
-      "content_hash": "sha256:dbf06c0f28f347c52e52fc8bb8f2796a40afa082180261582278584e91e9ea42",
+      "review_status": "active",
+      "version": 2,
+      "content_hash": "sha256:f03e02666c3b0dd0f4e1029509649b232573f71ab9a2555c80b52b1349fa57b2",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "name_history": [
+        {
+          "name": "B型钠尿肽异常",
+          "changed_at": "2026-11-18T15:54:49.548200+00:00",
+          "changed_by": "丘丘",
+          "note": "人工修正实体名称"
+        }
+      ],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-18T15:54:53.148347+00:00",
+      "review_note": ""
     },
     {
       "id": "ENTITY:diagnostic_evidence:CTN:ABOVE_ULN_1",
@@ -3322,14 +3369,15 @@
       "source_refs": [
         "DOC-29e50309_p5_l6-25"
       ],
-      "review_status": "draft",
+      "review_status": "stale",
       "version": 1,
       "content_hash": "sha256:18def3d749c912af231f43f3c61ad8877cc54f2c37cc1e9e5c94cab8b51da86b",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_at": "2026-11-18T15:54:29.998258+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:I42.2",
@@ -4638,14 +4686,15 @@
       "source_refs": [
         "DOC-29e50309_p12_l84-96"
       ],
-      "review_status": "draft",
+      "review_status": "stale",
       "version": 1,
       "content_hash": "sha256:eb9b0f2ebd246f7203b79d813d1416b4cc45a39395de82d3ce2282f9e7316e87",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_at": "2026-11-18T15:55:42.538760+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:CAND-DISEASE-QIXING",
@@ -4675,14 +4724,15 @@
       "source_refs": [
         "DOC-29e50309_p12_l84-96"
       ],
-      "review_status": "draft",
+      "review_status": "stale",
       "version": 1,
       "content_hash": "sha256:1de982711005cee728ac04b7cbdd3a7937e183e7be99a063418e1d3fdbb8f398",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_at": "2026-11-18T15:55:42.538760+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:CAND-DISEASE-QIXING",
@@ -4693,14 +4743,15 @@
       "source_refs": [
         "DOC-29e50309_p12_l84-96"
       ],
-      "review_status": "draft",
+      "review_status": "stale",
       "version": 1,
       "content_hash": "sha256:7251da30c015a38ac6ed62b34229dde0aa398e78963729e132b86708bc0b40fc",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_at": "2026-11-18T15:56:03.027593+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:I42.2",
@@ -4756,14 +4807,17 @@
         "DOC-29e50309_p15_l51-60",
         "DOC-29e50309_p15_l94-29"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "version": 1,
       "content_hash": "sha256:68cc9843122cad671a236f768998d1304aa07e7b7b8446240d53296a5dc3c6f2",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-18T15:52:46.428299+00:00",
+      "review_note": "[AI审核建议] 指南明确指出梗阻性HCM可通过药物治疗改善症状，并详述了β受体阻滞剂、非二氢吡啶钙拮抗剂、丙吡胺等具体用药方案，DISEASE_HAS_TREATMENT_PLAN关系方向和端点均正确。目标实体ID为内部候选码，但其中文名称清晰，无需修改。"
     },
     {
       "source_node_id": "ENTITY:treatment_plan:TP-HCM-OBSTRUCTIVE-MEDICAL",
@@ -4858,14 +4912,17 @@
       "source_refs": [
         "DOC-29e50309_p15_l94-29"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "version": 1,
       "content_hash": "sha256:e6cf57fb830dc5c14d830e81241c826ff44d9719eb9196892752eed9f9977932",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-18T15:51:53.120982+00:00",
+      "review_note": "[AI审核建议] 指南原文多处提及梗阻性HCM患者出现呼吸困难（如\"梗阻性HCM合并持续性呼吸困难的患者\"、\"出现静息状态严重的呼吸困难\"），呼吸困难作为该疾病的临床表现关系成立，方向（疾病→症状）正确，端点实体为中文名称，无需修改。"
     },
     {
       "source_node_id": "ENTITY:treatment_plan:TP-HCM-OBSTRUCTIVE-MEDICAL",
@@ -5107,14 +5164,17 @@
       "source_refs": [
         "DOC-29e50309_p16_l47-53"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "version": 1,
       "content_hash": "sha256:48d253ae3676990533a20e0fad0b4c8c4b8cf39c07af1e9f61386c2a792151bf",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-18T15:52:44.749743+00:00",
+      "review_note": "[AI审核建议] 目标实体为中文可读名称“肥厚型心肌病介入治疗”，指南6.2.2节明确列出经皮腔内室间隔心肌消融术（PTSMA）、经皮心肌内室间隔射频消融术（PIMSRA）和经皮心内膜室间隔射频消融术（PESA）等介入治疗方式，支持梗阻性肥厚型心肌病（I42.1）具有介入治疗方案这一关系。关系方向为疾病→治疗方案，语义正确。"
     },
     {
       "source_node_id": "ENTITY:treatment_plan:TP-HCM-INTERVENTION",
@@ -5125,14 +5185,17 @@
       "source_refs": [
         "DOC-29e50309_p16_l47-53"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "version": 1,
       "content_hash": "sha256:52dc49544dd6eff53b643995ec401f65c32e1a8208f3ba495100b61601afcca7",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-18T15:56:34.646640+00:00",
+      "review_note": "[AI审核建议] 指南6.2.2节明确指出肥厚型心肌病介入治疗主要包括PTSMA（经皮腔内室间隔心肌消融术）等术式，TREATMENT_PLAN_INCLUDES_INTERVENTION关系（肥厚型心肌病介入治疗 → 经皮腔内室间隔心肌消融术）方向和语义均与原文一致。"
     },
     {
       "source_node_id": "ENTITY:treatment_plan:TP-HCM-INTERVENTION",
@@ -5143,14 +5206,17 @@
       "source_refs": [
         "DOC-29e50309_p16_l47-53"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "version": 1,
       "content_hash": "sha256:fa23c16e12da09bea5d106811f8da6bc5560d939f8176d04b8c1e7dea3fb0e56",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-18T15:57:25.015856+00:00",
+      "review_note": ""
     },
     {
       "source_node_id": "ENTITY:treatment_plan:TP-HCM-INTERVENTION",
@@ -5161,14 +5227,17 @@
       "source_refs": [
         "DOC-29e50309_p16_l47-53"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "version": 1,
       "content_hash": "sha256:622ac44f1b5184a2bba94220d9d74a482f7b9800c0897692de5600442e651300",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-18T15:57:17.863575+00:00",
+      "review_note": ""
     },
     {
       "source_node_id": "ENTITY:disease:I42.1",
@@ -5179,14 +5248,17 @@
       "source_refs": [
         "DOC-29e50309_p16_l54-91"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "version": 1,
       "content_hash": "sha256:3dd5cfc0c1e48bc2f1507150ace747955558fb3d9e0524b965d376f92f8947e6",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-18T15:52:42.959428+00:00",
+      "review_note": "[AI审核建议] 指南6.2.2.1明确支持PTSMA用于有适应证的梗阻性HCM患者，证据级别（Ⅰ，C）、患者适用范围均与原文一致；源实体I42.1梗阻性肥厚型心肌病与原文语境相符，方向正确。"
     },
     {
       "source_node_id": "ENTITY:treatment_plan:TP-HCM-PTSMA",
@@ -5225,14 +5297,17 @@
         "DOC-29e50309_p15_l88-92",
         "DOC-29e50309_p16_l92-29"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "version": 1,
       "content_hash": "sha256:63af701669062d3447cc673f870af6ebf0ed903646a4c0a3dbbf5740b0d40b4d",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-18T15:53:30.945995+00:00",
+      "review_note": "[AI审核建议] 指南明确支持：'超声心动图是HCM诊断首选、准确且经济的方法，所有HCM患者均应行经胸超声心动图检查（Ⅰ，B）'，梗阻性HCM作为HCM的亚型，同样适用该检查推荐。目标实体为检查项目（超声心动图）而非检查结果，与DISEASE_HAS_EXAM关系语义匹配，源到目标方向正确。"
     },
     {
       "source_node_id": "ENTITY:disease:I42.1",
@@ -5619,14 +5694,15 @@
       "source_refs": [
         "DOC-29e50309_p5_l6-25"
       ],
-      "review_status": "draft",
+      "review_status": "stale",
       "version": 1,
       "content_hash": "sha256:c9910baf45d13ebdb3d65037608e6ccd4c638afe80cbcbd210f41f5abaed22d9",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_at": "2026-11-18T15:54:29.998258+00:00"
     },
     {
       "source_node_id": "ENTITY:lab:CBC",
@@ -6341,17 +6417,17 @@
       "source_refs": [
         "DOC-29e50309_p12_l33-51"
       ],
-      "review_status": "active",
-      "version": 1,
+      "review_status": "rejected",
+      "version": 2,
       "content_hash": "sha256:80804ae132bee8c50cc1ad346d19bfb4951089aa01aa080486c04b5cc3142a52",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
       "orphaned_from": [],
-      "reviewed_by": "未署名",
-      "reviewed_at": "2026-11-18T08:55:44.603279+00:00",
-      "review_note": ""
+      "reviewed_by": "系统修复",
+      "reviewed_at": "2026-11-18T09:30:00+00:00",
+      "review_note": "[关系错绑] 原文属于线粒体疾病章节；图谱中已有CAND-MITOCARD到免疫组化的正确关系，拒绝I42.2重复错绑关系"
     },
     {
       "source_node_id": "ENTITY:disease:I42.2",
@@ -6362,17 +6438,17 @@
       "source_refs": [
         "DOC-29e50309_p12_l33-51"
       ],
-      "review_status": "active",
-      "version": 1,
+      "review_status": "rejected",
+      "version": 2,
       "content_hash": "sha256:13bd9bd2b6ac9195b63706037e73842488c6307fa4635d6cf3a8196b0512c16f",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
       "orphaned_from": [],
-      "reviewed_by": "未署名",
-      "reviewed_at": "2026-11-18T08:55:44.624536+00:00",
-      "review_note": ""
+      "reviewed_by": "系统修复",
+      "reviewed_at": "2026-11-18T09:30:00+00:00",
+      "review_note": "[关系错绑] 原文属于线粒体疾病章节；图谱中已有CAND-MITOCARD到PCR检查的正确关系，拒绝I42.2重复错绑关系"
     },
     {
       "source_node_id": "ENTITY:lab:CAND-BLOOD-LACTATE",
@@ -6654,14 +6730,15 @@
       "source_refs": [
         "DOC-29e50309_p12_l84-96"
       ],
-      "review_status": "draft",
+      "review_status": "stale",
       "version": 1,
       "content_hash": "sha256:9a76f22a09f412e136256244c62c6cd8e5689fa9c7beedc81d80322838453cea",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_at": "2026-11-18T15:56:03.027593+00:00"
     },
     {
       "source_node_id": "ENTITY:exam:ECG_12LEAD",
@@ -7193,14 +7270,15 @@
       "source_refs": [
         "DOC-29e50309_p5_l6-25"
       ],
-      "review_status": "draft",
+      "review_status": "stale",
       "version": 1,
       "content_hash": "sha256:398ad88a1aad922b42f60af9878514608bd0d8686bd00eb70b92100fde1ff699",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_at": "2026-11-18T15:54:49.548200+00:00"
     },
     {
       "source_node_id": "ENTITY:lab:CTN",
@@ -7412,14 +7490,15 @@
       "source_refs": [
         "DOC-29e50309_p5_l6-25"
       ],
-      "review_status": "draft",
+      "review_status": "stale",
       "version": 1,
       "content_hash": "sha256:549c1a26fe9b8cd25d2eec07d368fe0ebf1c90befe0a295fea5cceec57aaaa89",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_at": "2026-11-18T15:54:49.548200+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:I50.9",
@@ -9736,21 +9815,60 @@
         "rule_type": "diagnosis",
         "clinical_intent": "diagnosis_confirmation",
         "diagnosis_prerequisite": null,
-        "clinical_context": {},
+        "clinical_context": {
+          "population": "",
+          "subtype": "",
+          "phase": "",
+          "recommendation_strength": "",
+          "evidence_grade": "",
+          "exceptions": [],
+          "missing_information": []
+        },
         "clinical_statement_id": "",
         "name": "梗阻性肥厚型心肌病诊断规则",
         "disease_code": "I42.1",
         "disease_name": "梗阻性肥厚型心肌病",
         "priority": 2,
         "status": "draft",
-        "department": null,
+        "department": "",
         "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
         "conditions": {
           "type": "group",
-          "operator": "AND",
+          "operator": "OR",
           "scoring": null,
           "threshold": null,
-          "children": [],
+          "children": [
+            {
+              "type": "symptom",
+              "operator": null,
+              "scoring": null,
+              "threshold": null,
+              "children": [],
+              "required_children": [],
+              "evidence_id": null,
+              "lab_code": null,
+              "concept_code": null,
+              "parameter": null,
+              "exam_code": null,
+              "finding_code": null,
+              "standard_required": false,
+              "symptom_code": "SYM_DYSPNEA",
+              "duration_minutes": null,
+              "vital_code": null,
+              "threshold_value": null,
+              "age_min": null,
+              "age_max": null,
+              "gender": null,
+              "code": null,
+              "observation_type": null,
+              "weight": null,
+              "required": null,
+              "fact_type": null,
+              "attribute_code": null,
+              "attribute_value": null,
+              "label": null
+            }
+          ],
           "required_children": [],
           "evidence_id": null,
           "lab_code": null,
@@ -9819,7 +9937,60 @@
       "status": "draft",
       "checks": {},
       "scope_summary": "",
-      "updated_at": "2026-11-18T06:32:37.941620+00:00"
+      "updated_at": "2026-11-18T15:54:12.133653+00:00",
+      "completion": {
+        "source": "reviewed_graph",
+        "used": [
+          {
+            "evidence_id": "EV-DOC-29e50309-SYM_DYSPNEA-PRESENT",
+            "condition": {
+              "type": "symptom",
+              "symptom_code": "SYM_DYSPNEA"
+            },
+            "required": false,
+            "weight": 0.5
+          }
+        ],
+        "skipped": [
+          {
+            "evidence_id": "EV-DOC-29e50309-LVOT_OBSTRUCTION-PRESENT",
+            "reason": "关联实体或关系尚未全部审核通过"
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-SYM_HYPOTENSION-PRESENT",
+            "reason": "关联实体或关系尚未全部审核通过"
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:LVOT_OBSTRUCTION",
+            "reason": "关联实体或关系尚未全部审核通过"
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:SAM",
+            "reason": "关联实体或关系尚未全部审核通过"
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:LV_HYPERTROPHY",
+            "reason": "关联实体或关系尚未全部审核通过"
+          },
+          {
+            "evidence_id": "graph:ENTITY:symptom:SYM_CHEST_PAIN",
+            "reason": "关联实体或关系尚未全部审核通过"
+          },
+          {
+            "evidence_id": "graph:ENTITY:symptom:SYM_SHORTNESS_BREATH",
+            "reason": "关联实体或关系尚未全部审核通过"
+          },
+          {
+            "evidence_id": "graph:ENTITY:symptom:CAND-SYN-FAINT",
+            "reason": "关联实体或关系尚未全部审核通过"
+          },
+          {
+            "evidence_id": "graph:ENTITY:symptom:SYM_HYPOTENSION",
+            "reason": "关联实体或关系尚未全部审核通过"
+          }
+        ],
+        "completed_at": "2026-11-18T15:54:05.514398+00:00"
+      }
     },
     {
       "basis_id": "CB-e47e099fadc748a1ba0b",
