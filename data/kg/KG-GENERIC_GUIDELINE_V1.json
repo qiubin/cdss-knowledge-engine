@@ -164,7 +164,8 @@
         "DOC-29e50309_p13_l24-2",
         "DOC-29e50309_p15_l61-87",
         "DOC-29e50309_p16_l92-29",
-        "DOC-29e50309_p22_l24-37"
+        "DOC-29e50309_p22_l24-37",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -193,7 +194,8 @@
         "DOC-29e50309_p13_l24-2",
         "DOC-29e50309_p15_l61-87",
         "DOC-29e50309_p16_l92-29",
-        "DOC-29e50309_p22_l24-37"
+        "DOC-29e50309_p22_l24-37",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -217,7 +219,8 @@
       "attributes": {},
       "source_refs": [
         "DOC-29e50309_p3_l60-99",
-        "DOC-29e50309_p12_l97-22"
+        "DOC-29e50309_p12_l97-22",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -244,7 +247,8 @@
         "DOC-29e50309_p11_l30-75",
         "DOC-29e50309_p12_l52-64",
         "DOC-29e50309_p12_l97-22",
-        "DOC-29e50309_p13_l24-2"
+        "DOC-29e50309_p13_l24-2",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -274,7 +278,8 @@
       "source_refs": [
         "DOC-29e50309_p3_l60-99",
         "DOC-29e50309_p15_l3-50",
-        "DOC-29e50309_p22_l24-37"
+        "DOC-29e50309_p22_l24-37",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -633,14 +638,17 @@
       "source_refs": [
         "DOC-29e50309_p10_l40-57"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "version": 1,
       "content_hash": "sha256:354d76fa401ff26410208e0f6a145177d36b1fa7528a9e363460eb89979e8a44",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-19T07:54:18.286245+00:00",
+      "review_note": ""
     },
     {
       "id": "ENTITY:disease:I35.0",
@@ -653,14 +661,17 @@
       "source_refs": [
         "DOC-29e50309_p10_l40-57"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "version": 1,
       "content_hash": "sha256:599fd10638b04bc128aa4da123945420fd87c4d6d1fa0ab86adc4fb5bf7bd623",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-19T07:52:48.180028+00:00",
+      "review_note": ""
     },
     {
       "id": "ENTITY:treatment_plan:TP-HCM-SEPTAL-REDUCTION",
@@ -1002,26 +1013,6 @@
       "orphaned_from": []
     },
     {
-      "id": "ENTITY:disease:CAND-MITOCARD",
-      "node_type": "disease",
-      "code": "CAND-MITOCARD",
-      "concept_code": "",
-      "name": "线粒体心肌病",
-      "display_name": "线粒体心肌病（CAND-MITOCARD）",
-      "attributes": {},
-      "source_refs": [
-        "DOC-29e50309_p12_l33-51"
-      ],
-      "review_status": "draft",
-      "version": 1,
-      "content_hash": "sha256:e7f1d8562b13a1564a2b7dd0bb0f3b808f34acf8cc20109e51d547fb4328ecc0",
-      "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
-      "source_doc_ids": [
-        "DOC-29e50309"
-      ],
-      "orphaned_from": []
-    },
-    {
       "id": "ENTITY:exam:IMMUNOHISTOCHEMISTRY",
       "node_type": "exam",
       "code": "IMMUNOHISTOCHEMISTRY",
@@ -1115,14 +1106,17 @@
       "source_refs": [
         "DOC-29e50309_p12_l52-64"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "version": 1,
       "content_hash": "sha256:23e437c33108967f489f85f9d07ca2cde4babdb70adeca30992334c22579ca03",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-19T03:33:18.790426+00:00",
+      "review_note": ""
     },
     {
       "id": "ENTITY:exam:CAND-GENETIC-TESTING",
@@ -1246,14 +1240,17 @@
       "source_refs": [
         "DOC-29e50309_p12_l84-96"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "version": 1,
       "content_hash": "sha256:b25c64a8e0d069e30ba0b57a76cadb4ec85dd3dbe89ba9d2aea1cc91b9d7fb5b",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-19T01:49:26.448378+00:00",
+      "review_note": ""
     },
     {
       "id": "ENTITY:disease:CAND-DISEASE-CFC",
@@ -2199,8 +2196,8 @@
       "node_type": "treatment_plan",
       "code": "TP-HCM-SEPTAL-MYECTOMY",
       "concept_code": "",
-      "name": "室间隔肥厚心肌切除术方案",
-      "display_name": "室间隔肥厚心肌切除术方案（TP-HCM-SEPTAL-MYECTOMY）",
+      "name": "肥厚型心肌病室间隔心肌切除术方案",
+      "display_name": "肥厚型心肌病室间隔心肌切除术方案（TP-HCM-SEPTAL-MYECTOMY）",
       "attributes": {
         "TREATMENT_EVIDENCE_LEVEL": "Ⅰ，B",
         "TREATMENT_PATIENT_SCOPE": "NYHAⅢ/Ⅳ级或严重胸痛，静息或运动激发LVOTG≥50 mmHg"
@@ -2209,13 +2206,24 @@
         "DOC-29e50309_p17_l90-18"
       ],
       "review_status": "draft",
-      "version": 1,
-      "content_hash": "sha256:c7d06cfaafbfcff6a44979d3602d3386fb557389415e07b9cb1b72eec5693f91",
+      "version": 2,
+      "content_hash": "sha256:4a93ae928c4b3df4615543b1170b906abd69408a90fcf0e970766f204ce13926",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "name_history": [
+        {
+          "name": "室间隔肥厚心肌切除术方案",
+          "changed_at": "2026-11-19T03:33:08.471546+00:00",
+          "changed_by": "丘丘",
+          "note": "人工修正实体名称"
+        }
+      ],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-19T03:33:08.471546+00:00",
+      "review_note": "人工修正实体名称"
     },
     {
       "id": "ENTITY:intervention:SEPTAL-MYECTOMY",
@@ -2228,14 +2236,17 @@
       "source_refs": [
         "DOC-29e50309_p17_l90-18"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "version": 1,
       "content_hash": "sha256:071e4021cb71340c04debe88341df000137215f60ca39eed9b558499246ae1b0",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-19T03:32:06.978408+00:00",
+      "review_note": ""
     },
     {
       "id": "ENTITY:intervention:DDD-PACEMAKER",
@@ -2705,7 +2716,8 @@
         "DOC-29e50309_p15_l3-50",
         "DOC-29e50309_p16_l92-29",
         "DOC-29e50309_p7_l160-12",
-        "DOC-29e50309_p15_l94-29"
+        "DOC-29e50309_p15_l94-29",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -2731,7 +2743,8 @@
         "DOC-29e50309_p3_l100-20",
         "DOC-29e50309_p5_l94-153",
         "DOC-29e50309_p16_l54-91",
-        "DOC-29e50309_p17_l90-18"
+        "DOC-29e50309_p17_l90-18",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -2755,7 +2768,8 @@
       "attributes": {},
       "source_refs": [
         "DOC-29e50309_p5_l26-74",
-        "DOC-29e50309_p10_l58-67"
+        "DOC-29e50309_p10_l58-67",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -2780,7 +2794,8 @@
       "source_refs": [
         "DOC-29e50309_p5_l26-74",
         "DOC-29e50309_p11_l76-103",
-        "DOC-29e50309_p11_l104-32"
+        "DOC-29e50309_p11_l104-32",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 4,
@@ -2827,7 +2842,8 @@
         "DOC-29e50309_p10_l58-67",
         "DOC-29e50309_p11_l76-103",
         "DOC-29e50309_p12_l52-64",
-        "DOC-29e50309_p12_l97-22"
+        "DOC-29e50309_p12_l97-22",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 2,
@@ -2882,7 +2898,8 @@
       "attributes": {},
       "source_refs": [
         "DOC-29e50309_p10_l58-67",
-        "DOC-29e50309_p12_l52-64"
+        "DOC-29e50309_p12_l52-64",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -2907,7 +2924,8 @@
       "source_refs": [
         "DOC-29e50309_p11_l30-75",
         "DOC-29e50309_p11_l76-103",
-        "DOC-29e50309_p12_l33-51"
+        "DOC-29e50309_p12_l33-51",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 2,
@@ -3023,7 +3041,8 @@
       "display_name": "晕厥（CAND-SYN-FAINT）",
       "attributes": {},
       "source_refs": [
-        "DOC-29e50309_p22_l24-37"
+        "DOC-29e50309_p22_l24-37",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -3150,20 +3169,31 @@
       "node_type": "diagnostic_evidence",
       "code": "CK_MB:ABOVE_ULN_1",
       "concept_code": "ABOVE_ULN_1",
-      "name": "肌酸激酶同工酶超正常上限",
-      "display_name": "肌酸激酶同工酶超正常上限（CK_MB:ABOVE_ULN_1）",
+      "name": "肌酸激酶同工酶CK-MB高于正常上限",
+      "display_name": "肌酸激酶同工酶CK-MB高于正常上限（CK_MB:ABOVE_ULN_1）",
       "attributes": {},
       "source_refs": [
         "DOC-29e50309_p11_l104-32"
       ],
       "review_status": "draft",
-      "version": 1,
-      "content_hash": "sha256:4757d3c2012ccdbd98a8c78d9ff63208341e6a8b41913bf15f18a31073f6fd00",
+      "version": 2,
+      "content_hash": "sha256:5f2c4a41b7c76253434039112c28206ef9da92b159b5d469b09303e13e364621",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "name_history": [
+        {
+          "name": "肌酸激酶同工酶超正常上限",
+          "changed_at": "2026-11-19T03:32:02.300073+00:00",
+          "changed_by": "丘丘",
+          "note": "人工修正实体名称"
+        }
+      ],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-19T03:32:02.300073+00:00",
+      "review_note": "人工修正实体名称"
     },
     {
       "id": "ENTITY:diagnostic_evidence:CAND-BLOOD-LACTATE:ABNORMAL",
@@ -3205,7 +3235,8 @@
       "display_name": "晕厥（SYM_SYNCOPE）",
       "attributes": {},
       "source_refs": [
-        "DOC-29e50309_p15_l3-50"
+        "DOC-29e50309_p15_l3-50",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 2,
@@ -3272,7 +3303,8 @@
         "DOC-29e50309_p15_l61-87",
         "DOC-29e50309_p13_l24-2",
         "DOC-29e50309_p16_l92-29",
-        "DOC-29e50309_p22_l24-37"
+        "DOC-29e50309_p22_l24-37",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -3299,7 +3331,8 @@
         "DOC-29e50309_p13_l24-2",
         "DOC-29e50309_p15_l61-87",
         "DOC-29e50309_p16_l92-29",
-        "DOC-29e50309_p22_l24-37"
+        "DOC-29e50309_p22_l24-37",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -3321,7 +3354,8 @@
       "attributes": {},
       "source_refs": [
         "DOC-29e50309_p3_l60-99",
-        "DOC-29e50309_p12_l97-22"
+        "DOC-29e50309_p12_l97-22",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -3346,7 +3380,8 @@
         "DOC-29e50309_p12_l97-22",
         "DOC-29e50309_p13_l24-2",
         "DOC-29e50309_p11_l30-75",
-        "DOC-29e50309_p12_l52-64"
+        "DOC-29e50309_p12_l52-64",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -3606,7 +3641,8 @@
       "target_node_id": "ENTITY:diagnostic_evidence:PATHOLOGICAL_Q_WAVE",
       "attributes": {},
       "source_refs": [
-        "DOC-29e50309_p5_l26-74"
+        "DOC-29e50309_p5_l26-74",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -3627,7 +3663,8 @@
       "target_node_id": "ENTITY:diagnostic_evidence:LVH_VOLTAGE",
       "attributes": {},
       "source_refs": [
-        "DOC-29e50309_p5_l26-74"
+        "DOC-29e50309_p5_l26-74",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 2,
@@ -3650,7 +3687,8 @@
       "source_refs": [
         "DOC-29e50309_p5_l26-74",
         "DOC-29e50309_p12_l52-64",
-        "DOC-29e50309_p12_l97-22"
+        "DOC-29e50309_p12_l97-22",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -3870,7 +3908,8 @@
         "DOC-29e50309_p16_l92-29",
         "DOC-29e50309_p2_l43-59",
         "DOC-29e50309_p15_l88-92",
-        "DOC-29e50309_p7_l160-12"
+        "DOC-29e50309_p7_l160-12",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -3894,7 +3933,8 @@
         "DOC-29e50309_p5_l94-153",
         "DOC-29e50309_p16_l54-91",
         "DOC-29e50309_p3_l100-20",
-        "DOC-29e50309_p17_l90-18"
+        "DOC-29e50309_p17_l90-18",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -3943,7 +3983,8 @@
         "DOC-29e50309_p15_l88-92",
         "DOC-29e50309_p16_l54-91",
         "DOC-29e50309_p16_l92-29",
-        "DOC-29e50309_p2_l43-59"
+        "DOC-29e50309_p2_l43-59",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -3967,7 +4008,8 @@
         "DOC-29e50309_p5_l94-153",
         "DOC-29e50309_p16_l54-91",
         "DOC-29e50309_p3_l100-20",
-        "DOC-29e50309_p17_l90-18"
+        "DOC-29e50309_p17_l90-18",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -4338,118 +4380,6 @@
       "reviewed_by": "未署名",
       "reviewed_at": "2026-11-18T08:13:57.754506+00:00",
       "review_note": ""
-    },
-    {
-      "source_node_id": "ENTITY:disease:CAND-MITOCARD",
-      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
-      "relation_name": "疾病构成诊断依据",
-      "target_node_id": "ENTITY:diagnostic_evidence:LV_HYPERTROPHY",
-      "attributes": {},
-      "source_refs": [
-        "DOC-29e50309_p12_l33-51"
-      ],
-      "review_status": "stale",
-      "version": 1,
-      "content_hash": "sha256:c6228194818cb0992f79edbad63537b1bd0e2bb5656eaec15727618c53e055ac",
-      "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
-      "source_doc_ids": [
-        "DOC-29e50309"
-      ],
-      "orphaned_from": [],
-      "reviewed_at": "2026-11-18T08:04:44.687009+00:00"
-    },
-    {
-      "source_node_id": "ENTITY:disease:CAND-MITOCARD",
-      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
-      "relation_name": "疾病构成诊断依据",
-      "target_node_id": "ENTITY:diagnostic_evidence:PATHOLOGY_CONFIRMED",
-      "attributes": {},
-      "source_refs": [
-        "DOC-29e50309_p12_l33-51"
-      ],
-      "review_status": "stale",
-      "version": 1,
-      "content_hash": "sha256:900979e791248c297ad1bc046079177f7d721fc8d4e595d7e637822c552c833c",
-      "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
-      "source_doc_ids": [
-        "DOC-29e50309"
-      ],
-      "orphaned_from": [],
-      "reviewed_at": "2026-11-18T08:04:39.166464+00:00"
-    },
-    {
-      "source_node_id": "ENTITY:disease:CAND-MITOCARD",
-      "relation_code": "DISEASE_HAS_EXAM",
-      "relation_name": "疾病关联检查",
-      "target_node_id": "ENTITY:exam:BIOPSY",
-      "attributes": {},
-      "source_refs": [
-        "DOC-29e50309_p12_l33-51"
-      ],
-      "review_status": "stale",
-      "version": 1,
-      "content_hash": "sha256:a526a659a88cf90de42e7437c66f3a832dc82d88960801d1612698df9428c494",
-      "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
-      "source_doc_ids": [
-        "DOC-29e50309"
-      ],
-      "orphaned_from": [],
-      "reviewed_at": "2026-11-18T08:07:47.097764+00:00"
-    },
-    {
-      "source_node_id": "ENTITY:disease:CAND-MITOCARD",
-      "relation_code": "DISEASE_HAS_EXAM",
-      "relation_name": "疾病关联检查",
-      "target_node_id": "ENTITY:exam:IMMUNOHISTOCHEMISTRY",
-      "attributes": {},
-      "source_refs": [
-        "DOC-29e50309_p12_l33-51"
-      ],
-      "review_status": "draft",
-      "version": 1,
-      "content_hash": "sha256:d71bef35b15270ff768dcad387b3574546323dbadad07a2849d7991a9fc7881c",
-      "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
-      "source_doc_ids": [
-        "DOC-29e50309"
-      ],
-      "orphaned_from": []
-    },
-    {
-      "source_node_id": "ENTITY:disease:CAND-MITOCARD",
-      "relation_code": "DISEASE_HAS_EXAM",
-      "relation_name": "疾病关联检查",
-      "target_node_id": "ENTITY:exam:PCR_TEST",
-      "attributes": {},
-      "source_refs": [
-        "DOC-29e50309_p12_l33-51"
-      ],
-      "review_status": "draft",
-      "version": 1,
-      "content_hash": "sha256:39b553b41bf5a2f76c46096ae43062cb3fee96ab0e4a8924d984fdec2024c84a",
-      "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
-      "source_doc_ids": [
-        "DOC-29e50309"
-      ],
-      "orphaned_from": []
-    },
-    {
-      "source_node_id": "ENTITY:disease:CAND-MITOCARD",
-      "relation_code": "DISEASE_HAS_LAB",
-      "relation_name": "疾病关联检验",
-      "target_node_id": "ENTITY:lab:CAND-BLOOD-LACTATE",
-      "attributes": {},
-      "source_refs": [
-        "DOC-29e50309_p12_l33-51"
-      ],
-      "review_status": "stale",
-      "version": 1,
-      "content_hash": "sha256:5d42c80b51f5c560a4c180250cb1b27035dc3047460a831f1cae45eda103e433",
-      "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
-      "source_doc_ids": [
-        "DOC-29e50309"
-      ],
-      "orphaned_from": [],
-      "reviewed_at": "2026-11-18T08:42:40.351620+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:CAND-G11.8-FRIEDREICH",
@@ -5931,7 +5861,7 @@
         "DOC-29e50309_p11_l76-103",
         "DOC-29e50309_p12_l52-64"
       ],
-      "review_status": "stale",
+      "review_status": "rejected",
       "version": 1,
       "content_hash": "sha256:5921d9dd1e7245f44993f443debe09c5eb356d1ab6da0b2f78f768b645c4423e",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
@@ -5939,7 +5869,9 @@
         "DOC-29e50309"
       ],
       "orphaned_from": [],
-      "reviewed_at": "2026-11-18T08:06:30.457105+00:00"
+      "reviewed_at": "2026-11-19T07:50:27.549517+00:00",
+      "reviewed_by": "丘丘",
+      "review_note": "[证据不足]"
     },
     {
       "source_node_id": "ENTITY:disease:I25",
@@ -5951,14 +5883,17 @@
         "DOC-29e50309_p10_l58-67",
         "DOC-29e50309_p5_l26-74"
       ],
-      "review_status": "draft",
+      "review_status": "rejected",
       "version": 1,
       "content_hash": "sha256:13a95c523be681b13fb8e72383522928e62b91a5b6cc799dafe9964a23b72637",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-19T07:49:19.808315+00:00",
+      "review_note": "[AI审核建议] 该关系声称「病理性Q波」构成「慢性缺血性心脏病(I25)」的诊断依据，但所给指南原文均出自《肥厚型心肌病》(HCM)章节：病理性Q波是HCM的心电图表现（发生率18%~53%），而在4.4.3节中病理性Q波恰恰是HCM易被误诊为冠心病的鉴别因素，并非冠心病本身的诊断依据。关系绑定到了错误的疾病端点，且端点节点存在未激活警告。"
     },
     {
       "source_node_id": "ENTITY:disease:I25",
@@ -5987,7 +5922,8 @@
       "attributes": {},
       "source_refs": [
         "DOC-29e50309_p11_l30-75",
-        "DOC-29e50309_p12_l33-51"
+        "DOC-29e50309_p12_l33-51",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -6604,7 +6540,8 @@
       "target_node_id": "ENTITY:diagnostic_evidence:T_WAVE_INVERSION",
       "attributes": {},
       "source_refs": [
-        "DOC-29e50309_p12_l52-64"
+        "DOC-29e50309_p12_l52-64",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -6875,7 +6812,8 @@
       "target_node_id": "ENTITY:symptom:SYM_DIZZINESS_CAND_SYNOPE",
       "attributes": {},
       "source_refs": [
-        "DOC-29e50309_p15_l3-50"
+        "DOC-29e50309_p15_l3-50",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -7189,14 +7127,15 @@
       "source_refs": [
         "DOC-29e50309_p17_l90-18"
       ],
-      "review_status": "draft",
+      "review_status": "stale",
       "version": 1,
       "content_hash": "sha256:898eb551347149a8d839a480148321acc68806e3d82ee39b0bd3dda850e1b8cc",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_at": "2026-11-19T03:33:08.471546+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:I42.2",
@@ -7205,7 +7144,8 @@
       "target_node_id": "ENTITY:symptom:CAND-SYN-FAINT",
       "attributes": {},
       "source_refs": [
-        "DOC-29e50309_p22_l24-37"
+        "DOC-29e50309_p22_l24-37",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -7350,14 +7290,15 @@
       "source_refs": [
         "DOC-29e50309_p11_l104-32"
       ],
-      "review_status": "draft",
+      "review_status": "stale",
       "version": 1,
       "content_hash": "sha256:26b101428a4124abde1b7630ad1e1a06d8132e1c3aca165f481b0804dc93d59d",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
       "source_doc_ids": [
         "DOC-29e50309"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_at": "2026-11-19T03:32:02.300073+00:00"
     },
     {
       "source_node_id": "ENTITY:lab:CAND-BLOOD-LACTATE",
@@ -7381,24 +7322,6 @@
       "review_note": ""
     },
     {
-      "source_node_id": "ENTITY:disease:CAND-MITOCARD",
-      "relation_code": "DISEASE_HAS_EXAM",
-      "relation_name": "疾病关联检查",
-      "target_node_id": "ENTITY:exam:ECHO",
-      "attributes": {},
-      "source_refs": [
-        "DOC-29e50309_p12_l33-51"
-      ],
-      "review_status": "draft",
-      "version": 1,
-      "content_hash": "sha256:fcf0b5aa875a6dce7730f24af4c8dbbb1445579f92592839b77b56c2c0b9a162",
-      "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
-      "source_doc_ids": [
-        "DOC-29e50309"
-      ],
-      "orphaned_from": []
-    },
-    {
       "source_node_id": "ENTITY:lab:CAND-BLOOD-LACTATE",
       "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
       "relation_name": "检验形成诊断依据",
@@ -7420,32 +7343,14 @@
       "review_note": ""
     },
     {
-      "source_node_id": "ENTITY:disease:CAND-MITOCARD",
-      "relation_code": "DISEASE_HAS_DIAGNOSTIC_EVIDENCE",
-      "relation_name": "疾病构成诊断依据",
-      "target_node_id": "ENTITY:diagnostic_evidence:CAND-BLOOD-LACTATE:POSITIVE",
-      "attributes": {},
-      "source_refs": [
-        "DOC-29e50309_p12_l33-51"
-      ],
-      "review_status": "stale",
-      "version": 1,
-      "content_hash": "sha256:c6b703153e4adcab8b1f321077059a2ee18afcefa0d73950262ba4ef0c4ad057",
-      "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
-      "source_doc_ids": [
-        "DOC-29e50309"
-      ],
-      "orphaned_from": [],
-      "reviewed_at": "2026-11-18T07:22:17.453332+00:00"
-    },
-    {
       "source_node_id": "ENTITY:disease:I42.2",
       "relation_code": "DISEASE_HAS_SYMPTOM",
       "relation_name": "疾病关联症状",
       "target_node_id": "ENTITY:symptom:SYM_SYNCOPE",
       "attributes": {},
       "source_refs": [
-        "DOC-29e50309_p15_l3-50"
+        "DOC-29e50309_p15_l3-50",
+        "DOC-29e50309_p2_l31-42"
       ],
       "review_status": "active",
       "version": 1,
@@ -7693,11 +7598,6 @@
     {
       "code": "GEN-CAND-PRKAG2",
       "name_cn": "单磷酸腺苷激活蛋白激酶γ2亚基编码基因变异心脏综合征",
-      "name_en": ""
-    },
-    {
-      "code": "CAND-MITOCARD",
-      "name_cn": "线粒体心肌病",
       "name_en": ""
     },
     {
@@ -9606,10 +9506,15 @@
         "created_at": "",
         "updated_at": ""
       },
-      "status": "draft",
-      "checks": {},
-      "scope_summary": "",
-      "updated_at": "2026-11-18T09:02:22.578566+00:00",
+      "status": "active",
+      "checks": {
+        "entities": true,
+        "logic": true,
+        "scope": true,
+        "source": true
+      },
+      "scope_summary": "1",
+      "updated_at": "2026-11-19T02:51:39.117299+00:00",
       "completion": {
         "source": "reviewed_graph",
         "used": [
@@ -9802,7 +9707,12 @@
           }
         ],
         "completed_at": "2026-11-18T09:02:22.578575+00:00"
-      }
+      },
+      "approved_fingerprint": "241db105e39353f5329573c0db9d992ed44b95df44e0b928c576ab0401800d55",
+      "reviewer": "丘丘",
+      "note": "1",
+      "generated_rule_id": "RULE-CB-b4e3705c70fbacec222a",
+      "generated_at": "2026-11-19T02:51:39.146968+00:00"
     },
     {
       "basis_id": "CB-ec1e00564b9ca205a990",
@@ -9934,10 +9844,15 @@
         "created_at": "",
         "updated_at": ""
       },
-      "status": "draft",
-      "checks": {},
-      "scope_summary": "",
-      "updated_at": "2026-11-18T15:54:12.133653+00:00",
+      "status": "active",
+      "checks": {
+        "entities": true,
+        "logic": true,
+        "scope": true,
+        "source": true
+      },
+      "scope_summary": "1",
+      "updated_at": "2026-11-19T08:15:05.748445+00:00",
       "completion": {
         "source": "reviewed_graph",
         "used": [
@@ -9990,7 +9905,12 @@
           }
         ],
         "completed_at": "2026-11-18T15:54:05.514398+00:00"
-      }
+      },
+      "approved_fingerprint": "f4bac09f0ddf27e2ea4fa83cd37c567f30b41193fec7acb52df7011c84aab2ae",
+      "reviewer": "丘丘",
+      "note": "1",
+      "generated_rule_id": "RULE-CB-ec1e00564b9ca205a990",
+      "generated_at": "2026-11-19T08:15:05.779175+00:00"
     },
     {
       "basis_id": "CB-e47e099fadc748a1ba0b",
@@ -10022,7 +9942,7 @@
         "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
         "conditions": {
           "type": "group",
-          "operator": null,
+          "operator": "AND",
           "scoring": null,
           "threshold": null,
           "children": [
@@ -10367,7 +10287,7 @@
       "status": "draft",
       "checks": {},
       "scope_summary": "test",
-      "updated_at": "2026-11-18T09:02:06.054188+00:00",
+      "updated_at": "2026-11-19T02:19:43.163718+00:00",
       "completion": {
         "source": "reviewed_graph",
         "used": [
@@ -10750,91 +10670,38 @@
     },
     {
       "basis_id": "CB-3217283910435c332947",
-      "name": "肥厚型心肌病室间隔减容治疗候选规则",
+      "name": "梗阻性肥厚型心肌病治疗方案（药物/介入/外科）",
       "specification": {
-        "rule_id": "RULE-HCM-TP-SEPTAL-001",
+        "rule_id": "RULE-HOCM-TREATMENT-002",
         "version": 1,
         "domain": "western",
         "anchor_type": "disease",
         "rule_type": "diagnosis",
         "clinical_intent": "diagnosis_confirmation",
         "diagnosis_prerequisite": null,
-        "clinical_context": {},
+        "clinical_context": {
+          "population": "",
+          "subtype": "",
+          "phase": "",
+          "recommendation_strength": "",
+          "evidence_grade": "",
+          "exceptions": [],
+          "missing_information": []
+        },
         "clinical_statement_id": "",
-        "name": "肥厚型心肌病室间隔减容治疗候选规则",
+        "name": "梗阻性肥厚型心肌病治疗方案（药物/介入/外科）",
         "disease_code": "I42.1",
         "disease_name": "梗阻性肥厚型心肌病",
-        "priority": 8,
+        "priority": 10,
         "status": "draft",
-        "department": null,
+        "department": "",
         "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
         "conditions": {
-          "type": "group",
-          "operator": "AND",
+          "type": "diagnosis",
+          "operator": "equals",
           "scoring": null,
           "threshold": null,
-          "children": [
-            {
-              "type": "exam_finding",
-              "operator": null,
-              "scoring": null,
-              "threshold": null,
-              "children": [],
-              "required_children": [],
-              "evidence_id": null,
-              "lab_code": null,
-              "concept_code": null,
-              "parameter": null,
-              "exam_code": "ECHO",
-              "finding_code": "LVOT_OBSTRUCTION",
-              "standard_required": false,
-              "symptom_code": null,
-              "duration_minutes": null,
-              "vital_code": null,
-              "threshold_value": null,
-              "age_min": null,
-              "age_max": null,
-              "gender": null,
-              "code": null,
-              "observation_type": null,
-              "weight": null,
-              "required": null,
-              "fact_type": null,
-              "attribute_code": null,
-              "attribute_value": null,
-              "label": "超声心动图（ECHO） · 左室流出道梗阻（LVOT_OBSTRUCTION）"
-            },
-            {
-              "type": "evidence",
-              "operator": null,
-              "scoring": null,
-              "threshold": null,
-              "children": [],
-              "required_children": [],
-              "evidence_id": null,
-              "lab_code": null,
-              "concept_code": null,
-              "parameter": null,
-              "exam_code": null,
-              "finding_code": null,
-              "standard_required": false,
-              "symptom_code": null,
-              "duration_minutes": null,
-              "vital_code": null,
-              "threshold_value": null,
-              "age_min": null,
-              "age_max": null,
-              "gender": null,
-              "code": null,
-              "observation_type": null,
-              "weight": null,
-              "required": null,
-              "fact_type": null,
-              "attribute_code": null,
-              "attribute_value": null,
-              "label": "证据："
-            }
-          ],
+          "children": [],
           "required_children": [],
           "evidence_id": null,
           "lab_code": null,
@@ -10857,14 +10724,14 @@
           "fact_type": null,
           "attribute_code": null,
           "attribute_value": null,
-          "label": "(超声心动图（ECHO） · 左室流出道梗阻（LVOT_OBSTRUCTION） AND 证据：)"
+          "label": "diagnosis"
         },
         "condition_text": "超声心动图（ECHO） · 左室流出道梗阻（LVOT_OBSTRUCTION） AND 证据：",
         "conclusion": {
           "diagnosis": "I42.1",
-          "confidence": "medium",
-          "message": "存在左心室流出道梗阻且非侵入性影像学检查无法明确或拟行减容治疗的HCM患者，推荐评估室间隔心肌消融术或外科切除术（Ⅰ，B）。",
-          "action": "建议左心室造影术前评估并考虑室间隔减容治疗",
+          "confidence": "high",
+          "message": "对于梗阻性HCM 患者，可以通过药物、介入治疗、外科手术等来改善症状，降低风险。",
+          "action": "评估药物、介入治疗、外科手术等治疗选择",
           "conclusion_type": null,
           "treatment_plan_id": null,
           "treatment_name": null,
@@ -10882,13 +10749,13 @@
         "source": {
           "guideline_id": "DOC-29e50309",
           "guideline_title": "中国 成人肥厚型心肌病诊断与治疗指南2023",
-          "chunk_id": "DOC-29e50309_p7_l160-12",
-          "section": "4.2.8 左心室造影",
-          "page_start": 7,
-          "page_end": 8,
-          "line_start": 160,
-          "line_end": 12,
-          "quote": "HCM减容治疗（包括室间隔心肌消融术与外科切除术）的术前评估"
+          "chunk_id": "DOC-29e50309_p15_l51-60",
+          "section": "6  治疗",
+          "page_start": 15,
+          "page_end": 15,
+          "line_start": 58,
+          "line_end": 60,
+          "quote": "对于梗阻性HCM 患者，\n可以通过药物、介入治疗、外科手术等来改善症状，\n降低风险。"
         },
         "exclusions": [],
         "tags": [
@@ -10902,7 +10769,7 @@
       "status": "draft",
       "checks": {},
       "scope_summary": "",
-      "updated_at": "2026-11-18T06:32:37.942077+00:00"
+      "updated_at": "2026-11-19T02:37:32.148110+00:00"
     },
     {
       "basis_id": "CB-46958a6c30de6710a49b",
@@ -11012,14 +10879,22 @@
         "rule_type": "diagnosis",
         "clinical_intent": "diagnosis_confirmation",
         "diagnosis_prerequisite": null,
-        "clinical_context": {},
+        "clinical_context": {
+          "population": "",
+          "subtype": "",
+          "phase": "",
+          "recommendation_strength": "",
+          "evidence_grade": "",
+          "exceptions": [],
+          "missing_information": []
+        },
         "clinical_statement_id": "",
         "name": "法布雷病心脏受累提示（超声“双边”征）",
         "disease_code": "D-CAND-FABRY",
         "disease_name": "法布雷病",
         "priority": 50,
         "status": "draft",
-        "department": null,
+        "department": "",
         "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
         "conditions": {
           "type": "group",
@@ -11124,8 +10999,8 @@
       },
       "status": "draft",
       "checks": {},
-      "scope_summary": "",
-      "updated_at": "2026-11-18T06:32:37.942243+00:00"
+      "scope_summary": "111",
+      "updated_at": "2026-11-19T02:50:28.193762+00:00"
     },
     {
       "basis_id": "CB-6aef4eabb7ca4cbed114",
@@ -11379,164 +11254,6 @@
       "checks": {},
       "scope_summary": "",
       "updated_at": "2026-11-18T06:32:37.942428+00:00"
-    },
-    {
-      "basis_id": "CB-826d45a3bb1990a206b5",
-      "name": "线粒体疾病心脏受累疑似诊断规则",
-      "specification": {
-        "rule_id": "RULE-MITO-DX-01",
-        "version": 1,
-        "domain": "western",
-        "anchor_type": "disease",
-        "rule_type": "diagnosis",
-        "clinical_intent": "suspected_diagnosis",
-        "diagnosis_prerequisite": null,
-        "clinical_context": {},
-        "clinical_statement_id": "",
-        "name": "线粒体疾病心脏受累疑似诊断规则",
-        "disease_code": "CAND-MITOCARD",
-        "disease_name": "线粒体心肌病",
-        "priority": 50,
-        "status": "draft",
-        "department": null,
-        "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
-        "conditions": {
-          "type": "group",
-          "operator": "AND",
-          "scoring": null,
-          "threshold": null,
-          "children": [
-            {
-              "type": "exam_finding",
-              "operator": null,
-              "scoring": null,
-              "threshold": null,
-              "children": [],
-              "required_children": [],
-              "evidence_id": null,
-              "lab_code": null,
-              "concept_code": null,
-              "parameter": null,
-              "exam_code": "ECHO",
-              "finding_code": "LV_HYPERTROPHY",
-              "standard_required": false,
-              "symptom_code": null,
-              "duration_minutes": null,
-              "vital_code": null,
-              "threshold_value": null,
-              "age_min": null,
-              "age_max": null,
-              "gender": null,
-              "code": null,
-              "observation_type": null,
-              "weight": null,
-              "required": null,
-              "fact_type": null,
-              "attribute_code": null,
-              "attribute_value": null,
-              "label": "超声心动图（ECHO） · 左室肥厚（LV_HYPERTROPHY）"
-            },
-            {
-              "type": "lab_concept",
-              "operator": null,
-              "scoring": null,
-              "threshold": null,
-              "children": [],
-              "required_children": [],
-              "evidence_id": null,
-              "lab_code": "CAND-BLOOD-LACTATE",
-              "concept_code": "POSITIVE",
-              "parameter": null,
-              "exam_code": null,
-              "finding_code": null,
-              "standard_required": false,
-              "symptom_code": null,
-              "duration_minutes": null,
-              "vital_code": null,
-              "threshold_value": null,
-              "age_min": null,
-              "age_max": null,
-              "gender": null,
-              "code": null,
-              "observation_type": null,
-              "weight": null,
-              "required": null,
-              "fact_type": null,
-              "attribute_code": null,
-              "attribute_value": null,
-              "label": "CAND-BLOOD-LACTATE 阳性（POSITIVE）"
-            }
-          ],
-          "required_children": [],
-          "evidence_id": null,
-          "lab_code": null,
-          "concept_code": null,
-          "parameter": null,
-          "exam_code": null,
-          "finding_code": null,
-          "standard_required": false,
-          "symptom_code": null,
-          "duration_minutes": null,
-          "vital_code": null,
-          "threshold_value": null,
-          "age_min": null,
-          "age_max": null,
-          "gender": null,
-          "code": null,
-          "observation_type": null,
-          "weight": null,
-          "required": null,
-          "fact_type": null,
-          "attribute_code": null,
-          "attribute_value": null,
-          "label": "(超声心动图（ECHO） · 左室肥厚（LV_HYPERTROPHY） AND CAND-BLOOD-LACTATE 阳性（POSITIVE）)"
-        },
-        "condition_text": "超声心动图（ECHO） · 左室肥厚（LV_HYPERTROPHY） AND CAND-BLOOD-LACTATE 阳性（POSITIVE）",
-        "conclusion": {
-          "diagnosis": "CAND-MITOCARD",
-          "confidence": "medium",
-          "message": "超声心动图示左心室壁肥厚伴血乳酸、丙酮酸最小运动量试验阳性，提示线粒体疾病心脏受累，建议心肌活检及基因检测确诊",
-          "action": "建议完善心肌活检、免疫组化及基因检测",
-          "conclusion_type": null,
-          "treatment_plan_id": null,
-          "treatment_name": null,
-          "priority": null,
-          "treatment_items": [],
-          "order_set_ids": [],
-          "treatment_method_code": null,
-          "formula_code": null,
-          "formula_name": null,
-          "herbs": [],
-          "modifications": [],
-          "course": null,
-          "score_threshold": null
-        },
-        "source": {
-          "guideline_id": "DOC-29e50309",
-          "guideline_title": "中国 成人肥厚型心肌病诊断与治疗指南2023",
-          "chunk_id": "DOC-29e50309_p12_l33-51",
-          "section": "4.4.10 线粒体疾病",
-          "page_start": 12,
-          "page_end": 12,
-          "line_start": 36,
-          "line_end": 51,
-          "quote": "心脏病变见于40% 的患者，其中心肌肥厚最常见。早期多表现为左心室壁肥厚……实验室检查血乳酸、丙酮酸最小运动量试验阳性；肌肉及心肌活检是指导诊断的有利证据"
-        },
-        "exclusions": [],
-        "tags": [
-          "DOC-29e50309",
-          "auto-generated",
-          "draft",
-          "pending-review"
-        ],
-        "created_by": "",
-        "created_at": "",
-        "updated_at": ""
-      },
-      "status": "draft",
-      "checks": {},
-      "scope_summary": "",
-      "updated_at": "2026-11-18T06:32:37.942541+00:00"
     },
     {
       "basis_id": "CB-054a8b11e37f9273461a",
@@ -12407,42 +12124,11 @@
         "department": null,
         "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
         "conditions": {
-          "type": "group",
-          "operator": null,
+          "type": "diagnosis",
+          "operator": "equals",
           "scoring": null,
           "threshold": null,
-          "children": [
-            {
-              "type": "diagnosis",
-              "operator": "equals",
-              "scoring": null,
-              "threshold": null,
-              "children": [],
-              "required_children": [],
-              "evidence_id": null,
-              "lab_code": null,
-              "concept_code": null,
-              "parameter": null,
-              "exam_code": null,
-              "finding_code": null,
-              "standard_required": false,
-              "symptom_code": null,
-              "duration_minutes": null,
-              "vital_code": null,
-              "threshold_value": null,
-              "age_min": null,
-              "age_max": null,
-              "gender": null,
-              "code": null,
-              "observation_type": null,
-              "weight": null,
-              "required": null,
-              "fact_type": null,
-              "attribute_code": null,
-              "attribute_value": null,
-              "label": "diagnosis"
-            }
-          ],
+          "children": [],
           "required_children": [],
           "evidence_id": null,
           "lab_code": null,
@@ -12510,7 +12196,60 @@
       "status": "draft",
       "checks": {},
       "scope_summary": "",
-      "updated_at": "2026-11-18T06:32:37.943256+00:00"
+      "updated_at": "2026-11-19T02:35:53.886437+00:00",
+      "completion": {
+        "source": "reviewed_graph",
+        "used": [
+          {
+            "evidence_id": "EV-DOC-29e50309-SYM_DYSPNEA-PRESENT",
+            "condition": {
+              "type": "symptom",
+              "symptom_code": "SYM_DYSPNEA"
+            },
+            "required": false,
+            "weight": 0.5
+          }
+        ],
+        "skipped": [
+          {
+            "evidence_id": "EV-DOC-29e50309-LVOT_OBSTRUCTION-PRESENT",
+            "reason": "关联实体或关系尚未全部审核通过"
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-SYM_HYPOTENSION-PRESENT",
+            "reason": "关联实体或关系尚未全部审核通过"
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:LVOT_OBSTRUCTION",
+            "reason": "关联实体或关系尚未全部审核通过"
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:SAM",
+            "reason": "关联实体或关系尚未全部审核通过"
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:LV_HYPERTROPHY",
+            "reason": "关联实体或关系尚未全部审核通过"
+          },
+          {
+            "evidence_id": "graph:ENTITY:symptom:SYM_CHEST_PAIN",
+            "reason": "关联实体或关系尚未全部审核通过"
+          },
+          {
+            "evidence_id": "graph:ENTITY:symptom:SYM_SHORTNESS_BREATH",
+            "reason": "关联实体或关系尚未全部审核通过"
+          },
+          {
+            "evidence_id": "graph:ENTITY:symptom:CAND-SYN-FAINT",
+            "reason": "关联实体或关系尚未全部审核通过"
+          },
+          {
+            "evidence_id": "graph:ENTITY:symptom:SYM_HYPOTENSION",
+            "reason": "关联实体或关系尚未全部审核通过"
+          }
+        ],
+        "completed_at": "2026-11-19T02:35:53.886445+00:00"
+      }
     },
     {
       "basis_id": "CB-59b34347c883e37f1b22",
@@ -14025,6 +13764,1804 @@
       "checks": {},
       "scope_summary": "",
       "updated_at": "2026-11-18T06:32:37.944354+00:00"
+    },
+    {
+      "basis_id": "CB-b4e3705c70fbacec222a-R2",
+      "name": "肥厚型心肌病影像确诊规则（修订 2）",
+      "specification": {
+        "rule_id": "RULE-HCM-DX-001",
+        "version": 2,
+        "domain": "western",
+        "anchor_type": "disease",
+        "rule_type": "diagnosis",
+        "clinical_intent": "diagnosis_confirmation",
+        "diagnosis_prerequisite": null,
+        "clinical_context": {},
+        "clinical_statement_id": "",
+        "name": "肥厚型心肌病影像确诊规则",
+        "disease_code": "I42.2",
+        "disease_name": "肥厚型心肌病",
+        "priority": 1,
+        "status": "draft",
+        "department": null,
+        "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
+        "conditions": {
+          "type": "group",
+          "operator": "AND",
+          "scoring": null,
+          "threshold": null,
+          "children": [
+            {
+              "type": "group",
+              "operator": "OR",
+              "scoring": null,
+              "threshold": null,
+              "children": [
+                {
+                  "type": "symptom",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": null,
+                  "standard_required": false,
+                  "symptom_code": "SYM_SHORTNESS_BREATH",
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "symptom",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": null,
+                  "standard_required": false,
+                  "symptom_code": "SYM_CHEST_PAIN",
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "symptom",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": null,
+                  "standard_required": false,
+                  "symptom_code": "SYM_DIZZINESS",
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "symptom",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": null,
+                  "standard_required": false,
+                  "symptom_code": "SYM_PALPITATION",
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "symptom",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": null,
+                  "standard_required": false,
+                  "symptom_code": "SYM_DIZZINESS_CAND_SYNOPE",
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "symptom",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": null,
+                  "standard_required": false,
+                  "symptom_code": "CAND-SYN-FAINT",
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "symptom",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": null,
+                  "standard_required": false,
+                  "symptom_code": "SYM_SYNCOPE",
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                }
+              ],
+              "required_children": [],
+              "evidence_id": null,
+              "lab_code": null,
+              "concept_code": null,
+              "parameter": null,
+              "exam_code": null,
+              "finding_code": null,
+              "standard_required": false,
+              "symptom_code": null,
+              "duration_minutes": null,
+              "vital_code": null,
+              "threshold_value": null,
+              "age_min": null,
+              "age_max": null,
+              "gender": null,
+              "code": null,
+              "observation_type": null,
+              "weight": null,
+              "required": null,
+              "fact_type": null,
+              "attribute_code": null,
+              "attribute_value": null,
+              "label": null
+            },
+            {
+              "type": "group",
+              "operator": "OR",
+              "scoring": null,
+              "threshold": null,
+              "children": [
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": "ECHO",
+                  "finding_code": "LV_HYPERTROPHY",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": "ECHO",
+                  "finding_code": "LVOT_OBSTRUCTION",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": "ECHO",
+                  "finding_code": "SAM",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": "LV_HYPERTROPHY",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": "PATHOLOGICAL_Q_WAVE",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": "LVH_VOLTAGE",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": "ST_T_CHANGE",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": "LVOT_OBSTRUCTION",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": "SAM",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": "PATHOLOGY_CONFIRMED",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": "T_WAVE_INVERSION",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                }
+              ],
+              "required_children": [],
+              "evidence_id": null,
+              "lab_code": null,
+              "concept_code": null,
+              "parameter": null,
+              "exam_code": null,
+              "finding_code": null,
+              "standard_required": false,
+              "symptom_code": null,
+              "duration_minutes": null,
+              "vital_code": null,
+              "threshold_value": null,
+              "age_min": null,
+              "age_max": null,
+              "gender": null,
+              "code": null,
+              "observation_type": null,
+              "weight": null,
+              "required": null,
+              "fact_type": null,
+              "attribute_code": null,
+              "attribute_value": null,
+              "label": null
+            }
+          ],
+          "required_children": [],
+          "evidence_id": null,
+          "lab_code": null,
+          "concept_code": null,
+          "parameter": null,
+          "exam_code": null,
+          "finding_code": null,
+          "standard_required": false,
+          "symptom_code": null,
+          "duration_minutes": null,
+          "vital_code": null,
+          "threshold_value": null,
+          "age_min": null,
+          "age_max": null,
+          "gender": null,
+          "code": null,
+          "observation_type": null,
+          "weight": null,
+          "required": null,
+          "fact_type": null,
+          "attribute_code": null,
+          "attribute_value": null,
+          "label": null
+        },
+        "condition_text": "",
+        "conclusion": {
+          "diagnosis": "I42.2",
+          "confidence": "high",
+          "message": "超声心动图或磁共振检查左心室舒张末期任意部位室壁厚度≥15 mm 可确诊肥厚型心肌病；致病基因检测阳性者或遗传受累家系成员室壁厚度≥13 mm 也可确诊",
+          "action": "确诊肥厚型心肌病，进一步行血流动力学分型评估",
+          "conclusion_type": null,
+          "treatment_plan_id": null,
+          "treatment_name": null,
+          "priority": null,
+          "treatment_items": [],
+          "order_set_ids": [],
+          "treatment_method_code": null,
+          "formula_code": null,
+          "formula_name": null,
+          "herbs": [],
+          "modifications": [],
+          "course": null,
+          "score_threshold": null
+        },
+        "source": {
+          "guideline_id": "DOC-29e50309",
+          "guideline_title": "中国 成人肥厚型心肌病诊断与治疗指南2023",
+          "chunk_id": "DOC-29e50309_p2_l31-42",
+          "section": "1 定义和分型",
+          "page_start": 2,
+          "page_end": 2,
+          "line_start": 31,
+          "line_end": 42,
+          "quote": "超声心动图或者磁共振检查左心室舒张末期任意部位室壁厚度≥15 mm 可确诊，致病基因检测阳性者或者遗传受累家系成员检查发现左心室壁厚度≥13 mm 也可确诊"
+        },
+        "exclusions": [],
+        "tags": [
+          "DOC-29e50309",
+          "auto-generated",
+          "需医学审核"
+        ],
+        "created_by": "",
+        "created_at": "",
+        "updated_at": ""
+      },
+      "status": "active",
+      "checks": {
+        "entities": true,
+        "logic": true,
+        "scope": true,
+        "source": true
+      },
+      "scope_summary": "1",
+      "updated_at": "2026-11-19T08:02:59.271184+00:00",
+      "revised_from_basis_id": "CB-b4e3705c70fbacec222a",
+      "supersedes_rule_id": "RULE-CB-b4e3705c70fbacec222a",
+      "completion": {
+        "source": "reviewed_graph_revision",
+        "used": [
+          {
+            "evidence_id": "EV-DOC-29e50309-LV_HYPERTROPHY-PRESENT",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "LV_HYPERTROPHY",
+              "exam_code": "ECHO"
+            },
+            "required": false,
+            "weight": 0.5
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-LVOT_OBSTRUCTION-PRESENT",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "LVOT_OBSTRUCTION",
+              "exam_code": "ECHO"
+            },
+            "required": false,
+            "weight": 0.5
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-SAM-PRESENT",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "SAM",
+              "exam_code": "ECHO"
+            },
+            "required": false,
+            "weight": 0.5
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-SYM_SHORTNESS_BREATH-PRESENT",
+            "condition": {
+              "type": "symptom",
+              "symptom_code": "SYM_SHORTNESS_BREATH"
+            },
+            "required": false,
+            "weight": 0.5
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-SYM_CHEST_PAIN-PRESENT",
+            "condition": {
+              "type": "symptom",
+              "symptom_code": "SYM_CHEST_PAIN"
+            },
+            "required": false,
+            "weight": 0.5
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-SYM_DIZZINESS-PRESENT",
+            "condition": {
+              "type": "symptom",
+              "symptom_code": "SYM_DIZZINESS"
+            },
+            "required": false,
+            "weight": 0.5
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-SYM_PALPITATION-PRESENT",
+            "condition": {
+              "type": "symptom",
+              "symptom_code": "SYM_PALPITATION"
+            },
+            "required": false,
+            "weight": 0.5
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:LV_HYPERTROPHY",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "LV_HYPERTROPHY"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:PATHOLOGICAL_Q_WAVE",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "PATHOLOGICAL_Q_WAVE"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:LVH_VOLTAGE",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "LVH_VOLTAGE"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:ST_T_CHANGE",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "ST_T_CHANGE"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:LVOT_OBSTRUCTION",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "LVOT_OBSTRUCTION"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:SAM",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "SAM"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:PATHOLOGY_CONFIRMED",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "PATHOLOGY_CONFIRMED"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:T_WAVE_INVERSION",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "T_WAVE_INVERSION"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:symptom:SYM_DIZZINESS_CAND_SYNOPE",
+            "condition": {
+              "type": "symptom",
+              "symptom_code": "SYM_DIZZINESS_CAND_SYNOPE"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:symptom:CAND-SYN-FAINT",
+            "condition": {
+              "type": "symptom",
+              "symptom_code": "CAND-SYN-FAINT"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:symptom:SYM_SYNCOPE",
+            "condition": {
+              "type": "symptom",
+              "symptom_code": "SYM_SYNCOPE"
+            },
+            "required": false,
+            "weight": null
+          }
+        ],
+        "skipped": [
+          {
+            "evidence_id": "EV-DOC-29e50309-ECHO-PRESENT",
+            "reason": "证据类型不支持条件映射"
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-MRI_SCAN-PRESENT",
+            "reason": "证据类型不支持条件映射"
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-ECG_12LEAD-PRESENT",
+            "reason": "证据类型不支持条件映射"
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-SYM_FATIGUE-PRESENT",
+            "reason": "关联实体或关系尚未全部审核通过"
+          },
+          {
+            "evidence_id": "graph:ENTITY:symptom:SYM_FATIGUE",
+            "reason": "关联实体或关系尚未全部审核通过"
+          }
+        ],
+        "completed_at": "2026-11-19T08:01:28.727336+00:00"
+      },
+      "approved_fingerprint": "2ccb94d2817ab20b260ffe0b359908286bbf47e1c44318676f8e6f5d180c3778",
+      "reviewer": "丘丘",
+      "note": "1",
+      "generated_rule_id": "RULE-CB-b4e3705c70fbacec222a-R2",
+      "generated_at": "2026-11-19T08:02:59.301384+00:00"
+    },
+    {
+      "basis_id": "CB-b4e3705c70fbacec222a-R3",
+      "name": "肥厚型心肌病影像确诊规则（修订 3）",
+      "specification": {
+        "rule_id": "RULE-HCM-DX-001",
+        "version": 2,
+        "domain": "western",
+        "anchor_type": "disease",
+        "rule_type": "diagnosis",
+        "clinical_intent": "diagnosis_confirmation",
+        "diagnosis_prerequisite": null,
+        "clinical_context": {},
+        "clinical_statement_id": "",
+        "name": "肥厚型心肌病影像确诊规则",
+        "disease_code": "I42.2",
+        "disease_name": "肥厚型心肌病",
+        "priority": 1,
+        "status": "draft",
+        "department": null,
+        "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
+        "conditions": {
+          "type": "group",
+          "operator": "AND",
+          "scoring": null,
+          "threshold": null,
+          "children": [
+            {
+              "type": "group",
+              "operator": "OR",
+              "scoring": null,
+              "threshold": null,
+              "children": [
+                {
+                  "type": "symptom",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": null,
+                  "standard_required": false,
+                  "symptom_code": "SYM_SHORTNESS_BREATH",
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "symptom",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": null,
+                  "standard_required": false,
+                  "symptom_code": "SYM_CHEST_PAIN",
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "symptom",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": null,
+                  "standard_required": false,
+                  "symptom_code": "SYM_DIZZINESS",
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "symptom",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": null,
+                  "standard_required": false,
+                  "symptom_code": "SYM_PALPITATION",
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "symptom",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": null,
+                  "standard_required": false,
+                  "symptom_code": "SYM_DIZZINESS_CAND_SYNOPE",
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "symptom",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": null,
+                  "standard_required": false,
+                  "symptom_code": "CAND-SYN-FAINT",
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "symptom",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": null,
+                  "standard_required": false,
+                  "symptom_code": "SYM_SYNCOPE",
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                }
+              ],
+              "required_children": [],
+              "evidence_id": null,
+              "lab_code": null,
+              "concept_code": null,
+              "parameter": null,
+              "exam_code": null,
+              "finding_code": null,
+              "standard_required": false,
+              "symptom_code": null,
+              "duration_minutes": null,
+              "vital_code": null,
+              "threshold_value": null,
+              "age_min": null,
+              "age_max": null,
+              "gender": null,
+              "code": null,
+              "observation_type": null,
+              "weight": null,
+              "required": null,
+              "fact_type": null,
+              "attribute_code": null,
+              "attribute_value": null,
+              "label": null
+            },
+            {
+              "type": "group",
+              "operator": "OR",
+              "scoring": null,
+              "threshold": null,
+              "children": [
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": "ECHO",
+                  "finding_code": "LV_HYPERTROPHY",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": "ECHO",
+                  "finding_code": "LVOT_OBSTRUCTION",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": "ECHO",
+                  "finding_code": "SAM",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": "LV_HYPERTROPHY",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": "PATHOLOGICAL_Q_WAVE",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": "LVH_VOLTAGE",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": "ST_T_CHANGE",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": "LVOT_OBSTRUCTION",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": "SAM",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": "PATHOLOGY_CONFIRMED",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                },
+                {
+                  "type": "exam_finding",
+                  "operator": null,
+                  "scoring": null,
+                  "threshold": null,
+                  "children": [],
+                  "required_children": [],
+                  "evidence_id": null,
+                  "lab_code": null,
+                  "concept_code": null,
+                  "parameter": null,
+                  "exam_code": null,
+                  "finding_code": "T_WAVE_INVERSION",
+                  "standard_required": false,
+                  "symptom_code": null,
+                  "duration_minutes": null,
+                  "vital_code": null,
+                  "threshold_value": null,
+                  "age_min": null,
+                  "age_max": null,
+                  "gender": null,
+                  "code": null,
+                  "observation_type": null,
+                  "weight": null,
+                  "required": null,
+                  "fact_type": null,
+                  "attribute_code": null,
+                  "attribute_value": null,
+                  "label": null
+                }
+              ],
+              "required_children": [],
+              "evidence_id": null,
+              "lab_code": null,
+              "concept_code": null,
+              "parameter": null,
+              "exam_code": null,
+              "finding_code": null,
+              "standard_required": false,
+              "symptom_code": null,
+              "duration_minutes": null,
+              "vital_code": null,
+              "threshold_value": null,
+              "age_min": null,
+              "age_max": null,
+              "gender": null,
+              "code": null,
+              "observation_type": null,
+              "weight": null,
+              "required": null,
+              "fact_type": null,
+              "attribute_code": null,
+              "attribute_value": null,
+              "label": null
+            }
+          ],
+          "required_children": [],
+          "evidence_id": null,
+          "lab_code": null,
+          "concept_code": null,
+          "parameter": null,
+          "exam_code": null,
+          "finding_code": null,
+          "standard_required": false,
+          "symptom_code": null,
+          "duration_minutes": null,
+          "vital_code": null,
+          "threshold_value": null,
+          "age_min": null,
+          "age_max": null,
+          "gender": null,
+          "code": null,
+          "observation_type": null,
+          "weight": null,
+          "required": null,
+          "fact_type": null,
+          "attribute_code": null,
+          "attribute_value": null,
+          "label": null
+        },
+        "condition_text": "",
+        "conclusion": {
+          "diagnosis": "I42.2",
+          "confidence": "high",
+          "message": "超声心动图或磁共振检查左心室舒张末期任意部位室壁厚度≥15 mm 可确诊肥厚型心肌病；致病基因检测阳性者或遗传受累家系成员室壁厚度≥13 mm 也可确诊",
+          "action": "确诊肥厚型心肌病，进一步行血流动力学分型评估",
+          "conclusion_type": null,
+          "treatment_plan_id": null,
+          "treatment_name": null,
+          "priority": null,
+          "treatment_items": [],
+          "order_set_ids": [],
+          "treatment_method_code": null,
+          "formula_code": null,
+          "formula_name": null,
+          "herbs": [],
+          "modifications": [],
+          "course": null,
+          "score_threshold": null
+        },
+        "source": {
+          "guideline_id": "DOC-29e50309",
+          "guideline_title": "中国 成人肥厚型心肌病诊断与治疗指南2023",
+          "chunk_id": "DOC-29e50309_p2_l31-42",
+          "section": "1 定义和分型",
+          "page_start": 2,
+          "page_end": 2,
+          "line_start": 31,
+          "line_end": 42,
+          "quote": "超声心动图或者磁共振检查左心室舒张末期任意部位室壁厚度≥15 mm 可确诊，致病基因检测阳性者或者遗传受累家系成员检查发现左心室壁厚度≥13 mm 也可确诊"
+        },
+        "exclusions": [],
+        "tags": [
+          "DOC-29e50309",
+          "auto-generated",
+          "需医学审核"
+        ],
+        "created_by": "",
+        "created_at": "",
+        "updated_at": ""
+      },
+      "status": "draft",
+      "checks": {},
+      "scope_summary": "1",
+      "updated_at": "2026-11-19T08:05:30.338168+00:00",
+      "revised_from_basis_id": "CB-b4e3705c70fbacec222a",
+      "supersedes_rule_id": "RULE-CB-b4e3705c70fbacec222a",
+      "completion": {
+        "source": "reviewed_graph_revision",
+        "used": [
+          {
+            "evidence_id": "EV-DOC-29e50309-LV_HYPERTROPHY-PRESENT",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "LV_HYPERTROPHY",
+              "exam_code": "ECHO"
+            },
+            "required": false,
+            "weight": 0.5
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-LVOT_OBSTRUCTION-PRESENT",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "LVOT_OBSTRUCTION",
+              "exam_code": "ECHO"
+            },
+            "required": false,
+            "weight": 0.5
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-SAM-PRESENT",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "SAM",
+              "exam_code": "ECHO"
+            },
+            "required": false,
+            "weight": 0.5
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-SYM_SHORTNESS_BREATH-PRESENT",
+            "condition": {
+              "type": "symptom",
+              "symptom_code": "SYM_SHORTNESS_BREATH"
+            },
+            "required": false,
+            "weight": 0.5
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-SYM_CHEST_PAIN-PRESENT",
+            "condition": {
+              "type": "symptom",
+              "symptom_code": "SYM_CHEST_PAIN"
+            },
+            "required": false,
+            "weight": 0.5
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-SYM_DIZZINESS-PRESENT",
+            "condition": {
+              "type": "symptom",
+              "symptom_code": "SYM_DIZZINESS"
+            },
+            "required": false,
+            "weight": 0.5
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-SYM_PALPITATION-PRESENT",
+            "condition": {
+              "type": "symptom",
+              "symptom_code": "SYM_PALPITATION"
+            },
+            "required": false,
+            "weight": 0.5
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:LV_HYPERTROPHY",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "LV_HYPERTROPHY"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:PATHOLOGICAL_Q_WAVE",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "PATHOLOGICAL_Q_WAVE"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:LVH_VOLTAGE",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "LVH_VOLTAGE"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:ST_T_CHANGE",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "ST_T_CHANGE"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:LVOT_OBSTRUCTION",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "LVOT_OBSTRUCTION"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:SAM",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "SAM"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:PATHOLOGY_CONFIRMED",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "PATHOLOGY_CONFIRMED"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:diagnostic_evidence:T_WAVE_INVERSION",
+            "condition": {
+              "type": "exam_finding",
+              "finding_code": "T_WAVE_INVERSION"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:symptom:SYM_DIZZINESS_CAND_SYNOPE",
+            "condition": {
+              "type": "symptom",
+              "symptom_code": "SYM_DIZZINESS_CAND_SYNOPE"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:symptom:CAND-SYN-FAINT",
+            "condition": {
+              "type": "symptom",
+              "symptom_code": "CAND-SYN-FAINT"
+            },
+            "required": false,
+            "weight": null
+          },
+          {
+            "evidence_id": "graph:ENTITY:symptom:SYM_SYNCOPE",
+            "condition": {
+              "type": "symptom",
+              "symptom_code": "SYM_SYNCOPE"
+            },
+            "required": false,
+            "weight": null
+          }
+        ],
+        "skipped": [
+          {
+            "evidence_id": "EV-DOC-29e50309-ECHO-PRESENT",
+            "reason": "证据类型不支持条件映射"
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-MRI_SCAN-PRESENT",
+            "reason": "证据类型不支持条件映射"
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-ECG_12LEAD-PRESENT",
+            "reason": "证据类型不支持条件映射"
+          },
+          {
+            "evidence_id": "EV-DOC-29e50309-SYM_FATIGUE-PRESENT",
+            "reason": "关联实体或关系尚未全部审核通过"
+          },
+          {
+            "evidence_id": "graph:ENTITY:symptom:SYM_FATIGUE",
+            "reason": "关联实体或关系尚未全部审核通过"
+          }
+        ],
+        "completed_at": "2026-11-19T08:05:30.338175+00:00"
+      }
     }
   ]
 }

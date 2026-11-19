@@ -84,6 +84,17 @@
   },
   {
     "hospital_id": "XM_FIRST",
+    "lab_code": "CAND-BLOOD-LACTATE",
+    "lab_name": "血乳酸（指南候选编码，对应 LACTATE）",
+    "concept_code": "POSITIVE",
+    "ref_source": "STATIC",
+    "effective_from": "2024-01-01",
+    "version": 1,
+    "status": "active",
+    "source_note": "定性阳性，需 LIS 提供 qualitative 字段；指南场景为血乳酸/丙酮酸最小运动量试验阳性，定量判定可按 LACTATE ELEVATED (>2.2 mmol/L) 执行"
+  },
+  {
+    "hospital_id": "XM_FIRST",
     "lab_code": "CBC",
     "lab_name": "血常规",
     "concept_code": "ABNORMAL",
@@ -106,7 +117,22 @@
     "effective_from": "2024-01-01",
     "version": 1,
     "status": "active",
-    "source_note": "CK-MB ULN=5.0 ng/mL"
+    "source_note": "CK-MB ULN=5.0 ng/mL",
+    "id": null,
+    "item_type": "lab",
+    "exam_code": "",
+    "exam_name": "",
+    "finding_code": "",
+    "finding_name": "",
+    "interpretation_type": "auto",
+    "accepted_values": [],
+    "method": "",
+    "threshold_upper": null,
+    "context_gender": null,
+    "context_age_min": null,
+    "context_age_max": null,
+    "effective_to": null,
+    "created_by": ""
   },
   {
     "hospital_id": "XM_FIRST",
@@ -738,16 +764,5 @@
     "version": 1,
     "status": "active",
     "source_note": "定性结果，需 LIS 提供 qualitative 字段"
-  },
-  {
-    "hospital_id": "XM_FIRST",
-    "lab_code": "CAND-BLOOD-LACTATE",
-    "lab_name": "血乳酸（指南候选编码，对应 LACTATE）",
-    "concept_code": "POSITIVE",
-    "ref_source": "STATIC",
-    "effective_from": "2024-01-01",
-    "version": 1,
-    "status": "active",
-    "source_note": "定性阳性，需 LIS 提供 qualitative 字段；指南场景为血乳酸/丙酮酸最小运动量试验阳性，定量判定可按 LACTATE ELEVATED (>2.2 mmol/L) 执行"
   }
 ]

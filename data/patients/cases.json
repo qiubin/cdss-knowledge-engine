@@ -1,6 +1,15 @@
 {
   "cases": [
     {
+      "case_id": "hcm-nonobstructive-i42-2",
+      "file": "demo_hcm_nonobstructive.json",
+      "name": "其它肥厚型心肌病 · 非梗阻性（虚构测试）",
+      "domain": "western",
+      "description": "46岁男性，活动后胸闷气短，室间隔19–20 mm，静息及激发流出道压差低。未预填I42.2诊断，供推理验证。",
+      "default": false,
+      "category": "肥厚型心肌病"
+    },
+    {
       "case_id": "stemi-anterior",
       "file": "demo_stemi_patient.json",
       "name": "STEMI · 急性前壁心肌梗死",

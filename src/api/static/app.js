@@ -4767,7 +4767,7 @@
       const ai = document.createElement("button");
       ai.className = "btn";
       ai.textContent = "大模型辅助审核";
-      ai.onclick = () => window.openBasisAiReview(basis, filename, {api, esc, configure: () => navigate("templates", {reload: true}), edit: async () => {
+      ai.onclick = () => window.openBasisAiReview(basis, filename, {api, esc, edit: async () => {
         if (basis.generated_rule_id) await showClinicalBasis(basis, filename);
         else await openCompletedBasisEditor(basis, filename, basis.scope_summary || "");
       }});
@@ -4905,6 +4905,30 @@
       <div class="field"><label>审核意见（退回时必填）</label><textarea id="basisNote"></textarea></div>
       <div class="actions"><button id="basisSave" class="btn" ${basis.generated_rule_id ? "disabled" : ""}>保存待审依据</button><button id="basisApprove" class="btn primary">确认依据通过</button><button id="basisReject" class="btn">退回修订</button><button id="basisGenerate" class="btn primary" ${basis.validation.status === "active" && !basis.validation.issues.length ? "" : "disabled"}>生成规则草稿</button></div>`);
     const endpoint = `/api/review/bases/${encodeURIComponent(basis.basis_id)}`;
+    if (!basis.generated_rule_id) {
+      const repair = document.createElement("section");
+      repair.className = "detail-section";
+      repair.innerHTML = `<h4>修正引文与定位</h4><p>将支持本条依据的原句填写到引文中。若下面定位原文不对，请先对照 PDF 修改页行并保存，再核对新定位原文。</p><h5>当前定位的实际原文</h5><div class="quote">${esc(basis.validation.provenance?.text || "未找到定位原文，请核对指南和页行。")}</div><div class="field"><label>指南标识</label><input data-source-field="guideline_id" value="${esc(source.guideline_id || "")}"></div>${[["page_start", "起始页"], ["page_end", "结束页"], ["line_start", "起始行"], ["line_end", "结束行"]].map(([key, label]) => `<label>${label}<input type="number" min="1" data-source-field="${key}" value="${esc(source[key] || (key === "page_end" ? source.page_start : "") || "")}"></label>`).join(" ")}<div class="field"><label>支持本条依据的原句（引文）</label><textarea data-source-field="quote" rows="5">${esc(source.quote || "")}</textarea></div><button type="button" class="btn primary" data-source-save>保存引文并重新校验</button><p class="muted">请从实际原文中复制支持当前判断的连续原句；文字匹配后仍需确认医学含义。</p>`;
+      $("#basisDetail").prepend(repair);
+      repair.querySelector("[data-source-save]").onclick = async (event) => {
+        const button = event.currentTarget;
+        button.disabled = true;
+        try {
+          const specification = JSON.parse($("#basisSpec").value);
+          specification.source = {...specification.source};
+          repair.querySelectorAll("[data-source-field]").forEach((input) => {
+            const key = input.dataset.sourceField;
+            specification.source[key] = ["page_start", "page_end", "line_start", "line_end"].includes(key) ? Number(input.value) : input.value.trim();
+          });
+          await api(endpoint + `?graph_filename=${encodeURIComponent(filename)}`, {method: "PUT", json: {specification, scope_summary: $("#basisScope").value}});
+          const result = await api(`/api/review/bases?graph_filename=${encodeURIComponent(filename)}`);
+          const updated = result.items.find((item) => item.basis_id === basis.basis_id);
+          await showClinicalBasis(updated, filename);
+          toast(updated.validation.provenance.status === "verified" ? "引文已匹配实际原文，请继续核对医学含义" : "已保存，请查看新的定位原文和剩余问题");
+        } catch (error) { toast(error.message, true); }
+        finally { button.disabled = false; }
+      };
+    }
     pageEl.querySelectorAll("[data-basis-dependency]").forEach((button) => button.onclick = async () => {
       try {
         const ref = basis.validation.references[Number(button.dataset.basisDependency)];
@@ -6746,7 +6770,31 @@
         toast(state.standardEditIndex >= 0 ? "已打开配置，可编辑后保存草稿" : "已打开标准配置，请补充判定参数");
       } catch (error) { toast(error.message, true); }
     };
-    pageEl.querySelectorAll("[data-std-active]").forEach((button) => button.onclick = async () => { try { await api(`/api/standards/${hospital}/${button.dataset.stdActive}/activate`, { method: "POST" }); toast("标准已启用"); markStale("dashboard"); renderStandards(); } catch (error) { toast(error.message, true); } });
+    pageEl.querySelectorAll("[data-std-active]").forEach((button) => {
+      button.textContent = "启用";
+      const validate = document.createElement("button");
+      validate.className = "btn sm";
+      validate.textContent = "校验（含AI）";
+      button.before(validate);
+      validate.onclick = async () => {
+        const dialog = document.createElement("dialog");
+        dialog.className = "dialog";
+        dialog.innerHTML = '<h3>本院判定标准校验</h3><div data-validation>正在进行参数检查与AI校验…</div><button type="button" class="btn" data-close>关闭</button>';
+        document.body.append(dialog);
+        dialog.querySelector("[data-close]").onclick = () => dialog.close();
+        dialog.addEventListener("close", () => dialog.remove(), {once: true});
+        dialog.showModal();
+        validate.disabled = true;
+        try {
+          const result = await api(`/api/standards/${hospital}/${button.dataset.stdActive}/validate`, {method: "POST"});
+          const advice = result.advice || {};
+          const list = (items) => (Array.isArray(items) ? items : []).map((item) => `<li>${esc(typeof item === "string" ? item : JSON.stringify(item))}</li>`).join("");
+          dialog.querySelector("[data-validation]").innerHTML = `<h4>参数检查：${result.passed ? "通过" : "需修正"}</h4><ul>${list(result.issues)}</ul><h4>AI校验建议</h4><p>${esc(result.ai_error || advice.summary || "暂无建议")}</p><ul>${list(advice.findings)}</ul><h4>修改建议</h4><ul>${list(advice.suggestions)}</ul><p class="muted">共用解析模板中的模型配置。校验不会启用标准；请核对建议，通过“编辑”修正并保存后重新校验，确认后单独点击“启用”。</p>`;
+        } catch (error) { dialog.querySelector("[data-validation]").textContent = error.message; }
+        finally { validate.disabled = false; }
+      };
+      button.onclick = async () => { try { await api(`/api/standards/${hospital}/${button.dataset.stdActive}/activate`, { method: "POST" }); toast("标准已启用"); markStale("dashboard"); renderStandards(); } catch (error) { toast(error.message, true); } };
+    });
     pageEl.querySelectorAll("[data-std-delete]").forEach((button) => button.onclick = async () => { if (!confirm("确认删除此标准？")) return; try { await api(`/api/standards/${hospital}/${button.dataset.stdDelete}`, { method: "DELETE" }); reset(); markStale("dashboard"); renderStandards(); } catch (error) { toast(error.message, true); } });
   }
 
@@ -6760,7 +6808,7 @@
     if (editing) await api(`/api/standards/${state.hospitalId}/${state.standardEditIndex}`, { method: "PUT", json: payload });
     else await api(`/api/standards/${state.hospitalId}`, { json: payload });
     state.pendingStandard = null; state.standardEditIndex = -1;
-    toast("已保存草稿，请校验并启用"); await renderStandards();
+    toast("已保存草稿，请先校验，确认后单独启用"); await renderStandards();
   }
 
   async function renderInference() {

@@ -1,0 +1,31 @@
+{
+  "patient_id": "TEST-HCM-I422-001",
+  "hospital_id": "XM_FIRST",
+  "age": 46,
+  "gender": "M",
+  "encounter_time": "2026-11-19T10:00:00+08:00",
+  "display_name": "其它肥厚型心肌病 · 非梗阻性（虚构测试）",
+  "category": "肥厚型心肌病",
+  "chief_complaint": "活动后胸闷、气短1年，加重伴头晕2周。",
+  "history_present": "【虚构测试病历】患者快步行走、爬楼后胸闷气短，休息后缓解。近2周活动耐量下降，偶有头晕，无晕厥、持续胸痛、发热及近期感染。查体：心律齐，双肺清，无明显收缩期杂音，双下肢无水肿。心电图：窦性心律，左室高电压，胸前导联ST-T改变。超声心动图：室间隔非对称性增厚，最大19 mm，后壁10 mm，LVEF 65%，舒张功能减低；静息流出道峰值压差12 mmHg，Valsalva动作后20 mmHg，未见二尖瓣收缩期前向运动，无主动脉瓣狭窄。心脏磁共振：室间隔最大20 mm，少量斑片状延迟强化，未见典型弥漫性淀粉样变强化。肌钙蛋白未升高，肾功能及电解质正常。以上检查完整保留在叙述中；未映射的结构化发现需按当前图谱编码补录。",
+  "history_past": "无高血压病史，多次血压正常；无主动脉瓣狭窄、先天性心脏病、慢性肾病及糖尿病史。父亲曾诊断肥厚型心肌病，无已知家族遗传代谢病史。测试目标为I42.2，但未将目标诊断写入参与推理的既往疾病编码。",
+  "symptoms": [
+    {"symptom_code": "SYM_CHEST_TIGHTNESS", "symptom_name": "胸闷", "present": true, "severity": "moderate"},
+    {"symptom_code": "SYM_SHORTNESS_BREATH", "symptom_name": "气短", "present": true, "severity": "moderate"},
+    {"symptom_code": "SYM_DIZZINESS", "symptom_name": "头晕", "present": true, "severity": "mild"}
+  ],
+  "labs": [],
+  "exam_findings": [
+    {"exam_code": "ECHO", "exam_name": "超声心动图", "finding_code": "LV_HYPERTROPHY", "finding_name": "左室肥厚", "present": true, "detail": {"summary": "舒张末期室间隔最大厚度19 mm，后壁10 mm，LVEF 65%；心脏磁共振室间隔最大厚度20 mm。"}},
+    {"exam_code": "ECHO", "exam_name": "超声心动图", "finding_code": "LVOT_OBSTRUCTION", "finding_name": "左室流出道梗阻", "present": false, "detail": {"summary": "静息峰值压差12 mmHg，Valsalva动作后20 mmHg。"}},
+    {"exam_code": "ECHO", "exam_name": "超声心动图", "finding_code": "SAM", "finding_name": "二尖瓣前叶收缩期前移", "present": false, "detail": {"summary": "未见二尖瓣收缩期前向运动。"}}
+  ],
+  "vitals": [
+    {"vital_code": "sbp", "value": 118, "unit": "mmHg"},
+    {"vital_code": "dbp", "value": 72, "unit": "mmHg"},
+    {"vital_code": "hr", "value": 76, "unit": "bpm"}
+  ],
+  "past_history": [],
+  "current_medications": [],
+  "allergies": []
+}

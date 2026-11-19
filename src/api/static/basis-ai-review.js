@@ -11,14 +11,14 @@
     dialog.addEventListener("close", () => dialog.remove(), {once: true});
     dialog.querySelector("[data-ai-edit]").onclick = async () => { dialog.close(); await ctx.edit(); };
     dialog.showModal();
-    const configButton = document.createElement("button");
-    configButton.type = "button";
-    configButton.className = "btn";
-    configButton.textContent = "模型配置";
-    configButton.onclick = () => { dialog.close(); ctx.configure(); };
-    dialog.querySelector(".actions").append(configButton);
+    const configHint = document.createElement("p");
+    configHint.className = "muted";
+    configHint.textContent = "模型配置与指南解析共用，请在“解析模板 → 解析服务”中统一设置。";
+    dialog.querySelector(".actions").after(configHint);
     const content = dialog.querySelector("[data-ai-content]");
     const run = dialog.querySelector("[data-ai-run]");
+    run.textContent = "开始分析";
+    run.disabled = true;
     const endpoint = `/api/review/bases/${encodeURIComponent(basis.basis_id)}/ai-review?graph_filename=${encodeURIComponent(filename)}`;
     const list = (items) => (items || []).map((item) => `<li>${esc(item)}</li>`).join("");
     const render = (report) => {
@@ -33,17 +33,19 @@
     };
     const analyze = async () => {
       run.disabled = true;
+      run.textContent = "正在分析…";
       content.innerHTML = '<div class="empty">正在分析原文、规则和依赖，通常需要一些时间；可以关闭窗口，稍后回来查看。</div>';
       try { const result = await api(endpoint, {json: {}}); render(result.report); }
       catch (error) { if (dialog.isConnected) content.textContent = error.message; }
-      finally { run.disabled = false; }
+      finally { run.disabled = false; run.textContent = "开始分析"; }
     };
     run.onclick = analyze;
     try {
       const result = await api(endpoint);
       if (!dialog.isConnected) return;
       if (result.report) render(result.report);
-      else await analyze();
+      else content.textContent = "暂无审核建议，点击“开始分析”获取大模型辅助审核建议。";
     } catch (error) { if (dialog.isConnected) content.textContent = error.message; }
+    finally { if (dialog.isConnected) run.disabled = false; }
   };
 })();
