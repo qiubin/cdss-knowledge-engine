@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 # 预检提示文案里的类型中文名（前端 typeName 的服务端对应版本）。
 NODE_TYPE_LABELS = {
+    "clinical_rule": "临床判据与方案",
     "disease": "疾病", "symptom": "症状", "sign": "体征", "lab": "检验", "exam": "检查",
     "diagnostic_evidence": "诊断依据", "treatment_plan": "治疗方案", "medication": "药品",
     "intervention": "干预操作", "contraindication": "禁忌", "monitoring_requirement": "监测要求",

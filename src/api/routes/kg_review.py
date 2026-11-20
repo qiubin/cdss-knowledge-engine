@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 import re
-from typing import List, Optional
+from typing import List, Optional, Literal
 
 import httpx
 from fastapi import APIRouter, HTTPException
@@ -638,3 +638,83 @@ async def review_bulk_unified(request: UnifiedBulkRequest):
         "failed": sum(1 for item in results if not item["ok"]),
         "results": results,
     }
+
+
+class StandardReviewRequest(BaseModel):
+    action: Literal["save", "approve", "reject", "return"]
+    version: int = Field(ge=1)
+    reviewer: str = Field(min_length=1)
+    note: str = ""
+    standard: dict = Field(default_factory=dict)
+    hospital_ids: List[str] = Field(default_factory=list)
+    scope_confirmed: bool = False
+
+
+@audit_router.post("/standards/{item_id}/review")
+async def review_standard_item(item_id: str, payload: StandardReviewRequest):
+    from src.review.standards import review_standard
+    return review_standard(service, item_id, payload.model_dump())
+
+
+class RevisionDecision(BaseModel):
+    kind: Literal["node", "relation"]
+    item_id: str
+    action: Literal["approve", "reject"]
+    reviewer: str
+    revision_hash: str
+
+
+@router.get("/pending-revisions")
+def pending_revisions(graph_filename: str):
+    from src.review.clinical_basis import digest
+    from src.review.metadata import node_snapshot_content, relation_snapshot_content
+    graph = service._load_graph(graph_filename)
+    items = []
+    for kind, rows, snapshot in [
+        ("node", graph["nodes"].items(), node_snapshot_content),
+        ("relation", graph["relations"].items(), relation_snapshot_content),
+    ]:
+        for key, item in rows:
+            revision = item.get("pending_revision")
+            if not revision:
+                continue
+            items.append({"kind": kind, "item_id": key if kind == "node" else "|".join(key),
+                          "name": item.get("name") or item.get("relation_name") or str(key),
+                          "before": snapshot(item), "after": revision["content"],
+                          "revision_hash": digest(revision), "status": "draft"})
+    return {"items": items}
+
+
+@router.post("/pending-revisions/decision")
+def decide_revision(request: RevisionDecision, graph_filename: str):
+    import copy
+    from src.review.clinical_basis import digest, now
+    from src.review.metadata import node_content_hash, relation_content_hash
+    if not request.reviewer.strip():
+        raise HTTPException(422, "请填写审核人")
+    graph = service._load_graph(graph_filename)
+    previous = copy.deepcopy(graph)
+    key = request.item_id if request.kind == "node" else tuple(request.item_id.split("|"))
+    item = graph["nodes" if request.kind == "node" else "relations"].get(key)
+    revision = (item or {}).get("pending_revision")
+    if not revision or digest(revision) != request.revision_hash:
+        raise HTTPException(409, "修订已变化，请刷新后审核")
+    hash_content = node_content_hash if request.kind == "node" else relation_content_hash
+    if hash_content(item) != revision["base_hash"]:
+        raise HTTPException(409, "已审核版本已变化，请重新生成修订")
+    from src.review.metadata import node_snapshot_content, relation_snapshot_content
+    snapshot = node_snapshot_content if request.kind == "node" else relation_snapshot_content
+    approved_content = snapshot(item)
+    if request.action == "approve":
+        item.update(revision["content"])
+        item.update(review_status="active", reviewed_by=request.reviewer, reviewed_at=now(),
+                    version=int(item.get("version") or 1) + 1)
+        item["content_hash"] = hash_content(item)
+    item.setdefault("revision_history", []).append({**revision, "before": approved_content, "action": request.action,
+                                                    "reviewer": request.reviewer, "decided_at": now()})
+    item.pop("pending_revision", None)
+    rules = service._load_rules()
+    service._persist(graph_filename, previous, graph, rules, rules, [{
+        "entity_type": request.kind, "entity_id": request.item_id, "action": "revision_" + request.action,
+        "reviewer": request.reviewer, "graph_filename": graph_filename}])
+    return {"ok": True}

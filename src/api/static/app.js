@@ -201,7 +201,7 @@
     graphClear: ["图谱清除", "清空所选图谱内容及关联规则，保留指南原文与解析资料"],
     tcmGraph: ["中医图谱", "证候为中心的辨证、治法与方药知识图谱"],
     rules: ["规则管理", "规则使用抽象证据概念，不保存医院阈值"],
-    review: ["审核台", "跨图谱与规则的待办、阻断、待复核与审核记录"],
+    review: ["审核台", "跨图谱与规则的待办、阻断、待审核与审核记录"],
     standards: ["标准管理", "按医院维护检查与检验的判定方式、适用范围和来源"],
     inference: ["病历测试", "用模拟病历调用知识图谱、规则和医院标准"],
     tcmInference: ["中医辨证", "输入症状、舌象、脉象，输出证候、治法与方药"],
@@ -243,7 +243,7 @@
   const badge = (value) => `<span class="badge ${esc(value)}">${esc(value)}</span>`;
   const REVIEW_LABELS = {
     draft: "待审核", active: "已通过", rejected: "已拒绝",
-    retired: "已失效", stale: "待复核", blocked: "已阻断", testing: "测试中",
+    retired: "已失效", stale: "待审核", blocked: "已阻断", testing: "测试中",
     approved: "预审通过",
   };
   const CLINICAL_INTENT_LABELS = {
@@ -286,6 +286,7 @@
   // tests/js/type_name_parity.test.js 会校验它与模板类型全集、后端
   // precheck.NODE_TYPE_LABELS 双向一致（concept/exam_finding 为遗留类型豁免）。
   const typeName = {
+    clinical_rule: "临床判据与方案",
     disease: "疾病", syndrome: "证候", symptom: "症状", sign: "体征",
     lab: "检验", exam: "检查", exam_finding: "检查发现", diagnostic_evidence: "诊断依据",
     treatment_plan: "治疗方案", medication: "药品", intervention: "干预操作",
@@ -545,6 +546,7 @@
       ["医院标准", `${standardOverview.active_count} 条已启用`, standardOverview.active_count ? "done" : "pending"],
     ];
     pageEl.innerHTML = `
+      ${panel("医生诊疗决策说明", '<p>查看医生诊疗决策顺序、指南到规则的实现流程，以及推荐结果的含义。</p><button class="btn primary" id="clinicalDecisionHelp">查看诊疗决策说明</button>')}
       ${panel("知识图谱上下文", `
         <div class="inline-controls">
           <div class="field"><label>当前图谱</label><select id="dashboardGraph">${graphs.map((item) => `<option value="${esc(item.graph_filename)}" ${item.graph_filename === graphFilename ? "selected" : ""}>${esc(item.graph_filename)}</option>`).join("")}</select></div>
@@ -571,6 +573,7 @@
         </div>`, "", "按 引入 → 审核 → 验证 的主线组织；示例患者已内置在病历测试页")}
       ${panel("已上传文档", table(["文档", "ID", "页数", "实体", "上传时间"], docs.map((d) => `<tr><td>${esc(d.doc_title)}</td><td class="mono">${esc(d.doc_id)}</td><td>${d.total_pages}</td><td>${d.entity_count}</td><td class="nowrap">${esc(formatTime(d.uploaded_at))}</td></tr>`)))}
     `;
+    $("#clinicalDecisionHelp").onclick = () => window.WesternDecision.showExplanation();
     $("#dashboardGraph").onchange = (event) => {
       state.graphFilename = event.target.value;
       renderDashboard();
@@ -2947,7 +2950,7 @@
           <div class="field"><label>知识图谱</label><select id="graphSelector">${state.graphs.map((item) => `<option value="${esc(item.graph_filename)}" ${item.graph_filename === state.graphFilename ? "selected" : ""}>${esc(item.graph_filename)}</option>`).join("")}</select></div>
           <div class="field"><label>审核人</label><input id="reviewerName" value="${esc(localStorage.getItem("cdssReviewer") || "")}" placeholder="姓名"></div>
         </div>
-      `, "", "仅展示审核通过的知识；关系及两端实体均通过后才显示。待审、拒绝、失效及待复核内容请到审核台处理。")}
+      `, "", "仅展示审核通过的知识；关系及两端实体均通过后才显示。待审、拒绝、失效及待审核内容请到审核台处理。")}
       <div class="actions"><button id="openGraphVisual" class="btn">打开图谱可视</button><button id="openGraphClear" class="btn">图谱清除</button></div>
       <div class="grid c4">
         <div class="kpi"><span>疾病</span><strong>${graph.diseases.length}</strong></div>
@@ -2972,7 +2975,7 @@
             { value: "active", label: "已通过" },
             { value: "rejected", label: "已拒绝" },
             { value: "retired", label: "已失效" },
-            { value: "stale", label: "待复核" },
+
           ] },
         ],
         placeholder: "搜索节点、关系…",
@@ -2999,7 +3002,7 @@
             { value: "active", label: "已通过" },
             { value: "rejected", label: "已拒绝" },
             { value: "retired", label: "已失效" },
-            { value: "stale", label: "待复核" },
+
           ] },
         ],
         placeholder: "搜索名称、编码、类型…",
@@ -3024,7 +3027,7 @@
           { value: "active", label: "已通过" },
           { value: "rejected", label: "已拒绝" },
           { value: "retired", label: "已失效" },
-          { value: "stale", label: "待复核" },
+
         ] }],
         placeholder: "搜索方案、疾病、药物、措施…",
       })}
@@ -3283,6 +3286,8 @@
 
   function conditionText(node) {
     if (!node) return "-";
+    if (node.type === "count_group") return `至少满足 ${node.min_count} 项（${(node.children || []).map(conditionText).join("；")}）`;
+    if (node.type === "group") return `(${(node.children || []).map(conditionText).join(` ${node.operator || "[组合待确认]"} `)})`;
     if (node.label) return node.label.startsWith("(") && node.label.endsWith(")") ? node.label.slice(1, -1) : node.label;
     if (node.type === "group") return `${node.children.map(conditionText).join(` ${node.operator || "AND"} `)}`;
     if (node.type === "evidence") { const e = state.graph && state.graph.evidences.find((x) => x.id === node.evidence_id); return e ? e.description : node.evidence_id; }
@@ -3340,6 +3345,8 @@
       past_history_codes: (patient.past_history || []).join(","),
       current_medications: (patient.current_medications || []).join(","),
       allergies: (patient.allergies || []).join(","),
+      clinical_attributes: JSON.parse(JSON.stringify(patient.clinical_attributes || {})),
+      diagnoses: JSON.parse(JSON.stringify(patient.diagnoses || [])),
       symptoms: JSON.parse(JSON.stringify(patient.symptoms || [])),
       labs: JSON.parse(JSON.stringify(patient.labs || [])),
       exam_findings: (patient.exam_findings || []).map((item) => ({
@@ -3430,6 +3437,12 @@
       past_history_codes: $("#casePastCodes").value,
       current_medications: $("#caseMedications").value,
       allergies: $("#caseAllergies").value,
+      clinical_attributes: {...(state.caseRecord?.clinical_attributes || {}),
+        weight_kg: numberValue($("#caseWeight")?.value || ""), egfr: numberValue($("#caseEgfr")?.value || ""),
+        medications_reviewed: $("#caseMedicationsReviewed")?.checked || false,
+        allergies_reviewed: $("#caseAllergiesReviewed")?.checked || false,
+        prior_treatment_response: $("#casePriorResponse")?.value.trim() || null},
+      diagnoses: $("#caseWorkingDiagnosis")?.value.trim() ? [{code:$("#caseWorkingDiagnosis").value.trim(), certainty:$("#caseDiagnosisCertainty").value,clinical_status:"active",source:"clinician"}] : (state.caseRecord?.diagnoses || []),
       symptoms: readCaseMatrix("symptoms", (raw) => ({
         symptom_code: raw.symptom_code.trim(), symptom_name: raw.symptom_name.trim(),
         present: raw.present === "true", duration_minutes: numberValue(raw.duration_minutes),
@@ -3462,6 +3475,7 @@
       labs: record.labs, exam_findings: record.exam_findings, symptoms: record.symptoms,
       vitals: record.vitals, past_history: codeList(record.past_history_codes),
       current_medications: codeList(record.current_medications), allergies: codeList(record.allergies),
+      clinical_attributes: record.clinical_attributes || {}, diagnoses: record.diagnoses || [],
     };
   }
   function applyCaseRecord(record) {
@@ -3476,6 +3490,10 @@
     $("#casePastCodes").value = record.past_history_codes || "";
     $("#caseMedications").value = record.current_medications || "";
     $("#caseAllergies").value = record.allergies || "";
+    const clinicalFields = {caseWeight: record.clinical_attributes?.weight_kg ?? "", caseEgfr: record.clinical_attributes?.egfr ?? "", casePriorResponse: record.clinical_attributes?.prior_treatment_response || "", caseWorkingDiagnosis: record.diagnoses?.[0]?.code || "", caseDiagnosisCertainty: record.diagnoses?.[0]?.certainty || "suspected"};
+    Object.entries(clinicalFields).forEach(([id,value])=>{const el=$("#"+id);if(el)el.value=value;});
+    if ($("#caseMedicationsReviewed")) $("#caseMedicationsReviewed").checked = record.clinical_attributes?.medications_reviewed === true;
+    if ($("#caseAllergiesReviewed")) $("#caseAllergiesReviewed").checked = record.clinical_attributes?.allergies_reviewed === true;
     $("#symptomsRows").innerHTML = matrixOnly("symptoms", record);
     $("#labsRows").innerHTML = matrixOnly("labs", record);
     $("#exam_findingsRows").innerHTML = matrixOnly("exam_findings", record);
@@ -3498,9 +3516,9 @@
   // ==== 审核台：专业化条目显示 + 主从详情面板 ====
   const REVIEW_TYPE_LABELS = { graph_node: "实体", graph_relation: "关系", rule: "规则", package: "知识包" };
   const REVIEW_TABS = [
-    ["bydisease", "疾病审核工作台"], ["graph", "实体审核"], ["relations", "关系审核"], ["bases", "诊疗依据审核"], ["rules", "规则审核"], ["blocked", "被阻断"],
-    ["stale", "待复核"], ["active", "已通过"], ["orphan", "孤儿条目"],
-    ["dupes", "疑似重复"],
+    ["bydisease", "疾病审核工作台"], ["graph", "实体审核"], ["relations", "关系审核"], ["bases", "诊疗依据审核"], ["rules", "规则审核"], ["standards", "判定标准审核"], ["blocked", "被阻断"],
+    ["revisions", "待审修订"], ["active", "已通过"], ["orphan", "孤儿条目"],
+    ["dupes", "疑似重复实体"],
     ["audit", "审核记录"],
   ];
   const REJECT_REASONS = ["编码错误", "证据不足", "关系方向错误", "重复条目", "超出指南范围", "内容过期", "其他"];
@@ -3528,7 +3546,7 @@
   };
   const FLAG_LABELS = {
     endpoint_inactive: "端点未通过", no_source_refs: "无溯源",
-    direction_suspect: "方向可疑", self_loop: "自环", duplicate_pair: "重复连线",
+    direction_suspect: "方向可疑", self_loop: "自环", duplicate_pair: "疑似重复关系（同一对实体有多种连线）",
   };
   function flagChipsHtml(item) {
     return (item.flags || []).map((flag) => `<span class="flag-chip" title="${esc(flag.message)}">⚠ ${esc(FLAG_LABELS[flag.code] || flag.code)}</span>`).join(" ");
@@ -3536,7 +3554,7 @@
   function relationMatrixHtml(items) {
     const relItems = items.filter((item) => item.item_type === "graph_relation");
     if (!relItems.length) return "";
-    const statuses = ["draft", "stale", "active", "rejected", "retired"];
+    const statuses = ["draft", "active", "rejected", "retired"];
     const byCode = new Map();
     relItems.forEach((item) => {
       const code = item.relation_code || "-";
@@ -3720,7 +3738,7 @@
       const node = detail.node || {};
       $("#editorBody").innerHTML = `
         <h3>修正实体名称</h3>
-        <div class="result-banner warning"><strong>编码保持不变</strong><p>修改名称后，已通过的实体会回到“待复核”，相关关系也会重新标记为待复核。保存后仍需人工点击通过。</p></div>
+        <div class="result-banner warning"><strong>编码保持不变</strong><p>修改名称后，已通过的实体会回到“待审核”，相关关系也会重新标记为待审核。保存后仍需人工点击通过。</p></div>
         <div class="field"><label>稳定编码</label><input value="${esc(node.code || node.concept_code || item.node_id)}" readonly></div>
         <div class="field"><label>当前名称</label><input value="${esc(node.name || item.name || "")}" readonly></div>
         <div class="field"><label>修正后的中文名称</label><input id="nodeCorrectedName" maxlength="200" value="${esc(suggestedName || node.name || item.name || "")}" placeholder="例如：血乳酸阳性"></div>
@@ -3821,7 +3839,7 @@
     }
     if (result.suggested_relation_code) item.relation_code = result.suggested_relation_code;
     item.item_id = response.relation_id || item.item_id;
-    item.status = "stale";
+    item.status = "draft";
     markStale("dashboard", "graph", "graphVisual", "rules");
     return response;
   }
@@ -3883,7 +3901,7 @@
         ].filter(Boolean);
         const checklist = (result.reviewer_checklist || []).map((entry) => `<li>${esc(entry)}</li>`).join("");
         const confidence = Number.isFinite(Number(result.confidence)) ? `${Math.round(Number(result.confidence) * 100)}%` : "-";
-        const canReject = ["draft", "stale", "active"].includes(item.status || "draft");
+        const canReject = ["draft", "active"].includes(item.status || "draft");
         const canApprove = ["draft", "stale"].includes(item.status || "draft");
         const endpointsBlocked = relationEndpointBlocked(item);
         const controls = [
@@ -3926,7 +3944,7 @@
         });
         $("#relationAiResult").querySelector("[data-single-ai-apply]")?.addEventListener("click", async (event) => {
           const button = event.currentTarget;
-          if (!confirm("确认一键应用 AI 给出的实体名称、关系类型及方向修正？应用后关系将回到待复核。")) return;
+          if (!confirm("确认一键应用 AI 给出的实体名称、关系类型及方向修正？应用后关系将回到待审核。")) return;
           button.disabled = true;
           button.textContent = "应用中…";
           try {
@@ -4009,7 +4027,7 @@
       stop.textContent = "停止";
       const labels = {
         approve: ["建议通过", "active"], reject: ["建议拒绝", "rejected"],
-        revise: ["建议修正", "stale"], insufficient_evidence: ["证据不足", "draft"],
+        revise: ["建议修正", "draft"], insufficient_evidence: ["证据不足", "draft"],
         precheck: ["知识预审，原文未核验", "draft"],
       };
       const prompt = $("#batchRelationAiPrompt").value.trim();
@@ -4049,7 +4067,7 @@
             result.suggested_source_name ? `建议起点名称：${result.suggested_source_name}` : "",
             result.suggested_target_name ? `建议目标名称：${result.suggested_target_name}` : "",
           ].filter(Boolean);
-          const canReject = ["draft", "stale", "active"].includes(item.status || "draft");
+          const canReject = ["draft", "active"].includes(item.status || "draft");
           const canApprove = ["draft", "stale"].includes(item.status || "draft");
           const endpointsBlocked = relationEndpointBlocked(item);
           const actionButtons = [
@@ -4100,14 +4118,14 @@
           advice.querySelector("[data-ai-apply]")?.addEventListener("click", async (event) => {
             const button = event.currentTarget;
             if (!relationAiHasCorrection(currentResult)) return;
-            if (!confirm("确认一键应用 AI 给出的全部结构化修正？应用后关系将回到待复核。")) return;
+            if (!confirm("确认一键应用 AI 给出的全部结构化修正？应用后关系将回到待审核。")) return;
             button.disabled = true;
             button.textContent = "应用中…";
             try {
               const applied = await applyRelationAiCorrection(item, currentResult);
               button.textContent = `已应用 ${applied.changes.length} 项修正`;
               row.querySelector("td").textContent = `${item.source_name || item.source_node_id} → ${relationLabel(item)} → ${item.target_name || item.target_node_id}`;
-              row.querySelector(".batch-ai-status").innerHTML = miniStatus("stale").replace(REVIEW_LABELS.stale, "已修正待复核");
+              row.querySelector(".batch-ai-status").innerHTML = miniStatus("stale").replace(REVIEW_LABELS.stale, "已修正待审核");
               const approve = advice.querySelector("[data-ai-direct-approve]");
               if (approve) {
                 approve.hidden = false;
@@ -4425,7 +4443,7 @@
       </div>
       <div class="detail-section"><h4>出处（指南原文与上下文）</h4>${refsHtml || '<div class="result-banner warning">出处缺失：尚无指南引用，不能仅凭实体名称确认其依据，请补充原文定位。</div>'}${refsHtml && !(node.source_refs || []).some(parseSourceRef) ? '<div class="result-banner warning">现有出处引用无法解析到页行，尚不能核对原文上下文，请补充或修复定位。</div>' : ""}</div>
       ${relatedHtml}
-      ${(node.attribute_violations || []).length ? `<div class="detail-section"><h4>属性校验待复核（${node.attribute_violations.length}）</h4>${table(["属性", "问题"], node.attribute_violations.map((v) => `<tr><td class="mono">${esc(v.attribute_code)}</td><td>${esc(v.issue || "-")}</td></tr>`))}</div>` : ""}
+      ${(node.attribute_violations || []).length ? `<div class="detail-section"><h4>属性校验待审核（${node.attribute_violations.length}）</h4>${table(["属性", "问题"], node.attribute_violations.map((v) => `<tr><td class="mono">${esc(v.attribute_code)}</td><td>${esc(v.issue || "-")}</td></tr>`))}</div>` : ""}
       <div class="detail-section"><h4>属性（核对完整性与原文一致性）</h4>${Object.keys(node.attributes || {}).length ? attrTableHtml(node.attributes) : '<div class="muted">尚无已提取属性。请核对模板要求及原文；属性为空不直接等于实体识别错误。</div>'}</div>
       ${historyHtml}
       <div class="detail-section"><h4>引用本实体的推理规则（${rules.length}）</h4>${dependentRuleTable(rules)}</div>
@@ -4656,6 +4674,7 @@
   }
 
   function reviewQueueItemType(tab, filters = {}) {
+    if (tab === "standards") return "standard";
     if (tab === "rules" || tab === "blocked") return "rule";
     if (tab === "relations") return "graph_relation";
     if (tab === "graph") return "graph";
@@ -4674,10 +4693,12 @@
       const labels = [...groupEl.querySelectorAll(".dupe-node")].map((el) => ({
         id: el.querySelector("input[type=radio]").value,
         code: el.querySelector(".mono").textContent,
+        name: el.querySelector("strong")?.textContent || "",
       }));
-      const survivorCode = labels.find((l) => l.id === survivor).code;
+      const survivorNode = labels.find((l) => l.id === survivor);
+      const survivorCode = `${survivorNode.name}（${survivorNode.code}）`;
       const absorbed = labels.filter((l) => l.id !== survivor);
-      if (!confirm(`保留 ${survivorCode}，吸收：${absorbed.map((l) => l.code).join("、")}？\n关联关系将重挂到保留节点，引用被吸收编码的规则会自动改写（合并前自动备份）。`)) return;
+      if (!confirm(`保留 ${survivorCode}，吸收：${absorbed.map((l) => `${l.name}（${l.code}）`).join("、")}？\n关联关系将重挂到保留节点，引用被吸收编码的规则会自动改写（合并前自动备份）。`)) return;
       button.disabled = true;
       try {
         const result = await api("/api/kg/merge-nodes", { json: {
@@ -4695,7 +4716,8 @@
       ["graph", "1 · 实体审核", "核对名称、类型、编码、属性及出处"],
       ["relations", "2 · 关系审核", "核对连接对象、方向、关系含义及出处"],
       ["bases", "3 · 诊疗依据审核", "核对条件组合、适用范围、排除条件和原文；通过后生成规则草稿"],
-      ["rules", "4 · 规则审核", "核对执行逻辑、依赖及病例验证；审核后启用"],
+      ["standards", "4 · 判定标准审核", "核对检查、检验的阈值、单位、适用条件及原文；通过后发布到选定医院"],
+      ["rules", "5 · 规则审核", "核对执行逻辑、依赖及病例验证；审核后启用"],
     ].map(([key, title, description]) => `<button class="btn ${state.reviewTab === key ? "primary" : ""}" data-review-tab="${key}" style="white-space:normal;text-align:left;display:block;padding:12px"><strong>${title}</strong><div style="font-weight:normal;margin-top:6px">${description}</div></button>`).join("")}</div>`;
   }
 
@@ -4716,21 +4738,24 @@
   async function renderClinicalBases() {
     await loadBase();
     const graphs = await api("/api/kg/graphs");
-    const filename = state.reviewFilters.graph || graphs[0]?.graph_filename || "";
+    const filename = graphs.some((graph) => graph.graph_filename === state.reviewFilters.graph) ? state.reviewFilters.graph : (graphs[0]?.graph_filename || "");
     state.reviewFilters.graph = filename;
     const result = filename ? await api(`/api/review/bases?graph_filename=${encodeURIComponent(filename)}`) : { items: [] };
     const diseaseCode = state.basisDiseaseCode || "";
     const diseaseBases = result.items.filter((basis) => !diseaseCode || basis.specification.disease_code === diseaseCode);
-    const visibleBases = diseaseBases.filter((basis) => !state.basisQualityOnly || basis.validation.issues.length);
+    const visibleBases = diseaseBases.filter((basis) =>
+      (!state.basisQualityOnly || (basis.disposition !== "discarded" && basis.validation.issues.length)) &&
+      (!state.basisStatusFilter || (state.basisStatusFilter === "discarded" ? basis.disposition === "discarded" : basis.disposition !== "discarded" && basis.validation.status === state.basisStatusFilter)));
     const tabHtml = REVIEW_TABS.map(([key, label]) => `<button class="review-tab ${key === "bases" ? "active" : ""}" data-review-tab="${key}">${label}</button>`).join("");
     pageEl.innerHTML = `<div class="review-tabs">${tabHtml}</div>${reviewCategoriesHtml()}
+      <div class="result-banner"><strong>按知识图谱管理诊疗依据</strong><div class="inline-controls"><label>知识图谱 <select id="basisGraphFilter">${graphs.map((g) => `<option value="${esc(g.graph_filename)}" ${filename === g.graph_filename ? "selected" : ""}>${esc(g.source || g.graph_filename)} · ${esc(g.graph_filename)}</option>`).join("")}</select></label><label>状态 <select id="basisStatusFilter">${[["", "全部状态"], ["draft", "待审"], ["active", "已通过"], ["revisions", "待审修订"], ["rejected", "已退回"], ["discarded", "不采纳"]].map(([value, label]) => `<option value="${value}" ${state.basisStatusFilter === value ? "selected" : ""}>${label}</option>`).join("")}</select></label></div><p>当前图谱共 ${result.items.length} 份依据；显示 ${visibleBases.length} 份。新增、整理、编辑、不采纳及生成规则均在此图谱内操作。</p></div>
       <div class="result-banner">已有 ${visibleBases.length} 份候选依据${diseaseCode ? `（疾病 ${esc(diseaseCode)}）` : ""}。候选已保留解析条件、结论和原文；图谱审核状态自动复用，无须重新录入。核对组合逻辑后，点击“确认依据并生成待审规则”。${diseaseCode ? '<button class="btn sm" id="allDiseaseBases">查看全部疾病</button>' : ""}</div>
-      <div class="result-banner ${diseaseBases.some((basis) => basis.validation.issues.length) ? "warning" : "ok"}"><strong>质量复核：${diseaseBases.filter((basis) => basis.validation.issues.length).length} 份存在待处理问题</strong><p>引文须与实际指南页行一致。原有审核记录保留，存在问题时须修正后重新确认。</p><label><input type="checkbox" id="basisQualityOnly" ${state.basisQualityOnly ? "checked" : ""}> 仅显示有问题的依据</label></div>
+      <div class="result-banner ${diseaseBases.some((basis) => basis.disposition !== "discarded" && basis.validation.issues.length) ? "warning" : "ok"}"><strong>质量复核：${diseaseBases.filter((basis) => basis.disposition !== "discarded" && basis.validation.issues.length).length} 份存在待处理问题</strong><p>引文须与实际指南页行一致。原有审核记录保留，存在问题时须修正后重新确认。</p><label><input type="checkbox" id="basisQualityOnly" ${state.basisQualityOnly ? "checked" : ""}> 仅显示有问题的依据</label></div>
       ${panel("诊疗依据审核", `<p>审核对象是一组完整的诊疗判断，不是单个实体或一条关系。实体与关系通过审核后，还须确认组合逻辑及适用条件；只有通过的依据组才能生成规则草稿。</p>
         <div class="inline-controls"><div class="field"><label>知识图谱</label><select id="basisGraph">${graphs.map((g) => `<option value="${esc(g.graph_filename)}" ${filename === g.graph_filename ? "selected" : ""}>${esc(g.graph_filename)}</option>`).join("")}</select></div>
         <button class="btn" id="prepareBases" ${filename ? "" : "disabled"}>整理已有候选为待审依据</button><button class="btn primary" id="newClinicalBasis" ${filename ? "" : "disabled"}>新增诊疗依据</button></div>
         <p class="muted">整理操作读取此图谱的知识包候选和已有规则，不猜测实体连线的且/或关系，不修改或停用已有规则。</p>`)}
-      ${panel("诊疗依据组", table(["名称 / 指南", "审核状态", "生成前检查", "操作"], visibleBases.map((basis) => `<tr><td><strong>${esc(basis.name)}</strong><div>${esc(basis.specification.source?.guideline_title || "-")}</div></td><td>${reviewBadge(basis.validation.status)}</td><td>${basis.validation.issues.length ? esc(basis.validation.issues.join("；")) : "图谱依赖完整，待人工核对逻辑"}${basis.generated_rule_id ? `<div>已生成：${esc(basis.generated_rule_id)}</div>` : ""}</td><td>${basis.generated_rule_id ? `<button class="btn primary" data-basis-revise="${esc(basis.basis_id)}" title="依据最新已审关联创建修订依据，旧规则保持不变">更新并重新生成待审规则</button>` : `<button class="btn primary" data-basis-edit="${esc(basis.basis_id)}" title="先沿用已审核关联补全缺失条件，再打开编辑器">按已审图谱补全并编辑</button>`}<button class="btn" data-basis-detail="${esc(basis.basis_id)}">审核详情</button></td></tr>`)))}
+      ${panel("诊疗依据组", table(["名称 / 指南", "审核状态", "生成前检查", "操作"], visibleBases.map((basis) => `<tr><td><strong>${esc(basis.name)}</strong><div>${esc(basis.specification.source?.guideline_title || "-")}</div></td><td>${basis.disposition === "discarded" ? badge("不采纳") : reviewBadge(basis.validation.status)}</td><td>${basis.disposition === "discarded" ? `不生成规则${basis.disposition_reason ? "：" + esc(basis.disposition_reason) : ""}` : basis.validation.issues.length ? esc(basis.validation.issues.join("；")) : "图谱依赖完整，待人工核对逻辑"}${basis.generated_rule_id ? `<div>已生成：${esc(basis.generated_rule_id)}</div>` : ""}</td><td>${basis.disposition === "discarded" ? "" : basis.generated_rule_id ? `<button class="btn primary" data-basis-revise="${esc(basis.basis_id)}" title="基于最新诊断依据创建修订，核对条件后再生成待审规则">修订规则条件</button>` : `<button class="btn primary" data-basis-edit="${esc(basis.basis_id)}" title="带入审核通过的诊断依据，可使用 AI 建议或手动组合条件">配置规则条件</button>`}<button class="btn" data-basis-detail="${esc(basis.basis_id)}">审核详情</button>${!basis.generated_rule_id ? `<button class="btn" data-basis-disposition="${esc(basis.basis_id)}" data-action="${basis.disposition === "discarded" ? "restore" : "discard"}">${basis.disposition === "discarded" ? "恢复待审" : "不采纳"}</button>` : ""}</td></tr>`)))}
       <div id="basisDetail"></div>`;
     if (diseaseCode) {
       pageEl.querySelectorAll("[data-basis-detail]").forEach((button) => {
@@ -4741,12 +4766,31 @@
     }
     bindReviewTabs();
     $("#basisQualityOnly").onchange = (event) => { state.basisQualityOnly = event.target.checked; renderClinicalBases(); };
-    $("#basisGraph").onchange = (event) => { state.reviewFilters.graph = event.target.value; renderClinicalBases(); };
+    const switchBasisGraph = (event) => {
+      state.reviewFilters.graph = event.target.value;
+      state.basisDiseaseCode = "";
+      state.basisQualityOnly = false;
+      state.basisStatusFilter = "";
+      renderClinicalBases();
+    };
+    $("#basisGraph").onchange = switchBasisGraph;
+    $("#basisGraphFilter").onchange = switchBasisGraph;
+    $("#basisStatusFilter").onchange = (event) => { state.basisStatusFilter = event.target.value; renderClinicalBases(); };
     $("#newClinicalBasis").onclick = () => openRuleEditor(null, { clinicalBasis: true, onSave: (specification) => api(`/api/review/bases?graph_filename=${encodeURIComponent(filename)}`, { json: { specification, scope_summary: "" } }) });
     $("#prepareBases").onclick = async () => {
       try { await api(`/api/review/bases/prepare?graph_filename=${encodeURIComponent(filename)}`, { json: {} }); await renderClinicalBases(); }
       catch (error) { toast(error.message, true); }
     };
+    pageEl.querySelectorAll("[data-basis-disposition]").forEach((button) => button.onclick = async () => {
+      const action = button.dataset.action;
+      const reason = action === "discard" ? prompt("不采纳后，该依据不用生成规则。可填写原因（选填）：", "") : "";
+      if (reason === null) return;
+      button.disabled = true;
+      try {
+        await api(`/api/review/bases/${encodeURIComponent(button.dataset.basisDisposition)}/disposition?graph_filename=${encodeURIComponent(filename)}`, {json: {action, reason}});
+        await renderClinicalBases();
+      } catch (error) { toast(error.message, true); button.disabled = false; }
+    });
     pageEl.querySelectorAll("[data-basis-edit]").forEach((button) => button.onclick = async () => {
       const basis = result.items.find((item) => item.basis_id === button.dataset.basisEdit);
       await openCompletedBasisEditor(basis, filename, basis.scope_summary || "", button);
@@ -4759,7 +4803,7 @@
         toast(`已创建修订依据并带入 ${result.used.length} 个已审条件，请核对后生成新待审规则`);
         await renderClinicalBases();
         await showClinicalBasis(result.basis, filename);
-      } catch (error) { toast(error.message, true); button.disabled = false; button.textContent = "更新并重新生成待审规则"; }
+      } catch (error) { toast(error.message, true); button.disabled = false; button.textContent = "修订规则条件"; }
     });
     pageEl.querySelectorAll("[data-basis-detail]").forEach((button) => {
       const basis = result.items.find((item) => item.basis_id === button.dataset.basisDetail);
@@ -4782,7 +4826,7 @@
     return node;
   }
 
-  function chooseConditionLogic(question) {
+  function chooseConditionLogic(question, aiContext = null) {
     return new Promise((resolve) => {
       const dialog = $("#editorDialog");
       const save = $("#editorSave");
@@ -4790,13 +4834,24 @@
       save.hidden = true;
       $("#editorBody").innerHTML = `
         <h3>这些条件如何构成判断？</h3>
+        ${aiContext ? '<button type="button" class="btn" id="logicAiSuggest">AI 建议</button><div id="logicAiAdvice"></div>' : ""}
         <p class="muted">不需要编辑条件树。请根据指南原文选择最符合医学含义的一项。</p>
         <div class="detail-section"><ol>${(question.children || []).map((child) => `<li>${esc(conditionText(child))}</li>`).join("")}</ol></div>
         <div class="actions">
-          <button type="button" class="btn primary" data-logic-choice="AND">必须全部满足（且）</button>
+          <button type="button" class="btn" data-logic-choice="RESTRUCTURE">重组条件（嵌套且／或）</button><button type="button" class="btn primary" data-logic-choice="AND">必须全部满足（且）</button>
           <button type="button" class="btn primary" data-logic-choice="OR">满足任意一项（或）</button>
         </div>
         <p class="muted">如果原文没有说明组合关系，请取消并补充原文，不要猜测。</p>`;
+      if (aiContext) $("#logicAiSuggest").onclick = async () => {
+        const button = $("#logicAiSuggest");
+        button.disabled = true; button.textContent = "正在分析原文…";
+        try {
+          const advice = await api(`/api/review/bases/${encodeURIComponent(aiContext.basisId)}/logic-advice?graph_filename=${encodeURIComponent(aiContext.filename)}`, {json: {specification: aiContext.specification, path: question.path}});
+          $("#logicAiAdvice").innerHTML = `<div class="detail-section"><strong>建议组合</strong><div class="quote">${esc(advice.conditions ? conditionText(advice.conditions) : "依据不足，暂不能生成组合")}</div>${advice.conditions ? '<button type="button" class="btn primary" id="logicAiConfirm">采纳并编辑</button>' : ""}<details><summary>查看依据与排除项</summary><p>${esc(advice.reason)}</p><blockquote>${esc(advice.evidence_quote || "")}</blockquote><p>未纳入：${esc((advice.excluded_conditions || []).map(conditionText).join("；") || "无")}</p></details></div>`;
+          if (advice.conditions) $("#logicAiConfirm").onclick = () => { selected = {conditions: advice.conditions}; dialog.close(); };
+        } catch (error) { toast(error.message, true); }
+        finally { button.disabled = false; button.textContent = "AI 建议"; }
+      }
       $("#editorCancel").onclick = () => dialog.close();
       $("#editorBody").querySelectorAll("[data-logic-choice]").forEach((choice) => {
         choice.onclick = () => {
@@ -4814,11 +4869,18 @@
     });
   }
 
-  async function resolveBasisLogic(specification, questions) {
+  async function resolveBasisLogic(specification, questions, aiContext = null) {
     const resolved = JSON.parse(JSON.stringify(specification));
     for (const question of questions || []) {
-      const operator = await chooseConditionLogic(question);
+      const operator = await chooseConditionLogic(question, aiContext ? {...aiContext, specification: resolved} : null);
       if (!operator) return null;
+      if (typeof operator === "object" && operator.conditions) {
+        const target = conditionAtLogicPath(resolved, question.path);
+        Object.keys(target).forEach((key) => delete target[key]);
+        Object.assign(target, operator.conditions);
+        return resolved;
+      }
+      if (operator === "RESTRUCTURE") return resolved;
       const node = conditionAtLogicPath(resolved, question.path);
       if (node?.type === "group") node.operator = operator;
     }
@@ -4842,7 +4904,7 @@
         return;
       }
       const resolvedSpecification = await resolveBasisLogic(
-        prepared.specification, completed.logic_questions || []
+        prepared.specification, completed.logic_questions || [], {basisId: basis.basis_id, filename}
       );
       if (!resolvedSpecification) {
         toast("已取消：未修改诊疗依据");
@@ -4861,7 +4923,7 @@
       });
       const guidance = document.createElement("div");
       guidance.className = "result-banner ok";
-      guidance.innerHTML = `<strong>条件已整理完成</strong><p>${(completed.logic_questions || []).length ? "已按你的选择写入且／或关系。" : "系统已整理旧版条件结构。"}请核对下方中文条件预览；内容正确即可保存，不需要编辑 JSON 或条件树。</p>`;
+      guidance.innerHTML = `<strong>条件已整理完成</strong><p>${(completed.logic_questions || []).length ? "可在下方重组条件并确认各组的且／或关系。" : "系统已整理旧版条件结构。"}可在下方条件树点击“+子组”，每组独立设置且／或；拖动条件卡片进入对应分组。例如：（e 或 f）或（C 且 D 且 E）。核对后保存。</p>`;
       $("#editorBody").prepend(guidance);
       if (completed.candidates?.length) {
         const notice = document.createElement("div");
@@ -4889,8 +4951,9 @@
     const source = spec.source || {};
     const context = source.chunk_id ? await sourceRefsHtml([source.chunk_id]) : "";
     $("#basisDetail").innerHTML = panel(basis.name, `
+      <p class="mono muted">依据编号：${esc(basis.basis_id)}</p>
       ${clinicalStatementHtml(basis)}
-      ${basis.generated_rule_id ? '<button id="basisReviseLogic" class="btn primary">更新并重新生成待审规则</button>' : '<button id="basisEditLogic" class="btn primary" title="先沿用已审核关联补全缺失条件，再打开编辑器">按已审图谱补全并编辑</button>'}
+      ${basis.generated_rule_id ? '<button id="basisReviseLogic" class="btn primary">修订规则条件</button>' : '<button id="basisEditLogic" class="btn primary" title="带入审核通过的诊断依据，可使用 AI 建议或手动组合条件">配置规则条件</button>'}
       <h4>条件逻辑</h4><div class="quote">${esc(conditionText(spec.conditions))}</div>
       <h4>结论及排除条件</h4><pre>${esc(JSON.stringify({ conclusion: spec.conclusion, exclusions: spec.exclusions || [] }, null, 2))}</pre>
       <h4>指南原文</h4><div>${esc(source.guideline_title || source.guideline_id || "-")} · 第 ${esc(source.page_start || "-")} 页 · ${esc(source.line_start || "-")}–${esc(source.line_end || "-")} 行</div><div class="quote">${esc(source.quote || "缺少引文，不能通过")}</div>${context}
@@ -4955,7 +5018,7 @@
         toast(`已创建修订依据并带入 ${result.used.length} 个已审条件，请重新审核`);
         await renderClinicalBases();
         await showClinicalBasis(result.basis, filename);
-      } catch (error) { toast(error.message, true); button.disabled = false; button.textContent = "更新并重新生成待审规则"; }
+      } catch (error) { toast(error.message, true); button.disabled = false; button.textContent = "修订规则条件"; }
     };
     const query = `?graph_filename=${encodeURIComponent(filename)}`;
     const changed = () => $("#basisScope").value !== (basis.scope_summary || "") || $("#basisSpec").value !== JSON.stringify(spec, null, 2);
@@ -5000,10 +5063,94 @@
     $("#basisDetail").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  async function renderStandardReview() {
+    await loadBase();
+    const filters = state.reviewFilters || {};
+    const params = new URLSearchParams({ item_type: "standard", limit: "1000" });
+    if (filters.graph) params.set("graph_filename", filters.graph);
+    if (filters.sourceDoc) params.set("source_doc", filters.sourceDoc);
+    if (state.standardReviewQuery) params.set("q", state.standardReviewQuery);
+    const queue = await api(`/api/review/queue?${params}`);
+    const items = (queue.items || []).filter((item) => !state.standardReviewStatus || item.status === state.standardReviewStatus);
+    const selected = items.find((item) => item.item_id === state.standardReviewId) || items[0];
+    const tabs = REVIEW_TABS.map(([key, label]) => `<button class="review-tab ${key === "standards" ? "active" : ""}" data-review-tab="${key}">${label}</button>`).join("");
+    const s = selected?.standard || {}, source = selected?.source || {};
+    const input = (key, label, type = "text") => `<div class="field"><label>${label}</label><input data-standard-field="${key}" type="${type}" ${type === "number" ? 'step="any"' : ""} value="${esc(s[key] ?? "")}"></div>`;
+    const detail = selected ? `<h3>${esc(selected.name)} · ${reviewBadge(selected.status)}</h3>
+      <p class="mono">${esc(selected.item_id)} · v${selected.version} · ${esc(s.concept_code)}</p>
+      <p>对象：${esc(s.item_type === "exam" ? "检查" : "检验")} · ${esc(s.exam_code || s.lab_code)} · ${esc(s.finding_code || "")}</p>
+      <div class="form-grid">${input("operator", "比较方式（>、>=、<、<=、=、BETWEEN、OUTSIDE）")}${input("threshold_value", "阈值 / 下界", "number")}${input("threshold_upper", "上界", "number")}${input("threshold_unit", "单位")}${input("context_age_min", "年龄下限", "number")}${input("context_age_max", "年龄上限", "number")}${input("context_gender", "适用性别（M/F，留空不限）")}${input("method", "适用方法")}${input("source_note", "来源说明")}</div>
+      <h4>适用条件及关联规则</h4><pre>${esc(JSON.stringify(selected.clinical_context || {}, null, 2))}</pre>
+      <p>${esc((selected.rule_ids || []).join("、") || "本院标准 / 未绑定规则")}</p>
+      <h4>指南原文</h4><p>${esc(source.guideline_title || s.source_note || "待补充")}</p>
+      <p>${esc(source.chunk_id || "")} · 页 ${esc(source.page_start || source.page || "待补充")}～${esc(source.page_end || source.page_start || "")} · 行 ${esc(source.line_start || "待补充")}～${esc(source.line_end || "")}</p>
+      <div class="quote">${esc(source.quote || "暂无逐字引文，请核对来源说明")}</div>
+      <div id="standardSourceContext"></div>
+      ${[...(selected.source_issues || []), ...(selected.configuration_issues || [])].map((issue) => `<p class="result-banner warning">${esc(issue)}</p>`).join("")}
+      <p class="muted">修改参数后先保存草稿，再审核通过。退回或驳回会停止该标准的使用。</p>
+      ${selected.origin === "guideline" ? `<label><input id="standardScopeConfirmed" type="checkbox">已核对人群、例外与关联规则条件，适用范围已落实</label><div class="field"><label>发布医院（逗号分隔）</label><input id="standardPublishHospitals" value="${esc(state.hospitalId || "")}" placeholder="XM_FIRST,FZ_HOSPITAL"></div>` : `<p>执行医院：${esc(s.hospital_id)}</p>`}
+      <div class="field"><label>审核人</label><input id="standardReviewer" value="${esc(localStorage.getItem("cdssReviewer") || "")}"></div>
+      <div class="field"><label>审核意见 / 驳回原因</label><textarea id="standardReviewNote"></textarea></div>
+      <div class="actions"><button class="btn" data-standard-action="save">保存修改为草稿</button><button class="btn primary" data-standard-action="approve">审核通过并启用</button><button class="btn danger" data-standard-action="reject">驳回</button><button class="btn" data-standard-action="return">退回待审</button></div>` : '<div class="empty">当前筛选下暂无判定标准</div>';
+    pageEl.innerHTML = `<div class="review-tabs">${tabs}</div>${reviewCategoriesHtml()}
+      ${panel("判定标准审核", `<div class="inline-controls"><input id="standardReviewSearch" placeholder="搜索指标、编码或指南" value="${esc(state.standardReviewQuery || "")}"><select id="standardReviewStatus">${[["", "全部状态"], ["draft", "待审核"], ["active", "已通过"], ["rejected", "已驳回"]].map(([key,label]) => `<option value="${key}" ${state.standardReviewStatus === key ? "selected" : ""}>${label}</option>`).join("")}</select><button id="standardReviewRefresh" class="btn">查询 / 刷新</button><button id="standardReviewClear" class="btn">清除图谱及指南筛选</button></div><p>包含指南自动提取标准和本院标准。草稿不参与正式推理；指南标准通过后发布到指定医院。</p>
+      ${queue.truncated?.standard ? '<p class="result-banner warning">超过展示上限，请缩小搜索范围。</p>' : ""}
+      <select id="standardReviewSelect" style="width:100%">${items.map((item) => `<option value="${esc(item.item_id)}" ${item === selected ? "selected" : ""}>${esc(item.name)} · ${esc(item.standard.exam_code || item.standard.lab_code)} · ${esc(item.standard.operator)} ${esc(item.standard.threshold_value ?? "待补充")} ${esc(item.standard.threshold_unit || "")} · ${esc(item.standard.hospital_id || "指南候选")} · ${esc(item.status)}</option>`).join("")}</select>`)}${panel("标准详情与审核", detail)}`;
+    bindReviewTabs();
+    $("#standardReviewRefresh").onclick = () => { state.standardReviewQuery = $("#standardReviewSearch").value; state.standardReviewStatus = $("#standardReviewStatus").value; renderStandardReview(); };
+    $("#standardReviewClear").onclick = () => { state.reviewFilters.graph = ""; state.reviewFilters.sourceDoc = ""; renderStandardReview(); };
+    $("#standardReviewSelect").onchange = (event) => { state.standardReviewId = event.target.value; renderStandardReview(); };
+    if (selected && source.chunk_id) {
+      try { $("#standardSourceContext").innerHTML = await sourceRefsHtml([source.chunk_id]); }
+      catch (error) { $("#standardSourceContext").textContent = `上下文暂不可用：${error.message}`; }
+    }
+    pageEl.querySelectorAll("[data-standard-action]").forEach((button) => button.onclick = async () => {
+      button.disabled = true;
+      try {
+        const standard = {};
+        pageEl.querySelectorAll("[data-standard-field]").forEach((input) => {
+          standard[input.dataset.standardField] = input.type === "number" ? (input.value === "" ? null : Number(input.value)) : input.value.trim();
+        });
+        const reviewer = $("#standardReviewer").value.trim();
+        const result = await api(`/api/review/standards/${encodeURIComponent(selected.item_id)}/review`, { method: "POST", json: {
+          action: button.dataset.standardAction, version: selected.version, reviewer, standard,
+          note: $("#standardReviewNote").value.trim(), scope_confirmed: $("#standardScopeConfirmed")?.checked || false,
+          hospital_ids: ($("#standardPublishHospitals")?.value || "").split(/[,，]+/).map((v) => v.trim()).filter(Boolean),
+        }});
+        localStorage.setItem("cdssReviewer", reviewer);
+        toast(`标准已${({ active: "通过并发布", draft: "保存为待审", rejected: "驳回" })[result.status]}`);
+        await renderStandardReview();
+      } catch (error) { toast(error.message, true); }
+      finally { button.disabled = false; }
+    });
+  }
+
+  async function renderPendingRevisions() {
+    const graphs = await api("/api/kg/graphs");
+    const filename = state.reviewFilters.graph || graphs[0]?.graph_filename || "";
+    state.reviewFilters.graph = filename;
+    const result = filename ? await api(`/api/kg/pending-revisions?graph_filename=${encodeURIComponent(filename)}`) : {items: []};
+    const fieldNames = {name: "名称", code: "编码", node_type: "实体类型", attributes: "属性", source_node_id: "起点", target_node_id: "终点", relation_code: "关系类型", relation_name: "关系名称"};
+    pageEl.innerHTML = `<div class="review-tabs">${REVIEW_TABS.map(([key, label]) => `<button class="review-tab ${key === "revisions" ? "active" : ""}" data-review-tab="${key}">${esc(label)}</button>`).join("")}</div><h3>待审修订</h3><p>已通过版本继续保留。审核下面的内容变化后，新版本才会替换旧版本。</p><select id="revisionGraph">${graphs.map((g) => `<option value="${esc(g.graph_filename)}" ${filename === g.graph_filename ? "selected" : ""}>${esc(g.graph_filename)}</option>`).join("")}</select>${result.items.map((item, index) => panel(`${item.kind === "node" ? "实体" : "关系"}：${item.name}`, table(["变更字段", "已审核版本", "待审版本"], Object.keys(item.after).filter((key) => JSON.stringify(item.before[key]) !== JSON.stringify(item.after[key])).map((key) => `<tr><td>${esc(fieldNames[key] || key)}</td><td>${esc(JSON.stringify(item.before[key]))}</td><td>${esc(JSON.stringify(item.after[key]))}</td></tr>`)) + `<button class="btn primary" data-revision="${index}" data-action="approve">通过修订</button><button class="btn" data-revision="${index}" data-action="reject">不采纳修订</button>`)).join("") || '<div class="empty">当前图谱没有待审修订</div>'}`;
+    bindReviewTabs();
+    $("#revisionGraph").onchange = (event) => { state.reviewFilters.graph = event.target.value; renderPendingRevisions(); };
+    pageEl.querySelectorAll("[data-revision]").forEach((button) => button.onclick = async () => {
+      const reviewer = prompt("审核人", localStorage.getItem("cdssReviewer") || "");
+      if (!reviewer?.trim()) return;
+      const item = result.items[Number(button.dataset.revision)];
+      try {
+        await api(`/api/kg/pending-revisions/decision?graph_filename=${encodeURIComponent(filename)}`, {json: {kind: item.kind, item_id: item.item_id, revision_hash: item.revision_hash, action: button.dataset.action, reviewer}});
+        await renderPendingRevisions();
+      } catch (error) { toast(error.message, true); }
+    });
+  }
+
   async function renderReviewCenter() {
     // 节点/关系详情的属性表依赖模板契约渲染中文名，直接进入审核台时也需加载模板数据。
     await loadExtractionSettings();
-    const tab = state.reviewTab || "bydisease";
+    const tab = state.reviewTab === "stale" ? "graph" : (state.reviewTab || "bydisease");
+    if (tab === "revisions") { await renderPendingRevisions(); return; }
+    if (tab === "standards") { await renderStandardReview(); return; }
     if (tab === "bases") { await renderClinicalBases(); return; }
     if (tab === "bydisease") { await renderByDisease(); return; }
     const reviewer = localStorage.getItem("cdssReviewer") || "";
@@ -5121,13 +5268,13 @@
             <div class="dupe-nodes">${group.nodes.map((n) => `
               <label class="dupe-node">
                 <input type="radio" name="dupe-group-${groupIndex}" value="${esc(n.node_id)}" ${n.node_id === group.recommended_survivor ? "checked" : ""}>
-                <span class="mono">${esc(n.code)}</span>
+                <strong>${esc(n.name || group.name)}</strong><span class="type-chip">${esc(typeName[group.node_type] || group.node_type)}</span><span class="mono">${esc(n.code)}</span>
                 ${n.is_standard_code ? '<span class="badge active">标准码</span>' : '<span class="badge">候选码</span>'}
                 ${reviewBadge(n.review_status)}
                 <span class="muted">关系 ${n.relation_count} · 引用 ${n.source_ref_count}</span>
               </label>`).join("")}</div>
             <div class="actions"><button class="btn sm primary" data-dupe-merge>合并为一</button></div>
-          </div>`).join("") || '<div class="empty">未检测到同类型同名重复</div>');
+          </div>`).join("") || '<div class="empty">未检测到同类型同名的重复实体</div>');
       pageEl.innerHTML = `<div class="review-tabs">${tabHtml}</div>${reviewCategoriesHtml()}
         <div class="review-list" style="max-width:none">
           <div class="review-toolbar compact review-filterbar">
@@ -5135,7 +5282,7 @@
               <option value="">请选择图谱</option>
               ${(state.reviewGraphOptions || []).map((g) => `<option value="${esc(g.graph_filename)}" ${filters.graph === g.graph_filename ? "selected" : ""}>${esc(g.graph_filename)}</option>`).join("")}
             </select>
-            <span class="muted">同类型同名节点分组；默认勾选推荐保留节点（标准码优先），「合并为一」吸收其余节点并自动改写规则引用（合并前自动备份）。</span>
+            <span class="muted">这里检查实体重复：同一图谱内、同类型、同中文名称的多个实体；不是关系重复。同名不一定同义，请核对后合并。默认勾选推荐保留节点（标准码优先），「合并为一」吸收其余节点并自动改写规则引用（合并前自动备份）。</span>
           </div>
           ${dupeCards}
         </div>`;
@@ -5466,6 +5613,7 @@
         api, esc, graphFilename: graphName, diseaseCode: subject.code, relationLabels: RELATION_LABELS,
         sourceRefBlock, parseSourceRef, fetchRefLines, refDocTitle,
         openBasis: async (basisId) => {
+          state.reviewFilters.graph = graphName;
           state.basisDiseaseCode = subject.code;
           state.reviewTab = "bases";
           await renderClinicalBases();
@@ -5989,6 +6137,7 @@
 
   function openRuleEditor(rule, options = {}) {
     const base = rule || { rule_id: `CUSTOM-${Date.now()}`, version: 1, domain: "western", anchor_type: "disease", rule_type: "diagnosis", clinical_intent: "diagnosis_confirmation", name: "", disease_code: "", disease_name: "", priority: 50, status: "draft", department: "心血管内科", conditions: { type: "group", operator: "AND", children: [] }, conclusion: { diagnosis: "", confidence: "medium", message: "", action: "" }, source: {}, exclusions: [], tags: [] };
+    let westernEditor = null;
     const ruleTypes = ["diagnosis", "treatment", "contraindication", "monitoring", "tcm_pattern", "tcm_treatment", "tcm_prescription", "tcm_contraindication"];
     const selectedIntent = base.clinical_intent || defaultClinicalIntent(base.rule_type);
     $("#editorBody").innerHTML = `
@@ -6008,12 +6157,14 @@
         <div class="field"><label>置信度</label><select name="confidence">${["high", "medium", "low"].map((s) => `<option value="${s}" ${base.conclusion.confidence === s ? "selected" : ""}>${s}</option>`).join("")}</select></div>
         <div class="field half"><label>提示</label><input name="message" value="${esc(base.conclusion.message)}"></div>
         <div class="field half"><label>动作</label><input name="action" value="${esc(base.conclusion.action || "")}"></div>
+        ${normalizeDomainClient(base.domain) === "western" ? '<div class="field wide" id="westernRecommendationEditor"></div>' : ''}
         ${base.rule_type === "treatment" ? `<div class="field wide"><label>已带入的治疗方案与项目</label><div class="result-banner"><strong>${esc(base.conclusion?.treatment_name || "尚未关联具体治疗方案")}</strong><div class="mono">${esc(base.conclusion?.treatment_plan_id || "")}</div>${(base.conclusion?.treatment_items || []).length ? table(["项目", "类型", "编码"], base.conclusion.treatment_items.map((item) => `<tr><td>${esc(item.name || item.code)}</td><td>${esc(typeName[item.entity_type] || item.entity_type || "-")}</td><td>${esc(item.code)}</td></tr>`)) : '<p>当前依据没有已带入的治疗项目。请核对是否已关联治疗方案，以及方案和项目的关系是否审核通过。</p>'}<p>${esc(base.conclusion?.message || "")}</p></div><div class="result-banner warning">下方条件树表示“什么情况下使用本方案”，上方治疗项目表示“执行什么”。子条件为空时，执行引擎仅在同一疾病诊断规则命中后评估此方案；如原文有分型、人群、阶段或禁忌限制，仍须在条件中明确表达。</div></div>` : ""}
         <div class="field wide"><label>${base.rule_type === "treatment" ? "治疗适用条件" : "条件树"} <span id="drlBadge"></span><button type="button" id="treeModeToggle" class="btn sm ct-toggle">JSON 模式</button></label><div id="conditionTreeHost" class="condition-tree"></div><textarea name="conditions" class="code" hidden>${esc(JSON.stringify(base.conditions, null, 2))}</textarea><div id="drlPreview" class="drl-preview" hidden><pre></pre></div></div>
         <div class="field wide"><label>排除疾病编码（逗号分隔）</label><input name="exclusions" value="${esc((base.exclusions || []).join(","))}"></div>
         <div class="field wide"><label>条件引用概念</label><div id="ruleConceptCheck" class="actions">${ruleConceptChips(base)}</div></div>
         ${["population", "subtype", "phase", "recommendation_strength", "evidence_grade"].map((key) => `<div class="field half"><label>${esc({population: "适用人群", subtype: "疾病分型", phase: "病程／治疗阶段", recommendation_strength: "推荐等级（按原文）", evidence_grade: "证据等级（按原文）"}[key])}</label><input name="context_${key}" value="${esc(base.clinical_context?.[key] || "")}" placeholder="原文未说明时留空，核对时明确记录"></div>`).join("")}
         <div class="field half"><label>例外与禁忌说明（每行一项，实际限制还须写入条件）</label><textarea name="context_exceptions">${esc((base.clinical_context?.exceptions || []).join("\n"))}</textarea></div>
+        ${base.clinical_context?.schema_version === 3 && base.clinical_context?.logic_origin === "ai_suggested" ? '<div class="field wide"><label><input type="checkbox" name="confirm_tcm_logic">我已核对原文并确认当前AI建议组合，作为人工确认逻辑保存</label></div>' : ""}
         <div class="field half"><label>待补信息（核对解决后移除，每行一项）</label><textarea name="context_missing">${esc((base.clinical_context?.missing_information || []).join("\n"))}</textarea></div>
         <div class="field wide"><label>结论扩展 JSON（治疗方案／中医治法／方剂／中药）</label><textarea name="conclusion_extra" class="code">${esc(JSON.stringify({ ...base.conclusion, diagnosis: undefined, confidence: undefined, message: undefined, action: undefined }, null, 2))}</textarea></div>
         <div class="field wide"><label>溯源 JSON</label><textarea name="source" class="code">${esc(JSON.stringify(base.source || {}, null, 2))}</textarea></div>
@@ -6076,8 +6227,8 @@
 
     const opSelectHtml = (node, path, readonly) => {
       const key = ctree.pathKey(path);
-      const op = String(node.operator || "AND").toUpperCase();
-      return `<select data-ct-op data-path="${key}" ${readonly ? "disabled" : ""}>${ctree.GROUP_OPERATORS.map((candidate) => {
+      const op = String(node.operator || "").toUpperCase();
+      return `<select data-ct-op data-path="${key}" ${readonly ? "disabled" : ""}>${!op ? '<option value="" selected disabled>请选择组合关系</option>' : ""}${ctree.GROUP_OPERATORS.map((candidate) => {
         const label = candidate === "AND" ? "且（AND）" : candidate === "OR" ? "或（OR）" : "非（NOT）";
         return `<option value="${candidate}" ${op === candidate ? "selected" : ""}>${label}</option>`;
       }).join("")}</select>`;
@@ -6110,11 +6261,11 @@
         if (!walker) break;
         if (ctree.READONLY_TYPES.includes(walker.type)) { readonly = true; break; }
       }
-      if (node.type === "group") {
+      if (node.type === "group" || node.type === "count_group") {
         const multi = ctree.fieldSelectionInfo(node);
         const multiHtml = multi ? `<div class="ct-detail-hint">${esc(multi.field.label)}已选 ${multi.values.length} 项 · ${node.operator === "AND" ? "全部满足" : "任一满足"}</div><button type="button" class="btn sm" data-ct-multi-open="${esc(multi.field.key)}" data-path="${ctree.pathKey(path)}">修改多选项目</button>` : "";
         return `<div class="ct-detail-title">条件组${path.length ? ` #${path.join(".")}` : "（根）"}</div>${multiHtml}
-          <div class="ct-detail-row"><em>组合方式</em>${opSelectHtml(node, path, readonly)}</div>
+          <div class="ct-detail-row"><em>组合方式</em><select data-ct-group-kind data-path="${ctree.pathKey(path)}"><option value="group" ${node.type === "group" ? "selected" : ""}>且／或／非</option><option value="count_group" ${node.type === "count_group" ? "selected" : ""}>至少满足指定数量</option></select>${node.type === "count_group" ? `<label>至少满足 <input type="number" min="1" max="${node.children.length}" data-ct-field="min_count" data-widget="number" data-path="${ctree.pathKey(path)}" value="${node.min_count || 1}"> 项</label>` : opSelectHtml(node, path, readonly)}</div>
           <div class="ct-detail-tools">${groupToolsHtml(node, path, readonly)}</div>
           <div class="ct-detail-hint">把画布上的卡片拖进该组即可加入子条件。</div>`;
       }
@@ -6209,7 +6360,9 @@
     };
 
     const renderTree = () => {
-      const host = $("#conditionTreeHost");
+      const westernHost = $("#westernRecommendationEditor");
+    if (westernHost && window.WesternDecision) westernEditor = window.WesternDecision.mountEditor(westernHost, base.clinical_context?.western_recommendation, base.source);
+    const host = $("#conditionTreeHost");
       if (!host) return;
       if (!treeMode) {
         host.hidden = true;
@@ -6276,7 +6429,9 @@
         }
         return;
       }
-      if (target.matches("[data-ct-op]")) {
+      if (target.matches("[data-ct-group-kind]")) {
+        mutate(() => ctree.updateNode(editorTree, path, {type: target.value, min_count: target.value === "count_group" ? 1 : null, operator: target.value === "group" ? "AND" : null, label: null}));
+      } else if (target.matches("[data-ct-op]")) {
         mutate(() => ctree.updateNode(editorTree, path, { operator: target.value, label: null }));
       } else if (target.matches("[data-ct-kind]")) {
         const kind = target.value;
@@ -6404,6 +6559,7 @@
           department: form.querySelector("[name=department]").value,
           conditions,
           clinical_context: {
+            ...(base.clinical_context || {}),
             ...Object.fromEntries(["population", "subtype", "phase", "recommendation_strength", "evidence_grade"].map((key) => [key, form.querySelector(`[name="context_${key}"]`).value.trim()])),
             exceptions: form.querySelector('[name="context_exceptions"]').value.split("\n").map((item) => item.trim()).filter(Boolean),
             missing_information: form.querySelector('[name="context_missing"]').value.split("\n").map((item) => item.trim()).filter(Boolean),
@@ -6418,12 +6574,32 @@
             action: form.querySelector("[name=action]").value,
           },
         };
+        const western = westernEditor?.read();
+        if (western) {
+          payload.clinical_context.western_recommendation = western;
+          payload.rule_type = "treatment";
+          payload.diagnosis_prerequisite = western.diagnosis_stage === "independent" ? null : western.diagnosis_stage;
+          payload.conclusion.treatment_items = western.actions.map(action => ({...action, entity_type:action.kind}));
+          payload.conclusion.treatment_plan_id ||= `TP-${payload.rule_id}`;
+          payload.conclusion.treatment_name ||= payload.name;
+        } else if (westernEditor) delete payload.clinical_context.western_recommendation;
+        if (payload.clinical_context.schema_version === 3 && form.querySelector('[name="confirm_tcm_logic"]')?.checked) {
+          payload.clinical_context.logic_origin = "human_defined";
+          payload.clinical_context.missing_information = payload.clinical_context.missing_information.filter((item) => item !== "AI建议组合尚未经人工确认");
+        }
         if (options.reviewRevision) payload.status = "draft";
         if (options.onSave) {
           payload.status = "draft";
-          await options.onSave(payload);
+          const savedBasis = await options.onSave(payload);
           dialog.close(); toast("诊疗依据已保存，须重新核对并审核");
-          await renderClinicalBases(); return;
+          await renderClinicalBases();
+          if (savedBasis?.basis_id) {
+            const filename = savedBasis.specification?.graph_filename || payload.graph_filename;
+            const latest = await api(`/api/review/bases?graph_filename=${encodeURIComponent(filename)}`);
+            const current = latest.items.find((item) => item.basis_id === savedBasis.basis_id);
+            if (current) await showClinicalBasis(current, filename);
+          }
+          return;
         }
         if (rule) await api(`/api/rules/${rule.rule_id}`, { method: "PUT", json: payload });
         else await api("/api/rules", { json: payload });
@@ -6674,6 +6850,7 @@
     const hospital = state.hospitalId || state.hospitals[0]?.hospital_id || "";
     state.hospitalId = hospital;
     const [rows, coverage] = hospital ? await Promise.all([api(`/api/standards/${encodeURIComponent(hospital)}`), api(`/api/standards/${encodeURIComponent(hospital)}/coverage`)]) : [[], { items: [] }];
+    const hcmTemplates = await api("/api/standards/templates/hcm");
     state.standards = rows;
     const editing = state.standardEditIndex >= 0 ? rows[state.standardEditIndex] : null;
     const form = state.pendingStandard || editing || { item_type: "lab", interpretation_type: "auto", concept_code: "ELEVATED" };
@@ -6706,7 +6883,8 @@
         items: readiness.map((item, index) => ({ text: `${item.lab_code || item.exam_code} ${item.finding_code || ""} ${conceptName(item.concept_code)} ${item.references.map((ref) => ref.name).join(" ")}`, values: { type: item.item_type },
           html: `<tr><td>${item.item_type === "exam" ? "检查" : "检验"}</td><td class="mono">${esc(item.lab_code || item.exam_code)}${item.finding_code ? `<div>${esc(item.finding_code)}</div>` : ""}</td><td>${esc(conceptName(item.concept_code))}</td><td><strong>${esc(statusLabels[item.status])}</strong><div class="muted">${esc(item.message)}</div></td><td>${item.references.map((ref) => `<div>${esc(ref.category)} · ${esc(ref.name)}</div>`).join("")}</td><td><button class="btn sm" data-standard-requirement="${index}">${item.standard_indices.length ? "查看配置" : "配置标准"}</button></td></tr>` })),
         filters: [{ key: "type", label: "对象", options: [{ value: "lab", label: "检验" }, { value: "exam", label: "检查" }] }], emptyText: "尚无规则或待审依据引用检查、检验条件" })}
-      <div class="actions"><button id="newExamStandard" class="btn primary">新增检查标准</button><button id="newLabStandard" class="btn">新增检验标准</button></div>
+      ${panel("HCM检查数值标准", `<p>成人标准：梗阻判断用30 mmHg；50 mmHg用于结合症状评估进一步治疗。壁厚阈值需结合病因、家族及遗传证据。载入后保存为草稿，不自动启用或修改诊断规则。</p><div class="inline-controls"><select id="stdHcmTemplate">${hcmTemplates.map((item, index) => `<option value="${index}">${esc(item.exam_name)} · ${esc(item.finding_name)} · ${esc(item.operator)} ${item.threshold_value} ${esc(item.threshold_unit)}</option>`).join("")}</select><button id="loadHcmStandard" class="btn">载入数值标准</button></div>`)}
+      <div class="actions"><button id="newExamStandard" class="btn primary">新增检查标准</button><button id="newLabStandard" class="btn">新增检验标准</button><button id="reviewStandards" class="btn">去审核台统一审核</button></div>
       ${panel(editing ? "编辑本院判定标准（保存后重新启用）" : "新增本院判定标准", `<div class="form-grid" id="standardForm">
         <div class="field"><label>对象类型</label><select id="stdType"><option value="lab" ${exam ? "" : "selected"}>检验</option><option value="exam" ${exam ? "selected" : ""}>检查</option></select></div>
         ${exam ? `<div class="field"><label>选择检查项目</label><select id="stdExamPicker"><option value="">请选择检查项目…</option>${[...examItems.values()].map((item) => `<option value="${esc(item.code)}" ${form.exam_code === item.code ? "selected" : ""}>${esc(item.name || item.code)} (${esc(item.code)})</option>`).join("")}</select></div><div class="field"><label>选择检查发现 / 测量指标</label><select id="stdFindingPicker"><option value="">请选择指标…</option>${[...findingItems.values()].map((item) => `<option value="${esc(item.code)}" ${form.finding_code === item.code ? "selected" : ""}>${esc(item.name || item.code)} (${esc(item.code)})</option>`).join("")}</select><small>来自实体词典及规则引用；需确认该指标属于所选检查。未收录的指标可在下方手工填写编码和名称。</small></div>` : ""}
@@ -6732,8 +6910,15 @@
       await renderStandards();
       $("#standardForm")?.closest(".panel")?.scrollIntoView({ block: "start" });
     };
+    $("#loadHcmStandard").onclick = async () => {
+      reset();
+      state.pendingStandard = { ...hcmTemplates[Number($("#stdHcmTemplate").value)], hospital_id: hospital };
+      await renderStandards();
+      $("#standardForm")?.closest(".panel")?.scrollIntoView({ block: "start" });
+    };
     $("#newExamStandard").onclick = () => openNewStandard("exam").catch((error) => toast(error.message, true));
     $("#newLabStandard").onclick = () => openNewStandard("lab").catch((error) => toast(error.message, true));
+    $("#reviewStandards").onclick = () => { state.reviewTab = "standards"; navigate("review"); };
     if (exam) {
       $("#stdExamPicker").onchange = (event) => {
         const item = examItems.get(event.target.value);
@@ -6747,7 +6932,17 @@
     $("#hospitalSelect").onchange = (event) => { state.hospitalId = event.target.value; reset(); renderStandards(); };
     $("#loadNewHospital").onclick = () => { const id = $("#newHospital").value.trim().toUpperCase(); if (!id) return; state.hospitalId = id; reset(); renderStandards(); };
     $("#stdType").onchange = (event) => { const type = event.target.value; state.pendingStandard = { item_type: type, interpretation_type: type === "exam" ? "presence" : "auto", concept_code: type === "exam" ? "PRESENT" : "ELEVATED" }; state.standardEditIndex = -1; renderStandards(); };
-    ["#stdMode", "#stdConcept"].forEach((id) => $(id).onchange = () => { state.pendingStandard = collectStandardForm(); renderStandards(); });
+    $("#stdMode").onchange = () => { state.pendingStandard = collectStandardForm(); renderStandards(); };
+    $("#stdConcept").onchange = () => {
+      const next = collectStandardForm();
+      const selected = state.vocab.find((item) => item.code === next.concept_code);
+      if (next.item_type === "exam") {
+        if (selected?.evaluator_type === "static_threshold") next.interpretation_type = "numeric";
+        else if (selected?.evaluator_type === "finding_exists") next.interpretation_type = "presence";
+      }
+      state.pendingStandard = next;
+      renderStandards();
+    };
     $("#stdSave").onclick = () => saveStandard().catch((error) => toast(error.message, true));
     $("#stdCancel").onclick = () => { reset(); renderStandards(); };
     // Delegate to the page: filtering and pagination replace requirement buttons.
@@ -6761,7 +6956,10 @@
         } else {
           const requirement = readiness[Number(button.dataset.standardRequirement)];
           state.standardEditIndex = requirement.standard_indices[0] ?? -1;
-          state.pendingStandard = state.standardEditIndex >= 0 ? null : { ...requirement, interpretation_type: requirement.item_type === "exam" ? "presence" : "auto" };
+          state.pendingStandard = state.standardEditIndex >= 0 ? null : { ...requirement,
+            ...(requirement.parameter?.interpretation || {}),
+            interpretation_type: requirement.parameter?.interpretation?.interpretation_type || (requirement.item_type === "exam"
+              ? (state.vocab.find((item) => item.code === requirement.concept_code)?.evaluator_type === "static_threshold" ? "numeric" : "presence") : "auto") };
         }
         await renderStandards();
         const form = $("#standardForm");
@@ -6857,6 +7055,7 @@
       `, "", "切换病例会覆盖当前表单；可修改后再保存或执行推荐")}
       ${panel("1. 患者基本信息", basicFields)}
       ${panel("2. 主诉", `<div class="form-grid">${narrativeField("caseChief", "主诉", record.chief_complaint, 2)}</div><div class="section-title">结构化症状</div>${caseMatrix("symptoms", record.symptoms, caseRowFields.symptoms)}`)}
+      ${panel("西医治疗决策资料", `<div class="form-grid"><div class="field"><label>体重（kg）</label><input id="caseWeight" type="number" step="any" value="${esc(record.clinical_attributes?.weight_kg ?? "")}"></div><div class="field"><label>eGFR（mL/min/1.73m²）</label><input id="caseEgfr" type="number" step="any" value="${esc(record.clinical_attributes?.egfr ?? "")}"></div><label><input id="caseMedicationsReviewed" type="checkbox" ${record.clinical_attributes?.medications_reviewed ? "checked" : ""}>已核实当前用药</label><label><input id="caseAllergiesReviewed" type="checkbox" ${record.clinical_attributes?.allergies_reviewed ? "checked" : ""}>已核实过敏史</label><div class="field"><label>既往治疗与反应</label><input id="casePriorResponse" value="${esc(record.clinical_attributes?.prior_treatment_response || "")}"></div><div class="field"><label>医生当前工作诊断编码（可留空由规则推断）</label><input id="caseWorkingDiagnosis" value="${esc(record.diagnoses?.[0]?.code || "")}"></div><div class="field"><label>诊断确定程度</label><select id="caseDiagnosisCertainty"><option value="suspected">疑似</option><option value="confirmed" ${record.diagnoses?.[0]?.certainty === "confirmed" ? "selected" : ""}>已确诊</option></select></div></div><p>未核实或未采集的信息不视为阴性；医生记录和规则推断分别保留来源。</p>`)}
       ${panel("3. 现病史", `<div class="form-grid">${narrativeField("caseHistoryPresent", "现病史", record.history_present, 4)}${narrativeField("caseMedications", "当前用药（编码，逗号分隔）", record.current_medications, 2)}${narrativeField("caseAllergies", "过敏史（编码，逗号分隔）", record.allergies, 2)}</div>`)}
       ${panel("4. 既往史", `<div class="form-grid">${narrativeField("caseHistoryPast", "既往史", record.history_past, 3)}${narrativeField("casePastCodes", "参与推理的疾病编码（逗号分隔）", record.past_history_codes, 3)}</div>`)}
       ${panel("5. 本次检验、检查数据", `
@@ -7183,7 +7382,7 @@
     const txHtml = treatmentList.length ? `<div class="entity-grid">${treatmentList.map((c) => `
       <article class="evidence-card"><strong>治疗方案：${esc(c.treatment_name || c.treatment_plan_id || "")}</strong><div class="muted">${badge(c.confidence)} ${esc(c.rule_id)}${c.priority_label ? ` · ${esc(c.priority_label)}` : ""}</div>${c.treatment_plan_id ? `<div class="mono">方案 ID：${esc(c.treatment_plan_id)}</div>` : ""}<p>${esc(c.message)}</p>${(c.treatment_items || []).length ? `<div class="trace">方案组成：${c.treatment_items.map((item) => `${esc(item.name || item.code)}（${esc(item.code)}）`).join("、")}</div>` : ""}${c.suggested_action ? `<div class="mono">动作：${esc(c.suggested_action)}</div>` : ""}${c.triggered_by && c.triggered_by.length ? `<div class="trace">由诊断触发：${esc(c.triggered_by.join("、"))}</div>` : ""}${c.guideline_source ? `<div class="trace">来源：${esc(c.guideline_source)}</div>` : ""}
       <div style="margin-top:10px">${c.evidence.map((e) => `<div class="evidence-card"><strong>${esc(e.description)}</strong><div class="trace">${esc(e.patient_value_display || "")}</div></div>`).join("")}</div></article>`).join("")}</div>` : '<div class="empty">无治疗方案推荐</div>';
-    box.innerHTML = diagHtml + panel(`疑似诊断推荐：${diagnosisList.length} 条`, dxHtml) + panel(`治疗方案推荐（候选草稿）：${treatmentList.length} 条`, txHtml);
+    box.innerHTML = (window.WesternDecision?.resultHtml(result.recommendation_assessments) || "") + diagHtml + panel(`疑似诊断推荐：${diagnosisList.length} 条`, dxHtml) + panel(`传统治疗规则结果：${treatmentList.length} 条`, txHtml);
   }
 
   async function runSmokeTest() {

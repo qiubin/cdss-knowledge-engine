@@ -1,6 +1,6 @@
 """Disease-centred, explicitly scoped graph-to-rule review workflow."""
 import copy
-from typing import Literal
+from typing import Literal, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from src.api.routes.kg import normalize_graph_filename
@@ -81,6 +81,7 @@ class Prepare(BaseModel):
     name: str = ""
     diagnosis_prerequisite: Literal["confirmed", "suspected"] = "confirmed"
     clinical_context: dict = Field(default_factory=dict)
+    western_recommendation: Optional[dict] = None
 
 
 def condition_for(item):
@@ -129,7 +130,7 @@ def prepare(request: Prepare, graph_filename: str):
             if candidate not in conditions:
                 conditions.append(candidate)
         elif choice.role == "recommendation":
-            recommendations.append({"code": item["code"], "name": item["target"], "entity_type": item["node_type"]})
+            recommendations.append({**(item["target_node"].get("attributes") or {}), "code": item["code"], "name": item["target"], "entity_type": item["node_type"]})
         else:
             raise HTTPException(422, "禁忌／监测关联需分别建立禁忌或监测规则，本场景暂不能把它们直接编入可执行条件")
     treatment = request.scene in {"treatment_recommendation", "treatment_selection"}
@@ -151,6 +152,15 @@ def prepare(request: Prepare, graph_filename: str):
                             "treatment_items": recommendations}, source=source,
                 diagnosis_prerequisite=request.diagnosis_prerequisite if treatment else None,
                 clinical_context=request.clinical_context).model_dump()
+    if request.western_recommendation:
+        spec["clinical_context"]["western_recommendation"] = request.western_recommendation
+    elif treatment:
+        contracts = [(item["target_node"].get("attributes") or {}).get("western_recommendation") for item in lookup.values()
+                     if item["id"] in {c.relation_id for c in request.selections if c.role == "recommendation"}]
+        contracts = [c for c in contracts if c]
+        if len(contracts) == 1:
+            spec["clinical_context"]["western_recommendation"] = copy.deepcopy(contracts[0])
+            spec["clinical_context"]["western_recommendation"]["scope_confirmed"] = False
     stage_bases(graph, [spec], filename)
     basis = next(item for item in graph["clinical_bases"] if item["specification"] == spec)
     if basis.get("scenario_review"):

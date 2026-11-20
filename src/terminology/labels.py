@@ -148,6 +148,9 @@ class TerminologyLabels:
         if not isinstance(condition, dict):
             return ""
         condition_type = str(condition.get("type") or "")
+        if condition_type == "count_group":
+            children = [self.summarize(child) for child in condition.get("children") or []]
+            return f"至少满足{condition.get('min_count')}项（" + "；".join(children) + "）"
         if condition_type == "group":
             children = [
                 self.condition_label(child)

@@ -32,6 +32,9 @@ NODE_META = {
     "syndrome_element": {"label": "证素", "color": "#faf089", "stroke": "#d69e2e", "shape": "dot", "size": 18},
     "external_therapy": {"label": "外治疗法", "color": "#4fd1c5", "stroke": "#2c7a7b", "shape": "box", "size": 22},
     "care_guidance": {"label": "调护", "color": "#bee3f8", "stroke": "#3182ce", "shape": "box", "size": 20},
+    "clinical_rule": {"label": "临床判据与方案", "color": "#319795", "shape": "box", "size": 24},
+    "medication": {"label": "中成药与制剂", "color": "#68d391", "shape": "dot", "size": 18},
+    "monitoring_requirement": {"label": "复评与监测", "color": "#bee3f8", "shape": "box", "size": 18},
     "western_disease": {"label": "西医疾病映射", "color": "#cbd5e0", "stroke": "#718096", "shape": "diamond", "size": 20},
 }
 
@@ -81,7 +84,7 @@ TCM_PROFILE = DomainProfile(
     domain=TCM,
     label="中医",
     description="辨证、治法与方药推理",
-    default_template_id="TCM_GUIDELINE_V2",
+    default_template_id="TCM_GUIDELINE_V3",
     graph=GraphProfile(
         domain=TCM,
         label="中医知识图谱",
@@ -91,7 +94,7 @@ TCM_PROFILE = DomainProfile(
             "pathogenesis", "treatment_method", "formula", "herb",
             "contraindication", "meridian", "acupoint", "constitution",
             "etiology", "syndrome_element", "external_therapy",
-            "care_guidance", "western_disease",
+            "care_guidance", "western_disease", "clinical_rule", "medication", "monitoring_requirement",
         ),
         # TCM pattern conditions reference observation nodes directly; the
         # western diagnostic-evidence projection is intentionally unused.
@@ -99,10 +102,12 @@ TCM_PROFILE = DomainProfile(
         legacy_graph_filename="tcm_graph.json",
     ),
     stages=(
+        InferenceStage(name="tcm_element", rule_types=("tcm_element",),
+                       description="病种范围内判据 → 证素", produces_facts=("syndrome_element",)),
         InferenceStage(
             name="tcm_pattern",
             rule_types=("tcm_pattern",),
-            description="症状/舌象/脉象 → 证候（评分）",
+            description="明确判据及组合 → 证候",
             produces_facts=("syndrome",),
         ),
         InferenceStage(

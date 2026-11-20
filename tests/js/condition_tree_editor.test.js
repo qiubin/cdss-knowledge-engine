@@ -315,3 +315,18 @@ test("treeToText renders readable Chinese text", () => {
   const orText = ctree.treeToText({ ...LAB_SYMPTOM, operator: "OR" });
   assert.ok(orText.includes("或"));
 });
+
+test("count groups roundtrip, accept moved leaves and keep explicit minimum", () => {
+  const tree = loadModule();
+  const initial = {type: "count_group", min_count: 2, children: [
+    {type: "observation", observation_type: "symptom", code: "A", concept_code: "PRESENT"},
+    {type: "observation", observation_type: "symptom", code: "B", concept_code: "ABSENT"},
+  ]};
+  let edited = tree.addChild(tree.sanitizeTree(initial), [], {type: "symptom", symptom_code: "C"});
+  assert.equal(edited.type, "count_group");
+  assert.equal(edited.min_count, 2);
+  assert.equal(tree.countLeaves(edited), 3);
+  assert.deepEqual(plain(tree.jsonToTree(tree.treeToJson(edited))), plain(edited));
+  assert.match(tree.treeToText(edited), /至少满足2项/);
+  assert.equal(tree.isCompilable(edited), false);
+});

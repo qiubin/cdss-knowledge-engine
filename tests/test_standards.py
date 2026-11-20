@@ -29,8 +29,9 @@ class StandardsCoverageTest(unittest.TestCase):
         for hospital_id in ("FZ_HOSPITAL", "XM_FIRST"):
             rows = repo.list_for_hospital(hospital_id)
             identities = [
-                (row.lab_code, row.concept_code, row.context_gender,
-                 row.context_age_min, row.context_age_max)
+                (row.item_type, row.lab_code, row.exam_code, row.finding_code,
+                 row.concept_code, row.context_gender,
+                 row.context_age_min, row.context_age_max, row.method)
                 for row in rows
             ]
             self.assertEqual(len(identities), len(set(identities)))

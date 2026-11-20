@@ -103,7 +103,7 @@ class ReviewServiceTest(unittest.TestCase):
         rules = json.loads(self.rules_path.read_text(encoding="utf-8"))
         self.assertEqual(rules[0]["status"], "blocked")
         reasons = {item["reason"] for item in rules[0]["blocked_by"]}
-        self.assertIn("stale", reasons)
+        self.assertIn("draft", reasons)
         self.assertIn("retired", reasons)
 
     def test_impact_counts_rules(self):
@@ -116,7 +116,7 @@ class ReviewServiceTest(unittest.TestCase):
         result = self.service.update_node_name(
             "REVIEW-TEST.json", "ENTITY:symptom:SYM_TEST", "规范中文症状", "张医生", "名称修正"
         )
-        self.assertEqual(result["status"], "stale")
+        self.assertEqual(result["status"], "draft")
         self.assertEqual(result["before_name"], "测试症状")
         graph = self.service._load_graph("REVIEW-TEST.json")
         node = graph["nodes"]["ENTITY:symptom:SYM_TEST"]
@@ -128,7 +128,7 @@ class ReviewServiceTest(unittest.TestCase):
             value for key, value in graph["relations"].items()
             if key[2] == "ENTITY:symptom:SYM_TEST"
         )
-        self.assertEqual(relation["review_status"], "stale")
+        self.assertEqual(relation["review_status"], "draft")
         self.assertIn("R1", result["affected_rules"])
         audit = self.service.audit_records(entity_id="ENTITY:symptom:SYM_TEST")
         self.assertEqual(audit[0]["action"], "edit_name")
@@ -145,7 +145,7 @@ class ReviewServiceTest(unittest.TestCase):
             "采纳 AI 修正",
             suggested_target_name="规范中文症状",
         )
-        self.assertEqual(result["status"], "stale")
+        self.assertEqual(result["status"], "draft")
         self.assertEqual(result["changes"], ["target_name"])
         graph = self.service._load_graph("REVIEW-TEST.json")
         self.assertEqual(
@@ -157,7 +157,7 @@ class ReviewServiceTest(unittest.TestCase):
         relation = graph["relations"][
             ("ENTITY:disease:I21.0", "DISEASE_HAS_SYMPTOM", "ENTITY:symptom:SYM_TEST")
         ]
-        self.assertEqual(relation["review_status"], "stale")
+        self.assertEqual(relation["review_status"], "draft")
         self.assertIn("R1", result["affected_rules"])
         audit = self.service.audit_records(
             entity_id="ENTITY:disease:I21.0|DISEASE_HAS_SYMPTOM|ENTITY:symptom:SYM_TEST"

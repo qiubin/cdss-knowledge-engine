@@ -375,12 +375,21 @@ def generate_western_rules(
         })
 
     treatment_index = 0
-    for code, candidate in sorted(treatment.items()):
+    for code, candidate, contract in (
+        (code, candidate, (item.get("attributes") or {}).get("western_recommendation"))
+        for code, candidate in sorted(treatment.items()) for item in candidate["items"]
+        if (item.get("attributes") or {}).get("western_recommendation")
+    ):
         # A treatment rule is only useful when the same disease has a
         # diagnosis rule to trigger it; otherwise it can never fire.
         if code not in diagnosis:
             continue
-        items = candidate["items"]
+        # Chapter co-occurrence is not a clinical recommendation. Only a source-bound
+        # structured statement can create a treatment basis; raw entities remain in KG.
+        import copy
+        contract = copy.deepcopy(contract)
+        contract["scope_confirmed"] = False
+        items = [{**action, "entity_type": action.get("kind")} for action in contract.get("actions", [])]
         order_sets = candidate.get("order_sets") or []
         if not items and not order_sets:
             continue
@@ -410,7 +419,7 @@ def generate_western_rules(
                 }
                 for item in items if item.get("code")
             ],
-            "message": "指南同章节推荐：" + "、".join(names[:6]),
+            "message": "结构化诊疗推荐（待审核）：" + "、".join(names[:6]),
         }
         if order_set_ids:
             conclusion["order_set_ids"] = order_set_ids
@@ -421,6 +430,7 @@ def generate_western_rules(
                 conclusion["message"] = "指南同章节医嘱组：" + "、".join(set_names[:6])
         rules.append({
             "rule_id": f"{doc_id}-TREAT-{treatment_index:03d}",
+            "clinical_context": {"western_recommendation": contract},
             "version": 1,
             "domain": WESTERN,
             "anchor_type": "disease",

@@ -15,6 +15,9 @@ STANDARDS_DIR = Path(__file__).parent.parent.parent.parent / "data" / "standards
 
 def _standard_sort_key(item: Dict) -> tuple:
     return (
+        str(item.get("item_type") or "lab"),
+        str(item.get("exam_code") or ""),
+        str(item.get("finding_code") or ""),
         str(item.get("lab_code") or ""),
         str(item.get("concept_code") or ""),
         str(item.get("context_gender") or ""),
@@ -85,7 +88,7 @@ async def standards_coverage(hospital_id: str):
     from src.standards.coverage import build_coverage
     root = STANDARDS_DIR.parent
     graphs = {}
-    specs = [(rule, "已启用规则" if rule.get("status") == "active" else "规则草稿/待复核")
+    specs = [(rule, "已启用规则" if rule.get("status") == "active" else "规则草稿/待审核")
              for rule in _load_all_rules() if rule.get("status", "draft") not in {"retired", "rejected"}]
     for path in (root / "kg").glob("*.json"):
         graph = json.loads(path.read_text(encoding="utf-8"))
@@ -109,6 +112,12 @@ def validate_configuration(standard):
     issues = standard_issues(parsed)
     if issues: raise HTTPException(422, "；".join(issues))
     return {**standard, **parsed}
+
+
+@router.get("/templates/hcm")
+async def get_hcm_templates():
+    from src.standards.hcm import hcm_templates
+    return hcm_templates()
 
 
 @router.get("/{hospital_id}")
@@ -136,6 +145,8 @@ async def update_standard(hospital_id: str, index: int, standard: Dict[str, Any]
     items = _load_hospital(hospital_id)
     if index < 0 or index >= len(items):
         raise HTTPException(404, "标准条目未找到")
+    if items[index].get("standard_candidate_id"):
+        raise HTTPException(409, "指南生成的标准请在审核台修改并重新审核")
     standard["hospital_id"] = hospital_id
     standard["status"] = "draft"
     standard["version"] = max(int(standard.get("version") or 1), int(items[index].get("version") or 1) + 1)
@@ -192,6 +203,8 @@ async def activate_standard(hospital_id: str, index: int):
     items = _load_hospital(hospital_id)
     if index < 0 or index >= len(items):
         raise HTTPException(404)
+    if items[index].get("standard_candidate_id"):
+        raise HTTPException(409, "指南生成的标准须在审核台核对原文及适用条件后发布")
     items[index] = validate_configuration(items[index])
     items[index]["status"] = "active"
     selected = items[index]

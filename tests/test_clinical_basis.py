@@ -74,7 +74,7 @@ def test_changed_clinical_content_requires_review_again(env):
     graph["nodes"][1]["attributes"] = {"changed": True}
     env[1].write_text(json.dumps(graph), encoding="utf-8")
     listed = api.list_bases("REVIEW-TEST.json")
-    assert listed["items"][0]["validation"]["status"] == "stale"
+    assert listed["items"][0]["validation"]["status"] == "draft"
     with pytest.raises(HTTPException):
         api.generate_rule(env[3], "REVIEW-TEST.json")
 
@@ -211,3 +211,66 @@ def test_activation_gate_rechecks_reviewed_basis(env, monkeypatch):
     monkeypatch.setattr(ReviewService, "_load_graph", lambda self, filename: graph)
     with pytest.raises(HTTPException):
         rules_api._ensure_clinical_basis(generated)
+
+
+def test_revision_materializes_reviewed_findings_without_inventing_logic(env, monkeypatch):
+    original = json.loads(env[1].read_text())["clinical_bases"][0]["specification"]["conditions"]
+    findings = [{"type": "exam_finding", "finding_code": code}
+                for code in ("LVOT_OBSTRUCTION", "SAM", "LV_HYPERTROPHY")]
+    monkeypatch.setattr(api, "collect_disease_evidence_conditions", lambda *a, **kw: {
+        "used": [{"condition": item} for item in findings], "skipped": []})
+    result = api.revise_basis_from_reviewed_graph(env[3], "REVIEW-TEST.json")
+    tree = result["basis"]["specification"]["conditions"]
+    assert tree["operator"] is None
+    assert tree["children"][0] == original
+    assert [child["finding_code"] for child in tree["children"][1:]] == [
+        "LVOT_OBSTRUCTION", "SAM", "LV_HYPERTROPHY"]
+    assert any("全部满足" in issue for issue in result["basis"]["validation"]["issues"])
+    persisted = json.loads(env[1].read_text())["clinical_bases"][-1]
+    assert persisted["specification"]["conditions"] == tree
+
+def test_logic_advice_requires_confirmation_and_verified_quote(env, monkeypatch):
+    import asyncio
+    graph = json.loads(env[1].read_text())
+    basis = graph['clinical_bases'][0]
+    spec = copy.deepcopy(basis['specification'])
+    spec['conditions'] = {'type': 'group', 'operator': None, 'children': [
+        {'type': 'symptom', 'symptom_code': 'SYM_TEST'},
+        {'type': 'exam_finding', 'finding_code': 'SAM'}]}
+    monkeypatch.setattr(api.ExtractionConfigRepository, 'load', lambda self: {'llm': {'model': 'test'}})
+    monkeypatch.setattr(api, 'resolve_api_key', lambda settings: 'test')
+    async def suggest(*args, **kwargs):
+        return {'tree': {'operator': 'OR', 'children': [{'leaf_id': 'L1'}, {'operator': 'AND', 'children': [{'leaf_id': 'L2'}]}]}, 'reason': '测试建议', 'evidence_quote': '测试症状作为判断依据'}
+    monkeypatch.setattr(api, 'chat_json', suggest)
+    before = env[1].read_bytes()
+    request = api.LogicAdviceRequest(specification=spec, path='conditions')
+    result = asyncio.run(api.suggest_condition_logic(env[3], request, 'REVIEW-TEST.json'))
+    assert result['conditions']['operator'] == 'OR'
+    assert result['conditions']['children'][1]['children'][0]['finding_code'] == 'SAM'
+    assert env[1].read_bytes() == before
+    async def unsupported(*args, **kwargs):
+        return {'operator': 'OR', 'reason': '无支持', 'evidence_quote': '原文没有这句话'}
+    monkeypatch.setattr(api, 'chat_json', unsupported)
+    result = asyncio.run(api.suggest_condition_logic(env[3], request, 'REVIEW-TEST.json'))
+    assert result['operator'] is None
+
+
+def test_discard_blocks_generation_and_can_restore(env):
+    result = api.set_basis_disposition(env[3], api.BasisDisposition(action='discard', reason='重复候选'), 'REVIEW-TEST.json')
+    assert result['status'] == 'discarded'
+    with pytest.raises(HTTPException):
+        approve(env)
+    with pytest.raises(HTTPException):
+        api.generate_rule(env[3], 'REVIEW-TEST.json')
+    result = api.set_basis_disposition(env[3], api.BasisDisposition(action='restore'), 'REVIEW-TEST.json')
+    assert result['status'] == 'draft'
+    approve(env)
+    assert api.generate_rule(env[3], 'REVIEW-TEST.json')['created']
+
+
+def test_generated_basis_cannot_be_discarded(env):
+    approve(env)
+    api.generate_rule(env[3], 'REVIEW-TEST.json')
+    with pytest.raises(HTTPException) as error:
+        api.set_basis_disposition(env[3], api.BasisDisposition(action='discard'), 'REVIEW-TEST.json')
+    assert error.value.status_code == 409

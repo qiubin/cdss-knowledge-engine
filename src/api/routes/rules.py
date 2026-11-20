@@ -252,6 +252,20 @@ class GraphSemanticChecker:
         )
         if not empty_treatment_gate:
             self._walk(conditions, disease_code, issues, concepts)
+        from src.domains.western.recommendations import recommendation_issues
+        issues.extend(recommendation_issues(rule))
+        recommendation = (rule.get("clinical_context") or {}).get("western_recommendation") or {}
+        plan_code = (rule.get("conclusion") or {}).get("treatment_plan_id")
+        if recommendation and plan_code:
+            self._add_node_issue(issues, "treatment_plan", plan_code)
+            self._add_relation_issue(issues, self._node_id("disease", disease_code), "DISEASE_HAS_TREATMENT_PLAN", self._node_id("treatment_plan", plan_code))
+        for action in recommendation.get("actions") or []:
+            kind = {"differential":"disease", "monitoring":"monitoring_requirement", "referral":"intervention", "care":"intervention"}.get(action.get("kind"), action.get("kind"))
+            if kind and action.get("code"):
+                self._add_node_issue(issues, kind, action["code"])
+            if action.get("conditions"): self._walk(action["conditions"], disease_code, issues, concepts)
+            for condition in action.get("contraindications") or []: self._walk(condition, disease_code, issues, concepts)
+
         concepts = list(dict.fromkeys(concepts))
         references = self._unique_references()
         review_issues = [

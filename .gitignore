@@ -54,6 +54,9 @@ data/terminology/imports/
 .tmp-*/
 .screenshots/
 
+# runtime export output
+output/
+
 # Drools sidecar build artifacts
 drools-sidecar/target/
 drools-sidecar/dependency-reduced-pom.xml

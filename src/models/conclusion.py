@@ -45,6 +45,11 @@ class Conclusion(BaseModel):
     formula_code: Optional[str] = None
     formula_name: Optional[str] = None
     herbs: List[Dict[str, Any]] = Field(default_factory=list)
+    regimen: Dict[str, Any] = Field(default_factory=dict)
+    monitoring: List[Dict[str, Any]] = Field(default_factory=list)
+    safety_level: Optional[str] = None
+    blocked_targets: List[str] = Field(default_factory=list)
+    modification_rules: List[Dict[str, Any]] = Field(default_factory=list)
     modifications: List[str] = Field(default_factory=list)
     course: Optional[str] = None
     # Pattern scoring (TCM) and condition counts.

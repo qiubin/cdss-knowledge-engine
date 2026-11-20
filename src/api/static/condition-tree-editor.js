@@ -19,7 +19,7 @@
     "lab_concept", "exam_finding", "symptom", "vital", "demographic",
     "past_history", "medication", "observation", "attribute",
   ];
-  const KNOWN_TYPES = ["group", ...READONLY_TYPES, ...SUPPORTED_LEAF_TYPES];
+  const KNOWN_TYPES = ["group", "count_group", ...READONLY_TYPES, ...SUPPORTED_LEAF_TYPES];
   const FORBIDDEN_KEYS = ["__proto__", "constructor", "prototype"];
 
   // Field manifests per editable leaf type; app.js renders widgets from this.
@@ -58,7 +58,7 @@
     observation: [
       { key: "observation_type", label: "观察类型", widget: "enum", required: true, options: ["symptom", "tongue", "pulse", "sign", "constitution"] },
       { key: "code", label: "观察项目", widget: "dict", dict: "observation", required: true },
-      { key: "concept_code", label: "状态", widget: "enum", options: ["PRESENT"], readonly: true },
+      { key: "concept_code", label: "状态", widget: "enum", options: ["PRESENT", "ABSENT"] },
       { key: "weight", label: "权重", widget: "number" },
       { key: "required", label: "必要", widget: "bool" },
     ],
@@ -91,7 +91,7 @@
       }
       node[key] = value;
     }
-    if ((node.type === "group" || node.type === "weighted_group") && !node.children) {
+    if ((node.type === "group" || node.type === "count_group" || node.type === "weighted_group") && !node.children) {
       node.children = [];
     }
     return node;
@@ -105,6 +105,7 @@
 
   function compilabilityReason(node, path = "root") {
     if (!node || typeof node !== "object") return `${path}: 条件节点缺失`;
+    if (node.type === "count_group") return `${path}: 满足数量组仅原生引擎执行`;
     if (node.type === "group") {
       const children = Array.isArray(node.children) ? node.children : [];
       if (!children.length) return `${path}: group children 为空`;
@@ -128,7 +129,7 @@
 
   function countLeaves(node) {
     if (!node) return 0;
-    if (node.type === "group" || node.type === "weighted_group") {
+    if (node.type === "group" || node.type === "count_group" || node.type === "weighted_group") {
       return (node.children || []).reduce((sum, child) => sum + countLeaves(child), 0);
     }
     return 1;
@@ -199,7 +200,7 @@
   function addChild(tree, path, child) {
     assertMutable(tree, path);
     return mapAtPath(tree, path || [], (node) => {
-      if (node.type === "group") {
+      if (["group", "count_group"].includes(node.type)) {
         return { ...node, children: [...(node.children || []), child] };
       }
       // 叶子上加子节点：把叶子包进新的 AND 组，保留原字段
@@ -286,7 +287,7 @@
     const srcParentPath = src.slice(0, -1);
     const srcParent = getNode(tree, srcParentPath);
     const targetParent = getNode(tree, target);
-    if (!srcParent || !targetParent || targetParent.type !== "group") return null;
+    if (!srcParent || !targetParent || !["group", "count_group"].includes(targetParent.type)) return null;
     const srcIndex = src[src.length - 1];
     const srcChildren = srcParent.children || [];
     if (srcIndex < 0 || srcIndex >= srcChildren.length) return null;
@@ -417,11 +418,12 @@
     if (node.label) {
       return String(node.label).replace(/^[（(【\[]+/, "").replace(/[）)】\]]+$/, "");
     }
-    if (node.type === "group" || node.type === "weighted_group") {
+    if (node.type === "group" || node.type === "count_group" || node.type === "weighted_group") {
       const parts = (node.children || []).map(describeNode).filter(Boolean);
       const op = String(node.operator || "AND").toUpperCase();
       const joiner = op === "OR" ? " 或 " : " 且 ";
       const text = parts.join(joiner);
+      if (node.type === "count_group") return `至少满足${node.min_count}项（${parts.join("；")}）`;
       if (op === "NOT") return `非（${text}）`;
       return parts.length > 1 ? `（${text}）` : text;
     }

@@ -1,0 +1,88 @@
+{
+  "patient_id": "TEST-HOCM-I421-001",
+  "hospital_id": "XM_FIRST",
+  "age": 52,
+  "gender": "M",
+  "encounter_time": "2026-11-20T10:00:00+08:00",
+  "display_name": "梗阻性肥厚型心肌病（虚构测试）",
+  "category": "肥厚型心肌病",
+  "chief_complaint": "活动后胸闷、气短2年，加重伴头晕1个月。",
+  "history_present": "【虚构测试病历】52岁男性，爬楼及快步行走后胸闷、气短，休息后缓解，近1个月活动时伴头晕，无发热、持续胸痛及晕厥。查体：心律齐，胸骨左缘可闻收缩期杂音，双肺清，双下肢无水肿。超声心动图：室间隔非对称性增厚，舒张末期最大厚度21 mm，后壁11 mm，LVEF 68%；静息左室流出道峰值压差58 mmHg，Valsalva动作后85 mmHg；可见二尖瓣前叶收缩期前移（SAM），伴轻度二尖瓣反流，未见主动脉瓣狭窄。该病例用于检查发现与规则条件匹配验证。",
+  "history_past": "无高血压、主动脉瓣狭窄及慢性肾病史。父亲有肥厚型心肌病病史。未预填I42.1诊断编码，以供诊断推理验证。",
+  "symptoms": [
+    {
+      "symptom_code": "SYM_CHEST_TIGHTNESS",
+      "symptom_name": "胸闷",
+      "present": true,
+      "severity": "moderate"
+    },
+    {
+      "symptom_code": "SYM_DYSPNEA",
+      "symptom_name": "呼吸困难",
+      "present": true,
+      "severity": "moderate"
+    },
+    {
+      "symptom_code": "SYM_DIZZINESS",
+      "symptom_name": "头晕",
+      "present": true,
+      "severity": "moderate"
+    }
+  ],
+  "labs": [],
+  "exam_findings": [
+    {
+      "exam_code": "ECHO",
+      "exam_name": "超声心动图",
+      "finding_code": "LV_HYPERTROPHY",
+      "finding_name": "左心室肥厚",
+      "present": true,
+      "detail": {
+        "summary": "舒张末期室间隔最大厚度21 mm，后壁11 mm，LVEF 68%。",
+        "septal_thickness_mm": 21
+      }
+    },
+    {
+      "exam_code": "ECHO",
+      "exam_name": "超声心动图",
+      "finding_code": "LVOT_OBSTRUCTION",
+      "finding_name": "左室流出道梗阻",
+      "present": true,
+      "detail": {
+        "summary": "静息左室流出道峰值压差58 mmHg，Valsalva动作后85 mmHg。",
+        "resting_gradient_mmhg": 58,
+        "provoked_gradient_mmhg": 85
+      }
+    },
+    {
+      "exam_code": "ECHO",
+      "exam_name": "超声心动图",
+      "finding_code": "SAM",
+      "finding_name": "二尖瓣前叶收缩期前移",
+      "present": true,
+      "detail": {
+        "summary": "可见SAM，伴轻度二尖瓣反流。"
+      }
+    }
+  ],
+  "vitals": [
+    {
+      "vital_code": "sbp",
+      "value": 118,
+      "unit": "mmHg"
+    },
+    {
+      "vital_code": "dbp",
+      "value": 72,
+      "unit": "mmHg"
+    },
+    {
+      "vital_code": "hr",
+      "value": 76,
+      "unit": "bpm"
+    }
+  ],
+  "past_history": [],
+  "current_medications": [],
+  "allergies": []
+}

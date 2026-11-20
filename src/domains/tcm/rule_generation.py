@@ -495,6 +495,9 @@ def generate_tcm_rules(
     relations: Optional[List[Dict[str, Any]]] = None,
 ) -> List[Dict[str, Any]]:
     """Run every enabled TCM generator for one document."""
+    if template.template_id == "TCM_GUIDELINE_V3":
+        from .clinical_schema import generate_v3_rules
+        return generate_v3_rules(entities, chunks, template, doc_id, doc_title, relations)
     abilities = set(template.capabilities or [])
     configured = {item.get("rule_type") for item in template.rule_generation}
     rules: List[Dict[str, Any]] = []

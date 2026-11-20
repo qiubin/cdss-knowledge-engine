@@ -67,6 +67,9 @@ const DOMAIN_FLAVOR = {
   disease: "中医疾病",
   acupoint: "腧穴",
   western_disease: "西医疾病映射",
+  medication: "中成药与制剂",
+  monitoring_requirement: "复评与监测",
+  clinical_rule: "临床判据与诊疗方案",
 };
 
 function assertLabelsAligned(file, pattern, source) {

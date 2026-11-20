@@ -18,6 +18,13 @@ def standard_issues(row):
         if standard.interpretation_type == "auto":
             issues.append("检查标准须明确选择数值、分级/定性或存在性判定")
     mode = standard.interpretation_type
+    from .numeric_concepts import NUMERIC_CONCEPTS
+    comparison = NUMERIC_CONCEPTS.get(standard.concept_code)
+    if comparison:
+        if mode != "numeric":
+            issues.append("数值比较概念必须使用数值判定，不能按存在性或分级判断")
+        if (standard.operator, standard.threshold_value) != comparison:
+            issues.append(f"判定参数须与概念一致：{comparison[0]} {comparison[1]}")
     if mode == "numeric" or (mode == "auto" and standard.concept_code in {"ELEVATED", "DECREASED", "ABNORMAL", "CRITICAL_HIGH", "CRITICAL_LOW"}):
         if standard.operator not in {">", ">=", "<", "<=", "=", "BETWEEN", "OUTSIDE"}:
             issues.append("数值比较方式无效")

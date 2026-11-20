@@ -43,7 +43,7 @@ class InferenceTestCaseRequest(BaseModel):
 def _rule_diagnostics(rule_repo: JsonRuleRepository, domain: str, graph_files: List[str]) -> Dict[str, Any]:
     target = normalize_domain(domain)
     if target == "tcm":
-        diagnosis_types = {"tcm_pattern"}
+        diagnosis_types = {"tcm_pattern", "tcm_element"}
         treatment_types = {"tcm_treatment", "tcm_prescription", "tcm_contraindication"}
     else:
         diagnosis_types = {"diagnosis", "monitoring"}
@@ -174,7 +174,7 @@ def _inference_result(
         diagnostics["reasons"].append(f"{len(skipped_rules)} 条已启用规则的依据需要复核，本次未执行")
     if diagnostics["undetermined_conditions"]:
         diagnostics["reasons"].append(f"{len(diagnostics['undetermined_conditions'])} 项条件无法判断，请核对标准、适用范围、单位及原始结果；不能作为阴性结果")
-    if not conclusions:
+    if not conclusions and not getattr(native_engine, "recommendation_assessments", []):
         if diagnostics["active_diagnosis_rules"]:
             diagnostics["reasons"].append(
                 f"已启用 {diagnostics['active_diagnosis_rules']} 条诊断规则，但当前患者数据未命中规则条件"
@@ -193,6 +193,7 @@ def _inference_result(
         "conclusions": all_conclusions,
         "diagnosis_conclusions": diagnosis_conclusions,
         "treatment_conclusions": treatment_conclusions,
+        "recommendation_assessments": getattr(native_engine, "recommendation_assessments", []),
         "graph_files": sorted(graph_clients),
         "diagnostics": diagnostics,
     }

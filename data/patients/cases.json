@@ -1,6 +1,15 @@
 {
   "cases": [
     {
+      "case_id": "hcm-obstructive-i42-1",
+      "file": "demo_hcm_obstructive.json",
+      "name": "梗阻性肥厚型心肌病（虚构测试）",
+      "domain": "western",
+      "description": "52岁男性，活动后胸闷气短伴头晕，室间隔21 mm、静息流出道压差58 mmHg、SAM阳性；未预填诊断编码，供规则验证。",
+      "default": false,
+      "category": "肥厚型心肌病"
+    },
+    {
       "case_id": "hcm-nonobstructive-i42-2",
       "file": "demo_hcm_nonobstructive.json",
       "name": "其它肥厚型心肌病 · 非梗阻性（虚构测试）",

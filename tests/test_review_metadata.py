@@ -43,7 +43,7 @@ class MetadataTest(unittest.TestCase):
         previous = snapshot_hashes(graph)
         graph["nodes"][0]["name"] = "新名"
         apply_import_review_metadata(graph, previous, "DOC-1")
-        self.assertEqual(graph["nodes"][0]["review_status"], "stale")
+        self.assertEqual(graph["nodes"][0]["review_status"], "draft")
         self.assertEqual(graph["nodes"][0]["version"], 2)
         self.assertIn("DOC-1", graph["nodes"][0]["source_doc_ids"])
 
@@ -60,7 +60,8 @@ class MetadataTest(unittest.TestCase):
         previous = snapshot_hashes(graph)
         graph["nodes"][1]["name"] = "新名"
         apply_import_review_metadata(graph, previous, "DOC-1")
-        self.assertEqual(graph["relations"][0]["review_status"], "stale")
+        self.assertEqual(graph["relations"][0]["review_status"], "active")
+        self.assertTrue(graph["relations"][0]["dependency_changed"])
 
 
 class EntityHistoryTest(unittest.TestCase):
@@ -84,11 +85,10 @@ class EntityHistoryTest(unittest.TestCase):
             graph, previous, "DOC-1", previous_contents=contents, graph_filename="HIST.json"
         )
         rows = read_entity_history("HIST.json", "node", "N1")
-        self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0]["content"]["name"], "旧名")
-        self.assertEqual(rows[0]["entity_type"], "node")
-        self.assertEqual(rows[0]["seq"], 1)
-        self.assertEqual(graph["nodes"][0]["review_status"], "stale")
+        self.assertEqual(rows, [])
+        self.assertEqual(graph["nodes"][0]["name"], "旧名")
+        self.assertEqual(graph["nodes"][0]["review_status"], "active")
+        self.assertEqual(graph["nodes"][0]["pending_revision"]["content"]["name"], "新名")
 
     def test_unchanged_node_writes_no_snapshot(self):
         node = {
@@ -114,9 +114,9 @@ class EntityHistoryTest(unittest.TestCase):
             graph, previous, "DOC-1", previous_contents=contents, graph_filename="RELHIST.json"
         )
         rows = read_entity_history("RELHIST.json", "relation", "A|REL|B")
-        self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0]["content"]["source_node_id"], "A")
-        self.assertNotIn("strength", rows[0]["content"].get("attributes") or {})
+        self.assertEqual(rows, [])
+        self.assertEqual(graph["relations"][0]["review_status"], "active")
+        self.assertEqual(graph["relations"][0]["pending_revision"]["content"]["attributes"]["strength"], "强")
 
 
 class MigrationTest(unittest.TestCase):

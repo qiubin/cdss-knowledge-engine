@@ -70,7 +70,7 @@ class DomainProfileTest(unittest.TestCase):
         profile = get_profile("tcm")
         self.assertEqual(
             [stage.name for stage in profile.stages],
-            ["tcm_pattern", "tcm_treatment", "tcm_prescription", "tcm_contraindication"],
+            ["tcm_element", "tcm_pattern", "tcm_treatment", "tcm_prescription", "tcm_contraindication"],
         )
         self.assertEqual(profile.graph.anchor_types, ("syndrome", "disease"))
 
@@ -123,7 +123,8 @@ class TcmTemplateTest(unittest.TestCase):
 
     def test_v2_is_the_only_active_tcm_template(self):
         templates = [item for item in ExtractionTemplateRepository().list_available() if item.domain == "tcm"]
-        self.assertEqual([item.template_id for item in templates], ["TCM_GUIDELINE_V2"])
+        self.assertEqual({item.template_id for item in templates}, {"TCM_GUIDELINE_V2", "TCM_GUIDELINE_V3"})
+        self.assertEqual([item.template_id for item in templates if item.is_default], ["TCM_GUIDELINE_V3"])
 
     def test_local_extraction_and_rule_families(self):
         result = extract_local(CHUNKS, tcm_template(), "DOC-TCM-T", "中医测试指南")
@@ -245,7 +246,7 @@ class TcmGraphAndInferenceTest(unittest.TestCase):
             return JsonGraphClient(str(self.kg_dir / filename))
 
         engine = InferenceEngine(rules, kg, standards, vocab, graph_factory, domain="tcm")
-        conclusions = engine.run(patient)
+        conclusions = engine.run(patient, include_draft_rules=True)
         by_type = {}
         for item in conclusions:
             by_type.setdefault(item.rule_type, []).append(item)

@@ -1,6 +1,7 @@
 """Inference engine - evaluates rules against patient data."""
 from __future__ import annotations
 
+import copy
 import json
 import logging
 from datetime import datetime, timezone
@@ -149,6 +150,16 @@ class InferenceEngine:
         matcher = matcher or self._native_match_stage
         profile = get_profile(self.domain)
         all_rules = list(self.rule_repo.list_all())
+        from src.domains.western.recommendations import get_recommendation, assess, resolve_conflicts
+        structured_rules = [r for r in all_rules if self.domain == "western" and r.domain == "western"
+            and get_recommendation(r) and r.status in ({"active", "draft", "testing"} if include_draft_rules else {"active"})
+            and (not department or not r.department or r.department == department)]
+        legacy_chapter_rules = [r for r in all_rules if self.domain == "western" and r.domain == "western"
+            and r.rule_type == "treatment" and r not in structured_rules
+            and r.status in ({"active", "draft", "testing"} if include_draft_rules else {"active"})
+            and str(r.conclusion.message).startswith(("指南同章节推荐", "指南同章节医嘱组"))]
+        all_rules = [r for r in all_rules if r not in structured_rules and r not in legacy_chapter_rules]
+
         explicit_types = {
             rule_type
             for stage in profile.stages
@@ -158,6 +169,9 @@ class InferenceEngine:
         self._atom_cache = {}
         self.evaluation_issues = []
         conclusions: List[Conclusion] = []
+        self.recommendation_assessments = []
+        self.recommendation_assessments.extend({"rule_id":r.rule_id,"name":r.name,"status":"needs_review",
+            "reasons":["旧规则仅由同章节项目拼接，需整理为有条件且有原文依据的诊疗推荐"],"actions":[]} for r in legacy_chapter_rules)
         patient_key_set = patient_keys(patient)
         facts: Dict[str, Dict[str, Conclusion]] = {}
 
@@ -243,7 +257,49 @@ class InferenceEngine:
             conclusions.extend(stage_conclusions)
             self._materialize_facts(facts, stage_conclusions)
 
+        relevant_codes = {c.disease_code for c in conclusions if c.rule_type == "diagnosis" and c.clinical_intent in {"suspected_diagnosis", "diagnosis_confirmation"}}
+        relevant_codes.update(d.code for d in patient.diagnoses if d.clinical_status == "active" and d.certainty in {"suspected", "confirmed"})
+        for rule in structured_rules:
+            if get_recommendation(rule).get("diagnosis_stage") != "independent" and rule.disease_code not in relevant_codes:
+                continue
+            self._current_kg = self.graph_client_factory(rule.graph_filename or profile.graph.legacy_graph_filename) if self.graph_client_factory else self.kg
+            try:
+                self.recommendation_assessments.append(assess(self, rule, patient, conclusions))
+            except Exception as error:
+                self.recommendation_assessments.append({"rule_id":rule.rule_id, "name":rule.name,
+                    "status":"needs_review", "reasons":["推荐条件无法执行：" + str(error)], "actions":[]})
+            finally:
+                self._current_kg = self.kg
+        resolve_conflicts(self.recommendation_assessments)
         conclusions.sort(key=lambda c: (-c.priority, c.rule_type))
+        # Materialize conditional prescription recommendations only after all
+        # diagnostic facts are available; these are proposals, never orders.
+        for item in conclusions:
+            if item.rule_type != "tcm_prescription":
+                continue
+            for modification in item.modification_rules:
+                matched, _ = self._evaluate_condition(RuleCondition(**modification["condition"]), patient)
+                if matched is not True:
+                    continue
+                target = modification["target_code"]
+                action = modification["action"]
+                present = any(herb.get("code") == target for herb in item.herbs)
+                if action in {"remove", "replace", "adjust_dose"} and not present:
+                    continue
+                if action != "add":
+                    item.herbs = [herb for herb in item.herbs if herb.get("code") != target]
+                component = modification.get("component")
+                if component and not any(herb.get("code") == component.get("code") for herb in item.herbs):
+                    item.herbs.append(copy.deepcopy(component))
+        blocked = {code for item in conclusions if item.rule_type == "tcm_contraindication"
+                   and item.safety_level != "caution" for code in item.blocked_targets}
+        if blocked:
+            def targets(item):
+                return {code for code in [item.formula_code, item.treatment_method_code,
+                        *[h.get("code") for h in item.herbs],
+                        *[m.get("code") for m in item.treatment_items]] if code}
+            conclusions = [item for item in conclusions if item.rule_type not in {"tcm_treatment", "tcm_prescription"}
+                           or not targets(item).intersection(blocked)]
         return conclusions
 
     def evaluate_tcm_pattern_candidates(
@@ -330,7 +386,7 @@ class InferenceEngine:
         if ctype in {"past_history", "medication"}:
             return f"{ctype}:{condition.code}"
         if ctype == "observation":
-            return f"observation:{condition.observation_type or 'symptom'}:{condition.code}:{condition.concept_code}"
+            return f"observation:{condition.observation_type or 'symptom'}:{condition.code}:{condition.concept_code}:" + json.dumps(condition.parameter or {}, sort_keys=True)
         if ctype == "attribute":
             return f"attribute:{condition.attribute_code}:{condition.operator}:{json.dumps(condition.attribute_value, sort_keys=True, ensure_ascii=False, default=str)}"
         if ctype == "evidence":
@@ -373,6 +429,18 @@ class InferenceEngine:
         """Original leaf dispatch chain (the cacheable leaves are memoized above)."""
         if condition.type == "group":
             return self._evaluate_group(condition, patient)
+        elif condition.type == "count_group":
+            results, traces = [], []
+            for child in condition.children:
+                matched, evidence = self._evaluate_condition(child, patient)
+                results.append(matched)
+                traces.extend(evidence)
+            minimum = condition.min_count
+            if minimum is None or minimum < 1 or minimum > len(results):
+                return False, []
+            positives = sum(value is True for value in results)
+            unknown = sum(value is None for value in results)
+            return (True if positives >= minimum else None if positives + unknown >= minimum else False), traces
         elif condition.type == "weighted_group":
             return self._evaluate_weighted_group(condition, patient)
         elif condition.type == "evidence":
@@ -461,6 +529,8 @@ class InferenceEngine:
                 "MILD": 0.6, "mild": 0.6,
                 "MODERATE": 0.8, "moderate": 0.8,
             }.get(str(item.severity or "").upper(), 1.0)
+        if (condition.parameter or {}).get("schema_version") == 3:
+            severity_factor = 1.0  # No unreferenced severity multipliers in clinical scores.
         if state == "unknown":
             trace = None
         else:
@@ -764,6 +834,13 @@ class InferenceEngine:
         if not lab_code or not concept_code:
             return False, []
 
+        if (condition.parameter or {}).get("standard_candidate_id"):
+            standard = self.standard_repo.get_active(patient.hospital_id, lab_code, concept_code,
+                patient.gender.value if patient.gender else None, patient.age)
+            if standard is None or not self.vocabulary.exists(concept_code):
+                from .evaluators.exam_interpretation import unknown
+                result = unknown("指南检验标准尚未审核发布，或不适用于当前患者")
+                return self._interpretation_state(result, item_type="lab", lab_code=lab_code), []
         evaluator_type = self.vocabulary.get_evaluator_type(concept_code)
         standard = self.standard_repo.get_active(
             hospital_id=patient.hospital_id,
@@ -920,6 +997,25 @@ class InferenceEngine:
         code = condition.code or ""
         if not code:
             return False, []
+        if (condition.parameter or {}).get("schema_version") == 3:
+            observed = patient.get_symptom(code) if observation_type == "symptom" else patient.get_observation(observation_type, code)
+            if observed is None:
+                return None, []
+            if condition.duration_minutes is not None:
+                duration = getattr(observed, "duration_minutes", None)
+                if duration is None:
+                    return None, []
+                if duration < condition.duration_minutes:
+                    return False, []
+            minimum_severity = (condition.parameter or {}).get("min_severity")
+            if minimum_severity:
+                levels = {"mild": 1, "moderate": 2, "severe": 3}
+                actual = levels.get(str(getattr(observed, "severity", "")).lower())
+                minimum = levels.get(str(minimum_severity).lower())
+                if actual is None or minimum is None:
+                    return None, []
+                if actual < minimum:
+                    return False, []
         evaluator = EvaluatorFactory.create("observation_present")
         result = evaluator.evaluate(patient, None, {
             "observation_type": observation_type,
@@ -1105,7 +1201,7 @@ class InferenceEngine:
             unmatched_items = list(weighted.get("unmatched_items", []))
             missing_items = list(weighted.get("missing_items", []))
         confidence = rule.conclusion.confidence
-        if rule.rule_type == "tcm_pattern" and score is not None:
+        if rule.rule_type == "tcm_pattern" and score is not None and (rule.clinical_context or {}).get("schema_version") != 3:
             confidence = "high" if score >= 0.8 else "medium" if score >= 0.6 else "low"
         now = datetime.now(timezone.utc).isoformat()
 
@@ -1137,6 +1233,11 @@ class InferenceEngine:
             formula_code=rule.conclusion.formula_code,
             formula_name=rule.conclusion.formula_name,
             herbs=list(rule.conclusion.herbs or []),
+            regimen=dict(rule.conclusion.regimen or {}),
+            monitoring=list(rule.conclusion.monitoring or []),
+            safety_level=rule.conclusion.safety_level,
+            blocked_targets=list(rule.conclusion.blocked_targets or []),
+            modification_rules=list(rule.conclusion.modification_rules or []),
             modifications=list(rule.conclusion.modifications or []),
             course=rule.conclusion.course,
             score=score,
@@ -1160,7 +1261,7 @@ class InferenceEngine:
 
     @staticmethod
     def _count_leaves(condition: RuleCondition) -> int:
-        if condition.type == "group":
+        if condition.type in {"group", "weighted_group", "count_group"}:
             return sum(InferenceEngine._count_leaves(child) for child in condition.children)
         return 1
 

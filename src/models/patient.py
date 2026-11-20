@@ -79,6 +79,14 @@ class Observation(BaseModel):
     observed_at: Optional[datetime] = None
 
 
+class PatientDiagnosis(BaseModel):
+    code: str
+    name: str = ""
+    certainty: str = "suspected"  # confirmed / suspected; historical diagnosis is not an active fact
+    clinical_status: str = "active"
+    source: str = "clinician"
+
+
 class PatientSnapshot(BaseModel):
     """Normalized clinical data for a patient at a point in time.
 
@@ -96,6 +104,7 @@ class PatientSnapshot(BaseModel):
     # Generic clinical attributes for oncology and other specialties:
     # histology, stage, grade, molecular markers, etc.
     clinical_attributes: Dict[str, Any] = Field(default_factory=dict)
+    diagnoses: List[PatientDiagnosis] = Field(default_factory=list)
     vitals: List[VitalSign] = Field(default_factory=list)
     past_history: List[str] = Field(default_factory=list)  # standard disease codes
     current_medications: List[str] = Field(default_factory=list)  # standard drug codes

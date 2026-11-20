@@ -35,7 +35,7 @@ class ObservationPresentEvaluator(BaseEvaluator):
             symptom = patient.get_symptom(code)
             if symptom is not None:
                 observed = bool(symptom.present)
-                display = symptom.name or symptom.symptom_code
+                display = symptom.symptom_name or symptom.symptom_code
                 if symptom.severity:
                     display += f"（{symptom.severity}）"
 

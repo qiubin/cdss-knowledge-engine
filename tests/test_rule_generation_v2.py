@@ -75,7 +75,7 @@ class WesternRuleGeneratorV2Test(unittest.TestCase):
             entities, [make_chunk()], make_template(), "DOC-V2", "测试指南"
         )
         types = {rule["rule_type"] for rule in rules}
-        self.assertEqual(types, {"diagnosis", "treatment"})
+        self.assertEqual(types, {"diagnosis"})
         for rule in rules:
             Rule(**rule)
 
@@ -90,12 +90,8 @@ class WesternRuleGeneratorV2Test(unittest.TestCase):
         lab_condition = diagnosis["conditions"]["children"][0]["children"][0]
         self.assertIn("肌钙蛋白（CTN）", lab_condition["label"])
 
-        treatment = next(rule for rule in rules if rule["rule_type"] == "treatment")
-        self.assertEqual(treatment["disease_code"], "I40.9")
-        self.assertTrue(treatment["conclusion"]["treatment_plan_id"])
-        self.assertTrue(treatment["conclusion"]["treatment_name"])
-        item_names = {item["name"] for item in treatment["conclusion"]["treatment_items"]}
-        self.assertIn("机械通气", item_names)
+        # Sharing a chapter is insufficient to create a treatment recommendation.
+        self.assertFalse(any(rule["rule_type"] == "treatment" for rule in rules))
 
     def test_auto_discovered_diseases_do_not_generate_rules(self):
         entities = [

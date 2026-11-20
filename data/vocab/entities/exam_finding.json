@@ -203,5 +203,29 @@
       "ST段改变",
       "ST-T异常"
     ]
+  },
+  {
+    "code": "LVOT_PEAK_GRADIENT_REST",
+    "name": "静息左室流出道峰值压差",
+    "aliases": [
+      "静息左室流出道峰值压差"
+    ],
+    "domain": "western"
+  },
+  {
+    "code": "LVOT_PEAK_GRADIENT_PROVOKED",
+    "name": "激发后左室流出道峰值压差",
+    "aliases": [
+      "激发后左室流出道峰值压差"
+    ],
+    "domain": "western"
+  },
+  {
+    "code": "LV_MAX_END_DIASTOLIC_WALL_THICKNESS",
+    "name": "左室舒张末期最大室壁厚度",
+    "aliases": [
+      "左室舒张末期最大室壁厚度"
+    ],
+    "domain": "western"
   }
 ]

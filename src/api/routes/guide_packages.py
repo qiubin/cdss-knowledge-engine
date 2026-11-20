@@ -506,9 +506,22 @@ def _tcm_checks(package: Dict[str, Any]) -> List[Dict[str, Any]]:
 
     checks: List[Dict[str, Any]] = []
 
-    # 1. Each syndrome should carry at least one symptom and one tongue/pulse.
+    # V3 uses authored contextual criteria, never same-chunk completeness defaults.
+    is_v3 = package.get("template_id") == "TCM_GUIDELINE_V3"
+    if is_v3:
+        from src.domains.tcm.clinical_schema import ClinicalContract
+        contract_issues = []
+        for entity in by_type.get("clinical_rule", []):
+            try:
+                ClinicalContract(**(entity.get("attributes") or {}).get("CLINICAL_RULE", {}))
+            except (ValueError, TypeError) as error:
+                contract_issues.append(f"{entity.get('name') or entity.get('code')}：{str(error)[:180]}")
+        checks.append({"code": "tcm_clinical_contract", "title": "场景化判据与诊疗方案",
+                       "status": "warning" if contract_issues else "passed", "issues": contract_issues,
+                       "details": [{"contract_count": len(by_type.get("clinical_rule", []))}]})
+    # Legacy V2 compatibility checks.
     completeness_issues: List[str] = []
-    for syndrome in by_type.get("syndrome", []):
+    for syndrome in ([] if is_v3 else by_type.get("syndrome", [])):
         chunk_id = syndrome.get("chunk_id", "")
         symptoms = [
             item for item in by_type.get("symptom", [])

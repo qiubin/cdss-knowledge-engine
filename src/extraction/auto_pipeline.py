@@ -88,7 +88,7 @@ def _auto_prompt(group: List[Dict[str, Any]], doc_title: str) -> List[Dict[str, 
     system = (
         "你是临床指南知识工程引擎。目标是把任意专科指南转换成可执行的临床知识图谱与规则。"
         "使用开放临床本体，不受预置疾病/症状词典限制。"
-        "必须只输出一个 JSON 对象，包含 entities、relations、rules、treatment_plans。"
+        "必须只输出一个 JSON 对象，包含 entities、relations、rules、treatment_plans、standards。"
         "实体类型只能是：disease, symptom, sign, lab, exam, diagnostic_evidence, pathology, "
         "biomarker, molecular_test, stage, histology, risk_factor, medication, intervention, "
         "treatment_plan, contraindication, monitoring_requirement, "
@@ -115,6 +115,14 @@ def _auto_prompt(group: List[Dict[str, Any]], doc_title: str) -> List[Dict[str, 
         "lab_concept 使用 lab_code + concept_code（ELEVATED/DECREASED/ABOVE_ULN_1/POSITIVE/NEGATIVE）；"
         "exam_finding 使用 exam_code + finding_code；symptom 使用 symptom_code；"
         "attribute 使用 attribute_code + operator + attribute_value（组织学、分期、分级、分子标志物）。"
+        "西医诊疗建议须在clinical_context.western_recommendation输出结构：schema_version=1、"
+        "diagnosis_stage(suspected/confirmed/independent)、clinical_question、setting、combination(single/alternatives/combined/sequential)、"
+        "selection_group、scope_confirmed=false、actions数组。每个action包含code/name、kind(medication/intervention/exam/lab/differential/monitoring/referral/care)、"
+        "verb(start/continue/adjust/switch/add/stop/avoid/assess/order/monitor)、conditions条件树、contraindications条件树数组、"
+        "required_data[{path:患者字段路径,label:资料名称,purpose:selection或dose,expected_value:如原文要求核实则指定}]、"
+        "regimen{dose,route,frequency,course,titration}、monitoring字符串数组、source完整原文定位。"
+        "仅录入逐字有据的用法，不得以常识补剂量或药品；类别不自动替换成具体药物。鉴别、检查和手术评估单独成条。"
+        "急症处理可独立于疾病确诊，但须有明确触发条件。替代方案不能合成联合，疗效不足升级须写前序治疗条件。"
         "治疗规则必须给出 treatment_plan_id、treatment_name、treatment_items（code/name/entity_type）；"
         "若该章节描述了医嘱套餐，conclusion 需附 order_set_ids（同章节 order_set 实体的 code）。"
         "指南中的医嘱套餐/医嘱组合抽为 order_set 实体，其包含的单条医嘱（药品、检验、检查、"
@@ -133,6 +141,12 @@ def _auto_prompt(group: List[Dict[str, Any]], doc_title: str) -> List[Dict[str, 
         "未知内容留空并列入missing_information，不得推测剂量、阈值、且或逻辑和禁忌。"
         "原文限定条件必须写入conditions，不能只写在说明中。"
         "quote必须逐字来自所标页行，保留完整推荐及限定语；缺少出处时留空，不得回填其他段落。"
+        "指南明确给出检查或检验数值阈值时，另输出standards数组，每项包含item_type(exam/lab)、"
+        "exam_code/finding_code或lab_code、项目及发现名称、interpretation_type=numeric、operator、"
+        "threshold_value、threshold_upper(如有)、threshold_unit、context_age_min/max、context_gender、method、"
+        "clinical_context(人群、例外和适用条件)、source(chunk_id、page_start/end、line_start/end、quote)。"
+        "禁止从常识补造阈值、单位或适用人群；缺失内容留空待审核。"
+        "关联规则叶节点同时携带parameter.interpretation数值标准，以便绑定同一审核流程。"
         "规则条件优先使用同一章节内的证据，不要把无关章节的检查/症状拼进同一规则。"
     )
     user = {
@@ -156,6 +170,14 @@ def _auto_prompt(group: List[Dict[str, Any]], doc_title: str) -> List[Dict[str, 
                 "conclusion": {"diagnosis": "肺癌", "confidence": "medium", "message": "..."},
                 "source": {"chunk_id": "c1", "page_start": 1, "line_start": 1, "line_end": 2, "quote": "..."},
                 "confidence": 0.85,
+            }],
+            "standards": [{
+                "item_type": "exam", "exam_code": "已映射的检查编码", "finding_code": "测量指标编码",
+                "exam_name": "检查项目名称", "finding_name": "测量指标名称", "interpretation_type": "numeric",
+                "operator": ">=", "threshold_value": None, "threshold_unit": "原文单位",
+                "context_age_min": None, "context_age_max": None, "context_gender": None,
+                "clinical_context": {"population": "原文人群", "exceptions": [], "missing_information": []},
+                "source": {"chunk_id": "c1", "page_start": 1, "line_start": 1, "line_end": 2, "quote": "包含阈值及限定条件的逐字原文"},
             }],
             "treatment_plans": [{
                 "plan_id": "TP-1", "name": "肺癌一线治疗方案", "disease_name": "肺癌",
@@ -383,6 +405,13 @@ def _normalize_rules(
             "source": source,
             "tags": list(dict.fromkeys([*(raw.get("tags") or []), "auto-generated", doc_id])),
         }
+        recommendation = rule["clinical_context"].get("western_recommendation")
+        if recommendation:
+            recommendation["scope_confirmed"] = False
+            for action in recommendation.get("actions") or []:
+                action.setdefault("source", source)
+            conclusion["treatment_items"] = [{**action, "entity_type": action.get("kind")} for action in recommendation.get("actions") or []]
+            rule["diagnosis_prerequisite"] = recommendation.get("diagnosis_stage") if recommendation.get("diagnosis_stage") in {"confirmed", "suspected"} else None
         rule["clinical_intent"] = normalize_clinical_intent(rule)
         try:
             Rule(**rule)
@@ -478,6 +507,7 @@ async def run_auto_pipeline(
     raw_relations: List[Dict[str, Any]] = []
     raw_rules: List[Dict[str, Any]] = []
     raw_plans: List[Dict[str, Any]] = []
+    raw_standards: List[Dict[str, Any]] = []
     warnings: List[str] = []
     if auto_activate:
         warnings.append("自动启用参数仅为兼容保留；所有候选仍须人工审核后发布")
@@ -491,6 +521,7 @@ async def run_auto_pipeline(
         raw_relations.extend(payload.get("relations") or [])
         raw_rules.extend(payload.get("rules") or [])
         raw_plans.extend(payload.get("treatment_plans") or [])
+        raw_standards.extend(payload.get("standards") or [])
 
     async def call_group(chunk_group: List[Dict[str, Any]]) -> Dict[str, Any]:
         extracted = await call(settings, _statement_prompt(chunk_group, doc_title))
@@ -498,7 +529,7 @@ async def run_auto_pipeline(
         if not isinstance(statements, list):
             # Retain older provider output as review-only candidates, never
             # silently certify it as a successfully structured statement.
-            warnings.append(f"片段 {chunk_group[0]['chunk_id']} 未返回临床陈述结构，仅保留待复核候选")
+            warnings.append(f"片段 {chunk_group[0]['chunk_id']} 未返回临床陈述结构，仅保留待审核候选")
             for rule in extracted.get("rules") or []:
                 context = rule.setdefault("clinical_context", {})
                 context.setdefault("missing_information", []).append("临床陈述结构未生成，须重新核对人群、逻辑与建议")
@@ -526,8 +557,12 @@ async def run_auto_pipeline(
             if not statement:
                 rule.setdefault("clinical_context", {}).setdefault("missing_information", []).append("规则未绑定有效临床陈述，请重新核对")
                 continue
+            western = (rule.get("clinical_context") or {}).get("western_recommendation")
             rule["clinical_context"] = {key: statement.get(key) for key in (
                 "population", "subtype", "phase", "exceptions", "recommendation_strength", "evidence_grade", "missing_information")}
+            if western:
+                western["scope_confirmed"] = False
+                rule["clinical_context"]["western_recommendation"] = western
             rule["source"] = statement.get("source") or {}
             if rule["source"].get("chunk_id") not in chunk_ids:
                 rule["clinical_context"]["missing_information"] = [*(rule["clinical_context"].get("missing_information") or []), "陈述原文不在当前片段中"]
@@ -769,7 +804,7 @@ async def run_auto_pipeline(
             "graph_filename": graph_filename,
             "conditions": {"type": "group", "operator": "AND", "children": []},
             "clinical_statement_id": str(plan.get("clinical_statement_id") or ""),
-            "clinical_context": {"missing_information": ["此方案尚未绑定完整适用条件，请对照原文核对"]},
+            "clinical_context": {"missing_information": ["此方案尚未绑定完整适用条件和结构化诊疗推荐，请对照完整原文核对"]},
             "conclusion": {
                 "diagnosis": disease_code,
                 "confidence": "medium",
@@ -828,6 +863,7 @@ async def run_auto_pipeline(
         template_id=AUTO_TEMPLATE_ID,
         graph_filename=graph_filename,
         candidate_rules=rules,
+        candidate_standards=raw_standards,
     ))
 
     # Rules are deferred until clinical-basis review; existing rules are preserved.

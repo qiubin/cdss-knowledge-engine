@@ -62,7 +62,7 @@ def node(entity: dict) -> dict:
 class TcmV2UpgradeTest(unittest.TestCase):
     def test_profile_uses_v2_contract(self):
         profile = get_profile("tcm")
-        self.assertEqual(profile.default_template_id, "TCM_GUIDELINE_V2")
+        self.assertEqual(profile.default_template_id, "TCM_GUIDELINE_V3")
         expected = {
             "constitution", "etiology", "syndrome_element", "meridian",
             "acupoint", "external_therapy", "care_guidance", "western_disease",
@@ -206,7 +206,7 @@ class TcmV2UpgradeTest(unittest.TestCase):
                 lambda filename: JsonGraphClient(str(root / "kg" / filename)),
                 domain="tcm",
             )
-            conclusions = engine.run(patient(), include_draft_patterns=True)
+            conclusions = engine.run(patient(), include_draft_patterns=True, include_draft_rules=True)
             types = {item.rule_type for item in conclusions}
             self.assertEqual(
                 types,

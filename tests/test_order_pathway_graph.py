@@ -138,8 +138,24 @@ class OrderTerminologyTest(unittest.TestCase):
         self.assertTrue(local_code("pathway_phase", "急性期").startswith("LOCAL-PP-"))
 
 
+WESTERN_CONTRACT = {
+    "schema_version": 1,
+    "diagnosis_stage": "confirmed",
+    "clinical_question": "急性期是否行再灌注治疗",
+    "combination": "single",
+    "scope_confirmed": False,
+    "actions": [{
+        "code": "OS-REPERFUSION",
+        "name": "STEMI再灌注医嘱套餐",
+        "kind": "care",
+        "verb": "start",
+        "source": {"quote": "STEMI再灌注医嘱套餐", "chunk_id": "c1", "doc_id": "DOC-OS"},
+    }],
+}
+
+
 class OrderRuleGenerationTest(unittest.TestCase):
-    def test_treatment_rule_carries_order_set_ids(self):
+    def test_chapter_cooccurrence_alone_does_not_create_treatment(self):
         entities = [
             entity("disease", "I21.0", "急性心肌梗死", 10),
             entity("lab", "CTN", "肌钙蛋白", 12, "肌钙蛋白明显升高"),
@@ -149,8 +165,28 @@ class OrderRuleGenerationTest(unittest.TestCase):
         rules = generate_western_rules(
             entities, [make_chunk()], make_template(), "DOC-OS", "测试指南"
         )
-        types = {rule["rule_type"] for rule in rules}
-        self.assertEqual(types, {"diagnosis", "treatment"})
+        # Chapter co-occurrence is not a clinical recommendation; raw
+        # entities (including order sets) stay in the KG only.
+        self.assertEqual({rule["rule_type"] for rule in rules}, {"diagnosis"})
+        for rule in rules:
+            Rule(**rule)
+
+    def test_contract_treatment_rule_carries_order_set_ids(self):
+        medication = {
+            **entity("medication", "MED-REPERFUSION", "再灌注治疗", 16, "STEMI再灌注医嘱套餐"),
+            "attributes": {"western_recommendation": WESTERN_CONTRACT},
+        }
+        entities = [
+            entity("disease", "I21.0", "急性心肌梗死", 10),
+            entity("lab", "CTN", "肌钙蛋白", 12, "肌钙蛋白明显升高"),
+            entity("symptom", "SYM_CHEST_PAIN", "胸痛", 13),
+            medication,
+            entity("order_set", "OS-REPERFUSION", "STEMI再灌注医嘱套餐", 15, "STEMI再灌注医嘱套餐"),
+        ]
+        rules = generate_western_rules(
+            entities, [make_chunk()], make_template(), "DOC-OS", "测试指南"
+        )
+        self.assertEqual({rule["rule_type"] for rule in rules}, {"diagnosis", "treatment"})
         for rule in rules:
             Rule(**rule)
 
@@ -159,7 +195,9 @@ class OrderRuleGenerationTest(unittest.TestCase):
         self.assertEqual(
             treatment["conclusion"]["order_set_ids"], ["OS-REPERFUSION"],
         )
-        self.assertIn("医嘱套餐", treatment["conclusion"]["message"])
+        contract = treatment["clinical_context"]["western_recommendation"]
+        self.assertEqual(contract["actions"][0]["code"], "OS-REPERFUSION")
+        self.assertIn("结构化诊疗推荐", treatment["conclusion"]["message"])
 
     def test_conclusion_models_accept_order_set_ids(self):
         conclusion = RuleConclusion(diagnosis="I21.0", order_set_ids=["OS-1"])

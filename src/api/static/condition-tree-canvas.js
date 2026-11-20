@@ -31,6 +31,7 @@
   // ------------------------------------------------------------ 卡片内容
 
   function chipLabel(node, labels) {
+    if (node.type === "count_group") return `至少满足 ${node.min_count || "?"} 项`;
     if (node.type === "group") {
       const op = String(node.operator || "AND").toUpperCase();
       return op === "AND" ? "且 AND" : op === "OR" ? "或 OR" : "非 NOT";
@@ -53,7 +54,7 @@
     const ct = ctree();
     const esc = options.esc || ((s) => String(s));
     const key = ct.pathKey(path);
-    const isGroup = node.type === "group" || node.type === "weighted_group";
+    const isGroup = node.type === "group" || node.type === "count_group" || node.type === "weighted_group";
     const op = String(node.operator || "AND").toUpperCase();
     const chipClass = node.type === "group" ? `op-${op}` : isGroup ? "op-w" : "op-leaf";
     const classes = [
@@ -238,7 +239,7 @@
 
     // 候选放置组：可编辑 group、不在被拖子树内
     const dropZones = () => items.filter((item) =>
-      item.node.type === "group"
+      ["group", "count_group"].includes(item.node.type)
       && !item.readonly
       && !isDescendantOrSelf(drag.path, item.path),
     ).map((item) => {

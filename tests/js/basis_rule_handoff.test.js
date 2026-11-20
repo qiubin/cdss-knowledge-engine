@@ -32,3 +32,20 @@ for (const blocked of [false, true]) {
     }
   });
 }
+
+test("saving a basis returns to the saved revision instead of an older disease basis", async () => {
+  const start = source.indexOf('          const savedBasis = await options.onSave(payload);');
+  const end = source.indexOf('        if (rule) await api', start);
+  assert.ok(start > 0);
+  const opened = [];
+  const current = {basis_id: 'CB-R19', specification: {graph_filename: 'G'}};
+  const ctx = vm.createContext({
+    options: {onSave: async () => current}, payload: {},
+    dialog: {close() {}}, toast() {}, renderClinicalBases: async () => {},
+    api: async () => ({items: [{basis_id: 'CB-OLD'}, current]}),
+    showClinicalBasis: async (basis) => opened.push(basis.basis_id), encodeURIComponent,
+  });
+  const block = source.slice(start, end).replace(/\n        }\s*$/, '');
+  await vm.runInContext(`(async () => { ${block} })()`, ctx);
+  assert.deepEqual(opened, ['CB-R19']);
+});

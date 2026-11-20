@@ -46,10 +46,10 @@ def collect_reviewed_treatment_links(graph, specification):
         if edge.get("relation_code") not in {"TREATMENT_PLAN_INCLUDES_MEDICATION", "TREATMENT_PLAN_INCLUDES_INTERVENTION"}:
             continue
         node = nodes[edge["target_node_id"]]
-        item = {"code": node.get("code"), "name": node.get("name"), "entity_type": node.get("node_type")}
+        item = {**(node.get("attributes") or {}), "code": node.get("code"), "name": node.get("name"), "entity_type": node.get("node_type")}
         if item not in items:
             items.append(item)
-    return {"plans": [{"code": node.get("code"), "name": node.get("name")} for node in plans],
+    return {"plans": [{"code": node.get("code"), "name": node.get("name"), "western_recommendation": (node.get("attributes") or {}).get("western_recommendation")} for node in plans],
             "items": items, "investigations": investigations}
 
 

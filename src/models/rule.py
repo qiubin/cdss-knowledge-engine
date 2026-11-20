@@ -51,6 +51,11 @@ class RuleConclusion(BaseModel):
     formula_code: Optional[str] = None
     formula_name: Optional[str] = None
     herbs: List[Dict[str, Any]] = Field(default_factory=list)  # [{code,name,dose,role}]
+    regimen: Dict[str, Any] = Field(default_factory=dict)
+    monitoring: List[Dict[str, Any]] = Field(default_factory=list)
+    safety_level: Optional[str] = None
+    blocked_targets: List[str] = Field(default_factory=list)
+    modification_rules: List[Dict[str, Any]] = Field(default_factory=list)
     modifications: List[str] = Field(default_factory=list)
     course: Optional[str] = None
     score_threshold: Optional[float] = None
@@ -80,6 +85,7 @@ class RuleCondition(BaseModel):
     # For group type
     children: List["RuleCondition"] = Field(default_factory=list)
     required_children: List["RuleCondition"] = Field(default_factory=list)
+    min_count: Optional[int] = None
 
     # For evidence type
     evidence_id: Optional[str] = None

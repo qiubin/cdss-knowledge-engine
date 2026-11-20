@@ -146,6 +146,8 @@ def _load_graph(
         node["display_name"] = _node_display_name(
             str(node["node_type"]), code, name
         )
+    from src.review.status import normalize_legacy_review_statuses
+    normalize_legacy_review_statuses(graph)
     return graph
 
 
@@ -176,6 +178,7 @@ class GraphImportRequest(BaseModel):
     template_id: str = ""
     graph_filename: str = ""
     candidate_rules: List[Dict[str, Any]] = []
+    candidate_standards: List[Dict[str, Any]] = []
 
 
 def _semantic_node_id(node_type: str, code: str) -> str:
@@ -585,6 +588,9 @@ def _ensure_treatment_plan_semantics(
         graph, "treatment_plan", plan_code,
         str(conclusion.get("treatment_name") or plan_code), refs,
     )["id"]
+    recommendation = (rule.get("clinical_context") or {}).get("western_recommendation")
+    if recommendation:
+        graph["nodes"][plan_id].setdefault("attributes", {})["western_recommendation"] = recommendation
     _upsert_semantic_relation(
         graph, disease_id, "DISEASE_HAS_TREATMENT_PLAN", plan_id,
         relation_names, refs,
@@ -596,8 +602,10 @@ def _ensure_treatment_plan_semantics(
         if not code:
             continue
         item_type = str(item.get("entity_type") or "medication")
+        clinical_kind = item_type
+        kind_map = {"exam":"exam", "lab":"lab", "differential":"disease", "monitoring":"monitoring_requirement", "referral":"intervention", "care":"intervention"}
         if item_type not in {"medication", "intervention"}:
-            item_type = "medication"
+            item_type = kind_map.get(item_type, "medication")
         item_id = _upsert_semantic_node(
             graph, item_type, code, str(item.get("name") or code), refs,
         )["id"]
@@ -606,6 +614,7 @@ def _ensure_treatment_plan_semantics(
             if item_type == "medication"
             else "TREATMENT_PLAN_INCLUDES_INTERVENTION"
         )
+        relation_code = {"exam":"TREATMENT_PLAN_REQUIRES_EXAM", "lab":"TREATMENT_PLAN_REQUIRES_LAB", "differential":"TREATMENT_PLAN_REQUIRES_DIFFERENTIAL", "monitoring":"TREATMENT_PLAN_HAS_MONITORING"}.get(clinical_kind, relation_code)
         _upsert_semantic_relation(
             graph, plan_id, relation_code, item_id, relation_names, refs,
         )
@@ -1208,6 +1217,9 @@ async def import_graph(request: GraphImportRequest):
                 added_links += 1
         _ensure_evidence_semantics(graph, evidence, relation_names)
 
+    from src.review.standards import stage_standards
+    stage_standards(graph, request.candidate_rules, request.candidate_standards,
+                    request.chunks, request.doc_id, request.doc_title, graph_filename)
     rule_semantics_added = _ensure_rule_semantics(
         graph,
         request.candidate_rules,
@@ -1251,6 +1263,7 @@ async def import_graph(request: GraphImportRequest):
         "links_added": added_links,
         "nodes_added": max(0, len(graph["nodes"]) - initial_nodes),
         "relations_added": max(0, len(graph["relations"]) - initial_relations),
+        "standard_candidate_count": len(graph.get("standard_candidates", [])),
         "rule_semantics_added": rule_semantics_added,
         "graph_filename": graph_filename,
         "unknown_concepts": unknown_concepts,
@@ -1504,6 +1517,7 @@ def find_duplicate_groups(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
             "name": name,
             "nodes": [{
                 "node_id": n["id"],
+                "name": str(n.get("name") or name),
                 "code": str(n.get("code") or ""),
                 "is_standard_code": _is_standard_code(node_type, str(n.get("code") or "")),
                 "review_status": str(n.get("review_status") or "draft"),

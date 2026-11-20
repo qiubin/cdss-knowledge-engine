@@ -244,8 +244,16 @@ def apply_import_review_metadata(
         old = previous_hashes.get("nodes", {}).get(node_id)
         new = node_content_hash(node)
         current = str(node.get("review_status") or "draft")
-        if old is not None and old != new and current == "active":
-            node["review_status"] = "stale"
+        if old is not None and old != new and current == "active" and previous_contents:
+            archived = previous_contents.get("nodes", {}).get(node_id)
+            if archived is not None:
+                node["pending_revision"] = {"content": node_snapshot_content(node), "created_at": now,
+                                            "source_doc_id": doc_id, "base_hash": old}
+                node.update(archived)
+                node["content_hash"] = old
+                continue
+        if old is not None and old != new and current == "active" and not previous_contents:
+            node["review_status"] = "draft"
         if old is None:
             node["version"] = int(node.get("version") or 1)
         elif old != new:
@@ -275,8 +283,16 @@ def apply_import_review_metadata(
         old = previous_hashes.get("relations", {}).get(key_text)
         new = relation_content_hash(relation)
         current = str(relation.get("review_status") or "draft")
-        if old is not None and old != new and current == "active":
-            relation["review_status"] = "stale"
+        if old is not None and old != new and current == "active" and previous_contents:
+            archived = previous_contents.get("relations", {}).get(key_text)
+            if archived is not None:
+                relation["pending_revision"] = {"content": relation_snapshot_content(relation), "created_at": now,
+                                                "source_doc_id": doc_id, "base_hash": old}
+                relation.update(archived)
+                relation["content_hash"] = old
+                continue
+        if old is not None and old != new and current == "active" and not previous_contents:
+            relation["review_status"] = "draft"
         if old is None:
             relation["version"] = int(relation.get("version") or 1)
         elif old != new:
@@ -300,6 +316,6 @@ def apply_import_review_metadata(
             node_status.get(str(relation.get("source_node_id"))) == "active"
             and node_status.get(str(relation.get("target_node_id"))) == "active"
         )
-        if not endpoint_active and relation.get("review_status") == "active":
-            relation["review_status"] = "stale"
+        # Approval history is retained; dependency checks independently gate use.
+        relation["dependency_changed"] = not endpoint_active
         _update_orphan(relation, doc_id, current_chunk_ids)

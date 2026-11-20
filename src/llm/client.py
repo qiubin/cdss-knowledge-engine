@@ -129,27 +129,45 @@ def request_headers(settings: Dict[str, Any], api_key: str) -> Dict[str, str]:
 
 def parse_json_response(text: str) -> Dict[str, Any]:
     cleaned = str(text or "").strip()
-    if cleaned.startswith("```"):
-        cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
-        cleaned = re.sub(r"\s*```$", "", cleaned).strip()
+    cleaned = re.sub(r"```(?:json)?", "", cleaned).strip()
+    decoder = json.JSONDecoder()
     try:
         value = json.loads(cleaned)
-    except json.JSONDecodeError as exc:
-        match = re.search(r"\{.*\}", cleaned, re.DOTALL)
-        if not match:
-            raise LLMError(
-                f"大模型响应不是有效 JSON（{exc.msg}），输出可能被截断；"
-                "可减小单次字符上限或提高最大输出 tokens"
-            ) from exc
+    except json.JSONDecodeError as original:
+        start = cleaned.find("{")
+        if start < 0:
+            raise LLMError(f"大模型响应不是有效 JSON（{original.msg}）") from original
+        objects = []
+        cursor = start
         try:
-            value = json.loads(match.group(0))
-        except json.JSONDecodeError as inner:
-            raise LLMError(
-                f"大模型响应 JSON 格式错误（{inner.msg}），输出可能被截断；"
-                "可减小单次字符上限或提高最大输出 tokens"
-            ) from inner
+            while cursor < len(cleaned):
+                value, end = decoder.raw_decode(cleaned, cursor)
+                objects.append(value)
+                cursor = end
+                while cursor < len(cleaned) and cleaned[cursor].isspace(): cursor += 1
+                if cursor == len(cleaned): break
+                # Explanatory text after one object is harmless. A further JSON
+                # opening must be fully decoded; never salvage truncated records.
+                next_start = cleaned.find("{", cursor)
+                if next_start < 0: break
+                cursor = next_start
+        except json.JSONDecodeError as error:
+            raise LLMError(f"大模型响应 JSON 格式错误（{error.msg}），需要缩小片段后重试") from error
+        if len(objects) == 1:
+            value = objects[0]
+        else:
+            keys = {"entities", "suggested_relations", "suggested_rules", "suggested_treatment_plans", "suggested_treatment_rules", "suggested_contraindications"}
+            if not all(isinstance(obj, dict) and obj and set(obj) <= keys and all(isinstance(v, list) for v in obj.values()) for obj in objects):
+                raise LLMError("模型返回多个不兼容JSON对象，不能安全合并")
+            value = {}
+            for obj in objects:
+                for key, items in obj.items(): value.setdefault(key, []).extend(items)
     if not isinstance(value, dict):
         raise LLMError("大模型响应 JSON 根节点必须是对象")
+    for wrapper in ("data", "result", "extraction"):
+        if "entities" not in value and isinstance(value.get(wrapper), dict) and "entities" in value[wrapper]:
+            value = value[wrapper]
+            break
     return value
 
 
@@ -228,7 +246,7 @@ async def _anthropic_chat_json(
 
     data = await _post(body)
     texts = _anthropic_texts(data)
-    if not texts and data.get("stop_reason") == "max_tokens":
+    if data.get("stop_reason") == "max_tokens":
         retry = dict(body)
         retry["max_tokens"] = min(16384, int(body.get("max_tokens") or 4096) * 2)
         if provider_name(settings) in {"zhipu", "zhipu_anthropic", "glm", "bigmodel"}:
@@ -240,6 +258,8 @@ async def _anthropic_chat_json(
             "Anthropic 响应中没有 text 内容块（可能只返回了 thinking，"
             "或 max_output_tokens 不足）；请提高最大输出 tokens 或关闭 thinking"
         )
+    if data.get("stop_reason") == "max_tokens":
+        raise LLMError("大模型输出被截断（max_tokens），请缩小片段后重试")
     payload = parse_json_response("\n".join(texts))
     if with_meta:
         return payload, {
@@ -305,8 +325,9 @@ async def chat_json(
         ),
         "response_format": {"type": "json_object"},
     }
-    if max_tokens:
-        body["max_tokens"] = int(max_tokens)
+    output_limit = max_tokens or settings.get("max_output_tokens")
+    if output_limit:
+        body["max_tokens"] = int(output_limit)
     timeout = float(settings.get("timeout_seconds", 120))
     url = endpoint_url(str(settings.get("base_url") or ""))
 
@@ -354,6 +375,8 @@ async def chat_json(
         content = data["choices"][0]["message"]["content"]
     except (KeyError, IndexError, TypeError) as exc:
         raise LLMError("大模型响应结构不符合 OpenAI chat/completions 约定") from exc
+    if data["choices"][0].get("finish_reason") == "length":
+        raise LLMError("大模型输出被截断（length），请缩小片段后重试")
     payload = parse_json_response(content)
     if with_meta:
         return payload, {

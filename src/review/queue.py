@@ -1,6 +1,7 @@
 """Unified review queue across graph items, rules and knowledge packages."""
 from __future__ import annotations
 
+import json
 from collections import Counter
 from typing import Any, Dict, List, Optional
 
@@ -132,6 +133,16 @@ def build_queue(
             "issues": result.get("issues", []),
         })
 
+    if not clinical_intent and item_type in (None, "", "standard"):
+        from src.review.standards import list_standard_items
+        for item in list_standard_items(service):
+            if target_domain and item.get("domain") != target_domain: continue
+            if status and item.get("status") != status: continue
+            if graph_filename and item.get("graph_filename") != graph_filename: continue
+            if source_doc and (item.get("source") or {}).get("guideline_id") != source_doc: continue
+            if query and query not in json.dumps(item, ensure_ascii=False).lower(): continue
+            items.append(item)
+
     if packages is not None and want_packages:
         for package in _package_items(packages):
             if status and package["status"] != status:
@@ -161,7 +172,7 @@ def build_queue(
     safe_limit = max(1, int(limit))
     limited: List[Dict[str, Any]] = []
     truncated: Dict[str, bool] = {}
-    for kind in ("graph_node", "graph_relation", "rule", "package"):
+    for kind in ("graph_node", "graph_relation", "rule", "package", "standard"):
         subset = sorted(
             (item for item in items if item["item_type"] == kind), key=_sort_key,
         )
@@ -180,6 +191,7 @@ def build_queue(
         "packages": dict(Counter(
             item["status"] for item in items if item["item_type"] == "package"
         )),
+        "standards": dict(Counter(item["status"] for item in items if item["item_type"] == "standard")),
         "total": len(items),
     }
     return {"summary": summary, "truncated": truncated, "items": limited}

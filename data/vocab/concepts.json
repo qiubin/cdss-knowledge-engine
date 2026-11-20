@@ -195,5 +195,59 @@
     "evaluator_type": "observation_present",
     "domain": "tcm",
     "is_active": true
+  },
+  {
+    "code": "GE_30",
+    "name_cn": "大于等于30",
+    "category": "exam_concept",
+    "description": "数值判断概念；必须绑定测量指标、运算符、阈值、单位及适用范围，不可替代存在性判断。",
+    "evaluator_type": "static_threshold",
+    "domain": "western",
+    "is_active": true
+  },
+  {
+    "code": "LT_30",
+    "name_cn": "小于30",
+    "category": "exam_concept",
+    "description": "数值判断概念；必须绑定测量指标、运算符、阈值、单位及适用范围，不可替代存在性判断。",
+    "evaluator_type": "static_threshold",
+    "domain": "western",
+    "is_active": true
+  },
+  {
+    "code": "GE_50",
+    "name_cn": "大于等于50",
+    "category": "exam_concept",
+    "description": "数值判断概念；必须绑定测量指标、运算符、阈值、单位及适用范围，不可替代存在性判断。",
+    "evaluator_type": "static_threshold",
+    "domain": "western",
+    "is_active": true
+  },
+  {
+    "code": "GE_15",
+    "name_cn": "大于等于15",
+    "category": "exam_concept",
+    "description": "数值判断概念；必须绑定测量指标、运算符、阈值、单位及适用范围，不可替代存在性判断。",
+    "evaluator_type": "static_threshold",
+    "domain": "western",
+    "is_active": true
+  },
+  {
+    "code": "GE_13",
+    "name_cn": "大于等于13",
+    "category": "exam_concept",
+    "description": "数值判断概念；必须绑定测量指标、运算符、阈值、单位及适用范围，不可替代存在性判断。",
+    "evaluator_type": "static_threshold",
+    "domain": "western",
+    "is_active": true
+  },
+  {
+    "code": "LT_15",
+    "name_cn": "小于15",
+    "category": "exam_concept",
+    "description": "数值判断概念；必须绑定测量指标、运算符、阈值、单位及适用范围，不可替代存在性判断。",
+    "evaluator_type": "static_threshold",
+    "domain": "western",
+    "is_active": true
   }
 ]
