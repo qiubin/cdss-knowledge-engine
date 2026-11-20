@@ -19,3 +19,15 @@ test('editor roundtrip retains source, action criteria and required patient data
  const editor=ui.mountEditor(host,base,{});const result=editor.read();
  assert.equal(result.actions[0].conditions.attribute_code,'stage');assert.equal(result.actions[0].source.quote,'原文');assert.equal(result.actions[0].contraindications.length,1);assert.equal(result.actions[0].required_data[0].label,'自定义资料');assert.equal(result.actions[0].monitoring[0],'监测血压');
 });
+
+test('fixed top button opens and closes the decision explanation independently of dashboard loading',()=>{
+ const vm=require('node:vm');let handler;let shown=false;let removed=false;
+ const closeButton={};const events={};
+ const dialog={innerHTML:'',className:'',querySelector:()=>closeButton,addEventListener:(event,callback)=>{events[event]=callback;},showModal:()=>{shown=true;},close:()=>{events.close();},remove:()=>{removed=true;}};
+ const document={getElementById:id=>id==='globalDecisionHelp'?{addEventListener:(event,callback)=>{handler=callback;}}:null,createElement:()=>dialog,body:{append(){}}};
+ vm.runInNewContext(fs.readFileSync('src/api/static/western-decision.js','utf8'),{document});
+ assert.equal(typeof handler,'function');handler();
+ assert.equal(shown,true);assert.ok(dialog.innerHTML.includes('西医诊疗决策说明'));
+ closeButton.onclick();assert.equal(removed,true);
+ const index=fs.readFileSync('src/api/static/index.html','utf8');assert.ok(index.includes('id="globalDecisionHelp"'));
+});

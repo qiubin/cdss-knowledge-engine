@@ -157,11 +157,14 @@ def parse_json_response(text: str) -> Dict[str, Any]:
             value = objects[0]
         else:
             keys = {"entities", "suggested_relations", "suggested_rules", "suggested_treatment_plans", "suggested_treatment_rules", "suggested_contraindications"}
-            if not all(isinstance(obj, dict) and obj and set(obj) <= keys and all(isinstance(v, list) for v in obj.values()) for obj in objects):
+            note_keys = {"notes", "warnings"}
+            if not all(isinstance(obj, dict) and obj and set(obj) <= keys | note_keys
+                       and all(isinstance(v, list) or k in note_keys and isinstance(v, str) for k,v in obj.items())
+                       for obj in objects) or not any(set(obj) & keys for obj in objects):
                 raise LLMError("模型返回多个不兼容JSON对象，不能安全合并")
             value = {}
             for obj in objects:
-                for key, items in obj.items(): value.setdefault(key, []).extend(items)
+                for key, items in obj.items(): value.setdefault(key, []).extend([items] if isinstance(items,str) else items)
     if not isinstance(value, dict):
         raise LLMError("大模型响应 JSON 根节点必须是对象")
     for wrapper in ("data", "result", "extraction"):

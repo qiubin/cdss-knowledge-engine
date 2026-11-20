@@ -69,13 +69,15 @@ def statement_for(spec, scope_summary=""):
             "missing_information": context.get("missing_information") or []}
 
 
-def coverage_report(chunks, completed, scheduled):
+def coverage_report(chunks, completed, scheduled, excluded=None):
+    excluded = set(excluded or [])
     items = [{"chunk_id": item["chunk_id"], "section": item.get("section") or "未分章节",
               "page_start": item.get("page_start"), "page_end": item.get("page_end"),
-              "status": "processed" if item["chunk_id"] in completed else
+              "status": "excluded" if item["chunk_id"] in excluded else "processed" if item["chunk_id"] in completed else
                         "failed" if item["chunk_id"] in scheduled else "not_scheduled"} for item in chunks]
     return {"total": len(items), "processed": sum(item["status"] == "processed" for item in items),
             "failed": sum(item["status"] == "failed" for item in items),
             "not_scheduled": sum(item["status"] == "not_scheduled" for item in items),
-            "complete": all(item["status"] == "processed" for item in items), "items": items,
-            "note": "已处理表示已收到模型响应，不代表该章节全部知识均已正确抽取"}
+            "excluded": len(excluded),
+            "complete": all(item["status"] in {"processed", "excluded"} for item in items), "items": items,
+            "note": "已处理表示已收到模型响应，不代表该章节全部知识均已正确抽取；excluded表示明确的参考文献或纯标题，不参与临床知识抽取"}

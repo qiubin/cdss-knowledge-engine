@@ -1028,13 +1028,18 @@
     const doc = state.doc;
     const coverage = doc.provider_metadata?.coverage;
     const domain = normalizeDomainClient(doc.extraction?.domain || doc.domain);
-    const anchors = doc.entities.filter((e) => domain === "tcm" ? e.entity_type === "syndrome" : e.entity_type === "disease");
-    const target = doc.targetDisease || (anchors[0] && anchors[0].code) || "";
+    const anchorKinds = domain === "tcm" ? (doc.entities.some((e) => e.entity_type === "syndrome") ? ["syndrome"] : ["disease"]) : ["disease"];
+    const anchors = [...new Map(doc.entities.filter((e) => anchorKinds.includes(e.entity_type) && e.code && !(e.discovered_from === "relation" && e.name === e.code)).map((e) => [e.code, e])).values()];
+    const target = anchors.some((e) => e.code === doc.targetDisease) ? doc.targetDisease : (anchors[0]?.code || "");
+    const configuredGraph = doc.graph_filename || doc.extraction?.graph_filename || "";
+    doc.graphTarget ||= configuredGraph ? {mode: "legacy", filename: configuredGraph} : {mode: "new", filename: ""};
+    const incomplete = coverage?.complete === false;
+    const empty = !doc.entities.length;
     doc.targetDisease = target;
     const relationCount = (doc.suggested_relations || []).length;
     const tabs = [["lines", "原文定位"], ["entities", `抽取实体 ${doc.entities.length}`], ["relations", `候选关系 ${relationCount}`], ["rules", `候选规则 ${doc.suggested_rules.length}`]];
     box.innerHTML = `
-      <div class="result-banner ok">${esc(doc.doc_title)} 解析成功：${doc.total_pages} 页，${doc.total_lines} 行，候选规则 ${doc.suggested_rules.length} 条。<div class="muted">方式：${doc.extraction_mode === "llm" ? "大模型解析" : "本地模板解析"}；领域：${domain === "tcm" ? "中医" : "西医"}；模板：${esc(doc.template_name || doc.template_id || "-")}${coverage ? `；片段覆盖 ${coverage.processed}/${coverage.total}` : ""}</div></div>
+      <div class="result-banner ${incomplete || empty ? "warning" : "ok"}">${esc(doc.doc_title)} ${empty ? "抽取结果为空" : incomplete ? "解析未完成" : "解析完成"}：${doc.total_pages} 页，${doc.total_lines} 行，候选规则 ${doc.suggested_rules.length} 条。<div class="muted">方式：${doc.extraction_mode === "llm" ? "大模型解析" : "本地模板解析"}；领域：${domain === "tcm" ? "中医" : "西医"}；模板：${esc(doc.template_name || doc.template_id || "-")}${coverage ? `；片段覆盖 ${coverage.processed}/${coverage.total}${coverage.excluded ? `，另有 ${coverage.excluded} 个参考文献或纯标题片段不参与抽取` : ""}` : ""}</div></div>
       <div class="pipeline">
         <div class="step done"><strong>1 上传并解析</strong><span>原文定位、实体与候选规则</span></div>
         <div class="step"><strong>2 审核候选内容</strong><span>核对实体、关系和候选规则</span></div>
@@ -1044,23 +1049,25 @@
       ${(doc.warnings || []).length ? (() => {
         const list = doc.warnings;
         const render = (items) => `<ul class="issue-list">${items.map((w) => `<li>${esc(w)}</li>`).join("")}</ul>`;
-        return `<div class="result-banner warning"><strong>解析告警 ${list.length} 条</strong><div class="muted">以下为自动修正或忽略记录，通常不影响已生成内容；请重点核对包含“失败”的条目。</div>${render(list.slice(0, 8))}${list.length > 8 ? `<details class="debug-panel"><summary>展开其余 ${list.length - 8} 条</summary>${render(list.slice(8))}</details>` : ""}</div>`;
+        return `<div class="result-banner warning"><strong>解析告警 ${list.length} 条</strong><div class="muted">${incomplete || empty ? "存在解析失败或空结果，可能遗漏诊疗依据；请先重试并核对覆盖报告。" : "以下为修正或忽略记录，请核对相关内容。"}</div>${render(list.slice(0, 8))}${list.length > 8 ? `<details class="debug-panel"><summary>展开其余 ${list.length - 8} 条</summary>${render(list.slice(8))}</details>` : ""}</div>`;
       })() : ""}
+      ${incomplete || empty ? '<button id="retryExtraction" class="btn primary">重新解析未完成内容</button>' : ""}
       ${panel("审核与生成知识包", `
         <div class="inline-controls">
-          <div class="field"><label>主目标${domain === "tcm" ? "证候" : "疾病"}（预检锚点）</label><select id="targetDisease">${anchors.map((d) => `<option value="${esc(d.code)}" ${d.code === target ? "selected" : ""}>${esc(d.name)} ${esc(d.code)}</option>`).join("")}</select></div>
+          <div class="field"><label>主目标${domain === "tcm" && anchorKinds.includes("syndrome") ? "证候" : "疾病"}（预检锚点）</label><select id="targetDisease" ${anchors.length ? "" : "disabled"}>${!anchors.length ? '<option value="">未识别到可用目标，请先重新解析</option>' : ""}${anchors.map((d) => `<option value="${esc(d.code)}" ${d.code === target ? "selected" : ""}>${esc(d.name)} ${esc(d.code)}</option>`).join("")}</select></div>
           <div class="muted" style="flex-basis:100%">${anchors.length > 1
             ? `本次将导入包内全部 ${anchors.length} 个${domain === "tcm" ? "证候" : "疾病"}：${esc(anchors.map((d) => `${d.name}（${d.code}）`).join("、"))}。主目标仅用于预检锚点与诊断链路定位，不是唯一导入对象。`
             : "主目标仅用于预检锚点与诊断链路定位；包内实体、关系和待审诊疗依据会导入。"}</div>
           ${domain === "tcm" ? `
           <div class="field"><label>目标图谱</label><select id="graphTargetMode">
-            <option value="new" selected>新建独立中医图谱</option>
-            <option value="existing">追加既有中医图谱</option>
+            ${configuredGraph ? `<option value="legacy" ${doc.graphTarget.mode === "legacy" ? "selected" : ""}>沿用已设置图谱：${esc(configuredGraph)}</option>` : ""}
+            <option value="new" ${doc.graphTarget.mode === "new" ? "selected" : ""}>新建独立中医图谱</option>
+            <option value="existing" ${doc.graphTarget.mode === "existing" ? "selected" : ""}>更换为其他既有中医图谱</option>
           </select></div>
-          <div class="field hidden" id="newGraphNameField"><label>图谱文件名（可选）</label><input id="newGraphName" placeholder="留空自动生成 KG-TCM-{doc_id}.json"></div>
+          <div class="field hidden" id="newGraphNameField"><label>图谱文件名（可选）</label><input id="newGraphName" value="${esc(doc.graphTarget.mode === "new" ? doc.graphTarget.filename : "")}" placeholder="留空自动生成 KG-TCM-{doc_id}.json"></div>
           <div class="field hidden" id="graphTargetField"><label>既有图谱</label><select id="graphTargetFilename"><option value="">加载中</option></select></div>
           <div class="field hidden" id="legacyGraphField"><label>模板绑定图谱</label><input id="legacyGraphName" value="${esc(doc.graph_filename || doc.extraction?.graph_filename || "")}" readonly></div>` : ""}
-          <button id="generatePackage" class="btn primary">生成知识包并进入审核</button>
+          <button id="generatePackage" class="btn primary" ${incomplete || empty || !anchors.length ? "disabled" : ""}>生成知识包并进入审核</button>
         </div>
         <p class="muted">生成后进入「知识包」页查看自动预检并完成入库；此处不再单独导入图谱或规则。</p>
       `, "", "生成的是候选知识包；图谱和草稿规则只在知识包页审核后统一入库，不会自动启用")}
@@ -1074,17 +1081,33 @@
         $("#graphTargetField")?.classList.toggle("hidden", graphMode.value !== "existing");
         $("#legacyGraphField")?.classList.toggle("hidden", graphMode.value !== "legacy");
       };
-      graphMode.onchange = async () => {
-        renderGraphTargetFields();
+      const loadExistingTargets = async () => {
         if (graphMode.value !== "existing") return;
         try {
           state.targetGraphs = availableTcmTargetGraphs(await api("/api/kg/graphs?domain=tcm"));
           const selector = $("#graphTargetFilename");
-          selector.innerHTML = state.targetGraphs.map((item) => `<option value="${esc(item.graph_filename)}">${esc(item.graph_filename)}（证候 ${item.syndromes || 0}）</option>`).join("");
+          selector.innerHTML = state.targetGraphs.map((item) => `<option value="${esc(item.graph_filename)}" ${item.graph_filename === doc.graphTarget.filename ? "selected" : ""}>${esc(item.graph_filename)}（证候 ${item.syndromes || 0}）</option>`).join("");
+          doc.graphTarget.filename = selector.value;
         } catch (error) { toast(error.message, true); }
       };
+      graphMode.onchange = async () => {
+        doc.graphTarget = {mode: graphMode.value, filename: graphMode.value === "legacy" ? configuredGraph : ""};
+        renderGraphTargetFields();
+        await loadExistingTargets();
+      };
+      if (graphMode.value === "existing") loadExistingTargets();
+      $("#newGraphName").oninput = (event) => { doc.graphTarget.filename = event.target.value.trim(); };
+      $("#graphTargetFilename").onchange = (event) => { doc.graphTarget.filename = event.target.value; };
       renderGraphTargetFields();
     }
+    if ($("#retryExtraction")) $("#retryExtraction").onclick = async (event) => {
+      const button = event.currentTarget;
+      button.disabled = true; button.textContent = "正在重新解析，请稍候…";
+      try {
+        state.doc = await api(`/api/pdf/${encodeURIComponent(doc.doc_id)}/reparse`, {json: {}});
+        renderImportResult();
+      } catch (error) { toast(error.message, true); button.disabled = false; button.textContent = "重新解析未完成内容"; }
+    };
     $("#generatePackage").onclick = generatePackage;
     box.querySelectorAll("[data-import-tab]").forEach((btn) => btn.onclick = () => { state.importTab = btn.dataset.importTab; renderImportResult(); });
     renderImportTab();
@@ -2307,7 +2330,7 @@
         mode: graphMode.value,
         filename: graphMode.value === "existing"
           ? $("#graphTargetFilename")?.value || ""
-          : ($("#newGraphName")?.value || "").trim(),
+          : graphMode.value === "legacy" ? (doc.graph_filename || doc.extraction?.graph_filename || "") : ($("#newGraphName")?.value || "").trim(),
       } : undefined;
       const result = await api("/api/guide-packages/generate", { json: {
         doc_id: doc.doc_id,

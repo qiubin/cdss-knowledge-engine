@@ -129,8 +129,31 @@ class ExtractionResult(BaseModel):
 
 
 SECTION_PATTERN = re.compile(
-    r"^(?:[一二三四五六七八九十]+、|（[一二三四五六七八九十]+）|\d+(?:\.\d+)*\s{2,}\S)"
+    r"^(?:[一二三四五六七八九十]+、|（[一二三四五六七八九十]+）|[1-9]\d*(?:\s*\.\s*\d+)+[\s\u3000]+(?:[A-Z\u4e00-\u9fff])|[1-9]\d*(?:\u3000+| {2,})[\u4e00-\u9fff]|参考文献$)"
 )
+
+
+def section_chunks(doc_id, lines):
+    chunks, current, ancestors = [], [], []
+    title = "前言"
+    for line in lines:
+        text = line['text'].strip()
+        if SECTION_PATTERN.match(text):
+            if current: chunks.append(_build_chunk(doc_id, title, current))
+            number = re.match(r'^(\d+(?:\s*\.\s*\d+)*)', text)
+            if number:
+                depth = len(re.split(r'\s*\.\s*', number.group(1)))
+                ancestors = ancestors[:depth - 1]
+                ancestors.append(text)
+                title = ' / '.join(ancestors)
+            else:
+                ancestors = []; title = text
+            current = [line]
+        else:
+            current.append(line)
+    if current: chunks.append(_build_chunk(doc_id, title, current))
+    return chunks
+
 MAX_CHUNK_CHARS = 12000
 WARN_NO_TEXT_LAYER = "该 PDF 无文字层，已使用 OCR 识别文本"
 
@@ -189,20 +212,7 @@ def parse_pdf(file_path: Path, doc_id: str) -> Dict[str, Any]:
         lines.sort(key=lambda item: (item["page"], item["line"]))
         ocr_used = True
 
-    # Aggregate into chunks by section
-    chunks = []
-    current_section = "前言"
-    current_lines: List[Dict] = []
-    for line in lines:
-        if SECTION_PATTERN.match(line["text"]):
-            if current_lines:
-                chunks.append(_build_chunk(doc_id, current_section, current_lines))
-            current_section = line["text"].strip()
-            current_lines = [line]
-        else:
-            current_lines.append(line)
-    if current_lines:
-        chunks.append(_build_chunk(doc_id, current_section, current_lines))
+    chunks = section_chunks(doc_id, lines)
 
     chunks = _split_long_chunks(chunks)
     for chunk in chunks:
@@ -586,3 +596,68 @@ async def list_documents():
         for d in sorted(docs, key=lambda x: x.get("uploaded_at", ""), reverse=True)
     ]
 
+
+
+_reparse_locks = {}
+
+
+async def reparse_document(doc_id: str, controller=None):
+    """Retry failed coverage; an empty extraction is reparsed in full."""
+    import asyncio
+    import copy
+    from src.review.quality import coverage_report
+    from src.review.clinical_basis import digest
+    lock = _reparse_locks.setdefault(doc_id, asyncio.Lock())
+    if lock.locked():
+        raise HTTPException(409, "此文档正在重新解析")
+    async with lock:
+        original = _load_doc(doc_id)
+        if not original:
+            raise HTTPException(404, "文档未找到")
+        baseline_bytes = _parsed_path(doc_id).read_bytes()
+        previous = copy.deepcopy(original)
+        doc = copy.deepcopy(original)
+        extraction = doc.get('extraction') or {}
+        template = extraction_templates.get(extraction.get('template_id'))
+        old_coverage = (extraction.get('metadata') or {}).get('coverage') or {}
+        excluded = {item['chunk_id'] for item in old_coverage.get('items') or [] if item['status'] == 'excluded'}
+        successful = {item['chunk_id'] for item in old_coverage.get('items') or [] if item['status'] in {'processed', 'excluded'}}
+        if not doc.get('entities') or any('已忽略引用未知 chunk_id 的实体' in warning for warning in extraction.get('warnings') or []):
+            successful = set()
+        if doc['parsed'].get('lines') and len({c.get('section') for c in doc['parsed']['chunks']}) <= 1:
+            doc['parsed']['chunks'] = section_chunks(doc_id, doc['parsed']['lines'])
+            successful = set(); excluded = set()
+            doc['entities'] = []; doc['suggested_relations'] = []; doc['suggested_rules'] = []
+        selected = [chunk for chunk in doc['parsed']['chunks'] if chunk['chunk_id'] not in successful]
+        if not selected:
+            return await get_document_result(doc_id)
+        old_ids = {chunk['chunk_id'] for chunk in selected}
+        config = copy.deepcopy(extraction_config.load())
+        if doc.get('reparse_history') and successful:
+            config.setdefault('llm', {})['max_chunk_chars'] = min(int(config.get('llm', {}).get('max_chunk_chars', 12000)), 1200)
+        result = await extract(extraction.get('mode','llm'), selected, template, doc_id, doc['doc_title'], config, controller=controller)
+        doc['parsed']['chunks'] = [chunk for chunk in doc['parsed']['chunks'] if chunk['chunk_id'] not in old_ids] + selected
+        for key, values in [('entities', result.entities), ('suggested_relations', result.suggested_relations), ('suggested_rules', result.suggested_rules)]:
+            existing = [item for item in doc.get(key) or [] if (item.get('chunk_id') or (item.get('source') or {}).get('chunk_id')) not in old_ids]
+            doc[key] = existing + values
+        new_coverage = result.metadata.get('coverage') or {}
+        successful.update(item['chunk_id'] for item in new_coverage.get('items') or [] if item['status'] == 'processed')
+        excluded.update(item['chunk_id'] for item in new_coverage.get('items') or [] if item['status'] == 'excluded')
+        coverage = coverage_report(doc['parsed']['chunks'], successful, {chunk['chunk_id'] for chunk in doc['parsed']['chunks']}, excluded)
+        metadata = {**extraction.get('metadata', {}), **result.metadata, 'coverage': coverage}
+        doc.setdefault('reparse_history', []).append({'at': _now(), 'previous_coverage': old_coverage,
+                                                     'previous_warnings': extraction.get('warnings', []), 'retried_chunks': sorted(old_ids)})
+        doc['extraction'] = {**extraction, 'metadata': metadata, 'warnings': result.warnings}
+        if digest(_load_doc(doc_id)) != digest(original) or _parsed_path(doc_id).read_bytes() != baseline_bytes:
+            raise HTTPException(409, "文档已被修改，请刷新后重新解析")
+        # Keep a recoverable copy; no graph or clinical rule is imported here.
+        backup = _parsed_path(doc_id).with_suffix('.before-reparse.json')
+        backup.write_text(json.dumps({k:v for k,v in previous.items() if k != 'file_path'}, ensure_ascii=False), encoding='utf-8')
+        _persist_doc(doc)
+        _doc_store[doc_id] = doc
+        return await get_document_result(doc_id)
+
+
+@router.post('/{doc_id}/reparse')
+async def retry_document_extraction(doc_id: str):
+    return await reparse_document(doc_id)

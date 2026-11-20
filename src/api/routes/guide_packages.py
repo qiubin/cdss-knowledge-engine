@@ -371,6 +371,7 @@ def _selected_target(
     candidates = [
         item for item in entities
         if item.get("entity_type") in anchor_types and item.get("code")
+        and not (item.get("discovered_from") == "relation" and item.get("name") == item.get("code"))
     ]
     label = "/".join(anchor_types)
     if requested:
@@ -845,6 +846,9 @@ async def generate_package(request: GuidePackageGenerateRequest):
         raise HTTPException(422, "生成状态只支持 generated 或 reviewed")
 
     entities: List[Dict[str, Any]] = doc.get("entities", [])
+    coverage = (doc.get("extraction", {}).get("metadata") or {}).get("coverage") or {}
+    if coverage.get("complete") is False or not entities:
+        raise HTTPException(409, "解析覆盖不完整或抽取结果为空，请先重新解析后生成知识包")
     template_id = _selected_template_id(doc, request.template_id, request.domain)
     template_meta = next(
         (item for item in _load_templates() if item.get("template_id") == template_id),
@@ -857,7 +861,9 @@ async def generate_package(request: GuidePackageGenerateRequest):
     )
     profile = get_profile(domain)
     graph_target = _resolve_graph_target(
-        request.graph_target, domain, template_id, request.doc_id
+        request.graph_target or ({"mode": "legacy", "filename": doc.get("extraction", {}).get("graph_filename")}
+                                 if doc.get("extraction", {}).get("graph_filename") else None),
+        domain, template_id, request.doc_id
     )
     anchor_types = profile.graph.anchor_types
     target = _selected_target(entities, request.target_disease_code, anchor_types)
