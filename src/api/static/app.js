@@ -5514,7 +5514,7 @@
     const queueUrl = `/api/review/queue?limit=300${queueItemType ? `&item_type=${queueItemType}` : ""}${filterParams}${query ? `&q=${encodeURIComponent(query)}` : ""}`;
     const [queue, audit] = await Promise.all([
       api(queueUrl),
-      tab === "audit" ? api("/api/review/audit?limit=100") : Promise.resolve({ items: [] }),
+      tab === "audit" ? api("/api/review/audit?limit=300") : Promise.resolve({ items: [] }),
       state.reviewDocOptions === null
         ? api("/api/pdf/documents").then((items) => { state.reviewDocOptions = items; }).catch(() => { state.reviewDocOptions = []; })
         : Promise.resolve(),
@@ -5580,18 +5580,48 @@
 
     if (tab === "audit") {
       const statusBadge = (value) => value ? reviewBadge(value) : '<span class="muted">-</span>';
-      const auditRows = (audit.items || []).map((row) => `<tr>
-        <td class="nowrap">${esc(formatTime(row.ts))}</td>
-        <td>${esc(row.entity_type || "-")}</td>
-        <td class="mono">${esc(row.entity_id || "-")}</td>
-        <td>${esc(row.action || "-")}</td>
-        <td>${statusBadge(row.before_status)} → ${statusBadge(row.after_status)}</td>
-        <td>${esc(row.reviewer || "-")}</td>
-        <td>${esc(row.note || "-")}</td>
-      </tr>`);
+      // 日志 entity_type 与队列 item_type 键不同（node/relation/rule/clinical_basis/graph_node）。
+      const auditTypeLabel = { node: "实体", relation: "关系", rule: "规则", clinical_basis: "诊疗依据", graph_node: "实体" };
+      // 列顺序：意见放中间（条目之后）；条目列可开关隐藏。
+      const showSubject = state.auditShowSubject !== false;
+      const auditHeaders = ["时间", "类型", ...(showSubject ? ["条目"] : []), "意见", "动作", "状态变化", "审核人"];
+      const buildAuditItems = (withSubject) => (audit.items || []).map((row) => {
+        const typeLabel = row.entity_label || auditTypeLabel[row.entity_type] || row.entity_type || "-";
+        const subjectHtml = row.entity_name
+          ? `<strong>${esc(row.entity_name)}</strong>${row.entity_code ? `<span class="mono muted"> ${esc(row.entity_code)}</span>` : ""}<div class="mono muted" style="font-size:11px">${esc(row.entity_id || "-")}</div>`
+          : `<span class="mono">${esc(row.entity_id || "-")}</span>`;
+        const cells = [
+          `<td class="nowrap">${esc(formatTime(row.ts))}</td>`,
+          `<td><span class="type-chip">${esc(typeLabel)}</span></td>`,
+          ...(withSubject ? [`<td>${subjectHtml}</td>`] : []),
+          `<td>${esc(row.note || "-")}</td>`,
+          `<td>${esc(row.action || "-")}</td>`,
+          `<td>${statusBadge(row.before_status)} → ${statusBadge(row.after_status)}</td>`,
+          `<td>${esc(row.reviewer || "-")}</td>`,
+        ];
+        return {
+          text: [typeLabel, row.entity_name, row.entity_code, row.entity_id, row.action, row.note, row.reviewer].filter(Boolean).join(" "),
+          html: `<tr>${cells.join("")}</tr>`,
+        };
+      });
       pageEl.innerHTML = `<div class="review-tabs">${tabHtml}</div>${reviewCategoriesHtml()}
-        ${panel("审核记录", table(["时间", "类型", "条目", "动作", "状态变化", "审核人", "意见"], auditRows), "", "全量审核动作的追加式日志；拒绝原因码会记录在意见前缀 [原因码] 中")}`;
+        ${pagedPanel({
+          key: "reviewAudit",
+          title: "审核记录",
+          description: "全量审核动作的追加式日志；条目显示实体类型与名称（名称下为原始 ID），拒绝原因码记录在意见前缀 [原因码] 中",
+          headers: auditHeaders,
+          items: buildAuditItems(showSubject),
+          actions: `<label class="muted"><input type="checkbox" id="auditShowSubject" ${showSubject ? "checked" : ""}> 显示条目</label>`,
+        })}`;
       bindReviewTabs();
+      bindPagedTable("reviewAudit");
+      $("#auditShowSubject")?.addEventListener("change", (event) => {
+        state.auditShowSubject = event.target.checked;
+        const withSubject = Boolean(event.target.checked);
+        pagedTableData.reviewAudit.headers = ["时间", "类型", ...(withSubject ? ["条目"] : []), "意见", "动作", "状态变化", "审核人"];
+        pagedTableData.reviewAudit.items = buildAuditItems(withSubject);
+        renderTableBody("reviewAudit");
+      });
       return;
     }
 
@@ -5854,8 +5884,13 @@
     // 无疾病连接的证候进「未归属证候」区，保证任何主体都有审核入口。
     // 病→证分组是中医图谱特有结构：图谱里没有任何证候归属时（西医图谱
     // 只有疾病主体），退回平铺列表，不显示空组头。
-    const visibleSubject = (subject) => subject.node_type !== "syndrome" || subject.review_status === "active";
-    const diseaseGroups = (groups.disease_groups || []).map((group) => {
+    // 疾病组头与平铺列表都不再显示被拒/退役疾病（终态噪声，名下关系已永久
+    // 阻塞）；证候仍仅 active 可见（草稿证候经疾病卡片内的关系审核处理）。
+    const hiddenSubjectStatuses = ["rejected", "retired"];
+    const visibleSubject = (subject) => subject.node_type === "syndrome"
+      ? subject.review_status === "active"
+      : !hiddenSubjectStatuses.includes(subject.review_status);
+    const diseaseGroups = (groups.disease_groups || []).filter((group) => visibleSubject(group.disease)).map((group) => {
       const syndromes = group.syndromes.filter((item) => visibleSubject(item) && item.membership_status === "active");
       return {
         ...group,

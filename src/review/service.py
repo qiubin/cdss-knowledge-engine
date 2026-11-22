@@ -29,6 +29,7 @@ from .precheck import (
     duplicate_relation_pairs,
     load_endpoint_type_map,
     relation_flags,
+    type_label,
 )
 from .status import StatusTransitionError, next_graph_status
 
@@ -116,6 +117,90 @@ class ReviewService:
     # ---- audit ----
     def audit_records(self, **filters) -> List[Dict[str, Any]]:
         return load_audit(path=self.audit_path, **filters)
+
+    def audit_records_enriched(
+        self,
+        entity_id: str = "",
+        graph_filename: str = "",
+        limit: int = 200,
+    ) -> List[Dict[str, Any]]:
+        """审核日志读时富化：把机械的 entity_id 解析成可读的类型与名称。
+
+        日志是追加式的，历史记录只有 ID；实体/关系/规则在图谱与规则库里
+        可按稳定 ID 反查，因此在读取侧统一补齐展示字段，存量记录同样受益。
+        反查不到（图谱已删、实体已清）时保留原字段，前端回退显示 ID。
+        """
+        rows = self.audit_records(entity_id=entity_id, graph_filename=graph_filename, limit=limit)
+        graphs: Dict[str, Dict[str, Any]] = {}
+        for row in rows:
+            filename = str(row.get("graph_filename") or "")
+            if filename and filename not in graphs:
+                try:
+                    graphs[filename] = self._load_graph(filename)
+                except Exception:
+                    graphs[filename] = {}
+        rules_by_id = {
+            str(rule.get("rule_id") or ""): rule
+            for rule in self._load_rules()
+            if rule.get("rule_id")
+        }
+
+        def node_ref(graph: Dict[str, Any], node_id: str) -> Dict[str, Any]:
+            node = (graph.get("nodes") or {}).get(node_id) or {}
+            return {
+                "name": str(node.get("display_name") or node.get("name") or ""),
+                "node_type": str(node.get("node_type") or ""),
+                "code": str(node.get("code") or node.get("concept_code") or ""),
+            }
+
+        for row in rows:
+            entity_type = str(row.get("entity_type") or "")
+            raw_id = str(row.get("entity_id") or "")
+            graph = graphs.get(str(row.get("graph_filename") or ""), {})
+            if entity_type == "node":
+                ref = node_ref(graph, raw_id)
+                row["entity_label"] = type_label(ref["node_type"])
+                row["entity_name"] = ref["name"]
+                row["entity_code"] = ref["code"]
+            elif entity_type == "relation" and raw_id.count("|") == 2:
+                source_id, code, target_id = raw_id.split("|")
+                source, target = node_ref(graph, source_id), node_ref(graph, target_id)
+                relation = (graph.get("relations") or {}).get(
+                    (source_id, code, target_id)) or {}
+                rel_name = str(relation.get("relation_name")
+                               or DEFAULT_RELATION_NAMES.get(code) or code)
+                row.update({
+                    "entity_label": "关系",
+                    "entity_name": f"{source['name'] or source_id} —{rel_name}→ {target['name'] or target_id}",
+                    "relation_code": code,
+                    "source_node_type": source["node_type"],
+                    "source_name": source["name"],
+                    "target_node_type": target["node_type"],
+                    "target_name": target["name"],
+                })
+            elif entity_type == "rule":
+                rule = rules_by_id.get(raw_id) or {}
+                row["entity_label"] = "规则"
+                row["entity_name"] = str(rule.get("name") or "")
+            elif entity_type == "clinical_basis":
+                basis = next(
+                    (b for b in (graph.get("clinical_bases") or [])
+                     if str(b.get("basis_id") or "") == raw_id),
+                    {},
+                )
+                spec = basis.get("specification") or {}
+                row["entity_label"] = "诊疗依据"
+                row["entity_name"] = str(basis.get("name") or spec.get("disease_name") or "")
+            elif entity_type == "graph_node" and not row.get("graph_filename"):
+                # 历史 merge 记录没有图谱归属，在已加载缓存里尽力反查一次。
+                for candidate in graphs.values():
+                    ref = node_ref(candidate, raw_id)
+                    if ref["name"]:
+                        row["entity_label"] = type_label(ref["node_type"])
+                        row["entity_name"] = ref["name"]
+                        row["entity_code"] = ref["code"]
+                        break
+        return rows
 
     def _persist(
         self,
@@ -385,6 +470,11 @@ class ReviewService:
         claimed = set()
         for subject in subjects:
             if subject["node_type"] != "disease":
+                continue
+            # 已拒绝/退役的疾病是审核终态：其名下归属关系永久阻塞，组不再
+            # 提供审核入口，不进列表。跳过时成员也不计入 claimed，draft/stale
+            # 证候落入 orphan_syndromes，审核入口得以保留。
+            if subject["review_status"] in ("rejected", "retired"):
                 continue
             members = []
             for member in memberships.get(subject["node_id"], {}).values():

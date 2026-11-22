@@ -236,3 +236,83 @@ class ReviewServiceTest(unittest.TestCase):
         items = self.service.list_items("REVIEW-TEST.json", status="draft", item_type="node")
         self.assertEqual(len(items), 1)
         self.assertEqual(items[0]["node_id"], "ENTITY:symptom:SYM_DRAFT")
+
+
+class AuditEnrichmentTest(unittest.TestCase):
+    """审核日志读时富化：entity_id 解析成类型/名称，存量机械记录可读。"""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        root = Path(self.tmp.name)
+        self.graph_dir = root / "kg"
+        self.graph_dir.mkdir()
+        self.rules_path = root / "rules" / "managed_rules.json"
+        self.rules_path.parent.mkdir()
+        self.audit_path = root / "review" / "review_log.jsonl"
+        graph = {**GRAPH, "clinical_bases": [{
+            "basis_id": "CB-TEST1",
+            "name": "心梗诊断依据",
+            "specification": {"disease_code": "I21.0", "disease_name": "测试病"},
+        }]}
+        (self.graph_dir / "REVIEW-TEST.json").write_text(
+            json.dumps(graph, ensure_ascii=False), encoding="utf-8"
+        )
+        self.rules_path.write_text(json.dumps([RULE], ensure_ascii=False), encoding="utf-8")
+        self.audit_path.parent.mkdir()
+        records = [
+            {"action": "reject", "entity_type": "node", "entity_id": "ENTITY:symptom:SYM_DRAFT",
+             "graph_filename": "REVIEW-TEST.json", "before_status": "draft", "after_status": "rejected",
+             "reviewer": "丘丘", "note": "噪声"},
+            {"action": "approve", "entity_type": "relation",
+             "entity_id": "ENTITY:disease:I21.0|DISEASE_HAS_SYMPTOM|ENTITY:symptom:SYM_TEST",
+             "graph_filename": "REVIEW-TEST.json", "before_status": "active", "after_status": "active",
+             "reviewer": "丘丘", "note": ""},
+            {"action": "approve", "entity_type": "rule", "entity_id": "R1",
+             "graph_filename": "REVIEW-TEST.json", "before_status": "blocked", "after_status": "active",
+             "reviewer": "丘丘", "note": ""},
+            {"action": "approve", "entity_type": "clinical_basis", "entity_id": "CB-TEST1",
+             "graph_filename": "REVIEW-TEST.json", "reviewer": "丘丘", "note": ""},
+            # 图谱缺失/实体不存在的记录保留原字段，前端回退显示 ID。
+            {"action": "reject", "entity_type": "node", "entity_id": "ENTITY:symptom:GONE",
+             "graph_filename": "MISSING.json", "reviewer": "丘丘", "note": ""},
+        ]
+        with self.audit_path.open("a", encoding="utf-8") as handle:
+            for record in records:
+                handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+        self.service = ReviewService(self.graph_dir, self.rules_path, self.audit_path)
+
+    def _by_id(self):
+        rows = self.service.audit_records_enriched()
+        return {row["entity_id"]: row for row in rows}
+
+    def test_node_record_resolves_type_and_name(self):
+        row = self._by_id()["ENTITY:symptom:SYM_DRAFT"]
+        self.assertEqual(row["entity_label"], "症状")
+        # display_name 与图谱页一致（名称（编码）），富化沿用同一展示口径。
+        self.assertEqual(row["entity_name"], "待审症状（SYM_DRAFT）")
+
+    def test_relation_record_resolves_endpoints_and_relation_name(self):
+        row = self._by_id()["ENTITY:disease:I21.0|DISEASE_HAS_SYMPTOM|ENTITY:symptom:SYM_TEST"]
+        self.assertEqual(row["entity_label"], "关系")
+        self.assertTrue(row["source_name"].startswith("测试病"))
+        self.assertTrue(row["target_name"].startswith("测试症状"))
+        self.assertEqual(row["source_node_type"], "disease")
+        self.assertIn("疾病有症状", row["entity_name"])
+        self.assertIn("测试病", row["entity_name"])
+        self.assertIn("测试症状", row["entity_name"])
+
+    def test_rule_record_resolves_name(self):
+        row = self._by_id()["R1"]
+        self.assertEqual(row["entity_label"], "规则")
+        self.assertEqual(row["entity_name"], "测试规则")
+
+    def test_clinical_basis_record_resolves_name(self):
+        row = self._by_id()["CB-TEST1"]
+        self.assertEqual(row["entity_label"], "诊疗依据")
+        self.assertEqual(row["entity_name"], "心梗诊断依据")
+
+    def test_unresolvable_records_keep_raw_fields(self):
+        row = self._by_id()["ENTITY:symptom:GONE"]
+        self.assertEqual(row["entity_name"], "")
+        self.assertEqual(row["entity_id"], "ENTITY:symptom:GONE")

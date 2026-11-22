@@ -294,6 +294,50 @@ class RelationGroupsTest(unittest.TestCase):
         detail = self.service.relation_group_detail("REVIEW-TEST2.json", node["id"])
         self.assertEqual(detail["sections"], [])
 
+    def test_rejected_or_retired_disease_not_grouped(self):
+        # 被拒/退役疾病是审核终态：不出组、不认领证候，名下 draft 证候落入
+        # orphan_syndromes 保留审核入口；active 疾病照常分组。
+        rejected_id = "ENTITY:disease:D1"
+        retired_id = "ENTITY:disease:D2"
+        active_id = "ENTITY:disease:D9"
+        claimed_syndrome = "ENTITY:syndrome:SYN1"
+        orphan_rejected = "ENTITY:syndrome:SYN2"
+        orphan_retired = "ENTITY:syndrome:SYN3"
+        membership = lambda source: {
+            "source_node_id": source, "relation_code": "DISEASE_HAS_MAIN_SYNDROME",
+            "target_node_id": claimed_syndrome if source == active_id else (
+                orphan_rejected if source == rejected_id else orphan_retired),
+            "review_status": "draft",
+        }
+        graph = {
+            "domain": "tcm",
+            "nodes": [
+                {"id": rejected_id, "node_type": "disease", "code": "D1", "name": "感冒", "review_status": "rejected"},
+                {"id": retired_id, "node_type": "disease", "code": "D2", "name": "旧病", "review_status": "retired"},
+                {"id": active_id, "node_type": "disease", "code": "D9", "name": "心衰", "review_status": "active"},
+                {"id": claimed_syndrome, "node_type": "syndrome", "code": "SYN1", "name": "气虚血瘀", "review_status": "draft"},
+                {"id": orphan_rejected, "node_type": "syndrome", "code": "SYN2", "name": "风寒束表", "review_status": "draft"},
+                {"id": orphan_retired, "node_type": "syndrome", "code": "SYN3", "name": "风热犯表", "review_status": "draft"},
+            ],
+            "relations": [membership(rejected_id), membership(retired_id), membership(active_id)],
+        }
+        (self.graph_dir / "REVIEW-GROUPED.json").write_text(
+            json.dumps(graph, ensure_ascii=False), encoding="utf-8",
+        )
+        groups = self.service.relation_groups("REVIEW-GROUPED.json")
+        self.assertEqual({g["disease"]["node_id"] for g in groups["disease_groups"]}, {active_id})
+        self.assertEqual(
+            {m["node_id"] for m in groups["disease_groups"][0]["syndromes"]}, {claimed_syndrome},
+        )
+        self.assertEqual(
+            {o["node_id"] for o in groups["orphan_syndromes"]}, {orphan_rejected, orphan_retired},
+        )
+        # subjects 保留全部主体（兼容字段，供名称回查等使用）。
+        self.assertEqual(
+            {s["node_id"] for s in groups["subjects"]},
+            {rejected_id, retired_id, active_id, claimed_syndrome, orphan_rejected, orphan_retired},
+        )
+
     def test_group_detail_sections_and_container_nesting(self):
         detail = self.service.relation_group_detail("REVIEW-TEST2.json", "ENTITY:disease:D1")
         by_code = {section["relation_code"]: section for section in detail["sections"]}

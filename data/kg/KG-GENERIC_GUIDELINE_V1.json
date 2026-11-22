@@ -71,7 +71,7 @@
         }
       ],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:disease:I42.1",
@@ -106,7 +106,7 @@
       "reviewed_at": "2026-11-18T07:30:24.478570+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.123269+00:00"
     },
     {
       "id": "ENTITY:disease:I48",
@@ -130,7 +130,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:symptom:SYM_CHEST_PAIN",
@@ -163,7 +163,7 @@
       "reviewed_at": "2026-11-18T07:26:21.027979+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:symptom:SYM_DIZZINESS",
@@ -190,7 +190,7 @@
       "reviewed_at": "2026-11-18T07:26:21.047971+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:lab:CTN",
@@ -232,7 +232,7 @@
         "base_hash": "sha256:725c7f5aece01c52b40e3a51861e616ae903942a1728fed8f9c24fcd9846a704"
       },
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:exam:MRI_SCAN",
@@ -274,7 +274,7 @@
         }
       ],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:exam:ECG_12LEAD",
@@ -320,7 +320,7 @@
         }
       ],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:exam:CORONARY_ANGIO",
@@ -347,7 +347,7 @@
       "reviewed_at": "2026-11-18T07:26:20.715904+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:exam:CT_SCAN",
@@ -379,7 +379,7 @@
       "reviewed_at": "2026-11-18T07:26:20.736695+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.582157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:exam:BIOPSY",
@@ -419,7 +419,7 @@
         }
       ],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:disease:I25",
@@ -448,7 +448,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:I35.0",
@@ -473,7 +473,7 @@
       "reviewed_at": "2026-11-19T07:52:48.180028+00:00",
       "review_note": "",
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:treatment_plan:TP-HCM-SEPTAL-REDUCTION",
@@ -591,7 +591,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:CAND-ATTRm-CMP-001",
@@ -613,7 +613,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:CAND-ATTRwt-CMP-001",
@@ -626,7 +626,7 @@
       "source_refs": [
         "DOC-29e50309_p11_l30-75"
       ],
-      "review_status": "draft",
+      "review_status": "rejected",
       "version": 1,
       "content_hash": "sha256:242f2d96508a4af3466a65cfce04825020d9cf0338a3f9a3dce71c5094cc0aea",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
@@ -635,7 +635,10 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00",
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-22T15:16:36.626935+00:00",
+      "review_note": "[证据不足]"
     },
     {
       "id": "ENTITY:disease:D-CAND-FABRY",
@@ -660,7 +663,7 @@
       "reviewed_at": "2026-11-18T08:12:05.343641+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:symptom:SYM_CAND_NEURO_PAIN",
@@ -685,7 +688,7 @@
       "reviewed_at": "2026-11-18T08:12:05.519565+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:lab:LAB_CAND_AGAL_A",
@@ -710,7 +713,7 @@
       "reviewed_at": "2026-11-18T08:12:05.540976+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:disease:GEN-CAND-GSD",
@@ -735,7 +738,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:GEN-CAND-DANON",
@@ -759,7 +762,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:GEN-CAND-PRKAG2",
@@ -774,7 +777,7 @@
       "source_refs": [
         "DOC-29e50309_p11_l104-32"
       ],
-      "review_status": "draft",
+      "review_status": "rejected",
       "version": 1,
       "content_hash": "sha256:e281b50c0ee8b0c13d301d24a5093d6de6f45e1a0c13d716589d77d067bd8d56",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
@@ -783,7 +786,10 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00",
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-22T15:17:04.153259+00:00",
+      "review_note": "[证据不足]"
     },
     {
       "id": "ENTITY:lab:CK_MB",
@@ -809,7 +815,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:exam:IMMUNOHISTOCHEMISTRY",
@@ -834,7 +840,7 @@
       "reviewed_at": "2026-11-18T07:26:20.777660+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:exam:PCR_TEST",
@@ -859,7 +865,7 @@
       "reviewed_at": "2026-11-18T07:26:20.797889+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:lab:CAND-BLOOD-LACTATE",
@@ -898,7 +904,7 @@
       "reviewed_at": "2026-11-18T08:42:40.351620+00:00",
       "review_note": "[AI审核建议] 原文明确支持线粒体疾病需开展血乳酸检验（实验室检查血乳酸、丙酮酸最小运动量试验阳性），关系代码DISEASE_HAS_LAB与方向正确；但目标实体使用内部候选码且名称为机器格式，建议改为规范中文名称。",
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:disease:CAND-G11.8-FRIEDREICH",
@@ -923,7 +929,7 @@
       "reviewed_at": "2026-11-19T03:33:18.790426+00:00",
       "review_note": "",
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:exam:CAND-GENETIC-TESTING",
@@ -953,7 +959,7 @@
       "reviewed_at": "2026-11-18T07:26:20.817708+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:disease:HEMOCHROMATOSIS_CAND",
@@ -969,7 +975,7 @@
       "source_refs": [
         "DOC-29e50309_p12_l65-83"
       ],
-      "review_status": "draft",
+      "review_status": "rejected",
       "version": 1,
       "content_hash": "sha256:84a9f3effed8eea80f858217a11abb306dcc31cc753464c44af839c7eebc4cfa",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
@@ -978,7 +984,10 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00",
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-22T15:19:19.154914+00:00",
+      "review_note": "[证据不足]"
     },
     {
       "id": "ENTITY:disease:CAND-DISEASE-QIXING",
@@ -991,7 +1000,7 @@
       "source_refs": [
         "DOC-29e50309_p12_l84-96"
       ],
-      "review_status": "draft",
+      "review_status": "rejected",
       "version": 1,
       "content_hash": "sha256:b1b9fbc153385abc6659fa4bfcb3bf647229e7ac4497ea8a5fcbc962fcc34b9e",
       "last_imported_at": "2026-11-18T06:32:37.939317+00:00",
@@ -1000,7 +1009,10 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00",
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-22T14:56:19.304182+00:00",
+      "review_note": "[证据不足]"
     },
     {
       "id": "ENTITY:disease:CAND-DISEASE-NOONAN",
@@ -1022,7 +1034,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:CAND-DISEASE-LEOPARD",
@@ -1044,7 +1056,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:CAND-DISEASE-COSTELLO",
@@ -1069,7 +1081,7 @@
       "reviewed_at": "2026-11-19T01:49:26.448378+00:00",
       "review_note": "",
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:CAND-DISEASE-CFC",
@@ -1091,7 +1103,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:CAND-I46.1",
@@ -1113,7 +1125,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:treatment_plan:TP-STEMI-REPERFUSION",
@@ -1262,7 +1274,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:treatment_plan:TP-HCM-OBSTRUCTIVE-MEDICAL",
@@ -1409,7 +1421,7 @@
       "reviewed_at": "2026-11-18T07:30:24.509865+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:symptom:SYM_HYPOTENSION",
@@ -1435,7 +1447,7 @@
       "reviewed_at": "2026-11-18T07:30:24.532966+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:medication:VERAPAMIL",
@@ -2537,7 +2549,7 @@
         }
       ],
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:LVOT_OBSTRUCTION",
@@ -2571,7 +2583,7 @@
       "reviewed_at": "2026-11-18T07:26:20.860415+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:SAM",
@@ -2601,7 +2613,7 @@
       "reviewed_at": "2026-11-18T07:26:20.882092+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:PATHOLOGICAL_Q_WAVE",
@@ -2628,7 +2640,7 @@
       "reviewed_at": "2026-11-18T07:26:20.987153+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:LVH_VOLTAGE",
@@ -2676,7 +2688,7 @@
         }
       ],
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:ST_T_CHANGE",
@@ -2714,7 +2726,7 @@
         }
       ],
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:CTN:ELEVATED",
@@ -2739,7 +2751,7 @@
       "reviewed_at": "2026-11-18T07:26:21.251662+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:T_WAVE_INVERSION",
@@ -2766,7 +2778,7 @@
       "reviewed_at": "2026-11-18T07:26:20.966752+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:PATHOLOGY_CONFIRMED",
@@ -2802,7 +2814,7 @@
         }
       ],
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:CAND-EVIDENCE-MAPK-VARIANT",
@@ -2835,7 +2847,7 @@
       "reviewed_at": "2026-11-18T15:55:42.538760+00:00",
       "review_note": "人工修正实体名称",
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:CAND-EVIDENCE-EXTRACARDIAC",
@@ -2868,7 +2880,7 @@
       "reviewed_at": "2026-11-18T15:56:03.027593+00:00",
       "review_note": "人工修正实体名称",
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:symptom:CAND-SYN-FAINT",
@@ -2902,7 +2914,7 @@
       "reviewed_at": "2026-11-18T07:26:21.130080+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:CTN:ABOVE_ULN_1",
@@ -2927,7 +2939,7 @@
       "reviewed_at": "2026-11-18T07:26:21.272054+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:CBC:ABNORMAL",
@@ -2952,7 +2964,7 @@
       "reviewed_at": "2026-11-18T07:26:21.292240+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:LAB_CAND_AGAL_A:ABNORMAL",
@@ -2985,7 +2997,7 @@
       "reviewed_at": "2026-11-18T08:12:05.431449+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:CK_MB:ABOVE_ULN_1",
@@ -3018,7 +3030,7 @@
       "reviewed_at": "2026-11-19T03:32:02.300073+00:00",
       "review_note": "人工修正实体名称",
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:CAND-BLOOD-LACTATE:ABNORMAL",
@@ -3051,7 +3063,7 @@
       "reviewed_at": "2026-11-18T07:26:21.312641+00:00",
       "review_note": "按疾病查看：人工核对后通过勾选实体",
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:CAND-BLOOD-LACTATE:POSITIVE",
@@ -3099,7 +3111,7 @@
       "content_hash": "sha256:8ac2f103e8abfd52c9d157f6407937c117a6892d4765579c3b030b412ef87ca0",
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:symptom:SYM_SYNCOPE",
@@ -3116,7 +3128,7 @@
       "content_hash": "sha256:943ce14e8ded82bcaa934e85901fa2923677a6cb0baed0e40926412e6aaa526f",
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:exam:GENETIC_TEST",
@@ -3133,7 +3145,7 @@
       "content_hash": "sha256:ffec0130a0a8e4bb668495057d1a43c74604781b5abd7fde9aa1612155453312",
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:symptom:SYM_CYANOTIC_LIPS",
@@ -3158,7 +3170,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.582157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:disease:I42.9",
@@ -3183,7 +3195,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:lab:COAGULATION",
@@ -3205,7 +3217,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:exam:ULTRASOUND",
@@ -3228,7 +3240,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-B5186E0F",
@@ -3250,7 +3262,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-87B1D622",
@@ -3272,7 +3284,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-682526FA",
@@ -3294,7 +3306,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-4E264647",
@@ -3316,7 +3328,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-04D2B9AE",
@@ -3338,7 +3350,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-6AA497B8",
@@ -3360,7 +3372,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-511CE83D",
@@ -3382,7 +3394,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-E962B538",
@@ -3404,7 +3416,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-842B025C",
@@ -3426,7 +3438,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-86AE9B40",
@@ -3449,7 +3461,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-383F818E",
@@ -3471,7 +3483,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-242EE7A6",
@@ -3493,7 +3505,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-AB22710A",
@@ -3515,7 +3527,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-76E27874",
@@ -3537,7 +3549,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-A2D5B777",
@@ -3559,7 +3571,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-DB17D415",
@@ -3581,7 +3593,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-94BC08E4",
@@ -3603,7 +3615,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-4972B65B",
@@ -3625,7 +3637,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-A6375D7D",
@@ -3647,7 +3659,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-FCDF630C",
@@ -3660,7 +3672,7 @@
       "source_refs": [
         "DOC-15fe3666_p6_l35-59_part2"
       ],
-      "review_status": "draft",
+      "review_status": "rejected",
       "version": 1,
       "content_hash": "sha256:fad94a547621874cbed87cbe1464ecd0f32684cddc767f651c079c966046dc35",
       "last_imported_at": "2026-11-21T03:39:04.386461+00:00",
@@ -3669,7 +3681,10 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00",
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-22T15:16:04.682431+00:00",
+      "review_note": "[证据不足]"
     },
     {
       "id": "ENTITY:disease:AUTO-46CA5E4E",
@@ -3691,7 +3706,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-FF94CA7D",
@@ -3713,7 +3728,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-827A8272",
@@ -3735,7 +3750,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-40ECC85A",
@@ -3757,7 +3772,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-E78AB949",
@@ -3779,7 +3794,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-EA9C90CF",
@@ -3801,7 +3816,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-115768D4",
@@ -3823,7 +3838,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-F235853D",
@@ -3846,7 +3861,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-CB7E77D1",
@@ -3868,7 +3883,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-7A1BDBD1",
@@ -3890,7 +3905,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-B2F2C13F",
@@ -3912,7 +3927,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-90FA07E7",
@@ -3934,7 +3949,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-CB19232F",
@@ -3956,7 +3971,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-64E58C7D",
@@ -3978,7 +3993,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:lab:CRP",
@@ -4001,7 +4016,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:lab:RENAL_FUNCTION",
@@ -4023,7 +4038,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-8D95D66E",
@@ -4045,7 +4060,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-2A019A61",
@@ -4067,7 +4082,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-3E250584",
@@ -4089,7 +4104,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-D36F40FF",
@@ -4111,7 +4126,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-C69D91AF",
@@ -4133,7 +4148,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-010E444A",
@@ -4155,7 +4170,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-5E0CDC5D",
@@ -4177,7 +4192,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-4661DF42",
@@ -4200,7 +4215,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-CDD93A3C",
@@ -4222,7 +4237,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-58F7F075",
@@ -4244,7 +4259,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:treatment_plan:TP-STEMI-PRIMARY-PCI",
@@ -4277,7 +4292,7 @@
       "source_refs": [
         "DOC-15fe3666_p6_l35-59_part4"
       ],
-      "review_status": "draft",
+      "review_status": "rejected",
       "version": 1,
       "content_hash": "sha256:e5474991831494b3c44b83cb5344acc4e45805c1ac1124231f19408c73508000",
       "last_imported_at": "2026-11-21T03:39:04.386461+00:00",
@@ -4286,7 +4301,10 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00",
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-22T15:16:52.795076+00:00",
+      "review_note": "[证据不足]"
     },
     {
       "id": "ENTITY:disease:AUTO-8C7A0FE7",
@@ -4308,7 +4326,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-7E04FE66",
@@ -4330,7 +4348,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-AB7AF7BB",
@@ -4352,7 +4370,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-7D304A43",
@@ -4374,7 +4392,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-14E3BD6E",
@@ -4396,7 +4414,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-8B60AAAE",
@@ -4418,7 +4436,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-BE9B672C",
@@ -4440,7 +4458,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-52B1F046",
@@ -4462,7 +4480,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-3A838C28",
@@ -4484,7 +4502,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-550E823B",
@@ -4497,7 +4515,7 @@
       "source_refs": [
         "DOC-15fe3666_p6_l35-59_part4"
       ],
-      "review_status": "draft",
+      "review_status": "rejected",
       "version": 1,
       "content_hash": "sha256:870738bad4385525bd28359dbed3e73000c3a829a634af0bf5e5770b71d93de1",
       "last_imported_at": "2026-11-21T03:39:04.386461+00:00",
@@ -4506,7 +4524,10 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00",
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-22T15:16:17.823204+00:00",
+      "review_note": "[证据不足]"
     },
     {
       "id": "ENTITY:disease:AUTO-FB2C8ABF",
@@ -4528,7 +4549,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-C92C8F5C",
@@ -4550,7 +4571,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-E1657452",
@@ -4572,7 +4593,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-AFE4CD64",
@@ -4594,7 +4615,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-49987765",
@@ -4616,7 +4637,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-4B5BB7A8",
@@ -4638,7 +4659,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:disease:AUTO-364C29D0",
@@ -4660,7 +4681,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.553508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.578159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:INFARCTION",
@@ -4683,7 +4704,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:COAGULATION:ABNORMAL",
@@ -4705,7 +4726,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:CRP:ABNORMAL",
@@ -4728,7 +4749,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:RENAL_FUNCTION:ABNORMAL",
@@ -4750,7 +4771,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:lab:TROPONIN",
@@ -4772,7 +4793,7 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "id": "ENTITY:diagnostic_evidence:TROPONIN:ABNORMAL",
@@ -4794,7 +4815,383 @@
       ],
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
+    },
+    {
+      "id": "ENTITY:disease:I50.9",
+      "node_type": "disease",
+      "code": "I50.9",
+      "concept_code": "",
+      "name": "心力衰竭",
+      "display_name": "心力衰竭（I50.9）",
+      "attributes": {},
+      "source_refs": [],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.238822+00:00",
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
+    },
+    {
+      "id": "ENTITY:disease:I20",
+      "node_type": "disease",
+      "code": "I20",
+      "concept_code": "",
+      "name": "心绞痛",
+      "display_name": "心绞痛（I20）",
+      "attributes": {},
+      "source_refs": [],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.238822+00:00",
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
+    },
+    {
+      "id": "ENTITY:disease:I10",
+      "node_type": "disease",
+      "code": "I10",
+      "concept_code": "",
+      "name": "原发性高血压",
+      "display_name": "原发性高血压（I10）",
+      "attributes": {},
+      "source_refs": [],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.238822+00:00",
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
+    },
+    {
+      "id": "ENTITY:disease:AUTO-AEB1BB70",
+      "node_type": "disease",
+      "code": "AUTO-AEB1BB70",
+      "concept_code": "",
+      "name": "慢性心力衰竭",
+      "display_name": "慢性心力衰竭（AUTO-AEB1BB70）",
+      "attributes": {
+        "alt_codes": [
+          "LOCAL-DIS-500C05FDBB"
+        ]
+      },
+      "source_refs": [],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.238822+00:00",
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
+    },
+    {
+      "id": "ENTITY:disease:I21",
+      "node_type": "disease",
+      "code": "I21",
+      "concept_code": "",
+      "name": "急性心肌梗死",
+      "display_name": "急性心肌梗死（I21）",
+      "attributes": {},
+      "source_refs": [],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.239824+00:00",
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
+    },
+    {
+      "id": "ENTITY:disease:I42.0",
+      "node_type": "disease",
+      "code": "I42.0",
+      "concept_code": "",
+      "name": "扩张型心肌病",
+      "display_name": "扩张型心肌病（I42.0）",
+      "attributes": {},
+      "source_refs": [],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.239824+00:00",
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
+    },
+    {
+      "id": "ENTITY:disease:LOCAL-DIS-88342BF8C3",
+      "node_type": "disease",
+      "code": "LOCAL-DIS-88342BF8C3",
+      "concept_code": "",
+      "name": "射血分数降低的心力衰竭",
+      "display_name": "射血分数降低的心力衰竭（LOCAL-DIS-88342BF8C3）",
+      "attributes": {},
+      "source_refs": [],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.239824+00:00",
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
+    },
+    {
+      "id": "ENTITY:disease:LOCAL-DIS-8D2C213D78",
+      "node_type": "disease",
+      "code": "LOCAL-DIS-8D2C213D78",
+      "concept_code": "",
+      "name": "射血分数保留的心力衰竭",
+      "display_name": "射血分数保留的心力衰竭（LOCAL-DIS-8D2C213D78）",
+      "attributes": {},
+      "source_refs": [],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.239824+00:00",
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
+    },
+    {
+      "id": "ENTITY:disease:LOCAL-DIS-C6B6622D92",
+      "node_type": "disease",
+      "code": "LOCAL-DIS-C6B6622D92",
+      "concept_code": "",
+      "name": "射血分数中间值的心力衰竭",
+      "display_name": "射血分数中间值的心力衰竭（LOCAL-DIS-C6B6622D92）",
+      "attributes": {},
+      "source_refs": [],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.239824+00:00",
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
+    },
+    {
+      "id": "ENTITY:disease:LOCAL-DIS-613ED1419C",
+      "node_type": "disease",
+      "code": "LOCAL-DIS-613ED1419C",
+      "concept_code": "",
+      "name": "心律失常",
+      "display_name": "心律失常（LOCAL-DIS-613ED1419C）",
+      "attributes": {},
+      "source_refs": [],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.239824+00:00",
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
+    },
+    {
+      "id": "ENTITY:disease:LOCAL-DIS-DEC0FE6FCA",
+      "node_type": "disease",
+      "code": "LOCAL-DIS-DEC0FE6FCA",
+      "concept_code": "",
+      "name": "气虚血瘀证",
+      "display_name": "气虚血瘀证（LOCAL-DIS-DEC0FE6FCA）",
+      "attributes": {},
+      "source_refs": [],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.239824+00:00",
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
+    },
+    {
+      "id": "ENTITY:disease:LOCAL-DIS-396CFCB129",
+      "node_type": "disease",
+      "code": "LOCAL-DIS-396CFCB129",
+      "concept_code": "",
+      "name": "气阴两虚血瘀证",
+      "display_name": "气阴两虚血瘀证（LOCAL-DIS-396CFCB129）",
+      "attributes": {},
+      "source_refs": [],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.240825+00:00",
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
+    },
+    {
+      "id": "ENTITY:disease:LOCAL-DIS-9D272FCA27",
+      "node_type": "disease",
+      "code": "LOCAL-DIS-9D272FCA27",
+      "concept_code": "",
+      "name": "阳气亏虚血瘀证",
+      "display_name": "阳气亏虚血瘀证（LOCAL-DIS-9D272FCA27）",
+      "attributes": {},
+      "source_refs": [],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.240825+00:00",
+      "last_import_at": "2026-11-22T15:19:19.121270+00:00"
+    },
+    {
+      "id": "ENTITY:symptom:SYM_SHORTNESS_BREATH",
+      "node_type": "symptom",
+      "code": "SYM_SHORTNESS_BREATH",
+      "concept_code": "",
+      "name": "气短",
+      "display_name": "气短（SYM_SHORTNESS_BREATH）",
+      "attributes": {},
+      "source_refs": [
+        "DOC-29e50309_p2_l31-42",
+        "DOC-29e50309_p2_l43-59",
+        "DOC-29e50309_p3_l60-99",
+        "DOC-29e50309_p12_l97-22",
+        "DOC-29e50309_p13_l24-2",
+        "DOC-29e50309_p15_l61-87",
+        "DOC-29e50309_p16_l92-29",
+        "DOC-29e50309_p22_l24-37",
+        "DOC-15fe3666_p2_l14-20",
+        "DOC-15fe3666_p2_l21-28",
+        "DOC-15fe3666_p2_l29-39",
+        "DOC-15fe3666_p5_l8-34"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.245824+00:00",
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
+    },
+    {
+      "id": "ENTITY:symptom:SYM_PALPITATION",
+      "node_type": "symptom",
+      "code": "SYM_PALPITATION",
+      "concept_code": "",
+      "name": "心悸",
+      "display_name": "心悸（SYM_PALPITATION）",
+      "attributes": {},
+      "source_refs": [
+        "DOC-29e50309_p2_l31-42",
+        "DOC-29e50309_p3_l60-99",
+        "DOC-29e50309_p11_l30-75",
+        "DOC-29e50309_p12_l52-64",
+        "DOC-29e50309_p12_l97-22",
+        "DOC-29e50309_p13_l24-2",
+        "DOC-15fe3666_p2_l14-20",
+        "DOC-15fe3666_p2_l21-28",
+        "DOC-15fe3666_p2_l29-39",
+        "DOC-15fe3666_p5_l8-34"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.249833+00:00",
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
+    },
+    {
+      "id": "ENTITY:exam:ECHO",
+      "node_type": "exam",
+      "code": "ECHO",
+      "concept_code": "",
+      "name": "超声心动图",
+      "display_name": "超声心动图（ECHO）",
+      "attributes": {},
+      "source_refs": [
+        "DOC-29e50309_p2_l31-42",
+        "DOC-29e50309_p2_l43-59",
+        "DOC-29e50309_p5_l94-153",
+        "DOC-29e50309_p8_l13-61",
+        "DOC-29e50309_p11_l30-75",
+        "DOC-29e50309_p11_l76-103",
+        "DOC-29e50309_p11_l104-32",
+        "DOC-29e50309_p12_l33-51",
+        "DOC-29e50309_p12_l52-64",
+        "DOC-29e50309_p12_l65-83",
+        "DOC-29e50309_p12_l84-96",
+        "DOC-29e50309_p12_l97-22",
+        "DOC-29e50309_p13_l24-2",
+        "DOC-29e50309_p15_l3-50",
+        "DOC-29e50309_p16_l54-91",
+        "DOC-29e50309_p16_l92-29",
+        "DOC-29e50309_p15_l88-92",
+        "DOC-29e50309_p3_l100-20",
+        "DOC-29e50309_p17_l90-18",
+        "DOC-15fe3666_p6_l35-59_part1",
+        "DOC-15fe3666_p6_l35-59_part3"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.252832+00:00",
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
+    },
+    {
+      "id": "ENTITY:lab:BNP",
+      "node_type": "lab",
+      "code": "BNP",
+      "concept_code": "",
+      "name": "B型钠尿肽",
+      "display_name": "B型钠尿肽（BNP）",
+      "attributes": {},
+      "source_refs": [
+        "DOC-29e50309_p5_l6-25",
+        "DOC-15fe3666_p2_l45-69",
+        "DOC-15fe3666_p3_l13-87",
+        "DOC-15fe3666_p3_l89-100",
+        "DOC-15fe3666_p3_l101-14",
+        "DOC-15fe3666_p4_l15-63",
+        "DOC-15fe3666_p4_l72-4",
+        "DOC-15fe3666_p2_l70-12",
+        "DOC-15fe3666_p6_l35-59_part1",
+        "DOC-15fe3666_p6_l35-59_part2",
+        "DOC-15fe3666_p6_l35-59_part3",
+        "DOC-15fe3666_p6_l35-59_part4"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.257832+00:00",
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:BNP:ABNORMAL",
+      "node_type": "diagnostic_evidence",
+      "code": "BNP:ABNORMAL",
+      "concept_code": "ABNORMAL",
+      "name": "B型钠尿肽异常",
+      "display_name": "B型钠尿肽异常（BNP:ABNORMAL）",
+      "attributes": {},
+      "source_refs": [
+        "DOC-29e50309_p5_l6-25",
+        "DOC-15fe3666_p2_l70-12",
+        "DOC-15fe3666_p6_l35-59_part1",
+        "DOC-15fe3666_p6_l35-59_part2",
+        "DOC-15fe3666_p6_l35-59_part3",
+        "DOC-15fe3666_p6_l35-59_part4"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.261346+00:00",
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
+    },
+    {
+      "id": "ENTITY:lab:CBC",
+      "node_type": "lab",
+      "code": "CBC",
+      "concept_code": "",
+      "name": "血常规",
+      "display_name": "血常规（CBC）",
+      "attributes": {},
+      "source_refs": [
+        "DOC-29e50309_p5_l6-25"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.264355+00:00",
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
+    },
+    {
+      "id": "ENTITY:symptom:SYM_FATIGUE",
+      "node_type": "symptom",
+      "code": "SYM_FATIGUE",
+      "concept_code": "",
+      "name": "乏力",
+      "display_name": "乏力（SYM_FATIGUE）",
+      "attributes": {},
+      "source_refs": [
+        "DOC-29e50309_p11_l104-32",
+        "DOC-29e50309_p12_l97-22",
+        "DOC-29e50309_p13_l24-2",
+        "DOC-15fe3666_p2_l14-20",
+        "DOC-15fe3666_p2_l21-28",
+        "DOC-15fe3666_p2_l29-39",
+        "DOC-15fe3666_p5_l8-34"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.266353+00:00",
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
+    },
+    {
+      "id": "ENTITY:symptom:SYM_DRY_MOUTH",
+      "node_type": "symptom",
+      "code": "SYM_DRY_MOUTH",
+      "concept_code": "",
+      "name": "口干",
+      "display_name": "口干（SYM_DRY_MOUTH）",
+      "attributes": {},
+      "source_refs": [
+        "DOC-15fe3666_p2_l21-28",
+        "DOC-15fe3666_p5_l8-34"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.269352+00:00",
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
+    },
+    {
+      "id": "ENTITY:diagnostic_evidence:BNP:DECREASED",
+      "node_type": "diagnostic_evidence",
+      "code": "BNP:DECREASED",
+      "concept_code": "DECREASED",
+      "name": "B型钠尿肽降低",
+      "display_name": "B型钠尿肽降低（BNP:DECREASED）",
+      "attributes": {},
+      "source_refs": [
+        "DOC-15fe3666_p2_l45-69",
+        "DOC-15fe3666_p3_l13-87",
+        "DOC-15fe3666_p3_l89-100",
+        "DOC-15fe3666_p3_l101-14",
+        "DOC-15fe3666_p4_l15-63",
+        "DOC-15fe3666_p4_l72-4"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.271866+00:00",
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     }
   ],
   "relations": [
@@ -4827,7 +5224,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:I42.2",
@@ -4853,7 +5250,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:I42.2",
@@ -4978,7 +5375,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:I42.1",
@@ -5010,7 +5407,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.123269+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:I42.1",
@@ -5036,7 +5433,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.123269+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:I42.2",
@@ -5061,7 +5458,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:I42.2",
@@ -5086,7 +5483,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:I42.2",
@@ -5113,7 +5510,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:lab:CTN",
@@ -5137,7 +5534,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:exam:ECG_12LEAD",
@@ -5162,7 +5559,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:exam:ECG_12LEAD",
@@ -5188,7 +5585,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:exam:ECG_12LEAD",
@@ -5216,7 +5613,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:I42.2",
@@ -5310,7 +5707,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:I42.2",
@@ -5341,7 +5738,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:I42.2",
@@ -5369,7 +5766,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:I42.2",
@@ -5476,7 +5873,7 @@
         "DOC-29e50309"
       ],
       "orphaned_from": [],
-      "reviewed_at": "2026-11-18T08:04:44.687009+00:00",
+      "reviewed_at": "2026-11-22T15:16:36.626935+00:00",
       "dependency_changed": true
     },
     {
@@ -5824,7 +6221,7 @@
         "DOC-29e50309"
       ],
       "orphaned_from": [],
-      "reviewed_at": "2026-11-18T08:11:12.115347+00:00",
+      "reviewed_at": "2026-11-22T15:19:19.154914+00:00",
       "dependency_changed": true,
       "created_at": "2026-11-22T03:54:25.557022+00:00",
       "last_import_at": "2026-11-22T03:54:25.581157+00:00"
@@ -5851,7 +6248,7 @@
         "DOC-29e50309"
       ],
       "orphaned_from": [],
-      "reviewed_at": "2026-11-18T08:07:47.097764+00:00",
+      "reviewed_at": "2026-11-22T15:19:19.154914+00:00",
       "dependency_changed": true,
       "created_at": "2026-11-22T03:54:25.557022+00:00",
       "last_import_at": "2026-11-22T03:54:25.581157+00:00"
@@ -5886,7 +6283,7 @@
         "DOC-29e50309"
       ],
       "orphaned_from": [],
-      "reviewed_at": "2026-11-18T08:04:44.687009+00:00",
+      "reviewed_at": "2026-11-22T15:19:19.154914+00:00",
       "dependency_changed": true,
       "created_at": "2026-11-22T03:54:25.557022+00:00",
       "last_import_at": "2026-11-22T03:54:25.581157+00:00"
@@ -5908,7 +6305,8 @@
         "DOC-29e50309"
       ],
       "orphaned_from": [],
-      "dependency_changed": true
+      "dependency_changed": true,
+      "reviewed_at": "2026-11-22T14:56:19.304182+00:00"
     },
     {
       "source_node_id": "ENTITY:exam:CAND-GENETIC-TESTING",
@@ -5947,7 +6345,7 @@
         "DOC-29e50309"
       ],
       "orphaned_from": [],
-      "reviewed_at": "2026-11-18T08:04:44.687009+00:00",
+      "reviewed_at": "2026-11-22T14:56:19.304182+00:00",
       "dependency_changed": true
     },
     {
@@ -5967,7 +6365,7 @@
         "DOC-29e50309"
       ],
       "orphaned_from": [],
-      "reviewed_at": "2026-11-18T15:55:42.538760+00:00",
+      "reviewed_at": "2026-11-22T14:56:19.304182+00:00",
       "dependency_changed": true
     },
     {
@@ -5987,7 +6385,7 @@
         "DOC-29e50309"
       ],
       "orphaned_from": [],
-      "reviewed_at": "2026-11-18T15:56:03.027593+00:00",
+      "reviewed_at": "2026-11-22T14:56:19.304182+00:00",
       "dependency_changed": true
     },
     {
@@ -6146,7 +6544,7 @@
       "review_note": "[AI审核建议] 指南原文多处提及梗阻性HCM患者出现呼吸困难（如\"梗阻性HCM合并持续性呼吸困难的患者\"、\"出现静息状态严重的呼吸困难\"），呼吸困难作为该疾病的临床表现关系成立，方向（疾病→症状）正确，端点实体为中文名称，无需修改。",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.123269+00:00"
     },
     {
       "source_node_id": "ENTITY:treatment_plan:TP-HCM-OBSTRUCTIVE-MEDICAL",
@@ -6567,7 +6965,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.123269+00:00"
     },
     {
       "source_node_id": "ENTITY:treatment_plan:TP-HCM-PTSMA",
@@ -6702,7 +7100,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.123269+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:I42.1",
@@ -6727,7 +7125,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.123269+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:I42.2",
@@ -7054,7 +7452,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:exam:ECG_12LEAD",
@@ -7109,7 +7507,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:exam:MRI_SCAN",
@@ -7640,7 +8038,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:exam:CAND-GENETIC-TESTING",
@@ -7887,7 +8285,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:disease:I42.2",
@@ -7956,7 +8354,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.554508+00:00",
-      "last_import_at": "2026-11-22T03:54:25.582157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.123269+00:00"
     },
     {
       "source_node_id": "ENTITY:treatment_plan:TP-HCM-OBSTRUCTIVE-MEDICAL",
@@ -8286,7 +8684,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:lab:LAB_CAND_AGAL_A",
@@ -8308,7 +8706,7 @@
       "reviewed_at": "2026-11-18T08:05:37.684443+00:00",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:lab:CK_MB",
@@ -8330,7 +8728,7 @@
       "reviewed_at": "2026-11-19T03:32:02.300073+00:00",
       "dependency_changed": true,
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:lab:CAND-BLOOD-LACTATE",
@@ -8354,7 +8752,7 @@
       "review_note": "",
       "dependency_changed": false,
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:lab:CAND-BLOOD-LACTATE",
@@ -8524,7 +8922,7 @@
       "dependency_changed": true,
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:exam:GENETIC_TEST",
@@ -8540,7 +8938,7 @@
       "dependency_changed": true,
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:exam:CT_SCAN",
@@ -8562,7 +8960,7 @@
       "dependency_changed": true,
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.580159+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:lab:CRP",
@@ -8640,7 +9038,7 @@
       "dependency_changed": true,
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:lab:CRP",
@@ -8662,7 +9060,7 @@
       "dependency_changed": true,
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:lab:RENAL_FUNCTION",
@@ -8683,7 +9081,7 @@
       "dependency_changed": true,
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     },
     {
       "source_node_id": "ENTITY:lab:TROPONIN",
@@ -8704,7 +9102,186 @@
       "dependency_changed": true,
       "orphaned_from": [],
       "created_at": "2026-11-22T03:54:25.556014+00:00",
-      "last_import_at": "2026-11-22T03:54:25.581157+00:00"
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I42.2",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病关联症状",
+      "target_node_id": "ENTITY:symptom:SYM_SHORTNESS_BREATH",
+      "attributes": {},
+      "source_refs": [
+        "DOC-29e50309_p2_l31-42"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.245824+00:00",
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I42.2",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病关联症状",
+      "target_node_id": "ENTITY:symptom:SYM_PALPITATION",
+      "attributes": {},
+      "source_refs": [
+        "DOC-29e50309_p2_l31-42"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.249833+00:00",
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I42.2",
+      "relation_code": "DISEASE_HAS_EXAM",
+      "relation_name": "疾病关联检查",
+      "target_node_id": "ENTITY:exam:ECHO",
+      "attributes": {},
+      "source_refs": [
+        "DOC-29e50309_p2_l31-42",
+        "DOC-29e50309_p5_l94-153"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.252832+00:00",
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
+    },
+    {
+      "source_node_id": "ENTITY:exam:ECHO",
+      "relation_code": "EXAM_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检查形成诊断依据",
+      "target_node_id": "ENTITY:diagnostic_evidence:LV_HYPERTROPHY",
+      "attributes": {},
+      "source_refs": [
+        "DOC-29e50309_p2_l31-42",
+        "DOC-29e50309_p5_l94-153",
+        "DOC-29e50309_p8_l13-61",
+        "DOC-29e50309_p11_l30-75",
+        "DOC-29e50309_p11_l76-103",
+        "DOC-29e50309_p11_l104-32",
+        "DOC-29e50309_p12_l33-51",
+        "DOC-29e50309_p12_l52-64",
+        "DOC-29e50309_p12_l65-83",
+        "DOC-29e50309_p12_l84-96",
+        "DOC-29e50309_p12_l97-22",
+        "DOC-29e50309_p13_l24-2",
+        "DOC-29e50309_p15_l3-50",
+        "DOC-29e50309_p16_l54-91",
+        "DOC-29e50309_p16_l92-29"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.252832+00:00",
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
+    },
+    {
+      "source_node_id": "ENTITY:exam:ECHO",
+      "relation_code": "EXAM_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检查形成诊断依据",
+      "target_node_id": "ENTITY:diagnostic_evidence:LVOT_OBSTRUCTION",
+      "attributes": {},
+      "source_refs": [
+        "DOC-29e50309_p2_l31-42",
+        "DOC-29e50309_p2_l43-59",
+        "DOC-29e50309_p5_l94-153",
+        "DOC-29e50309_p13_l24-2",
+        "DOC-29e50309_p15_l3-50",
+        "DOC-29e50309_p15_l88-92",
+        "DOC-29e50309_p16_l54-91",
+        "DOC-29e50309_p16_l92-29"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.252832+00:00",
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
+    },
+    {
+      "source_node_id": "ENTITY:exam:ECHO",
+      "relation_code": "EXAM_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检查形成诊断依据",
+      "target_node_id": "ENTITY:diagnostic_evidence:SAM",
+      "attributes": {},
+      "source_refs": [
+        "DOC-29e50309_p2_l31-42",
+        "DOC-29e50309_p5_l94-153",
+        "DOC-29e50309_p3_l100-20",
+        "DOC-29e50309_p16_l54-91",
+        "DOC-29e50309_p17_l90-18"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.252832+00:00",
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I42.1",
+      "relation_code": "DISEASE_HAS_EXAM",
+      "relation_name": "疾病关联检查",
+      "target_node_id": "ENTITY:exam:ECHO",
+      "attributes": {},
+      "source_refs": [
+        "DOC-29e50309_p2_l43-59"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.253834+00:00",
+      "last_import_at": "2026-11-22T15:19:19.123269+00:00"
+    },
+    {
+      "source_node_id": "ENTITY:disease:I42.1",
+      "relation_code": "DISEASE_HAS_SYMPTOM",
+      "relation_name": "疾病关联症状",
+      "target_node_id": "ENTITY:symptom:SYM_SHORTNESS_BREATH",
+      "attributes": {},
+      "source_refs": [
+        "DOC-29e50309_p2_l43-59"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.253834+00:00",
+      "last_import_at": "2026-11-22T15:19:19.123269+00:00"
+    },
+    {
+      "source_node_id": "ENTITY:lab:BNP",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断依据",
+      "target_node_id": "ENTITY:diagnostic_evidence:BNP:ABNORMAL",
+      "attributes": {},
+      "source_refs": [
+        "DOC-29e50309_p5_l6-25",
+        "DOC-15fe3666_p2_l70-12",
+        "DOC-15fe3666_p6_l35-59_part1",
+        "DOC-15fe3666_p6_l35-59_part2",
+        "DOC-15fe3666_p6_l35-59_part3",
+        "DOC-15fe3666_p6_l35-59_part4"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.261346+00:00",
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
+    },
+    {
+      "source_node_id": "ENTITY:lab:CBC",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断依据",
+      "target_node_id": "ENTITY:diagnostic_evidence:CBC:ABNORMAL",
+      "attributes": {},
+      "source_refs": [
+        "DOC-29e50309_p5_l6-25"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.264355+00:00",
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
+    },
+    {
+      "source_node_id": "ENTITY:lab:BNP",
+      "relation_code": "LAB_HAS_DIAGNOSTIC_EVIDENCE",
+      "relation_name": "检验形成诊断依据",
+      "target_node_id": "ENTITY:diagnostic_evidence:BNP:DECREASED",
+      "attributes": {},
+      "source_refs": [
+        "DOC-15fe3666_p2_l45-69",
+        "DOC-15fe3666_p3_l13-87",
+        "DOC-15fe3666_p3_l89-100",
+        "DOC-15fe3666_p3_l101-14",
+        "DOC-15fe3666_p4_l15-63",
+        "DOC-15fe3666_p4_l72-4"
+      ],
+      "review_status": "draft",
+      "created_at": "2026-11-22T14:56:19.271866+00:00",
+      "last_import_at": "2026-11-22T15:19:19.124268+00:00"
     }
   ],
   "diseases": [

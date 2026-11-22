@@ -13,7 +13,6 @@ from src.api.routes import rules as rules_route
 from src.extraction.repository import ExtractionConfigRepository
 from src.llm import LLMError, chat_json, resolve_api_key
 from src.review.ai_review import explain_model_error
-from src.review.audit import load_audit
 from src.review.precheck import (
     duplicate_relation_pairs,
     load_endpoint_type_map,
@@ -569,8 +568,7 @@ async def review_audit(
     graph_filename: Optional[str] = None,
     limit: int = 200,
 ):
-    items = load_audit(
-        path=service.audit_path,
+    items = service.audit_records_enriched(
         entity_id=entity_id or "",
         graph_filename=graph_filename or "",
         limit=limit,
