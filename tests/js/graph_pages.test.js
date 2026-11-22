@@ -157,3 +157,67 @@ test("TCM knowledge tables paginate approved entities and edges and can switch d
   await selectors.get("#tcmGraphSelector").onchange({target: {value: "west.json"}});
   assert.deepEqual(routes, ["graph"]);
 });
+
+test("dashboard presents TCM metrics and opens the selected TCM graph", async () => {
+  const buttons = new Map();
+  const calls = [];
+  const context = vm.createContext({
+    state: {route: "dashboard", dashboardGraphFilename: "tcm.json"},
+    pageEl: {},
+    api: async (url) => {
+      calls.push(url);
+      if (url === "/api/kg/graphs") return [
+        {graph_filename: "west.json", domain: "western"}, {graph_filename: "tcm.json", domain: "tcm"},
+      ];
+      if (url.startsWith("/api/kg/graph?")) return {
+        nodes: [{id: "D", node_type: "disease", review_status: "active"},
+          {id: "S", node_type: "syndrome", review_status: "active"},
+          {id: "P", node_type: "syndrome", review_status: "draft"}],
+        relations: [{source_node_id: "D", target_node_id: "S", review_status: "active"},
+          {source_node_id: "D", target_node_id: "P", review_status: "active"}],
+      };
+      if (url === "/api/pdf/documents") return [];
+      return {};
+    },
+    loadBase: async () => ({rules: []}),
+    $: (key) => {
+      if (!buttons.has(key)) buttons.set(key, {});
+      return buttons.get(key);
+    },
+    normalizeDomainClient: (domain) => domain,
+    esc: String,
+    panel: (title, body) => title + body,
+    table: () => "",
+    navigate: (route) => calls.push(route),
+  });
+  vm.runInContext(source.slice(source.indexOf("  async function renderDashboard()"), source.indexOf("  function templateGraphFilename(")) +
+    source.slice(source.indexOf("  function approvedKnowledgeGraph("), source.indexOf("  async function renderGraph(options")), context);
+  await context.renderDashboard();
+  assert.match(context.pageEl.innerHTML, /西医图谱/);
+  assert.match(context.pageEl.innerHTML, /中医疾病/);
+  assert.match(context.pageEl.innerHTML, /证候<\/span><strong>1/);
+  assert.match(context.pageEl.innerHTML, /语义关系<\/span><strong>1/);
+  buttons.get("#dashboardOpenGraph").onclick();
+  assert.equal(context.state.tcmGraphFilename, "tcm.json");
+  assert.equal(calls.at(-1), "tcmGraph");
+});
+
+test("disease review keeps approved entities in a closed disclosure with working detail indices", () => {
+  const context = vm.createContext({
+    state: {}, esc: String, typeName: {}, miniStatus: String,
+    table: (_headers, rows) => rows.join(""),
+  });
+  vm.runInContext(source.slice(source.indexOf("  function diseaseEndpointReviewHtml("), source.indexOf("  async function openEndpointSource(")), context);
+  const html = context.diseaseEndpointReviewHtml([{
+    source_node_id: "D", source_status: "active", target_node_id: "S", target_name: "证候甲", target_status: "active",
+  }, {
+    source_node_id: "D", source_status: "active", target_node_id: "P", target_name: "待审实体", target_status: "draft",
+  }], "tcm.json", {node_id: "D", name: "心衰", node_type: "disease", review_status: "active"});
+  const approved = html.match(/<details><summary>已通过的实体（2 个）<\/summary>(.*?)<\/details>/s)?.[1];
+  assert.ok(approved);
+  assert.match(approved, /心衰.*data-endpoint-detail="0"/s);
+  assert.match(approved, /证候甲.*data-endpoint-detail="1"/s);
+  assert.doesNotMatch(approved, /待审实体/);
+  assert.match(html, /data-endpoint-select="P"/);
+  assert.doesNotMatch(html, /data-endpoint-select="[DS]"/);
+});

@@ -499,23 +499,30 @@
   }
 
   async function renderDashboard() {
-    const [{ stats, rules, hospitals }, docs, graphs, standardOverview, ruleSync, reviewQueue] = await Promise.all([
+    const [{ rules }, docs, graphs, standardOverview, ruleSync] = await Promise.all([
       loadBase(),
       api("/api/pdf/documents"),
-      api("/api/kg/graphs").then((items) => items.filter((item) => normalizeDomainClient(item.domain) === "western")),
+      api("/api/kg/graphs"),
       api("/api/standards/all"),
       api("/api/rules/sync-check"),
-      api("/api/review/queue?limit=1").catch(() => ({ summary: {} })),
     ]);
-    state.graphs = graphs;
+    if (state.route !== "dashboard") return;
+    state.graphs = graphs.filter((item) => normalizeDomainClient(item.domain) === "western");
     state.rules = rules;
     state.ruleSync = ruleSync;
-    if (!graphs.some((item) => item.graph_filename === state.graphFilename)) {
-      state.graphFilename = graphs.find((item) => item.graph_filename === "KG-GENERIC_GUIDELINE_V1.json")?.graph_filename || graphs[0]?.graph_filename || "";
-    }
-    const graphFilename = state.graphFilename;
-    const graph = graphFilename ? await api(`/api/kg/graph?graph_filename=${encodeURIComponent(graphFilename)}`) : {};
-    state.graph = graph;
+    const selected = graphs.find((item) => item.graph_filename === (state.dashboardGraphFilename || state.graphFilename)) ||
+      graphs.find((item) => item.semantic_nodes > 0) || graphs[0];
+    const graphFilename = selected?.graph_filename || "";
+    state.dashboardGraphFilename = graphFilename;
+    const query = `graph_filename=${encodeURIComponent(graphFilename)}`;
+    const [rawGraph, reviewQueue] = graphFilename ? await Promise.all([
+      api(`/api/kg/graph?${query}`),
+      api(`/api/review/queue?${query}&limit=1`).catch(() => ({summary: {}})),
+    ]) : [{}, {summary: {}}];
+    if (state.route !== "dashboard" || state.dashboardGraphFilename !== graphFilename) return;
+    const graph = approvedKnowledgeGraph(rawGraph);
+    const tcm = normalizeDomainClient(selected?.domain || graph.domain) === "tcm";
+    if (!tcm) state.graph = rawGraph;
     const selectedRules = rules.filter((rule) => (rule.graph_filename || "KG-GENERIC_GUIDELINE_V1.json") === graphFilename);
     const activeRules = selectedRules.filter((rule) => rule.status === "active");
     const reviewSummary = reviewQueue.summary || {};
@@ -524,24 +531,25 @@
       sumStatuses(reviewSummary.graph_nodes, ["draft", "stale"])
       + sumStatuses(reviewSummary.graph_relations, ["draft", "stale"])
       + sumStatuses(reviewSummary.rules, ["draft", "testing", "blocked"]);
-    const semanticNodes = Array.isArray(graph.nodes) ? graph.nodes : Object.values(graph.nodes || {});
-    const semanticRelations = Array.isArray(graph.relations) ? graph.relations : Object.values(graph.relations || {});
-    // 概览口径：只统计已通过审核（review_status=active）的图谱数据
-    const isApproved = (item) => (item.review_status || "draft") === "active";
-    const approvedNodes = semanticNodes.filter(isApproved);
-    const approvedRelations = semanticRelations.filter(isApproved);
-    const diseaseNodes = approvedNodes.filter((node) => node.node_type === "disease" || node.node_type === "western_disease");
-    const evidenceNodes = approvedNodes.filter((node) => node.node_type === "diagnostic_evidence");
-    const planNodes = approvedNodes.filter((node) => node.node_type === "treatment_plan");
-    const planDiseaseLinks = approvedRelations.filter((relation) => relation.relation_code === "DISEASE_HAS_TREATMENT_PLAN");
-    const medNodes = approvedNodes.filter((node) => node.node_type === "medication");
-    const interventionNodes = approvedNodes.filter((node) => node.node_type === "intervention");
-    const diseaseLinkCount = approvedRelations.filter((relation) => (relation.relation_code || "").startsWith("DISEASE_HAS")).length;
+    const count = (...types) => graph.nodes.filter((node) => types.includes(node.node_type)).length;
+    const graphMetrics = tcm ? [
+      ["中医疾病", count("disease")],
+      ["证候", count("syndrome")],
+      ["辨证观察", count("symptom", "tongue", "pulse", "sign"), `${count("symptom")} 症见 / ${count("tongue")} 舌象 / ${count("pulse")} 脉象 / ${count("sign")} 体征`],
+      ["病机", count("pathogenesis")],
+      ["治法、方剂与中药", count("treatment_method", "formula", "herb"), `${count("treatment_method")} 治法 / ${count("formula")} 方剂 / ${count("herb")} 中药`],
+      ["语义关系", graph.relations.length],
+    ] : [
+      ["疾病节点", count("disease", "western_disease")],
+      ["诊断证据", count("diagnostic_evidence"), `${graph.relations.filter((edge) => (edge.relation_code || "").startsWith("DISEASE_HAS")).length} 条已通过疾病关联`],
+      ["治疗方案", count("treatment_plan"), `${graph.relations.filter((edge) => edge.relation_code === "DISEASE_HAS_TREATMENT_PLAN").length} 条已通过疾病关联`],
+      ["药物与措施", count("medication", "intervention"), `${count("medication")} 药物 / ${count("intervention")} 措施`],
+    ];
     const steps = [
       ["上传指南", `${docs.length} 份文档`, docs.length ? "done" : "pending"],
       ["知识包生成", "候选图谱与规则", "pending"],
       ["人工导入", "草稿进入图谱与规则", "pending"],
-      ["图谱入库", `${evidenceNodes.length} 证据节点已通过审核`, evidenceNodes.length ? "done" : "pending"],
+      ["图谱入库", `${graph.nodes.length} 个实体已通过审核`, graph.nodes.length ? "done" : "pending"],
       ["规则配置", `${activeRules.length} 条已启用`, activeRules.length ? "done" : "pending"],
       ["医院标准", `${standardOverview.active_count} 条已启用`, standardOverview.active_count ? "done" : "pending"],
     ];
@@ -549,14 +557,11 @@
       ${panel("医生诊疗决策说明", '<p>查看医生诊疗决策顺序、指南到规则的实现流程，以及推荐结果的含义。</p><button class="btn primary" id="clinicalDecisionHelp">查看诊疗决策说明</button>')}
       ${panel("知识图谱上下文", `
         <div class="inline-controls">
-          <div class="field"><label>当前图谱</label><select id="dashboardGraph">${graphs.map((item) => `<option value="${esc(item.graph_filename)}" ${item.graph_filename === graphFilename ? "selected" : ""}>${esc(item.graph_filename)}</option>`).join("")}</select></div>
+          <div class="field"><label for="dashboardGraph">当前图谱</label><select id="dashboardGraph" ${graphFilename ? "" : "disabled"}>${knowledgeGraphOptions(graphs, graphFilename) || '<option>暂无知识图谱</option>'}</select></div>
         </div>
       `, "", "统计口径：当前图谱中已通过审核（active）的数据；规则执行仍按规则自身配置的图谱加载")}
       <div class="grid c4">
-        <div class="kpi"><span>疾病节点</span><strong>${diseaseNodes.length}</strong><small>仅统计已通过审核 · 当前图谱</small></div>
-        <div class="kpi"><span>诊断证据</span><strong>${evidenceNodes.length}</strong><small>${diseaseLinkCount} 条已通过疾病关联</small></div>
-        <div class="kpi"><span>治疗方案</span><strong>${planNodes.length}</strong><small>${planDiseaseLinks.length} 条已通过疾病关联</small></div>
-        <div class="kpi"><span>药物与措施</span><strong>${medNodes.length + interventionNodes.length}</strong><small>${medNodes.length} 药物 / ${interventionNodes.length} 措施</small></div>
+        ${graphMetrics.map(([label, value, detail]) => `<div class="kpi"><span>${esc(label)}</span><strong>${value}</strong>${detail ? `<small>${esc(detail)}</small>` : ""}</div>`).join("")}
         <div class="kpi"><span>推理规则</span><strong>${activeRules.length}</strong><small>已通过审核并启用 · 共 ${selectedRules.length} 条</small></div>
         <div class="kpi"><span>医院标准</span><strong>${standardOverview.active_count}</strong><small>已启用 · ${standardOverview.hospital_count} 家机构</small></div>
       </div>
@@ -566,7 +571,7 @@
           <button class="btn primary" data-quick="import">上传 PDF 指南</button>
           <button class="btn ${pendingReview ? "primary" : ""}" data-quick="review">进入审核台${pendingReview ? `（${pendingReview} 条待办）` : ""}</button>
           <button class="btn" data-quick="packages">管理知识包</button>
-          <button class="btn" data-quick="graph">查看知识图谱</button>
+          <button class="btn" id="dashboardOpenGraph" ${graphFilename ? "" : "disabled"}>查看${tcm ? "中医" : ""}知识图谱</button>
           <button class="btn" data-quick="standards">维护医院标准</button>
           <button class="btn" data-quick="inference">病历测试</button>
           <button class="btn" data-quick="tcmInference">中医辨证</button>
@@ -575,8 +580,13 @@
     `;
     $("#clinicalDecisionHelp").onclick = () => window.WesternDecision.showExplanation();
     $("#dashboardGraph").onchange = (event) => {
-      state.graphFilename = event.target.value;
-      renderDashboard();
+      state.dashboardGraphFilename = event.target.value;
+      renderDashboard().catch((error) => toast(error.message, true));
+    };
+    $("#dashboardOpenGraph").onclick = () => {
+      if (tcm) state.tcmGraphFilename = graphFilename;
+      else state.graphFilename = graphFilename;
+      navigate(tcm ? "tcmGraph" : "graph", {reload: true});
     };
   }
 
@@ -6079,7 +6089,7 @@
       <button class="btn" data-disease-review>第 1 步：核对疾病名称、分型与出处</button>
       <div class="detail-sub mono muted">出边 ${detail.totals?.total ?? 0} 条 · 待审 ${detail.totals?.pending ?? 0} · 可疑 ${detail.totals?.suspect ?? 0}</div>
       <div class="result-banner"><strong>本疾病的审核顺序</strong><p>先核对下方实体与关系，再在场景区整理诊断、治疗和用药依据。</p><button class="btn" data-disease-bases>查看本疾病全部诊疗依据</button></div>
-      ${diseaseEndpointReviewHtml([...state.byDiseaseItems.values()], detail.graph_filename || graphName)}
+      ${diseaseEndpointReviewHtml([...state.byDiseaseItems.values()], detail.graph_filename || graphName, subject)}
       ${sections.map((section) => diseaseSectionHtml(section)).join("") || '<div class="empty">该节点没有出边关系</div>'}
       <div id="diseaseScenarioWorkbench" class="detail-section"><div class="empty">正在整理场景依据…</div></div>`;
     bindByDiseaseCardActions(mount);
@@ -6106,25 +6116,40 @@
     } catch (error) { sceneMount.textContent = `场景加载失败：${error.message}`; }
   }
 
-  function diseaseEndpointReviewHtml(items, graphFilename) {
+  function diseaseEndpointReviewHtml(items, graphFilename, subject) {
     const endpoints = new Map();
+    if (subject?.node_id) {
+      endpoints.set(subject.node_id, {
+        item_type: "graph_node", node_id: subject.node_id, graph_filename: graphFilename,
+        name: subject.display_name || subject.name || subject.node_id,
+        node_type: subject.node_type, status: subject.review_status || "draft",
+      });
+    }
     items.forEach((item) => {
       for (const side of ["source", "target"]) {
         const id = item[`${side}_node_id`];
         const status = item[`${side}_status`] || "missing";
-        if (id && status !== "active") endpoints.set(id, {
+        if (id && !endpoints.has(id)) endpoints.set(id, {
           item_type: "graph_node", node_id: id, graph_filename: graphFilename,
           name: item[`${side}_name`] || id, node_type: item[`${side}_node_type`] || "", status,
         });
       }
     });
     state.byDiseaseEndpoints = endpoints;
+    const indexed = [...endpoints.values()].map((item, index) => ({item, index}));
+    const pending = indexed.filter(({item}) => item.status !== "active");
+    const approved = indexed.filter(({item}) => item.status === "active");
+    const viewButton = (index) => `<button class="btn sm" data-endpoint-detail="${index}">查看原文与属性</button>`;
     // 卡片级关系批量：跨所有关系分组勾选待审关系（含嵌套小节），
     // 与第 1 步实体勾选同款交互；分组内仍有各自的小批量按钮。
     const pendingRels = items.filter((item) => item.item_type === "graph_relation" && ["draft", "stale"].includes(item.status));
     return `<div class="detail-section" id="diseaseEndpointReview"><h4>第 1 步：核对关系涉及的实体</h4>
       <p>实体与关系联动审核：通过任一关系时，两端待审实体会一并通过（此处无需先手工过一遍）。第 1 步用于需要单独处理实体的场合——查看原文、修改名称、拒绝错误实体，或恢复被拒绝的端点。</p>
-      ${endpoints.size ? `<div class="actions"><label><input type="checkbox" data-endpoint-select-all> 全选可审核实体</label><span class="muted" data-endpoint-selection-count>已选 0 项</span></div>${table(["选择", "尚未通过的实体", "实体类型", "状态", "核对与处理"], [...endpoints.values()].map((item, index) => `<tr><td><input type="checkbox" data-endpoint-select="${esc(item.node_id)}" ${["draft", "stale"].includes(item.status) ? "" : "disabled"}></td><td>${esc(item.name)}</td><td><span class="type-chip">${esc(typeName[item.node_type] || item.node_type || "类型缺失，请核对")}</span></td><td>${miniStatus(item.status)}</td><td><div class="actions"><button class="btn sm" data-endpoint-detail="${index}">查看原文与属性</button><button class="btn sm" data-endpoint-edit="${index}">修改</button><button class="btn sm" data-endpoint-ai="${index}">AI 修正</button>${["draft", "stale"].includes(item.status) ? `<button class="btn sm danger" data-endpoint-reject="${index}">拒绝</button>` : ""}</div></td></tr>`))}<div class="actions"><button class="btn sm primary" data-endpoint-approve>通过勾选的实体</button><button class="btn sm danger" data-endpoint-reject-selected>拒绝勾选的实体</button></div>` : '<div class="result-banner ok">相关实体均已通过，可直接审核下方关系。</div>'}
+      ${pending.length ? `<div class="actions"><label><input type="checkbox" data-endpoint-select-all> 全选可审核实体</label><span class="muted" data-endpoint-selection-count>已选 0 项</span></div>${table(["选择", "尚未通过的实体", "实体类型", "状态", "核对与处理"], pending.map(({item, index}) => `<tr><td><input type="checkbox" data-endpoint-select="${esc(item.node_id)}" ${["draft", "stale"].includes(item.status) ? "" : "disabled"}></td><td>${esc(item.name)}</td><td><span class="type-chip">${esc(typeName[item.node_type] || item.node_type || "类型缺失，请核对")}</span></td><td>${miniStatus(item.status)}</td><td><div class="actions">${viewButton(index)}<button class="btn sm" data-endpoint-edit="${index}">修改</button><button class="btn sm" data-endpoint-ai="${index}">AI 修正</button>${["draft", "stale"].includes(item.status) ? `<button class="btn sm danger" data-endpoint-reject="${index}">拒绝</button>` : ""}</div></td></tr>`))}<div class="actions"><button class="btn sm primary" data-endpoint-approve>通过勾选的实体</button><button class="btn sm danger" data-endpoint-reject-selected>拒绝勾选的实体</button></div>` : '<div class="result-banner ok">相关实体均已通过，可直接审核下方关系。</div>'}
+      ${approved.length ? `<details><summary>已通过的实体（${approved.length} 个）</summary>${table(
+        ["实体名称", "实体类型", "状态", "操作"],
+        approved.map(({item, index}) => `<tr><td>${esc(item.name)}</td><td>${esc(typeName[item.node_type] || item.node_type || "-")}</td><td>${miniStatus(item.status)}</td><td>${viewButton(index)}</td></tr>`),
+      )}</details>` : ""}
       <h4>第 2 步：审核下方关系</h4><p>核对关系的方向、医学含义和原文后，可勾选逐条，也可整组或整卡批量处理。通过关系时，两端待审实体会随之连带通过；只有端点被拒绝或失效的关系需要先恢复实体。</p>
       ${pendingRels.length ? `<div class="actions rel-batch-bar"><label><input type="checkbox" data-rel-select-all> 全选待审关系（${pendingRels.length} 条）</label><span class="muted" data-rel-selection-count>已选 0 / ${pendingRels.length} 项</span><button class="btn sm primary" data-rel-approve-selected>通过勾选的关系</button><button class="btn sm danger" data-rel-reject-selected>拒绝勾选的关系</button><button class="btn sm primary" data-rel-approve-all title="一次性提交本卡片全部待审关系；涉及未通过实体且不能连带通过的关系会先提示">一键通过全部待审关系</button></div>` : '<div class="muted">本卡待审关系 0 条。</div>'}</div>`;
   }
