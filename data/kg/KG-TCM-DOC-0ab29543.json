@@ -1,0 +1,15 @@
+{
+  "cleared": true,
+  "domain": "tcm",
+  "schema_version": 2,
+  "nodes": [],
+  "relations": [],
+  "diseases": [],
+  "evidences": [],
+  "disease_evidence": [],
+  "sources": [],
+  "anchor_types": [
+    "syndrome",
+    "disease"
+  ]
+}

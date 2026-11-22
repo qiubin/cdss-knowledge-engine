@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "description": "中医疾病与西医疾病独立对照主数据。正式关系仅使用 review_status=active 的记录；指南抽取结果不得直接写入本文件。",
+  "mappings": []
+}

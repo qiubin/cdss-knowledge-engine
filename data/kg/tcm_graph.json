@@ -1,19 +1,14 @@
 {
   "domain": "tcm",
   "schema_version": 2,
-  "anchor_types": [
-    "syndrome",
-    "disease"
-  ],
+  "nodes": [],
+  "relations": [],
   "diseases": [],
   "evidences": [],
   "disease_evidence": [],
   "sources": [],
-  "nodes": [],
-  "relations": [],
-  "syndromes": [],
-  "_repair_stats": {
-    "mode": "tcm",
-    "dangling_relations_removed": 0
-  }
+  "anchor_types": [
+    "syndrome",
+    "disease"
+  ]
 }

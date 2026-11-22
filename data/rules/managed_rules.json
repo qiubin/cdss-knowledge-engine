@@ -13,7 +13,7 @@
     "disease_code": "I42.2",
     "disease_name": "肥厚型心肌病",
     "priority": 1,
-    "status": "active",
+    "status": "blocked",
     "department": null,
     "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
     "conditions": {
@@ -688,11 +688,205 @@
     ],
     "created_by": "",
     "created_at": "",
-    "updated_at": "2026-11-19T02:52:04.095497+00:00",
+    "updated_at": "2026-11-21T05:17:11.393603+00:00",
     "reviewed_by": "丘丘",
     "reviewed_at": "2026-11-19T02:52:04.095497+00:00",
     "review_note": "",
-    "condition_text": "(气短（SYM_SHORTNESS_BREATH） OR 胸痛（SYM_CHEST_PAIN） OR 头晕（SYM_DIZZINESS） OR 心悸（SYM_PALPITATION） OR CAND-SYN-FAINT OR CAND-SYN-FAINT OR CAND-SYN-FAINT) AND (超声心动图（ECHO） · 左室肥厚（LV_HYPERTROPHY） OR 超声心动图（ECHO） · 左室流出道梗阻（LVOT_OBSTRUCTION） OR 超声心动图（ECHO） · 二尖瓣前叶收缩期前移（SAM） OR 左室肥厚（LV_HYPERTROPHY） OR 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 左室高电压（LVH_VOLTAGE） OR ST-T改变（ST_T_CHANGE） OR 左室流出道梗阻（LVOT_OBSTRUCTION） OR 二尖瓣前叶收缩期前移（SAM） OR 病理确诊（PATHOLOGY_CONFIRMED） OR T波倒置（T_WAVE_INVERSION）)"
+    "condition_text": "(气短（SYM_SHORTNESS_BREATH） OR 胸痛（SYM_CHEST_PAIN） OR 头晕（SYM_DIZZINESS） OR 心悸（SYM_PALPITATION） OR CAND-SYN-FAINT OR CAND-SYN-FAINT OR CAND-SYN-FAINT) AND (超声心动图（ECHO） · 左室肥厚（LV_HYPERTROPHY） OR 超声心动图（ECHO） · 左室流出道梗阻（LVOT_OBSTRUCTION） OR 超声心动图（ECHO） · 二尖瓣前叶收缩期前移（SAM） OR 左室肥厚（LV_HYPERTROPHY） OR 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 左室高电压（LVH_VOLTAGE） OR ST-T改变（ST_T_CHANGE） OR 左室流出道梗阻（LVOT_OBSTRUCTION） OR 二尖瓣前叶收缩期前移（SAM） OR 病理确诊（PATHOLOGY_CONFIRMED） OR T波倒置（T_WAVE_INVERSION）)",
+    "blocked_by": [
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:disease:I42.2",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:symptom:SYM_SHORTNESS_BREATH",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.2|DISEASE_HAS_SYMPTOM|ENTITY:symptom:SYM_SHORTNESS_BREATH",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:symptom:SYM_CHEST_PAIN",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.2|DISEASE_HAS_SYMPTOM|ENTITY:symptom:SYM_CHEST_PAIN",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:symptom:SYM_DIZZINESS",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.2|DISEASE_HAS_SYMPTOM|ENTITY:symptom:SYM_DIZZINESS",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:symptom:SYM_PALPITATION",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.2|DISEASE_HAS_SYMPTOM|ENTITY:symptom:SYM_PALPITATION",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:symptom:CAND-SYN-FAINT",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.2|DISEASE_HAS_SYMPTOM|ENTITY:symptom:CAND-SYN-FAINT",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:diagnostic_evidence:LV_HYPERTROPHY",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.2|DISEASE_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:LV_HYPERTROPHY",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:exam:ECHO",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.2|DISEASE_HAS_EXAM|ENTITY:exam:ECHO",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:exam:ECHO|EXAM_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:LV_HYPERTROPHY",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:diagnostic_evidence:LVOT_OBSTRUCTION",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.2|DISEASE_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:LVOT_OBSTRUCTION",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:exam:ECHO|EXAM_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:LVOT_OBSTRUCTION",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:diagnostic_evidence:SAM",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.2|DISEASE_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:SAM",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:exam:ECHO|EXAM_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:SAM",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:diagnostic_evidence:PATHOLOGICAL_Q_WAVE",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.2|DISEASE_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:PATHOLOGICAL_Q_WAVE",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:diagnostic_evidence:LVH_VOLTAGE",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.2|DISEASE_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:LVH_VOLTAGE",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:diagnostic_evidence:ST_T_CHANGE",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.2|DISEASE_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:ST_T_CHANGE",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:diagnostic_evidence:PATHOLOGY_CONFIRMED",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.2|DISEASE_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:PATHOLOGY_CONFIRMED",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:diagnostic_evidence:T_WAVE_INVERSION",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.2|DISEASE_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:T_WAVE_INVERSION",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      }
+    ]
   },
   {
     "rule_id": "RULE-CB-b4e3705c70fbacec222a-R4",
@@ -1675,7 +1869,7 @@
     "disease_code": "I42.1",
     "disease_name": "梗阻性肥厚型心肌病",
     "priority": 2,
-    "status": "active",
+    "status": "blocked",
     "department": "",
     "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
     "conditions": {
@@ -2020,11 +2214,133 @@
     ],
     "created_by": "",
     "created_at": "",
-    "updated_at": "2026-11-20T04:39:27.958646+00:00",
+    "updated_at": "2026-11-21T05:17:11.393603+00:00",
     "supersedes_rule_id": "RULE-CB-ec1e00564b9ca205a990",
     "reviewed_by": "丘丘",
     "reviewed_at": "2026-11-20T04:39:27.958646+00:00",
-    "review_note": ""
+    "review_note": "",
+    "blocked_by": [
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:disease:I42.1",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:symptom:SYM_DYSPNEA",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.1|DISEASE_HAS_SYMPTOM|ENTITY:symptom:SYM_DYSPNEA",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:diagnostic_evidence:LVOT_OBSTRUCTION",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.1|DISEASE_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:LVOT_OBSTRUCTION",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:exam:ECHO",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.1|DISEASE_HAS_EXAM|ENTITY:exam:ECHO",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:exam:ECHO|EXAM_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:LVOT_OBSTRUCTION",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:symptom:SYM_HYPOTENSION",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.1|DISEASE_HAS_SYMPTOM|ENTITY:symptom:SYM_HYPOTENSION",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:diagnostic_evidence:SAM",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.1|DISEASE_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:SAM",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:diagnostic_evidence:LV_HYPERTROPHY",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.1|DISEASE_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:LV_HYPERTROPHY",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:symptom:SYM_CHEST_PAIN",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.1|DISEASE_HAS_SYMPTOM|ENTITY:symptom:SYM_CHEST_PAIN",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:symptom:SYM_SHORTNESS_BREATH",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.1|DISEASE_HAS_SYMPTOM|ENTITY:symptom:SYM_SHORTNESS_BREATH",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:symptom:CAND-SYN-FAINT",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.1|DISEASE_HAS_SYMPTOM|ENTITY:symptom:CAND-SYN-FAINT",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      }
+    ]
   },
   {
     "rule_id": "RULE-CB-d751d104d5baf44e55eb",
@@ -2048,7 +2364,7 @@
     "disease_code": "I42.2",
     "disease_name": "肥厚型心肌病",
     "priority": 10,
-    "status": "active",
+    "status": "blocked",
     "department": "",
     "graph_filename": "KG-GENERIC_GUIDELINE_V1.json",
     "conditions": {
@@ -2211,10 +2527,84 @@
     ],
     "created_by": "",
     "created_at": "",
-    "updated_at": "2026-11-20T06:28:08.005501+00:00",
+    "updated_at": "2026-11-21T05:17:11.393603+00:00",
     "reviewed_by": "丘丘",
     "reviewed_at": "2026-11-20T06:28:08.005501+00:00",
-    "review_note": ""
+    "review_note": "",
+    "blocked_by": [
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:disease:I42.2",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:diagnostic_evidence:LV_HYPERTROPHY",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.2|DISEASE_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:LV_HYPERTROPHY",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:exam:ECHO",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.2|DISEASE_HAS_EXAM|ENTITY:exam:ECHO",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:exam:ECHO|EXAM_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:LV_HYPERTROPHY",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:diagnostic_evidence:LVOT_OBSTRUCTION",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.2|DISEASE_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:LVOT_OBSTRUCTION",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:exam:ECHO|EXAM_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:LVOT_OBSTRUCTION",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "node",
+        "entity_id": "ENTITY:diagnostic_evidence:SAM",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:disease:I42.2|DISEASE_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:SAM",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      },
+      {
+        "entity_type": "relation",
+        "entity_id": "ENTITY:exam:ECHO|EXAM_HAS_DIAGNOSTIC_EVIDENCE|ENTITY:diagnostic_evidence:SAM",
+        "reason": "missing",
+        "since": "2026-11-21T05:17:11.393603+00:00"
+      }
+    ]
   },
   {
     "rule_id": "RULE-CB-b4e3705c70fbacec222a-R7",
@@ -2908,5 +3298,238 @@
     "updated_at": "",
     "supersedes_rule_id": "RULE-CB-b4e3705c70fbacec222a",
     "condition_text": "(气短（SYM_SHORTNESS_BREATH） OR 胸痛（SYM_CHEST_PAIN） OR 头晕（SYM_DIZZINESS） OR 心悸（SYM_PALPITATION） OR CAND-SYN-FAINT OR CAND-SYN-FAINT OR CAND-SYN-FAINT) AND (超声心动图（ECHO） · 左室肥厚（LV_HYPERTROPHY） OR 超声心动图（ECHO） · 左室流出道梗阻（LVOT_OBSTRUCTION） OR 超声心动图（ECHO） · 二尖瓣前叶收缩期前移（SAM） OR 左室肥厚（LV_HYPERTROPHY） OR 病理性Q波（PATHOLOGICAL_Q_WAVE） OR 左室高电压（LVH_VOLTAGE） OR ST-T改变（ST_T_CHANGE） OR 左室流出道梗阻（LVOT_OBSTRUCTION） OR 二尖瓣前叶收缩期前移（SAM） OR 病理确诊（PATHOLOGY_CONFIRMED） OR T波倒置（T_WAVE_INVERSION）)"
+  },
+  {
+    "rule_id": "RULE-CB-06f73a1f0aba1def444a",
+    "version": 1,
+    "domain": "tcm",
+    "anchor_type": "syndrome",
+    "rule_type": "tcm_pattern",
+    "clinical_intent": "suspected_diagnosis",
+    "diagnosis_prerequisite": null,
+    "clinical_context": {
+      "suspected_tcm_diagnosis": {
+        "disease_code": "TCM_DIS_XIN_SHUAI",
+        "disease_name": "心衰",
+        "membership_relation": "DISEASE_HAS_SYNDROME"
+      },
+      "population": "",
+      "subtype": "",
+      "phase": "",
+      "recommendation_strength": "",
+      "evidence_grade": "",
+      "exceptions": [],
+      "missing_information": []
+    },
+    "clinical_statement_id": "",
+    "name": "心衰 · 气阴两虚血瘀证 · 疑似诊断",
+    "disease_code": "LOCAL-3A144C10C0",
+    "disease_name": "气阴两虚血瘀证",
+    "priority": 0,
+    "status": "active",
+    "department": "",
+    "graph_filename": "KG-TCM-DOC-39558af6.json",
+    "conditions": {
+      "type": "group",
+      "operator": "AND",
+      "scoring": null,
+      "threshold": null,
+      "children": [
+        {
+          "type": "observation",
+          "operator": null,
+          "scoring": null,
+          "threshold": null,
+          "children": [],
+          "required_children": [],
+          "min_count": null,
+          "evidence_id": null,
+          "lab_code": null,
+          "concept_code": null,
+          "parameter": null,
+          "exam_code": null,
+          "finding_code": null,
+          "standard_required": false,
+          "symptom_code": null,
+          "duration_minutes": null,
+          "vital_code": null,
+          "threshold_value": null,
+          "age_min": null,
+          "age_max": null,
+          "gender": null,
+          "code": "TCM_PATH_QI_XU",
+          "observation_type": "pathogenesis",
+          "weight": null,
+          "required": null,
+          "fact_type": null,
+          "attribute_code": null,
+          "attribute_value": null,
+          "label": "TCM_PATH_QI_XU 存在（PRESENT）"
+        },
+        {
+          "type": "observation",
+          "operator": null,
+          "scoring": null,
+          "threshold": null,
+          "children": [],
+          "required_children": [],
+          "min_count": null,
+          "evidence_id": null,
+          "lab_code": null,
+          "concept_code": null,
+          "parameter": null,
+          "exam_code": null,
+          "finding_code": null,
+          "standard_required": false,
+          "symptom_code": null,
+          "duration_minutes": null,
+          "vital_code": null,
+          "threshold_value": null,
+          "age_min": null,
+          "age_max": null,
+          "gender": null,
+          "code": "TCM_PATH_YIN_XU",
+          "observation_type": "pathogenesis",
+          "weight": null,
+          "required": null,
+          "fact_type": null,
+          "attribute_code": null,
+          "attribute_value": null,
+          "label": "TCM_PATH_YIN_XU 存在（PRESENT）"
+        },
+        {
+          "type": "observation",
+          "operator": null,
+          "scoring": null,
+          "threshold": null,
+          "children": [],
+          "required_children": [],
+          "min_count": null,
+          "evidence_id": null,
+          "lab_code": null,
+          "concept_code": null,
+          "parameter": null,
+          "exam_code": null,
+          "finding_code": null,
+          "standard_required": false,
+          "symptom_code": null,
+          "duration_minutes": null,
+          "vital_code": null,
+          "threshold_value": null,
+          "age_min": null,
+          "age_max": null,
+          "gender": null,
+          "code": "TCM_PATH_XUE_YU",
+          "observation_type": "pathogenesis",
+          "weight": null,
+          "required": null,
+          "fact_type": null,
+          "attribute_code": null,
+          "attribute_value": null,
+          "label": "TCM_PATH_XUE_YU 存在（PRESENT）"
+        },
+        {
+          "type": "observation",
+          "operator": null,
+          "scoring": null,
+          "threshold": null,
+          "children": [],
+          "required_children": [],
+          "min_count": null,
+          "evidence_id": null,
+          "lab_code": null,
+          "concept_code": null,
+          "parameter": null,
+          "exam_code": null,
+          "finding_code": null,
+          "standard_required": false,
+          "symptom_code": null,
+          "duration_minutes": null,
+          "vital_code": null,
+          "threshold_value": null,
+          "age_min": null,
+          "age_max": null,
+          "gender": null,
+          "code": "TCM_PATH_YANG_QI_XU_SHUAI",
+          "observation_type": "pathogenesis",
+          "weight": null,
+          "required": null,
+          "fact_type": null,
+          "attribute_code": null,
+          "attribute_value": null,
+          "label": "TCM_PATH_YANG_QI_XU_SHUAI 存在（PRESENT）"
+        }
+      ],
+      "required_children": [],
+      "min_count": null,
+      "evidence_id": null,
+      "lab_code": null,
+      "concept_code": null,
+      "parameter": null,
+      "exam_code": null,
+      "finding_code": null,
+      "standard_required": false,
+      "symptom_code": null,
+      "duration_minutes": null,
+      "vital_code": null,
+      "threshold_value": null,
+      "age_min": null,
+      "age_max": null,
+      "gender": null,
+      "code": null,
+      "observation_type": null,
+      "weight": null,
+      "required": null,
+      "fact_type": null,
+      "attribute_code": null,
+      "attribute_value": null,
+      "label": "(TCM_PATH_QI_XU 存在（PRESENT） AND TCM_PATH_YIN_XU 存在（PRESENT） AND TCM_PATH_XUE_YU 存在（PRESENT） AND TCM_PATH_YANG_QI_XU_SHUAI 存在（PRESENT）)"
+    },
+    "condition_text": "TCM_PATH_QI_XU 存在（PRESENT） AND TCM_PATH_YIN_XU 存在（PRESENT） AND TCM_PATH_XUE_YU 存在（PRESENT） AND TCM_PATH_YANG_QI_XU_SHUAI 存在（PRESENT）",
+    "conclusion": {
+      "diagnosis": "LOCAL-3A144C10C0",
+      "confidence": "medium",
+      "message": "心衰 · 气阴两虚血瘀证 · 疑似诊断",
+      "action": "",
+      "conclusion_type": null,
+      "treatment_plan_id": null,
+      "treatment_name": null,
+      "priority": null,
+      "treatment_items": [],
+      "order_set_ids": [],
+      "treatment_method_code": null,
+      "formula_code": null,
+      "formula_name": null,
+      "herbs": [],
+      "regimen": {},
+      "monitoring": [],
+      "safety_level": null,
+      "blocked_targets": [],
+      "modification_rules": [],
+      "modifications": [],
+      "course": null,
+      "score_threshold": null
+    },
+    "source": {
+      "guideline_id": "DOC-39558af6",
+      "guideline_title": "DOC-39558af6",
+      "chunk_id": "DOC-39558af6_p2_l6-13",
+      "section": "",
+      "page_start": 2,
+      "page_end": null,
+      "line_start": 6,
+      "line_end": 13,
+      "quote": "4. 2　中医辨证\n中医基本证候特征可用气虚血瘀概括，在此基\n础上本虚可有阴虚、阳虚，甚至发生阴阳两虚、阴\n竭阳脱，标实兼有痰饮。参考《慢性心力衰竭中医\n诊疗专家共识》\n［4］，分为气虚血瘀证、气阴两虚血\n瘀证、阳气亏虚血瘀证3 种基本证型，各基本证型\n均可兼痰饮。"
+    },
+    "exclusions": [],
+    "tags": [
+      "clinical-basis:CB-06f73a1f0aba1def444a"
+    ],
+    "created_by": "",
+    "created_at": "",
+    "updated_at": "2026-11-22T09:40:11.709098+00:00",
+    "reviewed_by": "丘丘",
+    "reviewed_at": "2026-11-22T09:40:11.709098+00:00",
+    "review_note": ""
   }
 ]

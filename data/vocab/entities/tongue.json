@@ -90,5 +90,15 @@
     "standard_code": "",
     "source": "自建种子",
     "attributes": {}
+  },
+  {
+    "code": "TCM_COATING_WHITE",
+    "name": "苔白",
+    "aliases": [
+      "苔白",
+      "白苔"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
   }
 ]

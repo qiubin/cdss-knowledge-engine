@@ -59,5 +59,35 @@
     "standard_code": "自建:TCM-SYN-005",
     "source": "自建种子",
     "attributes": {}
+  },
+  {
+    "code": "TCM_SYN_QI_XU_XUE_YU",
+    "name": "气虚血瘀证",
+    "aliases": [
+      "气虚血瘀证",
+      "气虚血瘀"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_SYN_QI_YIN_XU_XUE_YU",
+    "name": "气阴两虚血瘀证",
+    "aliases": [
+      "气阴两虚血瘀证",
+      "气阴两虚兼血瘀"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_SYN_YANG_QI_KUI_XU_XUE_YU",
+    "name": "阳气亏虚血瘀证",
+    "aliases": [
+      "阳气亏虚血瘀证",
+      "阳气亏虚兼血瘀"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
   }
 ]

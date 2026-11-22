@@ -3178,51 +3178,7 @@
           "病"
         ],
         "vocabulary": true,
-        "entries": [
-          {
-            "code": "TCM_DIS_XIONG_BI_XIN_TONG",
-            "name": "胸痹心痛病",
-            "aliases": [
-              "胸痹心痛病",
-              "胸痹",
-              "心痛病"
-            ],
-            "standard_code": "ICD11-TM1:SF01",
-            "source": "自建种子",
-            "attributes": {},
-            "domain": "tcm",
-            "standard_system": "ICD-11 TM1",
-            "standard_mappings": [
-              {
-                "system": "ICD-11_TM1",
-                "version": "current",
-                "code": "ICD11-TM1:SF01",
-                "status": "active"
-              }
-            ]
-          },
-          {
-            "code": "TCM_DIS_XIAO_KE",
-            "name": "消渴病",
-            "aliases": [
-              "消渴病",
-              "消渴"
-            ],
-            "standard_code": "ICD11-TM1:SD30",
-            "source": "自建种子",
-            "attributes": {},
-            "domain": "tcm",
-            "standard_system": "ICD-11 TM1",
-            "standard_mappings": [
-              {
-                "system": "ICD-11_TM1",
-                "version": "current",
-                "code": "ICD11-TM1:SD30",
-                "status": "active"
-              }
-            ]
-          }
-        ]
+        "entries": []
       },
       {
         "entity_type": "syndrome",
@@ -3407,6 +3363,14 @@
         "source_entity_type": "syndrome",
         "target_entity_type": "treatment_method",
         "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_RECOMMENDS_FORMULA",
+        "name": "证候推荐方剂",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "formula",
+        "generate_evidence": false,
+        "extraction_hint": "同一证候段落中明确出现代表方、主方、基础方或方剂名称时建立；不得跨证候章节配对"
       },
       {
         "relation_code": "METHOD_HAS_FORMULA",
@@ -3808,51 +3772,7 @@
           "病"
         ],
         "vocabulary": true,
-        "entries": [
-          {
-            "code": "TCM_DIS_XIONG_BI_XIN_TONG",
-            "name": "胸痹心痛病",
-            "aliases": [
-              "胸痹心痛病",
-              "胸痹",
-              "心痛病"
-            ],
-            "standard_code": "ICD11-TM1:SF01",
-            "source": "自建种子",
-            "attributes": {},
-            "domain": "tcm",
-            "standard_system": "ICD-11 TM1",
-            "standard_mappings": [
-              {
-                "system": "ICD-11_TM1",
-                "version": "current",
-                "code": "ICD11-TM1:SF01",
-                "status": "active"
-              }
-            ]
-          },
-          {
-            "code": "TCM_DIS_XIAO_KE",
-            "name": "消渴病",
-            "aliases": [
-              "消渴病",
-              "消渴"
-            ],
-            "standard_code": "ICD11-TM1:SD30",
-            "source": "自建种子",
-            "attributes": {},
-            "domain": "tcm",
-            "standard_system": "ICD-11 TM1",
-            "standard_mappings": [
-              {
-                "system": "ICD-11_TM1",
-                "version": "current",
-                "code": "ICD11-TM1:SD30",
-                "status": "active"
-              }
-            ]
-          }
-        ]
+        "entries": []
       },
       {
         "entity_type": "syndrome",
@@ -4058,6 +3978,14 @@
         "source_entity_type": "syndrome",
         "target_entity_type": "treatment_method",
         "generate_evidence": false
+      },
+      {
+        "relation_code": "SYNDROME_RECOMMENDS_FORMULA",
+        "name": "证候推荐方剂",
+        "source_entity_type": "syndrome",
+        "target_entity_type": "formula",
+        "generate_evidence": false,
+        "extraction_hint": "同一证候段落中明确出现代表方、主方、基础方或方剂名称时建立；不得跨证候章节配对"
       },
       {
         "relation_code": "METHOD_HAS_FORMULA",
@@ -4285,6 +4213,27 @@
         "description": "代表方或备选方"
       },
       {
+        "attribute_code": "HERB_ROLE",
+        "name": "君臣佐使",
+        "owner_entity_type": "herb",
+        "data_type": "enum",
+        "required": false,
+        "allowed_values": [
+          "君",
+          "臣",
+          "佐",
+          "使"
+        ]
+      },
+      {
+        "attribute_code": "HERB_DOSE",
+        "name": "剂量与单位",
+        "owner_entity_type": "herb",
+        "data_type": "string",
+        "required": false,
+        "description": "保留原文剂量、单位及范围，不推测缺失值"
+      },
+      {
         "attribute_code": "HERB_PREGNANCY_RESTRICTION",
         "name": "中药妊娠禁忌",
         "owner_entity_type": "herb",
@@ -4331,6 +4280,8 @@
     "prompt_instructions": [
       "按V3契约抽取疾病、证素、证候、症舌脉、治法及方药。",
       "clinical_rule实体attributes.CLINICAL_RULE必须符合ClinicalContract JSON Schema；不并行编造suggested_rules。",
+      "每个证候治疗段必须完整抽取：证候→治法、证候→推荐方剂、治法→代表方、方剂→组成中药；方剂及药味必须与同一证候段落绑定，不得跨章节串联。",
+      "原文只有方剂而未明确治法时，仍建立SYNDROME_RECOMMENDS_FORMULA；原文明列药味时逐味建立FORMULA_CONTAINS_HERB，并保留剂量、炮制与君臣佐使属性。",
       "scope必须是明确适用病种的条件，可含疾病事实/既往确诊编码，并组合人群阶段条件。",
       "criteria每项是单一条件，有role和独立source；combination只通过criterion_id引用，支持group AND/OR/NOT、count_group min_count和原文weighted_group。",
       "每个source填写当前guideline_id、chunk_id、页行和连续原文；未知信息保留，不推测。",

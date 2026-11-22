@@ -1,7 +1,12 @@
 {
   "disease": {
-    "label": "疾病（ICD-10）",
+    "label": "西医疾病（ICD-10）",
     "domain": "western",
+    "color": "#c05621"
+  },
+  "tcm_disease": {
+    "label": "中医疾病",
+    "domain": "tcm",
     "color": "#c05621"
   },
   "syndrome": {

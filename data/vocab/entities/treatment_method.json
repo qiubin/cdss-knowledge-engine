@@ -45,5 +45,35 @@
     "standard_code": "",
     "source": "自建种子",
     "attributes": {}
+  },
+  {
+    "code": "TCM_METHOD_YIQI_HUOXUE",
+    "name": "益气活血",
+    "aliases": [
+      "益气活血",
+      "益气活血化瘀"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_METHOD_YIQI_YANGYIN_HUOXUE",
+    "name": "益气养阴活血",
+    "aliases": [
+      "益气养阴活血",
+      "益气养阴化瘀活血"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_METHOD_YIQI_WENYANG_HUOXUE",
+    "name": "益气温阳活血",
+    "aliases": [
+      "益气温阳活血",
+      "益气温阳化瘀"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
   }
 ]

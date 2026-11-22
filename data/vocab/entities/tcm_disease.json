@@ -1,0 +1,275 @@
+[
+  {
+    "code": "TCM_DIS_XIONG_BI_XIN_TONG",
+    "name": "胸痹心痛",
+    "aliases": ["胸痹心痛", "胸痹心痛病", "胸痹", "心痛病"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A04.01.01",
+    "source": "GB/T 16751.1-2023《中医临床诊疗术语 第1部分：疾病》胸痹心痛；分类代码 GB/T 15657-2021 A04.01.01",
+    "standard_mappings": [
+      {
+        "system": "GB/T_15657-2021",
+        "version": "2021",
+        "code": "A04.01.01"
+      },
+      {
+        "system": "ICD-11_TM1",
+        "version": "current",
+        "code": "ICD11-TM1:SF01",
+        "status": "active"
+      }
+    ]
+  },
+  {
+    "code": "TCM_DIS_XIAO_KE",
+    "name": "消渴",
+    "aliases": ["消渴", "消渴病"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "ICD-11 TM1",
+    "standard_code": "ICD11-TM1:SD30",
+    "source": "GB/T 16751.1-2023《中医临床诊疗术语 第1部分：疾病》消渴；ICD-11 TM1 映射 SD30",
+    "standard_mappings": [
+      {
+        "system": "ICD-11_TM1",
+        "version": "current",
+        "code": "ICD11-TM1:SD30",
+        "status": "active"
+      }
+    ]
+  },
+  {
+    "code": "TCM_DIS_XIN_SHUAI",
+    "name": "心衰",
+    "aliases": ["心衰", "心衰病", "慢性心衰", "慢性心力衰竭", "心力衰竭"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A04.01.07",
+    "source": "GB/T 16751.1-2023《中医临床诊疗术语 第1部分：疾病》心衰；分类代码 GB/T 15657-2021 A04.01.07（心衰病）；别名覆盖《慢性心力衰竭中医诊疗指南（2022年）》常见写法",
+    "standard_mappings": [
+      {
+        "system": "GB/T_15657-2021",
+        "version": "2021",
+        "code": "A04.01.07"
+      },
+      {
+        "system": "GB/T_15657-1995",
+        "version": "1995",
+        "code": "BNX030"
+      }
+    ]
+  },
+  {
+    "code": "TCM_DIS_GAN_MAO",
+    "name": "感冒",
+    "aliases": ["感冒"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A01.01.01",
+    "source": "GB/T 16751.1-2023《中医临床诊疗术语 第1部分：疾病》3.1.1 感冒；分类代码见 GB/T 15657-2021 表2"
+  },
+  {
+    "code": "TCM_DIS_SHI_ZU",
+    "name": "湿阻病",
+    "aliases": ["湿阻病", "湿阻"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A01.01.03",
+    "source": "GB/T 15657-2021《中医病证分类与代码》表2；疾病术语与 GB/T 16751.1-2023 的一致性见后者引言"
+  },
+  {
+    "code": "TCM_DIS_QIU_ZAO",
+    "name": "秋燥病",
+    "aliases": ["秋燥病", "秋燥"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A01.01.04",
+    "source": "GB/T 15657-2021《中医病证分类与代码》表2；疾病术语与 GB/T 16751.1-2023 的一致性见后者引言"
+  },
+  {
+    "code": "TCM_DIS_FENG_WEN",
+    "name": "风温病",
+    "aliases": ["风温病", "风温"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A01.03.03",
+    "source": "GB/T 15657-2021《中医病证分类与代码》表2；疾病术语与 GB/T 16751.1-2023 的一致性见后者引言"
+  },
+  {
+    "code": "TCM_DIS_ZHEN_XIN_TONG",
+    "name": "真心痛",
+    "aliases": ["真心痛"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A04.01.02",
+    "source": "GB/T 16751.1-2023《中医临床诊疗术语 第1部分：疾病》真心痛；分类代码 GB/T 15657-2021 A04.01.02"
+  },
+  {
+    "code": "TCM_DIS_BAI_HE",
+    "name": "百合病",
+    "aliases": ["百合病"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A04.01.11",
+    "source": "GB/T 15657-2021《中医病证分类与代码》表2；疾病术语与 GB/T 16751.1-2023 的一致性见后者引言"
+  },
+  {
+    "code": "TCM_DIS_BU_MEI",
+    "name": "不寐病",
+    "aliases": ["不寐病", "不寐"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A04.01.13",
+    "source": "GB/T 15657-2021《中医病证分类与代码》表2；疾病术语与 GB/T 16751.1-2023 的一致性见后者引言"
+  },
+  {
+    "code": "TCM_DIS_CHI_DAI",
+    "name": "痴呆病",
+    "aliases": ["痴呆病", "痴呆"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A04.01.21",
+    "source": "GB/T 15657-2021《中医病证分类与代码》表2；疾病术语与 GB/T 16751.1-2023 的一致性见后者引言"
+  },
+  {
+    "code": "TCM_DIS_BIAN_MI",
+    "name": "便秘病",
+    "aliases": ["便秘病", "便秘"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A04.03.06",
+    "source": "GB/T 15657-2021《中医病证分类与代码》表2；疾病术语与 GB/T 16751.1-2023 的一致性见后者引言"
+  },
+  {
+    "code": "TCM_DIS_WEI_PI",
+    "name": "胃痞病",
+    "aliases": ["胃痞病", "胃痞", "痞满"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A04.03.15",
+    "source": "GB/T 15657-2021《中医病证分类与代码》表2；疾病术语与 GB/T 16751.1-2023 的一致性见后者引言"
+  },
+  {
+    "code": "TCM_DIS_XIAO_CHUAN",
+    "name": "哮喘病",
+    "aliases": ["哮喘病", "哮喘"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A04.04.04",
+    "source": "GB/T 15657-2021《中医病证分类与代码》表2；疾病术语与 GB/T 16751.1-2023 的一致性见后者引言"
+  },
+  {
+    "code": "TCM_DIS_FEI_ZHANG",
+    "name": "肺胀",
+    "aliases": ["肺胀", "肺胀病"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A04.04.09",
+    "source": "GB/T 15657-2021《中医病证分类与代码》表2；疾病术语与 GB/T 16751.1-2023 的一致性见后者引言"
+  },
+  {
+    "code": "TCM_DIS_SHI_LIN",
+    "name": "石淋",
+    "aliases": ["石淋", "石淋病"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A04.05.01.06",
+    "source": "GB/T 15657-2021《中医病证分类与代码》表2；疾病术语与 GB/T 16751.1-2023 的一致性见后者引言"
+  },
+  {
+    "code": "TCM_DIS_LONG_BI",
+    "name": "癃闭",
+    "aliases": ["癃闭", "癃闭病"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A04.05.06",
+    "source": "GB/T 15657-2021《中医病证分类与代码》表2；疾病术语与 GB/T 16751.1-2023 的一致性见后者引言"
+  },
+  {
+    "code": "TCM_DIS_YU_BING",
+    "name": "郁病",
+    "aliases": ["郁病", "郁证", "郁症"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A05.01",
+    "source": "GB/T 15657-2021《中医病证分类与代码》表2；GB/T 16751.1-2023 术语作郁证"
+  },
+  {
+    "code": "TCM_DIS_QUE_XUE_XING_ZHONG_FENG",
+    "name": "缺血性中风",
+    "aliases": ["缺血性中风", "缺血性中风病"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A07.01.01.01",
+    "source": "GB/T 15657-2021《中医病证分类与代码》表2；疾病术语与 GB/T 16751.1-2023 的一致性见后者引言"
+  },
+  {
+    "code": "TCM_DIS_CHU_XUE_XING_ZHONG_FENG",
+    "name": "出血性中风",
+    "aliases": ["出血性中风", "出血性中风病"],
+    "domain": "tcm",
+    "specialty": "中医内科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A07.01.01.02",
+    "source": "GB/T 15657-2021《中医病证分类与代码》表2；疾病术语与 GB/T 16751.1-2023 的一致性见后者引言"
+  },
+  {
+    "code": "TCM_DIS_RE_CHUANG",
+    "name": "热疮",
+    "aliases": ["热疮"],
+    "domain": "tcm",
+    "specialty": "中医皮肤科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A08.01.01",
+    "source": "GB/T 15657-2021《中医病证分类与代码》表2；疾病术语与 GB/T 16751.1-2023 的一致性见后者引言"
+  },
+  {
+    "code": "TCM_DIS_SHE_CHUAN_CHUANG",
+    "name": "蛇串疮",
+    "aliases": ["蛇串疮", "缠腰火丹", "蛇丹"],
+    "domain": "tcm",
+    "specialty": "中医皮肤科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A08.01.02",
+    "source": "GB/T 15657-2021《中医病证分类与代码》表2；缠腰火丹、蛇丹为传统又称"
+  },
+  {
+    "code": "TCM_DIS_BI_QIU",
+    "name": "鼻鼽",
+    "aliases": ["鼻鼽"],
+    "domain": "tcm",
+    "specialty": "中医耳鼻喉科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A13.02",
+    "source": "GB/T 15657-2021《中医病证分类与代码》表2；疾病术语与 GB/T 16751.1-2023 的一致性见后者引言"
+  },
+  {
+    "code": "TCM_DIS_BI_YUAN",
+    "name": "鼻渊",
+    "aliases": ["鼻渊", "脑漏"],
+    "domain": "tcm",
+    "specialty": "中医耳鼻喉科",
+    "standard_system": "GB/T 15657-2021",
+    "standard_code": "A13.03",
+    "source": "GB/T 15657-2021《中医病证分类与代码》表2；脑漏为传统又称"
+  }
+]

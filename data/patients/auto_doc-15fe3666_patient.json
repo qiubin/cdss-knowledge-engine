@@ -1,0 +1,20 @@
+{
+  "patient_id": "DEMO-DOC-15fe3666",
+  "hospital_id": "XM_FIRST",
+  "age": 58,
+  "gender": "M",
+  "labs": [],
+  "exam_findings": [],
+  "symptoms": [
+    {
+      "symptom_code": "SYM_PALPITATION",
+      "symptom_name": "心悸",
+      "present": true
+    }
+  ],
+  "observations": [],
+  "vitals": [],
+  "past_history": [],
+  "current_medications": [],
+  "clinical_attributes": {}
+}

@@ -106,6 +106,15 @@
       "description": "由知识包自动生成的阳性测试病例（中国 成人肥厚型心肌病诊断与治疗指南2023），满足规则 RULE-DRAFT-QIXING-DIFF-001 的条件。",
       "default": false,
       "category": "畸形综合征"
+    },
+    {
+      "case_id": "auto-doc-15fe3666",
+      "file": "auto_doc-15fe3666_patient.json",
+      "name": "心力衰竭 · 自动测试病例",
+      "domain": "western",
+      "description": "由知识包自动生成的阳性测试病例（慢性心力衰竭中医诊疗指南（2022年）），满足规则 DOC-15fe3666-AUTO-001 的条件。",
+      "default": false,
+      "category": "心力衰竭"
     }
   ]
 }

@@ -469,5 +469,90 @@
       "HERB_ROLE": "",
       "HERB_DOSE": ""
     }
+  },
+  {
+    "code": "TCM_HERB_PAO_FU_PIAN",
+    "name": "炮附片",
+    "aliases": [
+      "炮附片",
+      "附片",
+      "制附片"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_HERB_GUI_ZHI",
+    "name": "桂枝",
+    "aliases": [
+      "桂枝"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_HERB_ZE_XIE",
+    "name": "泽泻",
+    "aliases": [
+      "泽泻"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_HERB_ZHU_LING",
+    "name": "猪苓",
+    "aliases": [
+      "猪苓"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_HERB_SHENG_DI_HUANG",
+    "name": "生地黄",
+    "aliases": [
+      "生地黄",
+      "生地"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_HERB_SHU_DI_HUANG",
+    "name": "熟地黄",
+    "aliases": [
+      "熟地黄",
+      "熟地"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_HERB_GUA_LOU_PI",
+    "name": "瓜蒌皮",
+    "aliases": [
+      "瓜蒌皮"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_HERB_TING_LI_ZI",
+    "name": "葶苈子",
+    "aliases": [
+      "葶苈子"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
+  },
+  {
+    "code": "TCM_HERB_HUANG_QIN",
+    "name": "黄芩",
+    "aliases": [
+      "黄芩"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
   }
 ]

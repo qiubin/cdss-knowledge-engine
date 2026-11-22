@@ -197,5 +197,47 @@
     "standard_code": "",
     "source": "自建种子",
     "attributes": {}
+  },
+  {
+    "code": "SYM_JUAN_DAI_LAN_YAN",
+    "name": "倦怠懒言",
+    "aliases": [
+      "倦怠懒言",
+      "倦怠乏力懒言"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
+  },
+  {
+    "code": "SYM_MIAN_CHUN_ZI_AN",
+    "name": "面色或口唇紫暗",
+    "aliases": [
+      "面色或口唇紫暗",
+      "面色紫暗",
+      "口唇紫暗"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
+  },
+  {
+    "code": "SYM_YU_SHENG_DI_WEI",
+    "name": "语声低微",
+    "aliases": [
+      "语声低微",
+      "声低息微"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
+  },
+  {
+    "code": "SYM_SHOU_ZU_XIN_RE",
+    "name": "手足心发热",
+    "aliases": [
+      "手足心发热",
+      "五心烦热",
+      "手足心热"
+    ],
+    "source": "《慢性心力衰竭中医诊疗指南（2022年）》导入审核沉淀（图谱 KG-TCM-DOC-39558af6）",
+    "attributes": {}
   }
 ]

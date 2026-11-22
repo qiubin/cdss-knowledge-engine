@@ -1,0 +1,13 @@
+{
+  "domain": "western",
+  "schema_version": 1,
+  "nodes": [],
+  "relations": [],
+  "diseases": [],
+  "evidences": [],
+  "disease_evidence": [],
+  "sources": [],
+  "anchor_types": [
+    "disease"
+  ]
+}

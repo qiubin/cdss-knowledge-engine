@@ -293,5 +293,266 @@
     "standard_code": "I42.9",
     "source": "ICD-10",
     "attributes": {}
+  },
+  {
+    "code": "I10",
+    "name": "原发性高血压",
+    "aliases": [
+      "高血压",
+      "高血压病"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I10",
+    "standard_mappings": [],
+    "source": "ICD-10",
+    "specialty": "心血管内科",
+    "disease_tags": [],
+    "attributes": {}
+  },
+  {
+    "code": "I20",
+    "name": "心绞痛",
+    "aliases": [
+      "稳定型心绞痛",
+      "不稳定型心绞痛"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I20",
+    "standard_mappings": [],
+    "source": "ICD-10",
+    "specialty": "心血管内科",
+    "disease_tags": [],
+    "attributes": {}
+  },
+  {
+    "code": "I21",
+    "name": "急性心肌梗死",
+    "aliases": [
+      "心梗",
+      "AMI"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I21",
+    "standard_mappings": [],
+    "source": "ICD-10",
+    "specialty": "心血管内科",
+    "disease_tags": [],
+    "attributes": {}
+  },
+  {
+    "code": "I25",
+    "name": "慢性缺血性心脏病",
+    "aliases": [
+      "冠心病",
+      "冠状动脉粥样硬化性心脏病"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I25",
+    "standard_mappings": [],
+    "source": "ICD-10",
+    "specialty": "心血管内科",
+    "disease_tags": [],
+    "attributes": {}
+  },
+  {
+    "code": "I25.2",
+    "name": "陈旧性心肌梗死",
+    "aliases": [
+      "陈旧性心梗"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I25.2",
+    "standard_mappings": [],
+    "source": "ICD-10",
+    "specialty": "心血管内科",
+    "disease_tags": [],
+    "attributes": {}
+  },
+  {
+    "code": "I34",
+    "name": "二尖瓣关闭不全",
+    "aliases": [
+      "二尖瓣反流"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I34",
+    "standard_mappings": [],
+    "source": "ICD-10",
+    "specialty": "心血管内科",
+    "disease_tags": [],
+    "attributes": {}
+  },
+  {
+    "code": "I35.0",
+    "name": "主动脉瓣狭窄",
+    "aliases": [],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I35.0",
+    "standard_mappings": [],
+    "source": "ICD-10",
+    "specialty": "心血管内科",
+    "disease_tags": [],
+    "attributes": {}
+  },
+  {
+    "code": "I35.1",
+    "name": "主动脉瓣关闭不全",
+    "aliases": [
+      "主动脉瓣反流"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I35.1",
+    "standard_mappings": [],
+    "source": "ICD-10",
+    "specialty": "心血管内科",
+    "disease_tags": [],
+    "attributes": {}
+  },
+  {
+    "code": "I42.0",
+    "name": "扩张型心肌病",
+    "aliases": [
+      "扩张性心肌病"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I42.0",
+    "standard_mappings": [],
+    "source": "ICD-10",
+    "specialty": "心血管内科",
+    "disease_tags": [],
+    "attributes": {}
+  },
+  {
+    "code": "I44.2",
+    "name": "房室传导阻滞，完全性",
+    "aliases": [
+      "三度房室传导阻滞",
+      "III度AVB"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I44.2",
+    "standard_mappings": [],
+    "source": "ICD-10",
+    "specialty": "心血管内科",
+    "disease_tags": [],
+    "attributes": {}
+  },
+  {
+    "code": "I46",
+    "name": "心脏骤停",
+    "aliases": [
+      "心脏停搏"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I46",
+    "standard_mappings": [],
+    "source": "ICD-10",
+    "specialty": "心血管内科",
+    "disease_tags": [],
+    "attributes": {}
+  },
+  {
+    "code": "I47.1",
+    "name": "阵发性心动过速",
+    "aliases": [
+      "室上性心动过速",
+      "室上速"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I47.1",
+    "standard_mappings": [],
+    "source": "ICD-10",
+    "specialty": "心血管内科",
+    "disease_tags": [],
+    "attributes": {}
+  },
+  {
+    "code": "I48",
+    "name": "心房颤动和心房扑动",
+    "aliases": [
+      "房颤",
+      "心房扑动"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I48",
+    "standard_mappings": [],
+    "source": "ICD-10",
+    "specialty": "心血管内科",
+    "disease_tags": [],
+    "attributes": {}
+  },
+  {
+    "code": "I60.9",
+    "name": "蛛网膜下腔出血，未特指",
+    "aliases": [
+      "蛛网膜下腔出血"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I60.9",
+    "standard_mappings": [],
+    "source": "ICD-10",
+    "specialty": "心血管内科",
+    "disease_tags": [],
+    "attributes": {}
+  },
+  {
+    "code": "I61.9",
+    "name": "脑出血，未特指",
+    "aliases": [
+      "脑出血"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I61.9",
+    "standard_mappings": [],
+    "source": "ICD-10",
+    "specialty": "心血管内科",
+    "disease_tags": [],
+    "attributes": {}
+  },
+  {
+    "code": "I63.9",
+    "name": "脑梗死，未特指",
+    "aliases": [
+      "脑梗",
+      "缺血性脑卒中"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I63.9",
+    "standard_mappings": [],
+    "source": "ICD-10",
+    "specialty": "心血管内科",
+    "disease_tags": [],
+    "attributes": {}
+  },
+  {
+    "code": "I65.9",
+    "name": "入脑前动脉闭塞或狭窄，未特指",
+    "aliases": [
+      "颈动脉狭窄"
+    ],
+    "domain": "western",
+    "standard_system": "ICD-10",
+    "standard_code": "I65.9",
+    "standard_mappings": [],
+    "source": "ICD-10",
+    "specialty": "心血管内科",
+    "disease_tags": [],
+    "attributes": {}
   }
 ]
