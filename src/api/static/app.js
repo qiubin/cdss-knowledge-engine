@@ -2912,14 +2912,41 @@
     };
   }
 
+  function knowledgeGraphOptions(graphs, selected) {
+    return [["western", "西医图谱"], ["tcm", "中医图谱"]].map(([domain, label]) => {
+      const items = graphs.filter((item) => normalizeDomainClient(item.domain) === domain);
+      return items.length ? `<optgroup label="${label}">${items.map((item) =>
+        `<option value="${esc(item.graph_filename)}" ${item.graph_filename === selected ? "selected" : ""}>${esc(item.graph_filename)}</option>`
+      ).join("")}</optgroup>` : "";
+    }).join("");
+  }
+
+  function bindKnowledgeGraphSelector(selector, graphs, route) {
+    $(selector).onchange = (event) => {
+      const selected = graphs.find((item) => item.graph_filename === event.target.value);
+      if (!selected) return;
+      const tcm = normalizeDomainClient(selected.domain) === "tcm";
+      if (tcm) state.tcmGraphFilename = selected.graph_filename;
+      else state.graphFilename = selected.graph_filename;
+      const next = tcm ? "tcmGraph" : "graph";
+      if (next !== route) return navigate(next, {reload: true});
+      return (tcm ? renderTcmGraph() : renderGraph()).catch((error) => toast(error.message, true));
+    };
+  }
+
   async function renderGraph(options = {}) {
     await loadBase();
     if (!options.preserveTableState) resetPagedTables();
-    state.graphs = (await api("/api/kg/graphs")).filter((item) => normalizeDomainClient(item.domain) === "western");
+    const graphs = await api("/api/kg/graphs");
+    state.graphs = graphs.filter((item) => normalizeDomainClient(item.domain) === "western");
     if (!state.graphs.some((item) => item.graph_filename === state.graphFilename)) {
       state.graphFilename = state.graphs.find((item) => item.graph_filename === "KG-GENERIC_GUIDELINE_V1.json")?.graph_filename || state.graphs[0]?.graph_filename || "";
     }
-    if (!state.graphFilename) { pageEl.innerHTML = '<div class="empty">暂无西医知识图谱。</div>'; return; }
+    if (!state.graphFilename) {
+      if (graphs.some((item) => normalizeDomainClient(item.domain) === "tcm")) return navigate("tcmGraph", {reload: true});
+      pageEl.innerHTML = '<div class="empty">暂无知识图谱。</div>';
+      return;
+    }
     const graph = approvedKnowledgeGraph(await api(`/api/kg/graph?graph_filename=${encodeURIComponent(state.graphFilename)}`));
     state.graph = graph;
     const semanticNodes = Object.values(graph.nodes || {});
@@ -3137,7 +3164,7 @@
     pageEl.innerHTML = `
       ${panel("图谱选择", `
         <div class="inline-controls">
-          <div class="field"><label>知识图谱</label><select id="graphSelector">${state.graphs.map((item) => `<option value="${esc(item.graph_filename)}" ${item.graph_filename === state.graphFilename ? "selected" : ""}>${esc(item.graph_filename)}</option>`).join("")}</select></div>
+          <div class="field"><label for="graphSelector">知识图谱</label><select id="graphSelector">${knowledgeGraphOptions(graphs, state.graphFilename)}</select></div>
           <div class="field"><label>审核人</label><input id="reviewerName" value="${esc(localStorage.getItem("cdssReviewer") || "")}" placeholder="姓名"></div>
         </div>
       `, "", "仅展示审核通过的知识；关系及两端实体均通过后才显示。待审、拒绝、失效及待审核内容请到审核台处理。")}
@@ -3240,7 +3267,7 @@
       })}
     `;
     ["relations", "paths", "nodes", "evidences", "treatmentPlans", "links", "sources"].forEach(bindPagedTable);
-    $("#graphSelector").onchange = (e) => { state.graphFilename = e.target.value; renderGraph(); };
+    bindKnowledgeGraphSelector("#graphSelector", graphs, "graph");
     $("#reviewerName").onchange = (event) => {
       localStorage.setItem("cdssReviewer", event.target.value.trim());
     };
@@ -3359,30 +3386,22 @@
   }
 
   async function renderTcmGraph() {
-    const graphs = await api("/api/kg/graphs?domain=tcm");
-    if (!graphs.length) {
-      pageEl.innerHTML = panel(
-        "中医图谱",
-        '<div class="empty">尚未导入中医知识图谱。请先在「指南导入」选择中医模板并生成知识包，或在「知识包」导入。</div>',
-      );
+    resetPagedTables();
+    const graphs = await api("/api/kg/graphs");
+    const tcmGraphs = graphs.filter((item) => normalizeDomainClient(item.domain) === "tcm");
+    if (!tcmGraphs.length) {
+      pageEl.innerHTML = panel("中医图谱", '<div class="empty">尚未导入中医知识图谱。请在「指南导入」选择中医模板，或在「知识包」导入。</div>')
+        + (graphs.length ? panel("图谱选择", `<select id="tcmGraphSelector" aria-label="知识图谱"><option value="">选择已有图谱</option>${knowledgeGraphOptions(graphs)}</select>`) : "");
+      if (graphs.length) bindKnowledgeGraphSelector("#tcmGraphSelector", graphs, "tcmGraph");
       return;
     }
-    if (!state.tcmGraphFilename || !graphs.some((item) => item.graph_filename === state.tcmGraphFilename)) {
-      const nonLegacyGraph = graphs.find((item) => item.graph_filename !== "tcm_graph.json");
-      state.tcmGraphFilename = nonLegacyGraph?.graph_filename || graphs[0].graph_filename;
+    if (!tcmGraphs.some((item) => item.graph_filename === state.tcmGraphFilename)) {
+      state.tcmGraphFilename = (tcmGraphs.find((item) => item.semantic_nodes > 0) || tcmGraphs[0]).graph_filename;
     }
-    const graph = await api(`/api/kg/graph?graph_filename=${encodeURIComponent(state.tcmGraphFilename)}`);
-    const nodes = Array.isArray(graph.nodes) ? graph.nodes : Object.values(graph.nodes || {});
-    const relations = Array.isArray(graph.relations) ? graph.relations : Object.values(graph.relations || {});
-    if (!nodes.length) {
-      pageEl.innerHTML = panel(
-        "中医图谱",
-        '<div class="empty">该图谱当前为空。请先在「指南导入」上传中医指南，选择中医模板，生成并导入知识包后，证候、舌脉、治法与方药节点会显示在这里。</div>',
-        "",
-        "图谱已清空，等待重新导入指南生成",
-      );
-      return;
-    }
+    const filename = state.tcmGraphFilename;
+    const graph = approvedKnowledgeGraph(await api(`/api/kg/graph?graph_filename=${encodeURIComponent(filename)}`));
+    if (state.route !== "tcmGraph" || state.tcmGraphFilename !== filename) return;
+    const {nodes, relations} = graph;
     const index = Object.fromEntries(nodes.map((node) => [node.id, node]));
     const profile = graph.profile || {};
     const nodeMeta = profile.node_meta || {};
@@ -3403,29 +3422,47 @@
     const formulaHerbs = byRelation("FORMULA_CONTAINS_HERB");
     const herbsByFormula = {};
     formulaHerbs.forEach((relation) => {
-      (herbsByFormula[relation.target_node_id] = herbsByFormula[relation.target_node_id] || [])
+      (herbsByFormula[relation.source_node_id] = herbsByFormula[relation.source_node_id] || [])
         .push(index[relation.target_node_id]);
     });
     const formulaRows = [];
     syndromeMethods.forEach((sm) => {
       methodFormulas.filter((mf) => mf.source_node_id === sm.target_node_id).forEach((mf) => {
         const herbs = herbsByFormula[mf.target_node_id] || [];
-        formulaRows.push(`<tr>
+        formulaRows.push({
+          text: [sm.source_node_id, sm.target_node_id, mf.target_node_id].map((id) => index[id]?.name)
+            .concat(herbs.map((herb) => herb?.name)).join(" "),
+          html: `<tr>
           <td>${label(sm.source_node_id)}</td>
           <td>${label(sm.target_node_id)}</td>
           <td>${label(mf.target_node_id)}</td>
           <td>${herbs.map((herb) => `${esc(herb?.name || "")}${herb?.attributes?.HERB_DOSE ? ` ${esc(herb.attributes.HERB_DOSE)}` : ""}${herb?.attributes?.HERB_ROLE ? `（${esc(herb.attributes.HERB_ROLE)}）` : ""}`).join("、") || "-"}</td>
           <td class="mono">${refs(mf)}</td>
-        </tr>`);
+        </tr>`,
+        });
       });
     });
+    const relationRows = (edges) => edges.map((relation) => {
+      const name = relationLabel(relation);
+      return {
+        text: `${index[relation.source_node_id]?.name} ${name} ${relation.relation_code} ${index[relation.target_node_id]?.name} ${refs(relation)}`,
+        values: {relation: relation.relation_code},
+        html: `<tr><td>${label(relation.source_node_id)}</td><td><strong>${esc(name)}</strong><div class="mono muted">${esc(relation.relation_code)}</div></td>
+          <td>${label(relation.target_node_id)}</td><td class="mono">${refs(relation)}</td></tr>`,
+      };
+    });
+    const relationFilter = (edges) => [{key: "relation", label: "关系类型",
+      options: [...new Map(edges.map((edge) => [edge.relation_code, {
+        value: edge.relation_code, label: relationLabel(edge),
+      }])).values()]}];
 
     pageEl.innerHTML = `<div class="actions"><button id="openTcmGraphVisual" class="btn">打开图谱可视</button><button id="openTcmGraphClear" class="btn">图谱清除</button></div>
       ${panel("图谱选择", `
         <div class="inline-controls">
-          <div class="field"><label>中医知识图谱</label><select id="tcmGraphSelector">${graphs.map((item) => `<option value="${esc(item.graph_filename)}" ${item.graph_filename === state.tcmGraphFilename ? "selected" : ""}>${esc(item.graph_filename)}（证候 ${item.syndromes || 0}）</option>`).join("")}</select></div>
+          <div class="field"><label for="tcmGraphSelector">知识图谱</label><select id="tcmGraphSelector">${knowledgeGraphOptions(graphs, filename)}</select></div>
         </div>
-      `, "", "证候是中医推理的锚点；疾病、症状、舌脉、治法、方剂、中药共享同一语义层")}
+      `, "", "仅展示审核通过的实体，以及关系和两端实体均已通过的连线。")}
+      ${nodes.length ? "" : '<div class="empty">当前图谱暂无审核通过的实体。</div>'}
       <div class="grid c4">
         <div class="kpi"><span>证候</span><strong>${count("syndrome")}</strong></div>
         <div class="kpi"><span>症状</span><strong>${count("symptom")}</strong></div>
@@ -3437,38 +3474,43 @@
         <div class="kpi"><span>语义关系</span><strong>${relations.length}</strong></div>
       </div>
 
-      ${panel("辨证链路", table(["证候", "关系", "症状/舌象/脉象/病机", "指南溯源"], observationRelations.map((relation) => `
-        <tr>
-          <td>${label(relation.source_node_id)}</td>
-          <td><strong>${esc(relation.relation_name || relation.relation_code)}</strong><div class="mono muted">${esc(relation.relation_code)}</div></td>
-          <td>${label(relation.target_node_id)}</td>
-          <td class="mono">${refs(relation)}</td>
-        </tr>`)), "", "证候的主症、次症、舌象、脉象与病机依据")}
-      ${panel("治法方药链路", table(["证候", "治法", "方剂", "组成（剂量/君臣佐使）", "指南溯源"], formulaRows), "", "证候 → 治法 → 方剂 → 中药的完整处方路径")}
-      ${panel("语义节点", table(["类型", "名称", "编码", "属性", "来源"], nodes.map((node) => `
-        <tr>
+      ${pagedPanel({key: "tcmObservations", title: "辨证链路",
+        headers: ["证候", "关系", "症状 / 舌象 / 脉象 / 病机", "指南溯源"],
+        items: relationRows(observationRelations), filters: relationFilter(observationRelations),
+        placeholder: "搜索证候、观察项、出处…"})}
+      ${pagedPanel({key: "tcmFormulas", title: "治法方药链路",
+        headers: ["证候", "治法", "方剂", "组成（剂量/君臣佐使）", "指南溯源"],
+        items: formulaRows, placeholder: "搜索证候、治法、方剂、中药…"})}
+      ${pagedPanel({key: "tcmNodes", title: "语义实体", headers: ["类型", "名称", "编码", "属性", "来源"],
+        filters: [{key: "type", label: "实体类型", options: [...new Set(nodes.map((node) => node.node_type))]
+          .map((type) => ({value: type, label: typeLabel(type)}))}],
+        placeholder: "搜索实体名称、类型、编码…",
+        items: nodes.map((node) => ({
+          text: `${node.name} ${typeLabel(node.node_type)} ${node.code || ""}`,
+          values: {type: node.node_type},
+          html: `<tr>
           <td>${esc(typeLabel(node.node_type))}</td>
           <td><strong>${esc(node.name)}</strong></td>
           <td class="mono">${esc(node.code || "编码缺失，需补充")}</td>
           <td class="mono">${esc(Object.entries(node.attributes || {}).map(([key, value]) => `${key}=${value}`).join("；") || "-")}</td>
           <td class="mono">${esc((node.source_refs || []).join(" / ") || "-")}</td>
-        </tr>`)), "", "节点编码与实体词典、解析模板、规则条件共用同一语义")}
-      ${panel("语义关系", table(["源节点", "关系", "目标节点", "溯源"], relations.map((relation) => `
-        <tr>
-          <td>${label(relation.source_node_id)}</td>
-          <td><strong>${esc(relation.relation_name || relation.relation_code)}</strong><div class="mono muted">${esc(relation.relation_code)}</div></td>
-          <td>${label(relation.target_node_id)}</td>
-          <td class="mono">${refs(relation)}</td>
-        </tr>`)), "", "证候、观察项、治法、方剂之间的显式逻辑边")}
-      ${panel("指南出处", table(["文档 / 章节", "页行", "引文"], (graph.sources || []).map((source) => `
-        <tr><td><strong>${esc(source.doc_title)}</strong><div class="muted">${esc(source.section)}</div></td><td class="mono nowrap">p${source.page_start}:l${source.line_start}-${source.line_end}</td><td><div class="quote">${esc(source.quote)}</div></td></tr>`)))}
+        </tr>`,
+        })),
+      })}
+      ${pagedPanel({key: "tcmRelations", title: "语义关系",
+        headers: ["源节点", "关系", "目标节点", "溯源"], items: relationRows(relations),
+        filters: relationFilter(relations), placeholder: "搜索关系、实体、出处…"})}
+      ${pagedPanel({key: "tcmSources", title: "指南出处", headers: ["文档 / 章节", "页行", "引文"],
+        placeholder: "搜索指南、章节、引文…", items: graph.sources.map((source) => ({
+          text: `${source.doc_title} ${source.section} ${source.quote}`,
+          html: `<tr><td><strong>${esc(source.doc_title)}</strong><div class="muted">${esc(source.section)}</div></td><td class="mono nowrap">p${source.page_start}:l${source.line_start}-${source.line_end}</td><td><div class="quote">${esc(source.quote)}</div></td></tr>`,
+        })),
+      })}
     `;
     $("#openTcmGraphVisual").onclick = () => { state.visualGraphFilename = state.tcmGraphFilename; navigate("graphVisual", { reload: true }); };
     $("#openTcmGraphClear").onclick = () => { state.clearGraphFilename = state.tcmGraphFilename; navigate("graphClear", { reload: true }); };
-    $("#tcmGraphSelector").onchange = (event) => {
-      state.tcmGraphFilename = event.target.value;
-      renderTcmGraph();
-    };
+    ["tcmObservations", "tcmFormulas", "tcmNodes", "tcmRelations", "tcmSources"].forEach(bindPagedTable);
+    bindKnowledgeGraphSelector("#tcmGraphSelector", graphs, "tcmGraph");
   }
 
   function findingLabel(code) {

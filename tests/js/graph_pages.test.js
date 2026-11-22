@@ -109,3 +109,51 @@ test("visualization page lists both domains and mounts the selected graph", asyn
   assert.equal(h.mounts[0].domain, "tcm");
   assert.ok(!h.content.innerHTML.includes("clearExecuteBtn"));
 });
+
+test("TCM knowledge tables paginate approved entities and edges and can switch domains", async () => {
+  const graph = {
+    nodes: [
+      ...Array.from({length: 12}, (_, i) => ({id: `S${i}`, node_type: "syndrome", name: `证候${i}`, review_status: "active"})),
+      {id: "P", node_type: "symptom", name: "待审症状", review_status: "draft"},
+    ],
+    relations: [
+      {source_node_id: "S0", target_node_id: "S1", relation_code: "EXAMPLE", review_status: "active"},
+      {source_node_id: "S0", target_node_id: "P", relation_code: "SYNDROME_HAS_SYMPTOM", review_status: "active"},
+    ],
+  };
+  const tables = new Map();
+  const bound = [];
+  const routes = [];
+  const selectors = new Map();
+  const context = vm.createContext({
+    state: {route: "tcmGraph"},
+    pageEl: {},
+    $: (key) => {
+      if (!selectors.has(key)) selectors.set(key, {});
+      return selectors.get(key);
+    },
+    api: async (url) => url === "/api/kg/graphs" ? [
+      {graph_filename: "west.json", domain: "western"},
+      {graph_filename: "tcm.json", domain: "tcm", semantic_nodes: 13},
+    ] : graph,
+    normalizeDomainClient: (domain) => domain,
+    esc: String,
+    panel: (title, body) => title + body,
+    relationLabel: (relation) => relation.relation_code,
+    pagedPanel: (data) => { tables.set(data.key, data); return data.title; },
+    bindPagedTable: (key) => bound.push(key),
+    resetPagedTables: () => {},
+    navigate: (route) => routes.push(route),
+  });
+  vm.runInContext(source.slice(source.indexOf("  function approvedKnowledgeGraph("), source.indexOf("  async function renderGraph(options")) +
+    source.slice(source.indexOf("  async function renderTcmGraph()"), source.indexOf("  function findingLabel(")), context);
+  await context.renderTcmGraph();
+  assert.match(context.pageEl.innerHTML, /<optgroup label="西医图谱">.*west\.json/);
+  assert.match(context.pageEl.innerHTML, /<optgroup label="中医图谱">.*tcm\.json/);
+  assert.equal(tables.get("tcmNodes").items.length, 12);
+  assert.equal(tables.get("tcmRelations").items.length, 1);
+  assert.equal(tables.get("tcmObservations").items.length, 0);
+  assert.deepEqual(bound, ["tcmObservations", "tcmFormulas", "tcmNodes", "tcmRelations", "tcmSources"]);
+  await selectors.get("#tcmGraphSelector").onchange({target: {value: "west.json"}});
+  assert.deepEqual(routes, ["graph"]);
+});
