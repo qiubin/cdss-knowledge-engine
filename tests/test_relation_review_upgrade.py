@@ -281,6 +281,19 @@ class RelationGroupsTest(unittest.TestCase):
         ids = {s["node_id"] for s in groups["subjects"]}
         self.assertIn("ENTITY:lab:L1", ids)
 
+    def test_workbench_lists_disease_without_outgoing_relations(self):
+        node = {"id": "ENTITY:disease:D2", "node_type": "disease", "code": "D2",
+                "name": "待审疾病", "review_status": "draft"}
+        graph = {**GRAPH2, "nodes": [*GRAPH2["nodes"], node]}
+        (self.graph_dir / "REVIEW-TEST2.json").write_text(
+            json.dumps(graph, ensure_ascii=False), encoding="utf-8",
+        )
+        groups = self.service.relation_groups("REVIEW-TEST2.json")
+        subject = next(item for item in groups["subjects"] if item["node_id"] == node["id"])
+        self.assertEqual((subject["out_relation_count"], subject["review_status"]), (0, "draft"))
+        detail = self.service.relation_group_detail("REVIEW-TEST2.json", node["id"])
+        self.assertEqual(detail["sections"], [])
+
     def test_group_detail_sections_and_container_nesting(self):
         detail = self.service.relation_group_detail("REVIEW-TEST2.json", "ENTITY:disease:D1")
         by_code = {section["relation_code"]: section for section in detail["sections"]}

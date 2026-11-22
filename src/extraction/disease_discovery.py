@@ -126,8 +126,7 @@ def _vocab_code_for_alias_in(vocab: List[Dict[str, Any]], name: str) -> str:
 def _load_disease_vocab() -> List[Dict[str, Any]]:
     """Load ICD-10 western diseases from the shared entity dictionary.
 
-    ``disease.json`` is now a pure ICD-10 western dictionary. TCM diseases are
-    template-local entries and are intentionally not loaded from it. The
+    ``disease.json`` is an ICD-10 western dictionary. The
     legacy ``diseases.json`` remains only as a backward-compatible fallback.
     """
     global _DISEASE_VOCAB
@@ -487,17 +486,10 @@ def _discovered_disease_entities(
         discovered_items = _discovered_syndrome_matches(chunk, positions, pages, lines)
     elif entity_type.entity_type == "disease":
         if str(template_domain or "").strip().lower() in {"tcm", "中医", "中医内科"}:
-            # TCM disease discovery must map to TCM dictionary codes, never to
-            # the ICD-10 western list.
-            discovered_items = _discovered_disease_matches(
-                chunk, positions, pages, lines,
-                vocab=[
-                    item for item in _load_shared_entity_vocab("disease")
-                    if str(item.get("domain") or "").lower() == "tcm"
-                ],
-            )
-        else:
-            discovered_items = _discovered_disease_matches(chunk, positions, pages, lines)
+            # Shared TCM terms were already matched by the template. Western
+            # suffix heuristics cannot classify an unfamiliar TCM disease.
+            return results
+        discovered_items = _discovered_disease_matches(chunk, positions, pages, lines)
     else:
         return results
     for discovered in discovered_items:

@@ -10,7 +10,7 @@
     guidePackages: [],
     targetGraphs: [],
     guidePackageId: "",
-    importTab: "entities",
+    importHistory: { page: 1, page_size: 10 },
     graph: null,
     graphs: [],
     graphFilename: "KG-GENERIC_GUIDELINE_V1.json",
@@ -499,23 +499,23 @@
   }
 
   async function renderDashboard() {
-    const [{ stats, rules, hospitals }, docs, graphs, graph, standardOverview, ruleSync, reviewQueue] = await Promise.all([
+    const [{ stats, rules, hospitals }, docs, graphs, standardOverview, ruleSync, reviewQueue] = await Promise.all([
       loadBase(),
       api("/api/pdf/documents"),
       api("/api/kg/graphs").then((items) => items.filter((item) => normalizeDomainClient(item.domain) === "western")),
-      api(`/api/kg/graph?graph_filename=${encodeURIComponent(state.graphFilename)}`),
       api("/api/standards/all"),
       api("/api/rules/sync-check"),
       api("/api/review/queue?limit=1").catch(() => ({ summary: {} })),
     ]);
     state.graphs = graphs;
-    state.graph = graph;
     state.rules = rules;
     state.ruleSync = ruleSync;
     if (!graphs.some((item) => item.graph_filename === state.graphFilename)) {
-      state.graphFilename = graphs.find((item) => item.graph_filename === "KG-GENERIC_GUIDELINE_V1.json")?.graph_filename || graphs[0]?.graph_filename || "stemi_graph.json";
+      state.graphFilename = graphs.find((item) => item.graph_filename === "KG-GENERIC_GUIDELINE_V1.json")?.graph_filename || graphs[0]?.graph_filename || "";
     }
     const graphFilename = state.graphFilename;
+    const graph = graphFilename ? await api(`/api/kg/graph?graph_filename=${encodeURIComponent(graphFilename)}`) : {};
+    state.graph = graph;
     const selectedRules = rules.filter((rule) => (rule.graph_filename || "KG-GENERIC_GUIDELINE_V1.json") === graphFilename);
     const activeRules = selectedRules.filter((rule) => rule.status === "active");
     const reviewSummary = reviewQueue.summary || {};
@@ -657,13 +657,14 @@
     pageEl.innerHTML = `
       <div id="pendingUploadPanel"></div>
       <div id="importJobPanel"></div>
-      ${panel("一键自动生成（LLM 推荐）", `
+      ${panel("指南一键自动生成", `
         <div class="inline-controls">
+          <div class="field"><label>指南领域</label><select id="autoDomain"><option value="auto">自动识别</option><option value="tcm">中医</option><option value="western">西医</option></select></div>
           <button id="autoUploadBtn" class="btn primary">选择指南 PDF 自动生成</button>
           <span class="muted">自动完成并直接入库：开放术语发现 → 标准码/LOCAL 码 → 图谱与诊疗依据 → 人工审核 → 规则草稿</span>
         </div>
         <input id="autoPdfInput" type="file" accept=".pdf" hidden>
-      `, "", "不需要预先补疾病、症状、检查词典；需先在「解析模板」页配置 LLM 地址、API Key、模型")}
+      `, "", "显式选择优先；自动识别依据标题、辨证章节、证候、舌脉、治法和方药结构选择模板。")}
       ${state.autoResult ? `
         <div id="autoResultPanel" class="result-banner ok">
           <strong>自动生成并已入库：${esc(state.autoResult.doc_title || state.autoResult.doc_id)}</strong>
@@ -687,9 +688,25 @@
       ${panel("导入历史", '<div id="importHistoryBody" class="muted">加载中…</div>', "", "记录每次上传（含一键自动）的成功与失败；新文档使用新编号，不会覆盖历史记录")}
     `;
     const drop = $("#dropzone"), input = $("#pdfInput");
-    const autoInput = $("#autoPdfInput"), autoButton = $("#autoUploadBtn");
-    autoButton.onclick = () => autoInput.click();
-    autoInput.onchange = () => autoInput.files[0] && prepareAutoUpload(autoInput.files[0]);
+    // Keep one upload surface.  The drop zone now uses the same automatic
+    // domain detection and end-to-end pipeline as the former auto button.
+    const autoDomain = $("#autoDomain");
+    const autoPanel = autoDomain?.closest("section.panel");
+    const uploadPanel = drop?.closest("section.panel");
+    const templateControls = $("#uploadMode")?.closest(".inline-controls");
+    if (templateControls) {
+      $("#uploadMode")?.closest(".field")?.remove();
+      const fields = templateControls.querySelectorAll(".field");
+      fields[fields.length - 1]?.remove();
+      templateControls.prepend(autoDomain.closest(".field"));
+    }
+    if (uploadPanel) {
+      const heading = uploadPanel.querySelector("h3");
+      if (heading) heading.textContent = "上传指南 PDF";
+    }
+    const dropHint = drop?.querySelector("p");
+    if (dropHint) dropHint.textContent = "自动识别中西医领域，选择专用模板并生成实体、关系、知识包和候选规则";
+    autoPanel?.remove();
     $("#autoOpenPackage")?.addEventListener("click", () => {
       state.guidePackageId = state.autoResult.package_id;
       navigate("packages", { reload: true });
@@ -702,13 +719,9 @@
     drop.onclick = () => input.click();
     drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("drag"); };
     drop.ondragleave = () => drop.classList.remove("drag");
-    drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove("drag"); if (e.dataTransfer.files[0]) prepareUpload(e.dataTransfer.files[0]); };
-    input.onchange = () => input.files[0] && prepareUpload(input.files[0]);
-    $("#uploadMode").value = state.extractionConfig.default_mode || "local";
+    drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove("drag"); if (e.dataTransfer.files[0]) prepareAutoUpload(e.dataTransfer.files[0]); };
+    input.onchange = () => input.files[0] && prepareAutoUpload(input.files[0]);
     $("#uploadTemplate").value = state.extractionConfig.default_template_id || state.templates.find((t) => t.is_default)?.template_id || "";
-    $("#uploadMode").onchange = (e) => {
-      if (e.target.value === "llm" && !state.extractionConfig.llm.api_key_configured) toast("当前环境变量未配置大模型 API Key，调用将失败", true);
-    };
     $("#uploadTemplate").onchange = () => { state.uploadGraphChoice = $("#uploadGraph")?.value || "follow"; refreshUploadGraphOptions(); };
     $("#uploadGraph").onchange = (e) => {
       state.uploadGraphChoice = e.target.value;
@@ -718,21 +731,90 @@
     if (activeImportJob()) setImportBusy(true); else setImportBusy(false);
     renderImportJob();
     if (doc) renderImportResult();
-    api("/api/pdf/import-logs?limit=50").then((logs) => {
-      const body = $("#importHistoryBody");
-      if (!body) return;
-      if (!logs.length) { body.innerHTML = '<div class="empty">暂无导入记录；每次上传（含失败）都会在这里留痕。</div>'; return; }
+    loadImportHistory();
+  }
+
+  // 一次导入会产生 started/success/failed 等多条事件，按 job_id 归并为一条历史，
+  // 展示最终状态（success/failed/stopped 优先，否则取最新事件）。
+  function groupImportLogs(entries) {
+    const byJob = new Map();
+    for (const entry of entries) {
+      const key = entry.job_id || `${entry.doc_id}-${entry.ts}`;
+      if (!byJob.has(key)) byJob.set(key, []);
+      byJob.get(key).push(entry);
+    }
+    return [...byJob.entries()].map(([key, events]) => {
+      const sorted = [...events].sort((a, b) => (a.ts || "").localeCompare(b.ts || ""));
+      const last = sorted[sorted.length - 1];
+      const display = sorted.find((e) => e.status === "failed" || e.status === "stopped")
+        || sorted.find((e) => e.status === "success") || last;
+      return {
+        job_id: last.job_id || key,
+        doc_id: last.doc_id || "",
+        doc_title: last.doc_title || display.doc_title || "",
+        mode: last.mode || display.mode || "",
+        display,
+      };
+    });
+  }
+
+  async function loadImportHistory() {
+    const body = $("#importHistoryBody");
+    if (!body) return;
+    state.importHistory ||= { page: 1, page_size: 10 };
+    try {
+      const data = await api(`/api/pdf/import-logs?page=${state.importHistory.page}&page_size=${state.importHistory.page_size}`);
+      const totalPages = Math.max(1, Math.ceil(data.total / data.page_size));
+      state.importHistory.page = Math.min(Math.max(1, state.importHistory.page), totalPages);
+      const attempts = groupImportLogs(data.items);
       body.className = "";
-      body.innerHTML = table(["时间", "文档", "方式", "结果", "数量", "耗时", "失败原因"], logs.map((log) => `<tr>
-        <td class="nowrap mono">${esc(formatTime(log.ts))}</td>
-        <td><strong>${esc(log.doc_title || "-")}</strong><div class="mono muted">${esc(log.doc_id || "")}</div></td>
-        <td>${log.mode === "auto" ? "一键自动" : log.mode === "llm" ? "大模型" : log.mode === "local" ? "本地模板" : esc(log.mode || "-")}</td>
-        <td>${importLogStatusBadge(log.status)}</td>
-        <td class="muted">${log.status === "success" ? `${log.entity_count ?? "-"} 实体 / ${log.relation_count ?? "-"} 关系 / ${log.rule_count ?? "-"} 规则` : "-"}</td>
-        <td class="mono muted">${log.duration_ms != null ? `${log.duration_ms} ms` : "-"}</td>
-        <td>${esc(log.error || "-")}</td>
-      </tr>`));
-    }).catch(() => {});
+      if (!attempts.length) {
+        body.innerHTML = '<div class="empty">暂无导入记录；每次上传（含失败）都会在这里留痕。</div>';
+        return;
+      }
+      body.innerHTML = `
+        ${table(["时间", "文档", "方式", "结果", "数量", "失败原因", "操作"], attempts.map((attempt) => `<tr>
+          <td class="nowrap mono">${esc(formatTime(attempt.display.ts))}</td>
+          <td><a href="#" data-import-log-open="${esc(attempt.doc_id)}"><strong>${esc(attempt.doc_title || "-")}</strong></a><div class="mono muted">${esc(attempt.doc_id || "")}</div></td>
+          <td>${attempt.mode === "auto" ? "一键自动" : attempt.mode === "llm" ? "大模型" : attempt.mode === "local" ? "本地模板" : esc(attempt.mode || "-")}</td>
+          <td>${importLogStatusBadge(attempt.display.status)}</td>
+          <td class="muted">${attempt.display.status === "success" ? `${attempt.display.entity_count ?? "-"} 实体 / ${attempt.display.relation_count ?? "-"} 关系 / ${attempt.display.rule_count ?? "-"} 规则` : "-"}</td>
+          <td>${esc(attempt.display.error || "-")}</td>
+          <td><div class="actions"><button class="btn sm" data-import-log-open="${esc(attempt.doc_id)}">查看</button><button class="btn sm danger" data-import-log-delete="${esc(attempt.job_id)}">删除</button></div></td>
+        </tr>`))}
+        <div class="inline-controls muted">
+          <span>共 ${data.total} 条 · 第 ${state.importHistory.page} / ${totalPages} 页</span>
+          <button id="importHistoryPrev" class="btn sm" ${state.importHistory.page <= 1 ? "disabled" : ""}>上一页</button>
+          <button id="importHistoryNext" class="btn sm" ${state.importHistory.page >= totalPages ? "disabled" : ""}>下一页</button>
+        </div>`;
+      const openDoc = async (docId) => {
+        if (!docId) return;
+        try {
+          state.doc = await api(`/api/pdf/${encodeURIComponent(docId)}/result`);
+          renderImportResult();
+          $("#importResult")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch (error) { toast(error.message, true); }
+      };
+      body.querySelectorAll("[data-import-log-open]").forEach((el) => el.onclick = (event) => {
+        event.preventDefault();
+        openDoc(el.dataset.importLogOpen);
+      });
+      body.querySelectorAll("[data-import-log-delete]").forEach((btn) => btn.onclick = async () => {
+        if (!confirm("删除该次导入的历史记录，并联动删除对应的已上传文档？已生成的知识包与图谱不受影响。")) return;
+        btn.disabled = true;
+        try {
+          const result = await api(`/api/pdf/import-logs/${encodeURIComponent(btn.dataset.importLogDelete)}`, { method: "DELETE" });
+          toast(`已删除导入记录${result.deleted_doc_ids?.length ? `及对应文档 ${result.deleted_doc_ids.join("、")}` : ""}`);
+          if (result.deleted_doc_ids?.includes(state.doc?.doc_id)) { state.doc = null; }
+          await loadImportHistory();
+          if (!state.doc) renderImport();
+        } catch (error) { toast(error.message, true); btn.disabled = false; }
+      });
+      $("#importHistoryPrev").onclick = () => { if (state.importHistory.page > 1) { state.importHistory.page -= 1; loadImportHistory(); } };
+      $("#importHistoryNext").onclick = () => { if (state.importHistory.page < totalPages) { state.importHistory.page += 1; loadImportHistory(); } };
+    } catch (error) {
+      body.innerHTML = `<div class="empty">导入历史加载失败：${esc(error.message)}</div>`;
+    }
   }
 
   function renderPendingUpload() {
@@ -824,7 +906,6 @@
     $("#jobOpenDetailBtn")?.addEventListener("click", async () => {
       try {
         state.doc = await api(`/api/pdf/${encodeURIComponent(result.doc_id)}/result`);
-        state.importTab = "entities";
         renderImportResult();
       } catch (error) { toast(error.message, true); }
     });
@@ -852,6 +933,9 @@
       if (pending.graphFilename) form.append("graph_filename", pending.graphFilename);
     } else {
       form.append("auto_activate", "false");
+      form.append("domain", pending.domain || "auto");
+      form.append("template_id", pending.templateId || "");
+      if (pending.graphFilename) form.append("graph_filename", pending.graphFilename);
     }
     let created;
     try {
@@ -993,7 +1077,25 @@
   function prepareAutoUpload(file) {
     if (!file.name.toLowerCase().endsWith(".pdf")) return toast("仅支持 PDF 文件", true);
     if (activeImportJob()) return toast("已有导入任务正在进行，请等待完成或停止当前任务", true);
-    state.pendingUpload = { file, kind: "auto", mode: "auto", templateId: "", graphFilename: "" };
+    const graphSel = $("#uploadGraph");
+    let graphFilename = "";
+    if (graphSel?.value === "__new__") {
+      graphFilename = ($("#uploadGraphNew")?.value || "").trim();
+      if (!/^[A-Za-z0-9][A-Za-z0-9_.-]*(\.json)?$/.test(graphFilename) || graphFilename.includes("..")) {
+        return toast("新图谱文件名无效：仅限字母、数字、点、下划线、连字符", true);
+      }
+    } else if (graphSel?.value && graphSel.value !== "follow") {
+      graphFilename = graphSel.value;
+    }
+    state.pendingUpload = {
+      file, kind: "auto", mode: "auto",
+      // 一键自动入口不读取模板模式下拉的当前值：模板选择与 auto 入口分属
+      // 两个面板，混读会让「以为选了 V3 实际用默认 GENERIC」这类错配发生。
+      // auto 由领域决定：中医→TCM_GUIDELINE_V3，西医/自动→识别或通用管线。
+      templateId: "",
+      graphFilename,
+      domain: $("#autoDomain")?.value || "auto",
+    };
     renderPendingUpload();
     toast(`已选择 ${file.name}；确认后点击「开始导入」`);
   }
@@ -1036,14 +1138,12 @@
     const incomplete = coverage?.complete === false;
     const empty = !doc.entities.length;
     doc.targetDisease = target;
-    const relationCount = (doc.suggested_relations || []).length;
-    const tabs = [["lines", "原文定位"], ["entities", `抽取实体 ${doc.entities.length}`], ["relations", `候选关系 ${relationCount}`], ["rules", `候选规则 ${doc.suggested_rules.length}`]];
     box.innerHTML = `
-      <div class="result-banner ${incomplete || empty ? "warning" : "ok"}">${esc(doc.doc_title)} ${empty ? "抽取结果为空" : incomplete ? "解析未完成" : "解析完成"}：${doc.total_pages} 页，${doc.total_lines} 行，候选规则 ${doc.suggested_rules.length} 条。<div class="muted">方式：${doc.extraction_mode === "llm" ? "大模型解析" : "本地模板解析"}；领域：${domain === "tcm" ? "中医" : "西医"}；模板：${esc(doc.template_name || doc.template_id || "-")}${coverage ? `；片段覆盖 ${coverage.processed}/${coverage.total}${coverage.excluded ? `，另有 ${coverage.excluded} 个参考文献或纯标题片段不参与抽取` : ""}` : ""}</div></div>
+      <div class="result-banner ${incomplete || empty ? "warning" : "ok"}">${esc(doc.doc_title)} ${empty ? "抽取结果为空" : incomplete ? "解析未完成" : "解析完成"}：${doc.total_pages} 页，${doc.total_lines} 行。<div class="muted">方式：${doc.extraction_mode === "llm" ? "大模型解析" : "本地模板解析"}；领域：${domain === "tcm" ? "中医" : "西医"}；模板：${esc(doc.template_name || doc.template_id || "-")}${coverage ? `；片段覆盖 ${coverage.processed}/${coverage.total}${coverage.excluded ? `，另有 ${coverage.excluded} 个参考文献或纯标题片段不参与抽取` : ""}` : ""}</div></div>
       <div class="pipeline">
-        <div class="step done"><strong>1 上传并解析</strong><span>原文定位、实体与候选规则</span></div>
-        <div class="step"><strong>2 审核候选内容</strong><span>核对实体、关系和候选规则</span></div>
-        <div class="step pending"><strong>3 生成知识包</strong><span>生成后进入知识包页</span></div>
+        <div class="step done"><strong>1 上传并解析</strong><span>原文定位与解析留痕</span></div>
+        <div class="step"><strong>2 生成知识包</strong><span>生成后进入知识包页</span></div>
+        <div class="step pending"><strong>3 审核候选内容</strong><span>在知识包页核对实体、关系和候选规则</span></div>
         <div class="step pending"><strong>4 在知识包页入库</strong><span>预检后统一导入图谱和草稿规则</span></div>
       </div>
       ${(doc.warnings || []).length ? (() => {
@@ -1071,7 +1171,7 @@
         </div>
         <p class="muted">生成后进入「知识包」页查看自动预检并完成入库；此处不再单独导入图谱或规则。</p>
       `, "", "生成的是候选知识包；图谱和草稿规则只在知识包页审核后统一入库，不会自动启用")}
-      <section class="panel"><div class="tabs">${tabs.map(([id, text]) => `<button class="tab ${state.importTab === id ? "active" : ""}" data-import-tab="${id}">${text}</button>`).join("")}</div><div id="importTabBody" class="panel-body"></div></section>
+      <section class="panel"><div class="panel-head"><div><h3>原文定位</h3><p>按页查看指南原文，用于核对解析结果；实体、关系与规则的明细在知识包页审核</p></div></div><div id="importTabBody" class="panel-body"></div></section>
     `;
     $("#targetDisease").onchange = (e) => { doc.targetDisease = e.target.value; };
     const graphMode = $("#graphTargetMode");
@@ -1109,38 +1209,20 @@
       } catch (error) { toast(error.message, true); button.disabled = false; button.textContent = "重新解析未完成内容"; }
     };
     $("#generatePackage").onclick = generatePackage;
-    box.querySelectorAll("[data-import-tab]").forEach((btn) => btn.onclick = () => { state.importTab = btn.dataset.importTab; renderImportResult(); });
     renderImportTab();
   }
 
   async function renderImportTab() {
     const body = $("#importTabBody"); const doc = state.doc; if (!body || !doc) return;
-    if (state.importTab === "lines") {
-      const pages = [...new Set(doc.chunks.map((c) => c.page_start))].sort((a, b) => a - b);
-      const page = doc.linePage || pages[0] || 1;
-      body.innerHTML = `<div class="inline-controls"><div class="field"><label>页码</label><select id="pageSelect">${pages.map((p) => `<option value="${p}" ${p === page ? "selected" : ""}>第 ${p} 页</option>`).join("")}</select></div></div><div id="lineList" class="table-wrap"><div class="empty">加载中</div></div>`;
-      $("#pageSelect").onchange = async (e) => { doc.linePage = Number(e.target.value); renderImportTab(); };
-      const requestToken = ++state.importRequestToken;
-      const data = await api(`/api/pdf/${doc.doc_id}/lines?page=${page}`);
-      const lineList = $("#lineList");
-      if (requestToken !== state.importRequestToken || !lineList) return;
-      lineList.innerHTML = table(["页", "行", "正文", "定位"], data.lines.map((l) => `<tr><td>${l.page}</td><td>${l.line}</td><td>${esc(l.text)}</td><td class="mono muted">p${l.page}:l${l.line}</td></tr>`));
-    } else if (state.importTab === "entities") {
-      body.innerHTML = table(["类型", "名称", "状态", "编码", "页 / 行", "证据引文"], doc.entities.map((e) => `<tr><td>${typeName[e.entity_type] || e.entity_type}</td><td>${esc(e.name)}</td><td>${e.candidate_status === "pending" ? '<span class="badge warn">待术语审核</span>' : '<span class="badge ok">已识别</span>'}</td><td class="mono">${esc(e.code || e.concept_code || "-")}</td><td class="nowrap">p${e.page}:l${e.line_start}</td><td><div class="quote">${esc(e.quote)}</div></td></tr>`));
-    } else if (state.importTab === "relations") {
-      const relations = doc.suggested_relations || [];
-      body.innerHTML = relations.length ? table(["关系", "源实体", "目标实体", "证据概念", "页 / 行", "引文"], relations.map((r) => `
-        <tr>
-          <td><strong>${esc(r.relation_name || r.relation_code)}</strong><div class="mono muted">${esc(r.relation_code)}</div></td>
-          <td>${esc(typeName[r.source_type] || r.source_type)}<div class="mono muted">${esc(r.source_code)}</div></td>
-          <td>${esc(typeName[r.target_type] || r.target_type)}<div class="mono muted">${esc(r.target_code || r.target_concept_code)}</div></td>
-          <td>${r.target_concept_code ? conceptChip(r.target_concept_code) : "-"}</td>
-          <td class="nowrap">p${r.page}:l${r.line_start}-${r.line_end}</td>
-          <td><div class="quote">${esc(r.quote)}</div></td>
-        </tr>`)) : '<div class="empty">本次解析未生成显式候选关系；导入图谱时会按同片段实体和证据结构兜底补齐。</div>';
-    } else {
-      body.innerHTML = doc.suggested_rules.length ? table(["规则 / 结论", "条件逻辑", "溯源"], doc.suggested_rules.map((r) => `<tr><td><strong>${esc(r.name)}</strong><div class="muted">${badge(clinicalIntentLabel(r.clinical_intent, r.rule_type))} ${badge(r.status)} 优先级 ${r.priority}</div></td><td><div class="quote">${esc(r.condition_text || "无条件下")}</div><details class="debug-panel"><summary>原始条件 JSON</summary><pre class="mono">${esc(JSON.stringify(r.conditions, null, 2))}</pre></details></td><td class="mono muted">${esc(r.source.section || "-")}</td></tr>`)) : '<div class="empty">未生成候选规则，可先导入实体</div>';
-    }
+    const pages = [...new Set(doc.chunks.map((c) => c.page_start))].sort((a, b) => a - b);
+    const page = doc.linePage || pages[0] || 1;
+    body.innerHTML = `<div class="inline-controls"><div class="field"><label>页码</label><select id="pageSelect">${pages.map((p) => `<option value="${p}" ${p === page ? "selected" : ""}>第 ${p} 页</option>`).join("")}</select></div></div><div id="lineList" class="table-wrap"><div class="empty">加载中</div></div>`;
+    $("#pageSelect").onchange = async (e) => { doc.linePage = Number(e.target.value); renderImportTab(); };
+    const requestToken = ++state.importRequestToken;
+    const data = await api(`/api/pdf/${doc.doc_id}/lines?page=${page}`);
+    const lineList = $("#lineList");
+    if (requestToken !== state.importRequestToken || !lineList) return;
+    lineList.innerHTML = table(["页", "行", "正文", "定位"], data.lines.map((l) => `<tr><td>${l.page}</td><td>${l.line}</td><td>${esc(l.text)}</td><td class="mono muted">p${l.page}:l${l.line}</td></tr>`));
   }
 
   async function loadExtractionSettings(force = false) {
@@ -1692,7 +1774,7 @@
     const entries = selected ? await api(`/api/vocab/entities/${encodeURIComponent(selected.entity_type)}`) : [];
     const totalEntries = dictionaries.reduce((sum, d) => sum + d.entry_count, 0);
     const templateCount = new Set(dictionaries.flatMap((d) => d.referencing_templates.map((t) => t.template_id))).size;
-    const dictLabel = (type) => typeName[type] || type;
+    const dictLabel = (type) => dictionaries.find((item) => item.entity_type === type)?.label || typeName[type] || type;
     const specialtiesOf = (item) => (item.specialties?.length ? item.specialties : [item.specialty || "未分类"]);
     const diseasesOf = (item) => (item.diseases?.length ? item.diseases : (item.disease_tags?.length ? item.disease_tags : ["未分类"]));
     const uniqueSorted = (values) => [...new Set(values.filter(Boolean).map(String))].sort((a, b) => a.localeCompare(b, "zh-Hans-CN"));
@@ -1744,6 +1826,7 @@
         <div class="step done"><strong>术语层 · 实体词典（本页）</strong><span>共享实体字典 data/vocab/entities</span></div>
         <div class="step done"><strong>实例层 · 知识图谱</strong><span>文档导入后生成的节点与证据</span></div>
       </div>`, "", "模板只定义“有哪些类型和关系”（Schema 层）；具体实体统一存放在共享词典（术语层）；图谱节点按导入文档生成（实例层）")}
+      ${entityDictionaryPicker(dictionaries, state.entityVocabType)}
       <div class="grid c4">
         ${selected?.entity_type === "disease" ? `
           <div class="kpi"><span>启用疾病实体</span><strong>${terminologySummary.active_entities}</strong><small>参与解析与规则生成</small></div>
@@ -1757,11 +1840,6 @@
           <div class="kpi"><span>当前词典</span><strong>${selected ? entries.length : 0}</strong><small>${esc(selected ? dictLabel(selected.entity_type) : "-")} 条目 · 已分类 ${classifiedCount}</small></div>
         `}
       </div>
-      ${panel("词典选择", `
-        <div class="inline-controls">
-          <div class="field"><label>实体类型词典</label><select id="entityVocabSelector">${dictionaries.map((d) => `<option value="${esc(d.entity_type)}" ${d.entity_type === state.entityVocabType ? "selected" : ""}>${esc(dictLabel(d.entity_type))} / ${esc(d.entity_type)}（${d.entry_count} 实体 · ${d.referencing_templates.length} 模板引用）</option>`).join("")}</select></div>
-        </div>
-      `, "", "同一实体类型只有一个词典；所有勾选“共享词表”的模板都读取这里")}
       ${selected ? pagedPanel({
         key: tableKey,
         title: `${dictLabel(selected.entity_type)}词典（${entries.length}）`,
@@ -1777,7 +1855,7 @@
         <tr><td><strong>${esc(t.name)}</strong></td><td class="mono">${esc(t.template_id)}</td><td>${badge(t.status)}</td></tr>`
       )), "", "这些模板的实体类型勾选了“共享词表”，词典修改后无需逐模板维护") : ""}
     `;
-    $("#entityVocabSelector").onchange = (event) => { state.entityVocabType = event.target.value; renderEntityVocab(); };
+    bindEntityDictionaryPicker();
     const newButton = $("#newEntityEntry");
     if (newButton && selected) newButton.onclick = () => openEntityEntryEditor(selected.entity_type, null);
     const importButton = $("#importIcd10");
@@ -1902,6 +1980,7 @@
   }
 
   function openEntityEntryEditor(entityType, item, isNew = false) {
+    const isTcmDisease = entityType === "tcm_disease";
     const value = item || {
       code: "", name: "", aliases: [],
       domain: entityType === "disease" ? "western" : "",
@@ -1915,7 +1994,9 @@
     const isDisease = entityType === "disease";
     const domainField = isDisease
       ? `<div class="field"><label>领域</label><input value="西医" readonly></div>`
-      : `<div class="field"><label>领域</label><select name="domain"><option value="" ${!value.domain ? "selected" : ""}>共享</option><option value="western" ${value.domain === "western" ? "selected" : ""}>西医</option><option value="tcm" ${value.domain === "tcm" ? "selected" : ""}>中医</option></select></div>`;
+      : isTcmDisease
+        ? '<div class="field"><label>领域</label><input value="中医" readonly></div>'
+        : `<div class="field"><label>领域</label><select name="domain"><option value="" ${!value.domain ? "selected" : ""}>共享</option><option value="western" ${value.domain === "western" ? "selected" : ""}>西医</option><option value="tcm" ${value.domain === "tcm" ? "selected" : ""}>中医</option></select></div>`;
     const standardFields = isDisease
       ? [
           `<div class="field"><label>标准体系</label><input value="ICD-10" readonly></div>`,
@@ -1927,16 +2008,18 @@
         ].join("");
     const notice = isDisease
       ? `疾病字典按 ICD-10 编码和标准名称维护；标准编码自动等于疾病编码。`
-      : `保存后立即对全部引用「${esc(typeName[entityType] || entityType)}」词典的同领域模板生效。`;
+      : isTcmDisease ? "编码使用 TCM_DIS_ 前缀。标准编码与出处经核实后填写。"
+        : `保存后立即对全部引用「${esc(typeName[entityType] || entityType)}」词典的同领域模板生效。`;
     const derivedSpecialty = (value.specialties || []).filter((entry) => entry && entry !== "未分类").join("、");
     const derivedDiseases = (value.diseases || []).filter((entry) => entry && entry !== "未分类");
     $("#editorBody").innerHTML = `
-      <h3>${isNew ? "新增共享实体" : "编辑共享实体"} · ${esc(typeName[entityType] || entityType)}</h3>
+      <h3>${isNew ? "新增共享实体" : "编辑共享实体"} · ${esc(isTcmDisease ? "中医疾病" : typeName[entityType] || entityType)}</h3>
       <div class="form-grid">
         <div class="field"><label>实体编码</label><input name="code" value="${esc(value.code)}" ${!isNew ? "readonly" : ""}></div>
         <div class="field"><label>实体名称</label><input name="name" value="${esc(value.name)}"></div>
         ${domainField}
         ${standardFields}
+        ${isTcmDisease ? `<div class="field wide"><label>出处</label><input name="source" value="${esc(value.source || "")}"></div>` : ""}
         <div class="field"><label>专科</label><input name="specialty" value="${esc(value.specialty || "")}" placeholder="${esc(derivedSpecialty || "例如：心血管内科")}"></div>
         <div class="field wide"><label>关联疾病（每行一个，留空自动归类）</label><textarea name="disease_tags" placeholder="${esc(derivedDiseases.join("\n") || "例如：急性心肌梗死")}">${esc((value.disease_tags || []).join("\n"))}</textarea></div>
         <div class="field wide"><label>别名 / 正则（每行一个）</label><textarea name="aliases">${esc((value.aliases || []).join("\n"))}</textarea></div>
@@ -1954,6 +2037,11 @@
         payload.standard_system = "ICD-10";
         payload.standard_code = payload.code;
         payload.source = "ICD-10";
+      }
+      if (isTcmDisease) {
+        payload.domain = "tcm";
+        payload.standard_mappings = value.standard_mappings || [];
+        payload.attributes = value.attributes || {};
       }
       try {
         await (isNew
@@ -2205,6 +2293,37 @@
     };
   }
 
+  function entityDictionaryPicker(dictionaries, selectedType) {
+    const label = (entry) => entry.label || typeName[entry.entity_type] || entry.entity_type;
+    const diseaseDictionaries = ["tcm_disease", "disease"]
+      .map((type) => dictionaries.find((entry) => entry.entity_type === type))
+      .filter(Boolean);
+    return panel("词典选择", `
+      <div class="inline-controls">
+        <div class="actions" aria-label="疾病词典">
+          ${diseaseDictionaries.map((entry) => `
+            <button type="button" class="btn ${entry.entity_type === selectedType ? "primary" : ""}"
+              data-entity-dictionary="${esc(entry.entity_type)}" aria-pressed="${entry.entity_type === selectedType}">
+              ${esc(label(entry))}（${entry.entry_count}）
+            </button>`).join("")}
+        </div>
+        <div class="field"><label for="entityVocabSelector">全部实体词典</label>
+          <select id="entityVocabSelector">${dictionaries.map((entry) => `<option value="${esc(entry.entity_type)}" ${entry.entity_type === selectedType ? "selected" : ""}>${esc(label(entry))}（${entry.entry_count}）</option>`).join("")}</select>
+        </div>
+      </div>`);
+  }
+
+  function bindEntityDictionaryPicker() {
+    const select = (type) => {
+      state.entityVocabType = type;
+      return renderEntityVocab();
+    };
+    $("#entityVocabSelector").onchange = (event) => select(event.target.value);
+    pageEl.querySelectorAll("[data-entity-dictionary]").forEach((button) => {
+      button.onclick = () => select(button.dataset.entityDictionary);
+    });
+  }
+
   async function renderVocab(dictionaries = null) {
     if (state.route !== "entityVocab") { state.entityVocabType = "concept"; navigate("entityVocab"); return; }
     await loadBase();
@@ -2214,7 +2333,7 @@
     const filtered = state.vocab.filter((item) => (!category || item.category === category) && (!search || `${item.code} ${item.name_cn} ${item.name_en} ${(item.aliases || []).join(" ")} ${item.description}`.toLowerCase().includes(search)));
     const categories = [...new Set(state.vocab.map((item) => item.category))].sort();
     pageEl.innerHTML = `
-      ${panel("词典选择", `<div class="field"><label>实体类型词典</label><select id="entityVocabSelector">${dictionaries.map((d) => `<option value="${esc(d.entity_type)}" ${d.entity_type === "concept" ? "selected" : ""}>${esc(typeName[d.entity_type] || d.entity_type)} / ${esc(d.entity_type)}（${d.entry_count} 实体）</option>`).join("")}</select></div>`)}
+      ${entityDictionaryPicker(dictionaries, "concept")}
       <div class="grid c4">
         <div class="kpi"><span>概念总数</span><strong>${state.vocab.length}</strong><small>受控语义集合</small></div>
         <div class="kpi"><span>检验概念</span><strong>${state.vocab.filter((v) => v.category === "lab_concept").length}</strong><small>升高、降低、动态趋势等</small></div>
@@ -2225,7 +2344,7 @@
         <tr><td class="mono">${esc(item.code)}</td><td><strong>${esc(item.name_cn)}</strong></td><td>${esc((item.aliases || []).join(" / "))}</td><td>${esc(item.name_en || "-")}</td><td><span class="badge">${esc(item.category)}</span></td><td class="mono">${esc(item.evaluator_type)}</td><td><div class="quote">${esc(item.description)}</div></td><td>${item.is_active ? '<span class="badge active">启用</span>' : '<span class="badge retired">停用</span>'}</td><td><div class="actions"><button class="btn sm" data-concept-edit="${esc(item.code)}">编辑</button><button class="btn sm" data-concept-usage="${esc(item.code)}">引用</button><button class="btn sm danger" data-concept-delete="${esc(item.code)}">删除</button></div></td></tr>`
       )), `<div class="actions"><button id="newConcept" class="btn primary">新增概念</button><input id="vocabSearch" class="field" placeholder="搜索编码或名称" value="${esc(state.vocabSearch)}"><select id="vocabCategory"><option value="">全部类别</option>${categories.map((v) => `<option value="${v}" ${category === v ? "selected" : ""}>${v}</option>`).join("")}</select></div>`, "概念是规则、图谱、模板和医院标准之间的公共判断语言")}
     `;
-    $("#entityVocabSelector").onchange = (event) => { state.entityVocabType = event.target.value; renderEntityVocab(); };
+    bindEntityDictionaryPicker();
     $("#newConcept").onclick = () => openConceptEditor(null);
     $("#vocabSearch").oninput = (event) => { state.vocabSearch = event.target.value; renderVocab(); };
     $("#vocabCategory").onchange = (event) => { state.vocabCategory = event.target.value; renderVocab(); };
@@ -2363,6 +2482,9 @@
     const checkBadge = (status) => `<span class="badge ${status === "passed" ? "active" : status === "warning" ? "draft" : "danger"}">${status === "passed" ? "通过" : status === "warning" ? "提醒" : "失败"}</span>`;
     const importStatuses = ["imported", "ready_for_test", "published"];
     const isImported = (item) => Boolean(item?.imported) || Boolean(item?.import_result?.success);
+    const importedGraph = selected?.import_result?.graph?.graph_filename || selected?.graph_filename || "";
+    const graphAvailable = isImported(selected) && importedGraph
+      && (await api("/api/kg/graphs")).some((item) => item.graph_filename === importedGraph);
     const hasImportStateMismatch = (item) => Boolean(
       item && importStatuses.includes(item.status) && !isImported(item)
     );
@@ -2388,7 +2510,7 @@
       </div>
       ${panel("指南知识包", table(["知识包 / 指南", "目标证候/诊断", "候选内容", "预检", "状态", "更新时间", "操作"], state.guidePackages.map((item) => {
         const check = item.check_summary || {};
-        return `<tr><td><strong>${esc(item.package_id)}</strong><div class="muted">${esc(item.doc_title)}</div><div>${badge(normalizeDomainClient(item.domain))}</div></td><td class="mono">${esc(item.target_disease_code)}</td><td>${item.entity_count} 实体${item.syndrome_count ? `（证候 ${item.syndrome_count}）` : ""}<br>${item.relation_count} 关系 / ${item.rule_count} 规则</td><td>${check.passed || 0} 通过 / ${check.warning || 0} 提醒 / ${check.failed || 0} 失败</td><td><span class="badge ${esc(item.status)}">${esc(packageStatusLabel(item))}</span></td><td class="nowrap">${esc(formatTime(item.updated_at))}</td><td><div class="actions"><button class="btn sm" data-package-detail="${esc(item.package_id)}">查看 / 审核</button></div></td></tr>`;
+        return `<tr class="package-row ${state.guidePackageId === item.package_id ? "selected" : ""}" data-package-row="${esc(item.package_id)}"><td><strong>${esc(item.package_id)}</strong><div class="muted">${esc(item.doc_title)}</div><div>${badge(normalizeDomainClient(item.domain))}</div></td><td class="mono">${esc(item.target_disease_code)}</td><td>${item.entity_count} 实体${item.syndrome_count ? `（证候 ${item.syndrome_count}）` : ""}<br>${item.relation_count} 关系 / ${item.rule_count} 规则</td><td>${check.passed || 0} 通过 / ${check.warning || 0} 提醒 / ${check.failed || 0} 失败</td><td><span class="badge ${esc(item.status)}">${esc(packageStatusLabel(item))}</span></td><td class="nowrap">${esc(formatTime(item.updated_at))}</td><td><div class="actions"><button class="btn sm ${state.guidePackageId === item.package_id ? "primary" : ""}" data-package-detail="${esc(item.package_id)}">${state.guidePackageId === item.package_id ? "正在审核 ✓" : "查看 / 审核"}</button><button class="btn sm danger" data-package-delete="${esc(item.package_id)}" title="删除知识包文件；已导入的图谱与规则不受影响">删除</button></div></td></tr>`;
       })), '<button id="refreshPackages" class="btn primary">刷新列表</button>', "预检后导入图谱及待审诊疗依据；在审核台通过依据审核后，才能生成规则草稿")}
       ${selected ? `
         <div class="result-banner ${isImported(selected) ? "ok" : selected.status === "failed" ? "error" : "warning"}">
@@ -2414,7 +2536,7 @@
           <div class="result-banner warning"><strong>知识包尚未真正入库</strong><div>当前流程状态显示为已导入，但没有任何导入记录。请使用下方“导入图谱和草稿规则”完成入库；导入后 ${(selected.suggested_rules || []).length} 条候选规则会以 draft 状态出现。</div></div>
         ` : ""}
         ${isImported(selected) ? `
-          <div class="result-banner ok"><strong>该知识包已导入</strong><div>图谱实体和关系已更新，规则已保存为草稿但未启用。下一步请到规则管理逐条审核启用。</div><div class="actions"><button id="goRules" class="btn primary">前往规则管理启用</button><button id="genTestCase" class="btn">生成测试病历</button><span class="muted" id="genTestCaseHint">${(selected.import_result?.test_case?.case?.name) ? `已自动生成：${esc(selected.import_result.test_case.case.name)}` : (selected.import_result?.test_case?.error ? `自动生成失败：${esc(selected.import_result.test_case.error)}` : "")}</span></div></div>
+          <div class="result-banner ok"><strong>该知识包已导入</strong><div>${graphAvailable ? `已写入 ${esc(importedGraph)}。请在审核工作台核对实体、关系和诊疗依据。` : "当前没有可打开的已导入图谱。"}</div><div class="actions">${graphAvailable ? '<button id="reviewPackageGraph" class="btn primary">在审核工作台打开图谱</button>' : ""}<button id="genTestCase" class="btn">生成测试病历</button><span class="muted" id="genTestCaseHint">${(selected.import_result?.test_case?.case?.name) ? `已自动生成：${esc(selected.import_result.test_case.case.name)}` : (selected.import_result?.test_case?.error ? `自动生成失败：${esc(selected.import_result.test_case.error)}` : "")}</span></div></div>
           <details class="debug-panel"><summary>高级：重新导入</summary><div class="actions"><button id="reimportPackage" class="btn danger">重新导入图谱和草稿规则</button></div></details>
         ` : `
           ${panel("下一步", `
@@ -2438,6 +2560,7 @@
         ${panel("自动预检", table(["检查项", "结论", "问题明细"], (selected.checks || []).map((item) => `<tr><td><strong>${esc(item.title)}</strong><div class="mono muted">${esc(item.code)}</div></td><td>${checkBadge(item.status)}</td><td>${item.issues?.length ? `<ul class="issue-list">${item.issues.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul>` : '<span class="muted">未发现问题</span>'}</td></tr>`)))}
         ${panel("候选内容", table(["类别", "数量", "摘要"], [
           ...(normalizeDomainClient(selected.domain) === "tcm" ? [
+            ["中医疾病", (selected.entities || []).filter((item) => item.entity_type === "disease").length, (selected.entities || []).filter((item) => item.entity_type === "disease").map((item) => `${item.name} (${item.code})${item.candidate_status === "pending" ? " · 待登记" : ""}`).join("；") || "-"],
             ["证候", (selected.entities || []).filter((item) => item.entity_type === "syndrome").length, (selected.entities || []).filter((item) => item.entity_type === "syndrome").map((item) => `${item.name} (${item.code})`).join("；") || "-"],
             ["症状 / 舌象 / 脉象 / 体征", (selected.entities || []).filter((item) => ["symptom", "tongue", "pulse", "sign"].includes(item.entity_type)).length, (selected.entities || []).filter((item) => ["symptom", "tongue", "pulse", "sign"].includes(item.entity_type)).map((item) => `${typeName[item.entity_type]}:${item.name}`).join("；") || "-"],
             ["治法 / 方剂 / 中药", (selected.entities || []).filter((item) => ["treatment_method", "formula", "herb"].includes(item.entity_type)).length, (selected.entities || []).filter((item) => ["treatment_method", "formula", "herb"].includes(item.entity_type)).map((item) => `${typeName[item.entity_type]}:${item.name}`).join("；") || "-"],
@@ -2540,6 +2663,30 @@
     pageEl.querySelectorAll("[data-package-detail]").forEach((button) => button.onclick = () => {
       state.guidePackageId = button.dataset.packageDetail;
       renderGuidePackages();
+      // 重渲染后把选中的知识包行滚入视野，明确联动到正在审核的包。
+      requestAnimationFrame(() => {
+        pageEl.querySelector(`[data-package-row="${CSS.escape(state.guidePackageId)}"]`)
+          ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      });
+    });
+    pageEl.querySelectorAll("[data-package-delete]").forEach((button) => button.onclick = async () => {
+      const packageId = button.dataset.packageDelete;
+      const item = state.guidePackages.find((entry) => entry.package_id === packageId);
+      const imported = Boolean(item?.imported) || Boolean(item?.import_result?.success);
+      const message = imported
+        ? `「${item?.doc_title || packageId}」已导入图谱${item?.graph_filename ? `（${item.graph_filename}）` : ""}。\n\n删除只会移除知识包文件本身，已导入的图谱、规则和诊疗依据不受影响，但导入前的候选记录将无法找回。\n\n确认删除？`
+        : `确认删除知识包「${item?.doc_title || packageId}」？\n\n删除后不可恢复。`;
+      if (!confirm(message)) return;
+      button.disabled = true;
+      try {
+        await api(`/api/guide-packages/${encodeURIComponent(packageId)}?confirm=true`, { method: "DELETE" });
+        toast("知识包已删除");
+        if (state.guidePackageId === packageId) state.guidePackageId = "";
+        renderGuidePackages();
+      } catch (error) {
+        button.disabled = false;
+        toast(error.message, true);
+      }
     });
     if (!selected) return;
     const renderPackageGraphFields = () => {
@@ -2606,7 +2753,13 @@
     });
     $("#importSelectedPackage")?.addEventListener("click", () => importGuidePackage(selected.package_id));
     $("#reimportPackage")?.addEventListener("click", () => importGuidePackage(selected.package_id, true));
-    $("#goRules")?.addEventListener("click", () => navigate("rules", { reload: true }));
+    $("#reviewPackageGraph")?.addEventListener("click", () => {
+      state.reviewGraphOptions = null;
+      state.reviewTab = "bydisease";
+      state.reviewFilters.graph = importedGraph;
+      state.byDisease = { subject: "", search: "", composing: false, targetCode: selected.target_disease_code };
+      navigate("review", { reload: true });
+    });
     $("#genTestCase")?.addEventListener("click", async () => {
       try {
         const result = await api(`/api/guide-packages/${selected.package_id}/generate-test-case`, { json: {} });
@@ -2627,6 +2780,7 @@
       const ruleErrors = result.rules?.errors?.length || 0;
       toast(ruleErrors ? `导入完成，但 ${ruleErrors} 条规则失败，请查看知识包详情` : "导入完成：规则已保存为草稿，请到规则管理启用", Boolean(ruleErrors));
       state.guidePackageId = packageId;
+      state.reviewGraphOptions = null;
       markStale("dashboard", "graph", "graphVisual", "review", "rules");
       renderGuidePackages();
     } catch (error) { toast(error.message, true); }
@@ -2672,7 +2826,7 @@
       </div>
       <p>清除范围包含草稿、已审核、已启用、已拒绝和已失效的数据，不按审核状态保留。</p>
       <p>多个指南汇入同一图谱时，将清除该图谱中所有指南汇入的所选内容。</p>
-      <p>保留指南 PDF、解析结果、知识包、共享词典、模板、医院标准及审核历史。图谱保留为空图谱；被删规则保留历史快照。</p>
+      <p>清空后的图谱会从审核台和图谱列表隐藏。保留指南 PDF、解析结果和知识包供重新导入，已删规则可查历史快照。</p>
       <button id="clearPreviewBtn" class="btn">预览清除范围</button>
     `) + panel("清除预览", '<div id="clearPreviewBody">请先选择范围并预览。</div><button id="clearExecuteBtn" class="btn danger" hidden>执行清除</button>');
     let previewPayload = null;
@@ -2720,12 +2874,24 @@
         previewPayload = null;
         executeButton.hidden = true;
         state.reviewGraphOptions = null;
+        if (payload.clear_graph && state.reviewFilters?.graph === payload.graph_filename) {
+          state.reviewFilters.graph = "";
+        }
+        if (payload.clear_graph) {
+          if (state.autoResult?.graph_filename === payload.graph_filename) state.autoResult = null;
+          const index = graphs.findIndex((graph) => graph.graph_filename === payload.graph_filename);
+          if (index >= 0) graphs.splice(index, 1);
+          const selector = $("#clearGraphSelect");
+          selector.innerHTML = graphs.map((graph) => `<option value="${esc(graph.graph_filename)}">${esc(graph.graph_filename)}</option>`).join("");
+          state.clearGraphFilename = graphs[0]?.graph_filename || "";
+          selector.value = state.clearGraphFilename;
+        }
         previewBody.innerHTML = `<p>清除完成：实体 ${payload.clear_graph ? result.node_count : 0} 个、关系 ${payload.clear_graph ? result.relation_count : 0} 条、规则 ${result.cleared_rules} 条。</p>
           <p>备份：${result.backups.map(esc).join("、") || "无"}</p><p>指南原文、解析结果等资料已保留。</p>`;
         toast("图谱清除完成");
-        markStale("dashboard", "graph", "graphVisual", "review", "rules");
+        markStale("dashboard", "graph", "graphVisual", "tcmGraph", "review", "rules", "import", "packages");
       } catch (error) { toast(error.message, true); }
-      finally { executeButton.disabled = false; previewButton.disabled = false; }
+      finally { executeButton.disabled = false; previewButton.disabled = !graphs.length; }
     };
   }
 
@@ -2751,8 +2917,9 @@
     if (!options.preserveTableState) resetPagedTables();
     state.graphs = (await api("/api/kg/graphs")).filter((item) => normalizeDomainClient(item.domain) === "western");
     if (!state.graphs.some((item) => item.graph_filename === state.graphFilename)) {
-      state.graphFilename = state.graphs.find((item) => item.graph_filename === "KG-GENERIC_GUIDELINE_V1.json")?.graph_filename || state.graphs[0]?.graph_filename || "stemi_graph.json";
+      state.graphFilename = state.graphs.find((item) => item.graph_filename === "KG-GENERIC_GUIDELINE_V1.json")?.graph_filename || state.graphs[0]?.graph_filename || "";
     }
+    if (!state.graphFilename) { pageEl.innerHTML = '<div class="empty">暂无西医知识图谱。</div>'; return; }
     const graph = approvedKnowledgeGraph(await api(`/api/kg/graph?graph_filename=${encodeURIComponent(state.graphFilename)}`));
     state.graph = graph;
     const semanticNodes = Object.values(graph.nodes || {});
@@ -3121,6 +3288,7 @@
         await api(`/api/kg/relations/review?graph_filename=${encodeURIComponent(state.graphFilename)}`, {
           json: {
             action,
+            link_endpoints: true,
             reviewer: currentReviewer(),
             note,
             source_node_id: relation.source_node_id,
@@ -3145,6 +3313,7 @@
           ${openImported ? '<div class="result-banner warning">该条目来自开放抽取（模板外类型或词库外实体）。确认无误后请「通过」审核，并建议加入实体词典，供后续解析直接命中。</div>' : ""}
           <h4>指南溯源</h4>
           <div class="quote">${esc((detail.node.source_refs || []).join("；") || "-")}</div>
+          ${(detail.node.created_at || detail.node.last_import_at) ? `<p class="muted">生成时间：${detail.node.created_at ? `首次导入 ${formatTime(detail.node.created_at)}` : "历史导入"}${detail.node.last_import_at && detail.node.last_import_at !== detail.node.created_at ? ` · 最近导入命中 ${formatTime(detail.node.last_import_at)}` : ""}</p>` : ""}
           <h4>引用本实体的推理规则（${rules.length}）</h4>
           ${table(["规则", "状态", "依赖状态"], rules.map((rule) => `<tr><td class="mono">${esc(rule.rule_id)}</td><td>${reviewBadge(rule.status)}</td><td>${esc(rule.dependency_status || "-")}</td></tr>`))}
           <div class="actions">
@@ -3310,6 +3479,12 @@
   function conditionText(node) {
     if (!node) return "-";
     if (node.type === "count_group") return `至少满足 ${node.min_count} 项（${(node.children || []).map(conditionText).join("；")}）`;
+    if (node.type === "weighted_group") {
+      const threshold = node.threshold == null ? "阈值待确认" :
+        `达到 ${(node.threshold * 100).toLocaleString("zh-CN", {maximumFractionDigits: 4})}%`;
+      return `加权评分${threshold}（${(node.children || []).map((child) =>
+        `${conditionText(child)}：权重 ${child.weight ?? 1}`).join("；")}）`;
+    }
     if (node.type === "group") return `(${(node.children || []).map(conditionText).join(` ${node.operator || "[组合待确认]"} `)})`;
     if (node.label) return node.label.startsWith("(") && node.label.endsWith(")") ? node.label.slice(1, -1) : node.label;
     if (node.type === "group") return `${node.children.map(conditionText).join(` ${node.operator || "AND"} `)}`;
@@ -3551,7 +3726,7 @@
     EXAM_HAS_DIAGNOSTIC_EVIDENCE: "检查形成证据", DISEASE_HAS_SYMPTOM: "症见",
     SYNDROME_HAS_SYMPTOM: "症见", SYNDROME_HAS_TONGUE: "舌象", SYNDROME_HAS_PULSE: "脉象",
     SYNDROME_HAS_SIGN: "体征", SYNDROME_HAS_PATHOGENESIS: "病机",
-    SYNDROME_TREATED_BY_METHOD: "治以", METHOD_HAS_FORMULA: "选方", FORMULA_CONTAINS_HERB: "组成",
+    SYNDROME_TREATED_BY_METHOD: "治法", METHOD_HAS_FORMULA: "选方", FORMULA_CONTAINS_HERB: "组成",
     TREATMENT_PLAN_INCLUDES_MEDICATION: "含药品", TREATMENT_PLAN_INCLUDES_INTERVENTION: "含干预操作",
     TREATMENT_PLAN_HAS_MONITORING: "监测要求", TREATMENT_PLAN_HAS_CONTRAINDICATION: "禁忌",
     TREATMENT_PLAN_MATERIALIZED_AS: "物化为医嘱组", ORDER_SET_INCLUDES_ITEM: "含医嘱项",
@@ -3614,12 +3789,34 @@
     const full = formatTime(value);
     return full === "-" ? "-" : full.slice(5, 16);
   }
+  // 生成时间列：created_at 是节点/关系首次由指南导入生成的时间，
+  // last_import_at 是最近一次导入再次命中它的时间。last_import_at 与
+  // 图级 last_import_at 相同说明是「本次导入」产生的变化。
+  function generationCellHtml(item) {
+    if (item.item_type !== "graph_node" && item.item_type !== "graph_relation") {
+      return '<td class="nowrap muted">-</td>';
+    }
+    const parts = [];
+    if (item.created_at) parts.push(`创建 ${formatTime(item.created_at)}`);
+    if (item.last_import_at && item.last_import_at !== item.created_at) parts.push(`最近导入 ${formatTime(item.last_import_at)}`);
+    const thisImport = item.last_import_at && item.graph_last_import_at && item.last_import_at >= item.graph_last_import_at;
+    const badge = thisImport && item.created_at && item.created_at >= item.graph_last_import_at
+      ? '<span class="badge active" title="本次指南导入新生成">新</span>'
+      : (thisImport && item.created_at ? '<span class="badge" title="本次指南导入再次引用">更</span>' : "");
+    const text = item.created_at ? esc(shortTime(item.created_at)) : "-";
+    return `<td class="nowrap muted" title="${esc(parts.join(" · ") || "历史导入，无时间记录")}">${badge ? `${badge} ` : ""}${text}</td>`;
+  }
   function reviewReviewer() {
     return (($("#reviewCenterReviewer")?.value || "") || localStorage.getItem("cdssReviewer") || "").trim() || "未署名";
   }
+  // 联动审核语义：通过关系时两端 draft/stale 实体随关系一并通过（后端
+  // link_endpoints）。真正挡住关系的只剩被拒绝/已失效/缺失的端点——那是
+  // 明确的人工决定或数据缺口，必须先恢复/补全实体，不能随关系静默激活。
   function relationEndpointBlocked(item) {
     if (item.item_type !== "graph_relation") return false;
-    return (item.source_status || "draft") !== "active" || (item.target_status || "draft") !== "active";
+    return [item.source_status, item.target_status].some((status) =>
+      ["rejected", "retired", "missing"].includes(status)
+    );
   }
   function itemPayload(item) {
     return {
@@ -3669,6 +3866,7 @@
           source_node_id: item.source_node_id,
           relation_code: item.relation_code,
           target_node_id: item.target_node_id,
+          link_endpoints: true,
         },
       });
     } else if (item.item_type === "rule") {
@@ -3683,12 +3881,12 @@
   async function quickReview(item, action) {
     try {
       if (action === "approve" && relationEndpointBlocked(item)) {
-        const sourcePending = item.source_status !== "active";
-        const nodeId = sourcePending ? item.source_node_id : item.target_node_id;
-        toast("该关系的端点尚未通过，已为您打开待审实体", true);
+        const sourceBlocked = ["rejected", "retired", "missing"].includes(item.source_status);
+        const nodeId = sourceBlocked ? item.source_node_id : item.target_node_id;
+        toast("该关系的端点实体被拒绝、失效或缺失，请先恢复/补全该实体再审核关系", true);
         if (nodeId) await loadReviewDetail({
           item_type: "graph_node", node_id: nodeId,
-          graph_filename: item.graph_filename, status: sourcePending ? item.source_status : item.target_status,
+          graph_filename: item.graph_filename, status: sourceBlocked ? item.source_status : item.target_status,
         });
         return;
       }
@@ -3707,6 +3905,7 @@
     save.textContent = `确认${verb}`;
     $("#editorBody").innerHTML = `
       <h3>${verb}${items.length > 1 ? ` ${items.length} 条条目` : ""}：${esc(items.length > 1 ? "批量操作" : reviewItemTitle(items[0]))}</h3>
+      ${action === "reject" && items.every((item) => item.approves_endpoints) ? '<p class="muted">拒绝只作用于所选辨证分型关系。疾病、证候实体及其他分型关系保留各自的审核状态。</p>' : ""}
       <p class="muted">原因码会写入审核意见和审计记录，便于后续统计高频退回原因。</p>
       <div class="reason-chips" id="reasonChips">
         ${REJECT_REASONS.map((reason) => `<button type="button" class="reason-chip" data-reason="${esc(reason)}">${esc(reason)}</button>`).join("")}
@@ -3861,6 +4060,7 @@
       [item.source_node_type, item.target_node_type] = [item.target_node_type, item.source_node_type];
     }
     if (result.suggested_relation_code) item.relation_code = result.suggested_relation_code;
+    item.approves_endpoints = response.approves_endpoints;
     item.item_id = response.relation_id || item.item_id;
     item.status = "draft";
     markStale("dashboard", "graph", "graphVisual", "rules");
@@ -3928,7 +4128,7 @@
         const canApprove = ["draft", "stale"].includes(item.status || "draft");
         const endpointsBlocked = relationEndpointBlocked(item);
         const controls = [
-          canApprove ? `<button type="button" class="btn primary" data-single-ai-approve ${result.assessment === "approve" ? "" : "hidden"} ${endpointsBlocked ? "disabled title=\"请先通过关系两端实体\"" : ""}>${endpointsBlocked ? "端点未通过" : "按建议通过"}</button>` : "",
+          canApprove ? `<button type="button" class="btn primary" data-single-ai-approve ${result.assessment === "approve" ? "" : "hidden"} ${endpointsBlocked ? "disabled title=\"请先恢复端点实体\"" : ""}>${endpointsBlocked ? "端点未通过" : "按建议通过"}</button>` : "",
           ["reject", "revise", "insufficient_evidence"].includes(result.assessment) && canReject ? `<button type="button" class="btn danger" data-single-ai-reject>${item.status === "active" ? "标记失效" : (result.assessment === "reject" ? "按建议拒绝" : (result.assessment === "insufficient_evidence" ? "因证据不足拒绝" : "拒绝此关系"))}</button>` : "",
           result.assessment === "revise" && relationAiHasCorrection(result) ? '<button type="button" class="btn primary" data-single-ai-apply>一键应用修正</button>' : "",
         ].filter(Boolean).join("");
@@ -3943,7 +4143,7 @@
           <div class="result-banner warning"><strong>仍需人工决定</strong><p>请根据上方建议使用本页的“通过”或“拒绝”；AI 不会替代审核人操作。</p></div>`;
         $("#relationAiResult").querySelector("[data-single-ai-approve]")?.addEventListener("click", async (event) => {
           const button = event.currentTarget;
-          if (relationEndpointBlocked(item)) { toast("请先通过关系两端实体", true); return; }
+          if (relationEndpointBlocked(item)) { toast("请先恢复端点实体", true); return; }
           if (!confirm("确认根据 AI 建议通过这条关系？")) return;
           button.disabled = true;
           button.textContent = "提交中…";
@@ -3977,7 +4177,7 @@
             if (approve) {
               approve.hidden = false;
               approve.disabled = relationEndpointBlocked(item);
-              approve.textContent = relationEndpointBlocked(item) ? "端点未通过" : "通过修正后的关系";
+              approve.textContent = relationEndpointBlocked(item) ? "端点被拒/失效" : "通过修正后的关系";
             }
           } catch (error) { button.disabled = false; button.textContent = "一键应用修正"; toast(error.message, true); }
         });
@@ -4094,7 +4294,7 @@
           const canApprove = ["draft", "stale"].includes(item.status || "draft");
           const endpointsBlocked = relationEndpointBlocked(item);
           const actionButtons = [
-            canApprove ? `<button type="button" class="btn sm primary" data-ai-direct-approve ${result.assessment === "approve" ? "" : "hidden"} ${endpointsBlocked ? "disabled title=\"请先通过关系两端实体\"" : ""}>${endpointsBlocked ? "端点未通过" : "按建议通过"}</button>` : "",
+            canApprove ? `<button type="button" class="btn sm primary" data-ai-direct-approve ${result.assessment === "approve" ? "" : "hidden"} ${endpointsBlocked ? "disabled title=\"请先恢复端点实体\"" : ""}>${endpointsBlocked ? "端点未通过" : "按建议通过"}</button>` : "",
             canReject ? `<button type="button" class="btn sm danger" data-ai-direct-reject ${["reject", "revise", "insufficient_evidence"].includes(result.assessment) ? "" : "hidden"}>${item.status === "active" ? "标记失效" : (result.assessment === "reject" ? "按建议拒绝" : (result.assessment === "insufficient_evidence" ? "因证据不足拒绝" : "拒绝此关系"))}</button>` : "",
             `<button type="button" class="btn sm primary" data-ai-apply ${result.assessment === "revise" ? "" : "hidden"} ${relationAiHasCorrection(result) ? "" : "disabled"}>${relationAiHasCorrection(result) ? "一键应用修正" : "暂无可执行修正"}</button>`,
             `<button type="button" class="btn sm" data-ai-refine ${result.assessment === "revise" ? "" : "hidden"}>输入提示词进一步修正</button>`,
@@ -4104,7 +4304,7 @@
           advice.classList.remove("muted");
           advice.querySelector("[data-ai-direct-approve]")?.addEventListener("click", async (event) => {
             const button = event.currentTarget;
-            if (relationEndpointBlocked(item)) { toast("请先通过关系两端实体", true); return; }
+            if (relationEndpointBlocked(item)) { toast("请先恢复端点实体", true); return; }
             if (!confirm(`确认根据 AI 建议通过这条关系？\n\n${currentResult.summary || "AI 建议通过"}`)) return;
             button.disabled = true;
             button.textContent = "提交中…";
@@ -4153,7 +4353,7 @@
               if (approve) {
                 approve.hidden = false;
                 approve.disabled = relationEndpointBlocked(item);
-                approve.textContent = relationEndpointBlocked(item) ? "端点未通过" : "通过修正后的关系";
+                approve.textContent = relationEndpointBlocked(item) ? "端点被拒/失效" : "通过修正后的关系";
               }
             } catch (error) { button.disabled = false; button.textContent = "一键应用修正"; toast(error.message, true); }
           });
@@ -4188,7 +4388,7 @@
               if (approve) {
                 approve.hidden = currentResult.assessment !== "approve";
                 approve.disabled = relationEndpointBlocked(item);
-                approve.textContent = relationEndpointBlocked(item) ? "端点未通过" : "按建议通过";
+                approve.textContent = relationEndpointBlocked(item) ? "端点被拒/失效" : "按建议通过";
               }
               const reject = advice.querySelector("[data-ai-direct-reject]");
               if (reject) {
@@ -4325,11 +4525,14 @@
   }
 
   function detailHeadHtml(item) {
+    const timeParts = [];
+    if (item.created_at) timeParts.push(`首次生成 ${formatTime(item.created_at)}`);
+    if (item.last_import_at && item.last_import_at !== item.created_at) timeParts.push(`最近导入 ${formatTime(item.last_import_at)}`);
     return `<div class="detail-head">
       <div class="detail-title"><span class="type-chip">${esc(REVIEW_TYPE_LABELS[item.item_type] || item.item_type)}</span>
         <strong>${esc(reviewItemTitle(item))}</strong> ${reviewBadge(item.status)}
         ${item.orphaned_from?.length ? `<span class="badge danger" title="${esc(item.orphaned_from.join("、"))}">孤儿</span>` : ""}</div>
-      <div class="detail-sub mono">${esc(item.graph_filename || "")}${item.updated_at ? ` · 最近审核 ${esc(formatTime(item.updated_at))}` : ""}</div>
+      <div class="detail-sub mono">${esc(item.graph_filename || "")}${item.updated_at ? ` · 最近审核 ${esc(formatTime(item.updated_at))}` : ""}${timeParts.length ? ` · ${esc(timeParts.join(" · "))}` : ""}</div>
     </div>`;
   }
   function detailActionsHtml(item) {
@@ -4352,7 +4555,7 @@
   // 溯源引用 "DOC-xxx_p3_l100-20" → { docId, page, start, end }；生成器会把
   // l100-120 截成 l100-20（end 丢首位），end < start 时按 start 前缀补全位数。
   function parseSourceRef(ref) {
-    const match = /^([A-Za-z0-9-]+)_p(\d+)_l(\d+)-(\d+)(?:_part\d+)?$/.exec(String(ref || ""));
+    const match = /^([A-Za-z0-9-]+)_p(\d+)_l(\d+)-(\d+)(?:_part\d+)?(?:_s\d+)?$/.exec(String(ref || ""));
     if (!match) return null;
     const start = Number(match[3]);
     let end = Number(match[4]);
@@ -4363,7 +4566,7 @@
     return { docId: match[1], page: Number(match[2]), start, end };
   }
 
-  const sourceRefLineCache = {}; // "DOC-x:3" -> 该页行数组；null = 拉取失败（文档已删等）
+  const sourceRefLineCache = {}; // "DOC-x:3" -> 该页行数组
   function refDocTitle(docId) {
     return (state.reviewDocOptions || []).find((d) => d.doc_id === docId)?.doc_title || docId;
   }
@@ -4374,7 +4577,7 @@
         const data = await api(`/api/pdf/${encodeURIComponent(docId)}/lines?page=${page}`);
         sourceRefLineCache[key] = data.lines || [];
       } catch (_) {
-        sourceRefLineCache[key] = null;
+        return null;
       }
     }
     return sourceRefLineCache[key];
@@ -4494,7 +4697,7 @@
     const rulesInfo = detail.rules || { total: 0, items: [] };
     return `
       <div class="detail-section"><h4>关系审核重点</h4><p>核对关联对象、关系方向、医学含义、关系属性及出处；端点通过不代表这条关系成立。</p></div>
-      ${item.source_status !== "active" || item.target_status !== "active" ? '<div class="result-banner warning">端点未通过：请点击下方对应实体的“前往审核此实体”，审核通过后再返回关系审核。</div>' : ""}
+      ${["rejected", "retired", "missing"].some((s) => [item.source_status, item.target_status].includes(s)) ? '<div class="result-banner warning">端点实体被拒绝、失效或缺失：请先恢复/补全对应实体，再审核这条关系。待审端点会随关系一并通过，无需先审实体。</div>' : ""}
       <div class="detail-section"><h4>关联对象与方向</h4>
         <div class="relation-flow">
           ${endpointCard(detail.source, "起点实体（关系从这里出发）")}
@@ -4659,12 +4862,12 @@
       if (blockedCount) {
         const rest = selected.length - blockedCount;
         const proceed = confirm(
-          `${blockedCount} 条关系的端点节点还不是「已通过」，关系审核要求两端节点先通过，直接提交会被拒绝。` +
-          (rest ? `\n\n确定后仅提交其余 ${rest} 条；` : "\n\n当前没有可提交条目；") + "取消则不做操作。"
+          `${blockedCount} 条关系的端点实体被拒绝、已失效或缺失，系统不会连带恢复，直接提交会被拒绝。` +
+          (rest ? `\n\n确定后仅提交其余 ${rest} 条（待审端点实体将随关系一并通过）；` : "\n\n当前没有可提交条目；") + "取消则不做操作。"
         );
         if (!proceed) return;
         selected = selected.filter((item) => !relationEndpointBlocked(item));
-        if (!selected.length) { toast("没有可提交的条目，请先审核相关端点节点", true); return; }
+        if (!selected.length) { toast("没有可提交的条目：相关端点被拒绝或失效，请先恢复实体", true); return; }
       }
     }
     if (action === "reject" || action === "retire") {
@@ -4677,13 +4880,15 @@
         action,
         reviewer: reviewReviewer(),
         note: "",
+        link_endpoints: true,
       }});
+      const linked = (result.results || []).reduce((sum, entry) => sum + ((entry.result?.linked_endpoints) || []).length, 0);
       const firstError = (result.results || []).find((entry) => !entry.ok);
       const detail = firstError
         ? `；首个失败：${typeof firstError.error === "string" ? firstError.error : JSON.stringify(firstError.error)}`
         : "";
       markStale("graphVisual");
-      toast(`批量完成：成功 ${result.succeeded}，失败 ${result.failed}${detail}`, result.failed > 0);
+      toast(`批量完成：成功 ${result.succeeded}，失败 ${result.failed}${linked ? `，连带通过端点实体 ${linked} 个` : ""}${detail}`, result.failed > 0);
       renderReviewCenter();
     } catch (error) { toast(error.message, true); }
   }
@@ -4758,36 +4963,127 @@
     return `<div class="statement-review-grid"><section><h4>指南原文核验</h4>${pdfLink}<div class="badge ${source.status === "verified" ? "active" : "danger"}">${source.status === "verified" ? "引文匹配实际页行" : "原文待修复／无法核验"}</div><div class="quote">${esc(source.text || "暂无可核验的实际原文")}</div><p class="muted">文字匹配只证明出处存在，仍须核对医学含义。</p></section><section><h4>临床陈述</h4>${table(["核对内容", "当前值"], [["场景", clinicalIntentLabel(statement.scene)], ["目标", statement.target], ["人群", statement.population], ["分型", statement.subtype], ["阶段", statement.phase], ["例外", (statement.exceptions || []).join("；") || "待核对"], ["推荐等级", statement.recommendation_strength], ["证据等级", statement.evidence_grade], ["适用范围核对", statement.scope_summary || "待填写"]].map(([key, value]) => `<tr><td>${esc(key)}</td><td>${esc(value || "待核对")}</td></tr>`))}<p>${esc(conditionText(statement.conditions))}</p></section><section><h4>需要处理的问题</h4>${(validation.issues || []).map((issue) => `<p class="result-banner warning">${esc(issue)}</p>`).join("") || '<p>结构检查通过；请继续核对临床含义。</p>'}${(statement.missing_information || []).map((item) => `<p>${esc(item)}</p>`).join("")}</section></div>`;
   }
 
+  function clinicalBasisIdentity(basis, subjects = {}) {
+    const spec = basis.specification || {};
+    const context = spec.clinical_context?.suspected_tcm_diagnosis;
+    const tcm = normalizeDomainClient(spec.domain) === "tcm";
+    const syndrome = tcm && spec.anchor_type === "syndrome";
+    const diseaseAnchor = !tcm || !spec.anchor_type || spec.anchor_type === "disease";
+    const anchorCode = spec.disease_code;
+    const directDiseaseCode = basis.scenario_review?.disease_code || context?.disease_code ||
+      (diseaseAnchor ? anchorCode : "");
+    const memberships = syndrome && !directDiseaseCode ? (subjects.disease_groups || [])
+      .filter((group) => group.syndromes.some((item) => item.code === anchorCode)) : [];
+    const confirmed = memberships.filter((group) => group.syndromes.some((item) =>
+      item.code === anchorCode && item.membership_status === "active"));
+    const owners = confirmed.length ? confirmed : memberships;
+    const diseaseCodes = directDiseaseCode ? [directDiseaseCode] : owners.map((group) => group.disease.code);
+    const lookupName = (type, code) => (subjects.subjects || [])
+      .find((item) => item.node_type === type && item.code === code)?.display_name;
+    const diseaseName = directDiseaseCode
+      ? lookupName("disease", directDiseaseCode) || context?.disease_name ||
+        (diseaseAnchor && spec.disease_name) || directDiseaseCode
+      : [...new Set(owners.map((group) => group.disease.display_name || group.disease.name))].join("／");
+    const syndromeName = syndrome ? lookupName("syndrome", anchorCode) || spec.disease_name || anchorCode : "";
+    const intent = spec.clinical_intent || defaultClinicalIntent(spec.rule_type);
+    const scene = intent === "treatment_recommendation" ? "治疗方案" : clinicalIntentLabel(intent, spec.rule_type);
+    const title = [diseaseName || "疾病待关联", ...(tcm ? [syndromeName || "证候未指定"] : []), scene].join(" · ");
+    return {title, diseaseCodes};
+  }
+
   async function renderClinicalBases() {
     await loadBase();
     const graphs = await api("/api/kg/graphs");
     const filename = graphs.some((graph) => graph.graph_filename === state.reviewFilters.graph) ? state.reviewFilters.graph : (graphs[0]?.graph_filename || "");
     state.reviewFilters.graph = filename;
-    const result = filename ? await api(`/api/review/bases?graph_filename=${encodeURIComponent(filename)}`) : { items: [] };
+    const query = `?graph_filename=${encodeURIComponent(filename)}`;
+    const [result, subjects] = filename ? await Promise.all([
+      api(`/api/review/bases${query}&reviewable_only=true`),
+      api(`/api/kg/relations/groups${query}&subject_type=disease`).catch(() => ({})),
+    ]) : [{items: []}, {}];
+    state.basisTitleSubjects = {filename, subjects};
+    const identities = new Map(result.items.map((basis) => [basis.basis_id, clinicalBasisIdentity(basis, subjects)]));
     const diseaseCode = state.basisDiseaseCode || "";
-    const diseaseBases = result.items.filter((basis) => !diseaseCode || basis.specification.disease_code === diseaseCode);
+    const diseaseBases = result.items.filter((basis) => !diseaseCode || basis.specification.disease_code === diseaseCode ||
+      identities.get(basis.basis_id).diseaseCodes.includes(diseaseCode));
     const visibleBases = diseaseBases.filter((basis) =>
       (!state.basisQualityOnly || (basis.disposition !== "discarded" && basis.validation.issues.length)) &&
       (!state.basisStatusFilter || (state.basisStatusFilter === "discarded" ? basis.disposition === "discarded" : basis.disposition !== "discarded" && basis.validation.status === state.basisStatusFilter)));
+    // 诊疗依据表改用通用分页组件：行数据（含搜索文本/状态值/隐藏标记）预构建，
+    // 翻页与搜索只重绘 tbody，行内动作走容器事件委托。
+    const basisRows = visibleBases.map((basis) => {
+      const identity = identities.get(basis.basis_id);
+      return {
+        text: `${identity.title} ${basis.name || ""} ${basis.specification.source?.guideline_title || ""} ${(basis.validation.issues || []).join(" ")}`,
+        values: { status: basis.disposition === "discarded" ? "discarded" : basis.validation.status },
+        html: `<tr><td><strong>${esc(identity.title)}</strong>${basis.name && basis.name !== identity.title ? `<div>${esc(basis.name)}</div>` : ""}<div class="muted">${esc(basis.specification.source?.guideline_title || "-")}</div></td><td>${basis.disposition === "discarded" ? badge("不采纳") : reviewBadge(basis.validation.status)}</td><td>${basis.disposition === "discarded" ? `不生成规则${basis.disposition_reason ? "：" + esc(basis.disposition_reason) : ""}` : basis.validation.issues.length ? esc(basis.validation.issues.join("；")) : "图谱依赖完整，待人工核对逻辑"}${basis.generated_rule_id ? `<div>已生成：${esc(basis.generated_rule_id)}</div>` : ""}</td><td>${basis.disposition === "discarded" ? "" : basis.generated_rule_id ? `<button class="btn primary" data-basis-revise="${esc(basis.basis_id)}" title="基于最新诊断依据创建修订，核对条件后再生成待审规则">修订规则条件</button>` : `<button class="btn primary" data-basis-edit="${esc(basis.basis_id)}" title="带入审核通过的诊断依据，可使用 AI 建议或手动组合条件">配置规则条件</button>`}<button class="btn" data-basis-ai="${esc(basis.basis_id)}">大模型辅助审核</button><button class="btn" data-basis-detail="${esc(basis.basis_id)}">审核详情</button>${!basis.generated_rule_id ? `<button class="btn" data-basis-disposition="${esc(basis.basis_id)}" data-action="${basis.disposition === "discarded" ? "restore" : "discard"}">${basis.disposition === "discarded" ? "恢复待审" : "不采纳"}</button>` : ""}</td></tr>`,
+      };
+    });
     const tabHtml = REVIEW_TABS.map(([key, label]) => `<button class="review-tab ${key === "bases" ? "active" : ""}" data-review-tab="${key}">${label}</button>`).join("");
     pageEl.innerHTML = `<div class="review-tabs">${tabHtml}</div>${reviewCategoriesHtml()}
-      <div class="result-banner"><strong>按知识图谱管理诊疗依据</strong><div class="inline-controls"><label>知识图谱 <select id="basisGraphFilter">${graphs.map((g) => `<option value="${esc(g.graph_filename)}" ${filename === g.graph_filename ? "selected" : ""}>${esc(g.source || g.graph_filename)} · ${esc(g.graph_filename)}</option>`).join("")}</select></label><label>状态 <select id="basisStatusFilter">${[["", "全部状态"], ["draft", "待审"], ["active", "已通过"], ["revisions", "待审修订"], ["rejected", "已退回"], ["discarded", "不采纳"]].map(([value, label]) => `<option value="${value}" ${state.basisStatusFilter === value ? "selected" : ""}>${label}</option>`).join("")}</select></label></div><p>当前图谱共 ${result.items.length} 份依据；显示 ${visibleBases.length} 份。新增、整理、编辑、不采纳及生成规则均在此图谱内操作。</p></div>
+      <div class="result-banner"><strong>按知识图谱管理诊疗依据</strong><div class="inline-controls"><label>知识图谱 <select id="basisGraphFilter">${graphs.map((g) => `<option value="${esc(g.graph_filename)}" ${filename === g.graph_filename ? "selected" : ""}>${esc(g.source || g.graph_filename)} · ${esc(g.graph_filename)}</option>`).join("")}</select></label><label>状态 <select id="basisStatusFilter">${[["", "全部状态"], ["draft", "待审"], ["active", "已通过"], ["revisions", "待审修订"], ["rejected", "已退回"], ["discarded", "不采纳"]].map(([value, label]) => `<option value="${value}" ${state.basisStatusFilter === value ? "selected" : ""}>${label}</option>`).join("")}</select></label></div><p>当前图谱有 ${result.items.length} 份依据的实体和关系已通过审核；显示 ${visibleBases.length} 份。</p></div>
       <div class="result-banner">已有 ${visibleBases.length} 份候选依据${diseaseCode ? `（疾病 ${esc(diseaseCode)}）` : ""}。候选已保留解析条件、结论和原文；图谱审核状态自动复用，无须重新录入。核对组合逻辑后，点击“确认依据并生成待审规则”。${diseaseCode ? '<button class="btn sm" id="allDiseaseBases">查看全部疾病</button>' : ""}</div>
       <div class="result-banner ${diseaseBases.some((basis) => basis.disposition !== "discarded" && basis.validation.issues.length) ? "warning" : "ok"}"><strong>质量复核：${diseaseBases.filter((basis) => basis.disposition !== "discarded" && basis.validation.issues.length).length} 份存在待处理问题</strong><p>引文须与实际指南页行一致。原有审核记录保留，存在问题时须修正后重新确认。</p><label><input type="checkbox" id="basisQualityOnly" ${state.basisQualityOnly ? "checked" : ""}> 仅显示有问题的依据</label></div>
       ${panel("诊疗依据审核", `<p>审核对象是一组完整的诊疗判断，不是单个实体或一条关系。实体与关系通过审核后，还须确认组合逻辑及适用条件；只有通过的依据组才能生成规则草稿。</p>
         <div class="inline-controls"><div class="field"><label>知识图谱</label><select id="basisGraph">${graphs.map((g) => `<option value="${esc(g.graph_filename)}" ${filename === g.graph_filename ? "selected" : ""}>${esc(g.graph_filename)}</option>`).join("")}</select></div>
         <button class="btn" id="prepareBases" ${filename ? "" : "disabled"}>整理已有候选为待审依据</button><button class="btn primary" id="newClinicalBasis" ${filename ? "" : "disabled"}>新增诊疗依据</button></div>
         <p class="muted">整理操作读取此图谱的知识包候选和已有规则，不猜测实体连线的且/或关系，不修改或停用已有规则。</p>`)}
-      ${panel("诊疗依据组", table(["名称 / 指南", "审核状态", "生成前检查", "操作"], visibleBases.map((basis) => `<tr><td><strong>${esc(basis.name)}</strong><div>${esc(basis.specification.source?.guideline_title || "-")}</div></td><td>${basis.disposition === "discarded" ? badge("不采纳") : reviewBadge(basis.validation.status)}</td><td>${basis.disposition === "discarded" ? `不生成规则${basis.disposition_reason ? "：" + esc(basis.disposition_reason) : ""}` : basis.validation.issues.length ? esc(basis.validation.issues.join("；")) : "图谱依赖完整，待人工核对逻辑"}${basis.generated_rule_id ? `<div>已生成：${esc(basis.generated_rule_id)}</div>` : ""}</td><td>${basis.disposition === "discarded" ? "" : basis.generated_rule_id ? `<button class="btn primary" data-basis-revise="${esc(basis.basis_id)}" title="基于最新诊断依据创建修订，核对条件后再生成待审规则">修订规则条件</button>` : `<button class="btn primary" data-basis-edit="${esc(basis.basis_id)}" title="带入审核通过的诊断依据，可使用 AI 建议或手动组合条件">配置规则条件</button>`}<button class="btn" data-basis-detail="${esc(basis.basis_id)}">审核详情</button>${!basis.generated_rule_id ? `<button class="btn" data-basis-disposition="${esc(basis.basis_id)}" data-action="${basis.disposition === "discarded" ? "restore" : "discard"}">${basis.disposition === "discarded" ? "恢复待审" : "不采纳"}</button>` : ""}</td></tr>`)))}
+      ${pagedPanel({ key: "clinicalBases", title: "诊疗依据组", description: "分页浏览；支持按名称、指南、待处理问题搜索，行内动作不受翻页影响。", headers: ["疾病、证候与场景 / 指南", "审核状态", "生成前检查", "操作"], items: basisRows, placeholder: "搜索依据 / 指南 / 待处理问题…", emptyText: "暂无符合当前筛选、且图谱依赖已通过的依据" })}
       <div id="basisDetail"></div>`;
     if (diseaseCode) {
-      pageEl.querySelectorAll("[data-basis-detail]").forEach((button) => {
-        const basis = result.items.find((item) => item.basis_id === button.dataset.basisDetail);
-        if (basis.specification.disease_code !== diseaseCode) button.closest("tr").hidden = true;
-      });
       $("#allDiseaseBases").onclick = () => { state.basisDiseaseCode = ""; renderClinicalBases(); };
     }
     bindReviewTabs();
+    bindPagedTable("clinicalBases");
+    // 行内动作统一走 tbody 容器委托：翻页/搜索重建行后依然有效
+    const basisBody = pageEl.querySelector('[data-table-body="clinicalBases"]');
+    if (basisBody) basisBody.addEventListener("click", async (event) => {
+      const detailButton = event.target.closest("[data-basis-detail]");
+      if (detailButton) {
+        const basis = result.items.find((item) => item.basis_id === detailButton.dataset.basisDetail);
+        if (basis) await showClinicalBasis(basis, filename);
+        return;
+      }
+      const aiButton = event.target.closest("[data-basis-ai]");
+      if (aiButton) {
+        const basis = result.items.find((item) => item.basis_id === aiButton.dataset.basisAi);
+        if (!basis) return;
+        await window.openBasisAiReview(basis, filename, {api, esc, edit: async () => {
+          if (basis.generated_rule_id) await showClinicalBasis(basis, filename);
+          else await openCompletedBasisEditor(basis, filename, basis.scope_summary || "");
+        }});
+        return;
+      }
+      const dispositionButton = event.target.closest("[data-basis-disposition]");
+      if (dispositionButton) {
+        const action = dispositionButton.dataset.action;
+        const reason = action === "discard" ? prompt("不采纳后，该依据不用生成规则。可填写原因（选填）：", "") : "";
+        if (reason === null) return;
+        dispositionButton.disabled = true;
+        try {
+          await api(`/api/review/bases/${encodeURIComponent(dispositionButton.dataset.basisDisposition)}/disposition?graph_filename=${encodeURIComponent(filename)}`, {json: {action, reason}});
+          await renderClinicalBases();
+        } catch (error) { toast(error.message, true); dispositionButton.disabled = false; }
+        return;
+      }
+      const editButton = event.target.closest("[data-basis-edit]");
+      if (editButton) {
+        const basis = result.items.find((item) => item.basis_id === editButton.dataset.basisEdit);
+        if (basis) await openCompletedBasisEditor(basis, filename, basis.scope_summary || "", editButton);
+        return;
+      }
+      const reviseButton = event.target.closest("[data-basis-revise]");
+      if (reviseButton) {
+        reviseButton.disabled = true;
+        reviseButton.textContent = "正在汇总最新关联…";
+        try {
+          const reviseResult = await api(`/api/review/bases/${encodeURIComponent(reviseButton.dataset.basisRevise)}/revise-from-reviewed-graph?graph_filename=${encodeURIComponent(filename)}`, { json: {} });
+          toast(`已创建修订依据并带入 ${reviseResult.used.length} 个已审条件，请核对后生成新待审规则`);
+          await renderClinicalBases();
+          await showClinicalBasis(reviseResult.basis, filename);
+        } catch (error) { toast(error.message, true); reviseButton.disabled = false; reviseButton.textContent = "修订规则条件"; }
+      }
+    });
     $("#basisQualityOnly").onchange = (event) => { state.basisQualityOnly = event.target.checked; renderClinicalBases(); };
     const switchBasisGraph = (event) => {
       state.reviewFilters.graph = event.target.value;
@@ -4804,42 +5100,6 @@
       try { await api(`/api/review/bases/prepare?graph_filename=${encodeURIComponent(filename)}`, { json: {} }); await renderClinicalBases(); }
       catch (error) { toast(error.message, true); }
     };
-    pageEl.querySelectorAll("[data-basis-disposition]").forEach((button) => button.onclick = async () => {
-      const action = button.dataset.action;
-      const reason = action === "discard" ? prompt("不采纳后，该依据不用生成规则。可填写原因（选填）：", "") : "";
-      if (reason === null) return;
-      button.disabled = true;
-      try {
-        await api(`/api/review/bases/${encodeURIComponent(button.dataset.basisDisposition)}/disposition?graph_filename=${encodeURIComponent(filename)}`, {json: {action, reason}});
-        await renderClinicalBases();
-      } catch (error) { toast(error.message, true); button.disabled = false; }
-    });
-    pageEl.querySelectorAll("[data-basis-edit]").forEach((button) => button.onclick = async () => {
-      const basis = result.items.find((item) => item.basis_id === button.dataset.basisEdit);
-      await openCompletedBasisEditor(basis, filename, basis.scope_summary || "", button);
-    });
-    pageEl.querySelectorAll("[data-basis-revise]").forEach((button) => button.onclick = async () => {
-      button.disabled = true;
-      button.textContent = "正在汇总最新关联…";
-      try {
-        const result = await api(`/api/review/bases/${encodeURIComponent(button.dataset.basisRevise)}/revise-from-reviewed-graph?graph_filename=${encodeURIComponent(filename)}`, { json: {} });
-        toast(`已创建修订依据并带入 ${result.used.length} 个已审条件，请核对后生成新待审规则`);
-        await renderClinicalBases();
-        await showClinicalBasis(result.basis, filename);
-      } catch (error) { toast(error.message, true); button.disabled = false; button.textContent = "修订规则条件"; }
-    });
-    pageEl.querySelectorAll("[data-basis-detail]").forEach((button) => {
-      const basis = result.items.find((item) => item.basis_id === button.dataset.basisDetail);
-      button.onclick = () => showClinicalBasis(basis, filename);
-      const ai = document.createElement("button");
-      ai.className = "btn";
-      ai.textContent = "大模型辅助审核";
-      ai.onclick = () => window.openBasisAiReview(basis, filename, {api, esc, edit: async () => {
-        if (basis.generated_rule_id) await showClinicalBasis(basis, filename);
-        else await openCompletedBasisEditor(basis, filename, basis.scope_summary || "");
-      }});
-      button.before(ai);
-    });
   }
 
   function conditionAtLogicPath(specification, path) {
@@ -4969,11 +5229,18 @@
   }
 
   async function showClinicalBasis(basis, filename) {
+    if (basis.validation.dependencies_approved === false) {
+      toast("图谱依赖尚未全部审核通过，请先到疾病审核台补审", true);
+      return;
+    }
     const labels = { entities: "实体与关系：目标、条件对象和语义链路正确", logic: "组合逻辑：且/或/非、满足数量、评分和时间要求符合原文", scope: "适用与排除：已完整写入可执行条件及 exclusions，不只是填写下方说明", source: "指南依据：原文、页行定位、适用版本和结论含义一致" };
     const spec = basis.specification;
     const source = spec.source || {};
     const context = source.chunk_id ? await sourceRefsHtml([source.chunk_id]) : "";
-    $("#basisDetail").innerHTML = panel(basis.name, `
+    const subjects = state.basisTitleSubjects?.filename === filename ? state.basisTitleSubjects.subjects : {};
+    const {title} = clinicalBasisIdentity(basis, subjects);
+    $("#basisDetail").innerHTML = panel(title, `
+      ${basis.name && basis.name !== title ? `<p>${esc(basis.name)}</p>` : ""}
       <p class="mono muted">依据编号：${esc(basis.basis_id)}</p>
       ${clinicalStatementHtml(basis)}
       ${basis.generated_rule_id ? '<button id="basisReviseLogic" class="btn primary">修订规则条件</button>' : '<button id="basisEditLogic" class="btn primary" title="带入审核通过的诊断依据，可使用 AI 建议或手动组合条件">配置规则条件</button>'}
@@ -5150,7 +5417,8 @@
 
   async function renderPendingRevisions() {
     const graphs = await api("/api/kg/graphs");
-    const filename = state.reviewFilters.graph || graphs[0]?.graph_filename || "";
+    const filename = graphs.find((graph) => graph.graph_filename === state.reviewFilters.graph)?.graph_filename
+      || graphs[0]?.graph_filename || "";
     state.reviewFilters.graph = filename;
     const result = filename ? await api(`/api/kg/pending-revisions?graph_filename=${encodeURIComponent(filename)}`) : {items: []};
     const fieldNames = {name: "名称", code: "编码", node_type: "实体类型", attributes: "属性", source_node_id: "起点", target_node_id: "终点", relation_code: "关系类型", relation_name: "关系名称"};
@@ -5179,6 +5447,8 @@
     const reviewer = localStorage.getItem("cdssReviewer") || "";
     const query = (state.reviewQuery || "").trim();
     const filters = state.reviewFilters || { graph: "", sourceDoc: "", nodeType: "", relationCode: "", itemType: "", clinicalIntent: "" };
+    if (state.reviewGraphOptions === null) state.reviewGraphOptions = await api("/api/kg/graphs");
+    if (filters.graph && !state.reviewGraphOptions.some((graph) => graph.graph_filename === filters.graph)) filters.graph = "";
     const queueItemType = reviewQueueItemType(tab, filters);
     const showClinicalIntentFilter = ["rules", "blocked"].includes(tab)
       || (tab === "active" && (!filters.itemType || filters.itemType === "rule"));
@@ -5190,12 +5460,9 @@
       showClinicalIntentFilter && filters.clinicalIntent ? `&clinical_intent=${encodeURIComponent(filters.clinicalIntent)}` : "",
     ].join("");
     const queueUrl = `/api/review/queue?limit=300${queueItemType ? `&item_type=${queueItemType}` : ""}${filterParams}${query ? `&q=${encodeURIComponent(query)}` : ""}`;
-    const [queue, audit, graphs, docs] = await Promise.all([
+    const [queue, audit] = await Promise.all([
       api(queueUrl),
       tab === "audit" ? api("/api/review/audit?limit=100") : Promise.resolve({ items: [] }),
-      state.reviewGraphOptions === null
-        ? api("/api/kg/graphs").then((items) => { state.reviewGraphOptions = items; }).catch(() => { state.reviewGraphOptions = []; })
-        : Promise.resolve(),
       state.reviewDocOptions === null
         ? api("/api/pdf/documents").then((items) => { state.reviewDocOptions = items; }).catch(() => { state.reviewDocOptions = []; })
         : Promise.resolve(),
@@ -5340,6 +5607,7 @@
         </td>
         <td>${reviewBadge(item.status)}</td>
         <td class="nowrap">${esc(String(dependencyCount(item)))}</td>
+        ${generationCellHtml(item)}
         <td class="nowrap muted">${esc(shortTime(item.updated_at))}</td>
       </tr>`;
     });
@@ -5398,8 +5666,8 @@
             <span class="kbd-hint">J/K 切换 · X 勾选 · A 通过 · R 拒绝</span>
           </div>
           <div class="review-table-wrap"><table>
-            <thead><tr><th class="col-check"></th><th>条目</th><th>状态</th><th>依赖</th><th>更新</th></tr></thead>
-            <tbody>${rows.join("") || '<tr><td colspan="5"><div class="empty">当前页签没有待办条目</div></td></tr>'}</tbody>
+            <thead><tr><th class="col-check"></th><th>条目</th><th>状态</th><th>依赖</th><th>生成</th><th>更新</th></tr></thead>
+            <tbody>${rows.join("") || '<tr><td colspan="6"><div class="empty">当前页签没有待办条目</div></td></tr>'}</tbody>
           </table></div>
         </div>
         <div class="review-detail" id="reviewDetail">
@@ -5488,7 +5756,9 @@
       catch (error) { toast(`加载图谱列表失败：${error.message}`, true); }
     }
     const graphOptions = state.reviewGraphOptions || [];
-    const graphName = filters.graph || state.graphFilename || graphOptions[0]?.graph_filename || "";
+    const graphName = [filters.graph, state.graphFilename].find((name) =>
+      graphOptions.some((graph) => graph.graph_filename === name)
+    ) || graphOptions[0]?.graph_filename || "";
     state.byDisease = state.byDisease || { subject: "", search: "", composing: false };
     // 重渲染会重建搜索框，先记录焦点与光标，渲染后恢复（防抖过滤不打断输入）
     state.byDisease.composing = false;
@@ -5501,7 +5771,6 @@
     const graphFilterHtml = `<div class="field"><label for="byDiseaseGraphFilter">知识图谱</label>
       <select id="byDiseaseGraphFilter">
         <option value="" ${!graphName ? "selected" : ""} disabled>请选择图谱</option>
-        ${graphName && !graphOptions.some((g) => g.graph_filename === graphName) ? `<option value="${esc(graphName)}" selected>${esc(graphName)}</option>` : ""}
         ${graphOptions.map((g) => `<option value="${esc(g.graph_filename)}" ${g.graph_filename === graphName ? "selected" : ""}>${esc(g.graph_filename)}</option>`).join("")}
       </select></div>`;
     const bindGraphFilter = () => {
@@ -5528,14 +5797,76 @@
       return;
     }
     const search = (state.byDisease.search || "").trim().toLowerCase();
-    const subjects = (groups.subjects || []).filter((s) => !search || `${s.name} ${s.code}`.toLowerCase().includes(search));
+    const graphLastImport = groups.last_import_at || "";
+    // 以疾病为锚点的分组视图：疾病组头 + 名下证候（带主证/次证角色），
+    // 无疾病连接的证候进「未归属证候」区，保证任何主体都有审核入口。
+    // 病→证分组是中医图谱特有结构：图谱里没有任何证候归属时（西医图谱
+    // 只有疾病主体），退回平铺列表，不显示空组头。
+    const visibleSubject = (subject) => subject.node_type !== "syndrome" || subject.review_status === "active";
+    const diseaseGroups = (groups.disease_groups || []).map((group) => {
+      const syndromes = group.syndromes.filter((item) => visibleSubject(item) && item.membership_status === "active");
+      return {
+        ...group,
+        syndromes,
+        pending_total: group.disease.pending_count + syndromes.reduce((sum, item) => sum + item.pending_count, 0),
+      };
+    });
+    const orphanSyndromes = (groups.orphan_syndromes || []).filter(visibleSubject);
+    const hasSyndromeMembers = (groups.disease_groups || []).some((group) => group.syndromes.length > 0) || orphanSyndromes.length > 0;
+    const grouped = hasSyndromeMembers && diseaseGroups.length > 0;
+    const matchSearch = (s) => !search || `${s.name} ${s.display_name || ""} ${s.code}`.toLowerCase().includes(search);
+    const visibleGroups = diseaseGroups
+      .map((group) => {
+        const headMatch = matchSearch(group.disease);
+        const syndromes = headMatch ? group.syndromes : group.syndromes.filter(matchSearch);
+        return headMatch || syndromes.length ? { ...group, syndromes } : null;
+      })
+      .filter(Boolean);
+    const visibleOrphans = orphanSyndromes.filter(matchSearch);
+    state.byDisease.collapsedGroups ||= new Set();
+    const collapsed = state.byDisease.collapsedGroups;
+    // 疾病组一键全审用：组头 -> [组头 + 名下证候] 的主体节点清单
+    state.byDisease.groupMembers = Object.fromEntries(
+      diseaseGroups.map((group) => [group.disease.node_id, [group.disease.node_id, ...group.syndromes.map((m) => m.node_id)]]),
+    );
+    const groupedSyndromes = new Set(diseaseGroups.flatMap((group) => group.syndromes.map((item) => item.node_id)));
+    const subjects = (groups.subjects || []).filter((item) => visibleSubject(item) &&
+      (!grouped || item.node_type !== "syndrome" || groupedSyndromes.has(item.node_id) ||
+        orphanSyndromes.some((orphan) => orphan.node_id === item.node_id)));
+    if (state.byDisease.targetCode) {
+      const target = subjects.find((s) => s.code === state.byDisease.targetCode);
+      if (target) {
+        state.byDisease.subject = target.node_id;
+        // 展开目标证候所在的疾病组，选中项不被折叠隐藏。
+        const owner = diseaseGroups.find((g) => g.syndromes.some((m) => m.node_id === target.node_id));
+        if (owner) collapsed.delete(owner.disease.node_id);
+      }
+      delete state.byDisease.targetCode;
+    }
+    const groupHtml = (group) => {
+      const head = group.disease;
+      const isCollapsed = collapsed.has(head.node_id);
+      return `<div class="subject-group" data-subject-group="${esc(head.node_id)}">
+        ${subjectCardHtml(head, graphLastImport, {
+          groupHead: true,
+          collapsed: isCollapsed,
+          memberCount: group.syndromes.length,
+          pendingTotal: group.pending_total,
+        })}
+        ${!isCollapsed ? `<div class="subject-sublist">${group.syndromes.map((s) => subjectCardHtml(s, graphLastImport, { role: s.role, membershipStatus: s.membership_status })).join("") || '<div class="empty">名下暂无证候</div>'}</div>` : ""}
+      </div>`;
+    };
+    const listHtml = grouped
+      ? `${visibleGroups.map(groupHtml).join("")}
+         ${visibleOrphans.length ? `<div class="subject-group"><div class="subject-group-label">未归属证候（未与任何中医疾病建立关系）</div><div class="subject-sublist">${visibleOrphans.map((s) => subjectCardHtml(s, graphLastImport)).join("")}</div></div>` : ""}`
+      : (subjects.filter(matchSearch).map((s) => subjectCardHtml(s, graphLastImport)).join("") || '<div class="empty">没有匹配的主体节点</div>');
     const hint = `<div class="result-banner"><strong>疾病审核工作台</strong><p>1. 确认疾病与关联实体 → 2. 审核关系 → 3. 按场景核对用途和依据 → 4. 生成并验证规则。已有审核结果自动沿用。</p>当前图谱：${esc(graphName)}</div>`;
     pageEl.innerHTML = `<div class="review-tabs">${tabHtml}</div>${reviewCategoriesHtml()}${graphFilterHtml}${hint}
       <div class="by-disease-layout">
         <div class="subject-list">
           <input id="byDiseaseSearch" type="search" value="${esc(state.byDisease.search || "")}" placeholder="搜索疾病 / 证候 / 编码…">
           <div class="subject-list-scroll">
-            ${subjects.map(subjectCardHtml).join("") || '<div class="empty">没有匹配的主体节点</div>'}
+            ${listHtml || '<div class="empty">没有匹配的主体节点</div>'}
           </div>
         </div>
         <div class="review-detail" id="byDiseaseCard">
@@ -5578,6 +5909,19 @@
       }
     }
     pageEl.querySelectorAll(".subject-card").forEach((card) => card.onclick = () => loadByDiseaseCard(card.dataset.subject));
+    pageEl.querySelectorAll("[data-group-toggle]").forEach((button) => button.onclick = (event) => {
+      event.stopPropagation();
+      const id = button.dataset.groupToggle;
+      const collapsed = state.byDisease.collapsedGroups;
+      if (collapsed.has(id)) collapsed.delete(id);
+      else collapsed.add(id);
+      renderByDisease();
+    });
+    pageEl.querySelectorAll("[data-group-approve-all]").forEach((button) => button.onclick = async (event) => {
+      event.stopPropagation();
+      const memberIds = (state.byDisease.groupMembers || {})[button.dataset.groupApproveAll];
+      if (memberIds?.length) await approveGroupRelations(memberIds, button);
+    });
     if (state.byDisease.subject && subjects.some((s) => s.node_id === state.byDisease.subject)) {
       await loadByDiseaseCard(state.byDisease.subject);
     } else {
@@ -5585,15 +5929,82 @@
     }
   }
 
-  function subjectCardHtml(s) {
-    return `<div class="subject-card ${state.byDisease?.subject === s.node_id ? "selected" : ""}" data-subject="${esc(s.node_id)}">
-      <strong>${esc(s.display_name || s.name)}</strong>
-      <div class="sub-meta">
-        <span>${esc(typeName[s.node_type] || s.node_type || "-")}</span>
+  // 疾病组一键全审：拉取「组头疾病 + 名下全部证候」的待审出边，确认后
+  // 走 /api/review/bulk（link_endpoints）。端点被拒/失效的关系先跳过。
+  async function approveGroupRelations(memberIds, button) {
+    const graphName = (state.reviewFilters || {}).graph || state.graphFilename || "";
+    if (!graphName) { toast("请先选择图谱", true); return; }
+    let batch;
+    try {
+      batch = await api("/api/kg/relations/pending-batch", { json: { graph_filename: graphName, subject_node_ids: memberIds } });
+    } catch (error) { toast(error.message, true); return; }
+    const pending = (batch.items || []).filter((item) => ["draft", "stale"].includes(item.status));
+    if (!pending.length) { toast("该疾病名下没有待审关系", true); return; }
+    const blocked = pending.filter(relationEndpointBlocked);
+    const submit = pending.filter((item) => !relationEndpointBlocked(item));
+    if (!submit.length) { toast(`共 ${pending.length} 条待审关系，但端点全部被拒绝或失效，请先恢复实体`, true); return; }
+    const linkedHint = "待审端点实体会随关系一并通过";
+    const proceed = confirm(blocked.length
+      ? `该疾病名下共 ${pending.length} 条待审关系：${blocked.length} 条端点被拒绝/失效将跳过，提交其余 ${submit.length} 条（${linkedHint}）。确认通过？`
+      : `将该疾病名下 ${submit.length} 条待审关系全部通过（${linkedHint}）。确认？`);
+    if (!proceed) return;
+    const originalLabel = button.textContent;
+    button.disabled = true;
+    button.textContent = "提交中…";
+    try {
+      const result = await api("/api/review/bulk", { json: {
+        items: submit.map(itemPayload),
+        action: "approve",
+        reviewer: reviewReviewer(),
+        note: "按疾病组一键通过",
+        link_endpoints: true,
+      }});
+      const linked = (result.results || []).reduce((sum, entry) => sum + ((entry.result?.linked_endpoints) || []).length, 0);
+      const firstError = (result.results || []).find((entry) => !entry.ok);
+      const detail = firstError
+        ? `；首个失败：${String(typeof firstError.error === "string" ? firstError.error : JSON.stringify(firstError.error)).slice(0, 120)}`
+        : "";
+      markStale("dashboard", "graph", "graphVisual", "rules");
+      toast(`一键通过完成：成功 ${result.succeeded}，失败 ${result.failed}${linked ? `，连带通过端点实体 ${linked} 个` : ""}${detail}`, result.failed > 0);
+      await renderByDisease();
+    } catch (error) { toast(error.message, true); }
+    finally {
+      button.disabled = false;
+      button.textContent = originalLabel;
+    }
+  }
+
+  function subjectCardHtml(s, graphLastImport, options = {}) {
+    // 本次导入新生成/再次命中的疾病卡片打「新」徽标，悬停显示完整时间。
+    const thisImport = s.last_import_at && graphLastImport && s.last_import_at >= graphLastImport;
+    const isNew = thisImport && s.created_at && s.created_at >= graphLastImport;
+    const timeTitle = [
+      s.created_at ? `首次生成 ${formatTime(s.created_at)}` : "历史导入",
+      s.last_import_at && s.last_import_at !== s.created_at ? `最近导入 ${formatTime(s.last_import_at)}` : "",
+    ].filter(Boolean).join(" · ");
+    if (options.groupHead) {
+      return `<div class="subject-card subject-group-head ${state.byDisease?.subject === s.node_id ? "selected" : ""}" data-subject="${esc(s.node_id)}">
+        <button class="group-toggle" data-group-toggle="${esc(s.node_id)}" title="${options.collapsed ? "展开名下证候" : "收起名下证候"}">${options.collapsed ? "▸" : "▾"}</button>
+        <strong>${esc(s.display_name || s.name)}</strong>
+        <span class="type-chip">${esc(typeName[s.node_type] || s.node_type || "-")}</span>
         ${miniStatus(s.review_status)}
+        ${isNew ? `<span class="pending-chip" title="${esc(timeTitle)}">新</span>` : (thisImport ? `<span class="pending-chip warn" title="${esc(timeTitle)}">更新</span>` : "")}
+        <span class="muted">证候 ${options.memberCount ?? 0}</span>
+        ${(options.pendingTotal ?? s.pending_count) ? `<span class="pending-chip">待审 ${options.pendingTotal ?? s.pending_count}</span>` : '<span class="muted">已清</span>'}
+        ${s.suspect_count ? `<span class="pending-chip warn">⚠ ${s.suspect_count}</span>` : ""}
+        ${(options.pendingTotal ?? s.pending_count) ? `<button class="btn sm primary" data-group-approve-all="${esc(s.node_id)}" title="一键通过该疾病名下全部待审关系（含名下证候卡片的出边）；待审端点实体会随关系一并通过，端点被拒绝/失效的会跳过">通过全部</button>` : ""}
+      </div>`;
+    }
+    return `<div class="subject-card subject-member ${state.byDisease?.subject === s.node_id ? "selected" : ""}" data-subject="${esc(s.node_id)}">
+      <strong>${esc(s.display_name || s.name)}</strong>
+      ${options.role ? `<span class="type-chip ${options.membershipStatus === "active" ? "" : "muted-chip"}" title="${options.membershipStatus === "active" ? "疾病归属关系已审核通过" : "疾病归属关系待审核，确认前只是候选归属"}">${esc(options.role)}${options.membershipStatus === "active" ? "" : "·待审"}</span>` : `<span class="type-chip">${esc(typeName[s.node_type] || s.node_type || "-")}</span>`}
+      <div class="sub-meta">
+        ${miniStatus(s.review_status)}
+        ${isNew ? `<span class="pending-chip" title="${esc(timeTitle)}">新</span>` : (thisImport ? `<span class="pending-chip warn" title="${esc(timeTitle)}">更新</span>` : "")}
         <span>出边 ${s.out_relation_count}</span>
         ${s.pending_count ? `<span class="pending-chip">待审 ${s.pending_count}</span>` : '<span class="muted">已清</span>'}
         ${s.suspect_count ? `<span class="pending-chip warn">⚠ ${s.suspect_count}</span>` : ""}
+        ${s.created_at ? `<span class="muted" title="${esc(timeTitle)}">${esc(shortTime(s.created_at))}</span>` : ""}
       </div>
     </div>`;
   }
@@ -5633,16 +6044,21 @@
     const sceneMount = mount.querySelector("#diseaseScenarioWorkbench");
     try {
       await window.mountScenarioWorkbench(sceneMount, {
-        api, esc, graphFilename: graphName, diseaseCode: subject.code, relationLabels: RELATION_LABELS,
+        api, esc, graphFilename: graphName, relationLabels: RELATION_LABELS,
+        diseaseCode: subject.node_type === "syndrome" ? "" : subject.code,
+        syndromeCode: subject.node_type === "syndrome" ? subject.code : "",
         sourceRefBlock, parseSourceRef, fetchRefLines, refDocTitle,
-        openBasis: async (basisId) => {
+        openBasis: async (basisId, {configureLogic = false} = {}) => {
           state.reviewFilters.graph = graphName;
           state.basisDiseaseCode = subject.code;
           state.reviewTab = "bases";
           await renderClinicalBases();
           const result = await api(`/api/review/bases?graph_filename=${encodeURIComponent(graphName)}`);
           const basis = result.items.find((item) => item.basis_id === basisId);
-          if (basis) await showClinicalBasis(basis, graphName);
+          if (basis) {
+            await showClinicalBasis(basis, graphName);
+            if (configureLogic) await openCompletedBasisEditor(basis, graphName, basis.scope_summary || "");
+          }
         },
       });
     } catch (error) { sceneMount.textContent = `场景加载失败：${error.message}`; }
@@ -5661,10 +6077,14 @@
       }
     });
     state.byDiseaseEndpoints = endpoints;
+    // 卡片级关系批量：跨所有关系分组勾选待审关系（含嵌套小节），
+    // 与第 1 步实体勾选同款交互；分组内仍有各自的小批量按钮。
+    const pendingRels = items.filter((item) => item.item_type === "graph_relation" && ["draft", "stale"].includes(item.status));
     return `<div class="detail-section" id="diseaseEndpointReview"><h4>第 1 步：核对关系涉及的实体</h4>
-      <p>关系连接两个实体。请先确认疾病、症状、检查等实体识别正确，再审核它们之间的医学关系。实体通过不会自动通过关系。</p>
+      <p>实体与关系联动审核：通过任一关系时，两端待审实体会一并通过（此处无需先手工过一遍）。第 1 步用于需要单独处理实体的场合——查看原文、修改名称、拒绝错误实体，或恢复被拒绝的端点。</p>
       ${endpoints.size ? `<div class="actions"><label><input type="checkbox" data-endpoint-select-all> 全选可审核实体</label><span class="muted" data-endpoint-selection-count>已选 0 项</span></div>${table(["选择", "尚未通过的实体", "实体类型", "状态", "核对与处理"], [...endpoints.values()].map((item, index) => `<tr><td><input type="checkbox" data-endpoint-select="${esc(item.node_id)}" ${["draft", "stale"].includes(item.status) ? "" : "disabled"}></td><td>${esc(item.name)}</td><td><span class="type-chip">${esc(typeName[item.node_type] || item.node_type || "类型缺失，请核对")}</span></td><td>${miniStatus(item.status)}</td><td><div class="actions"><button class="btn sm" data-endpoint-detail="${index}">查看原文与属性</button><button class="btn sm" data-endpoint-edit="${index}">修改</button><button class="btn sm" data-endpoint-ai="${index}">AI 修正</button>${["draft", "stale"].includes(item.status) ? `<button class="btn sm danger" data-endpoint-reject="${index}">拒绝</button>` : ""}</div></td></tr>`))}<div class="actions"><button class="btn sm primary" data-endpoint-approve>通过勾选的实体</button><button class="btn sm danger" data-endpoint-reject-selected>拒绝勾选的实体</button></div>` : '<div class="result-banner ok">相关实体均已通过，可直接审核下方关系。</div>'}
-      <h4>第 2 步：审核下方关系</h4><p>核对关系的方向、医学含义和原文后，可批量通过本组关系。</p></div>`;
+      <h4>第 2 步：审核下方关系</h4><p>核对关系的方向、医学含义和原文后，可勾选逐条，也可整组或整卡批量处理。通过关系时，两端待审实体会随之连带通过；只有端点被拒绝或失效的关系需要先恢复实体。</p>
+      ${pendingRels.length ? `<div class="actions rel-batch-bar"><label><input type="checkbox" data-rel-select-all> 全选待审关系（${pendingRels.length} 条）</label><span class="muted" data-rel-selection-count>已选 0 / ${pendingRels.length} 项</span><button class="btn sm primary" data-rel-approve-selected>通过勾选的关系</button><button class="btn sm danger" data-rel-reject-selected>拒绝勾选的关系</button><button class="btn sm primary" data-rel-approve-all title="一次性提交本卡片全部待审关系；涉及未通过实体且不能连带通过的关系会先提示">一键通过全部待审关系</button></div>` : '<div class="muted">本卡待审关系 0 条。</div>'}</div>`;
   }
 
   async function openEndpointSource(item, trigger) {
@@ -5737,8 +6157,9 @@
   }
 
   function diseaseRelationRowHtml(item) {
+    const pendingRow = ["draft", "stale"].includes(item.status);
     const actions = [`<button class="btn sm" data-rel-ai="${esc(item.item_id)}">AI 审核</button>`];
-    if (["draft", "stale"].includes(item.status)) {
+    if (pendingRow) {
       actions.push(`<button class="btn sm primary" data-rel-action="approve" data-rel-id="${esc(item.item_id)}">通过</button>`);
       actions.push(`<button class="btn sm danger" data-rel-action="reject" data-rel-id="${esc(item.item_id)}">拒绝</button>`);
     } else if (item.status === "active") {
@@ -5747,6 +6168,7 @@
       actions.push(`<button class="btn sm" data-rel-action="restore" data-rel-id="${esc(item.item_id)}">恢复</button>`);
     }
     return `<tr>
+      <td>${pendingRow ? `<input type="checkbox" data-rel-select="${esc(item.item_id)}" title="勾选后可在上方批量通过 / 拒绝">` : ""}</td>
       <td>${relationSemHtml(item)}</td>
       <td>${reviewBadge(item.status)}</td>
       <td>${flagChipsHtml(item)}</td>
@@ -5784,6 +6206,22 @@
 
   function bindByDiseaseCardActions(mount) {
     mount.onchange = (event) => {
+      // 关系勾选：跨分组批量选择的联动（全选 / 半选态 / 计数）
+      if (event.target.matches("[data-rel-select-all], [data-rel-select]")) {
+        const inputs = [...mount.querySelectorAll("[data-rel-select]")];
+        const all = mount.querySelector("[data-rel-select-all]");
+        if (event.target.matches("[data-rel-select-all]")) {
+          inputs.forEach((input) => { input.checked = event.target.checked; });
+        }
+        const count = inputs.filter((input) => input.checked).length;
+        if (all) {
+          all.checked = inputs.length > 0 && count === inputs.length;
+          all.indeterminate = count > 0 && count < inputs.length;
+        }
+        const summary = mount.querySelector("[data-rel-selection-count]");
+        if (summary) summary.textContent = `已选 ${count} / ${inputs.length} 项`;
+        return;
+      }
       if (!event.target.matches("[data-endpoint-select-all], [data-endpoint-select]")) return;
       const inputs = [...mount.querySelectorAll("[data-endpoint-select]:not(:disabled)")];
       const all = mount.querySelector("[data-endpoint-select-all]");
@@ -5797,6 +6235,49 @@
       }
       const summary = mount.querySelector("[data-endpoint-selection-count]");
       if (summary) summary.textContent = `已选 ${count} / ${inputs.length} 项`;
+    };
+    // 卡片级关系批量通过：与分组批量同一确认流程——先剔除端点阻塞项，
+    // 有阻塞时提示先去第 1 步核对实体（归属关系可连带通过端点，不算阻塞）。
+    const bulkApproveRelations = async (candidates, button) => {
+      // 联动审核：draft/stale 端点实体随关系一并提交（link_endpoints），
+      // 仅被拒绝/已失效/缺失端点仍需先恢复实体，不能静默激活。
+      const pending = candidates.filter((item) => ["draft", "stale"].includes(item.status));
+      if (!pending.length) { toast("所选条目里没有待审关系", true); return; }
+      let submit = pending;
+      const blocked = pending.filter(relationEndpointBlocked);
+      if (blocked.length) {
+        $("#diseaseEndpointReview")?.scrollIntoView({ block: "start" });
+        const rest = pending.length - blocked.length;
+        const proceed = confirm(
+          `${blocked.length} 条关系的端点实体被拒绝、已失效或缺失，系统不会连带恢复。` +
+          (rest ? `\n\n确定后仅提交其余 ${rest} 条（其余关系的待审端点实体会随关系一并通过）；` : "\n\n当前没有可提交条目；") + "取消则不做操作。"
+        );
+        if (!proceed) return;
+        submit = pending.filter((item) => !relationEndpointBlocked(item));
+        if (!submit.length) { toast("没有可提交的条目：相关端点被拒绝或失效，请先恢复实体", true); return; }
+      }
+      const originalLabel = button?.textContent || "";
+      if (button) { button.disabled = true; button.textContent = "提交中…"; }
+      try {
+        const result = await api("/api/review/bulk", { json: {
+          items: submit.map(itemPayload),
+          action: "approve",
+          reviewer: reviewReviewer(),
+          note: "",
+          link_endpoints: true,
+        }});
+        const linked = (result.results || []).reduce((sum, entry) => sum + ((entry.result?.linked_endpoints) || []).length, 0);
+        const firstError = (result.results || []).find((entry) => !entry.ok);
+        const detail = firstError
+          ? `；首个失败：${String(typeof firstError.error === "string" ? firstError.error : JSON.stringify(firstError.error)).slice(0, 120)}`
+          : "";
+        markStale("dashboard", "graph", "graphVisual", "rules");
+        toast(`关系批量通过：成功 ${result.succeeded}，失败 ${result.failed}${linked ? `，连带通过端点实体 ${linked} 个` : ""}${detail}`, result.failed > 0);
+        await loadByDiseaseCard(state.byDisease.subject);
+      } catch (error) { toast(error.message, true); }
+      finally {
+        if (button) { button.disabled = false; button.textContent = originalLabel; }
+      }
     };
     const refresh = async () => {
       await renderByDisease();
@@ -5878,7 +6359,7 @@
         try {
           if (action === "approve" && relationEndpointBlocked(item)) {
             $("#diseaseEndpointReview")?.scrollIntoView({ block: "start" });
-            toast("请先完成上方第 1 步：查看并勾选尚未通过的实体，然后再审核这条关系", true);
+            toast("这条关系的端点实体被拒绝、失效或缺失，请先在上方恢复/补全实体后再审核", true);
             return;
           }
           await submitReviewAction(item, action, "");
@@ -5897,33 +6378,37 @@
       const sectionBtn = event.target.closest("[data-section-action]");
       if (sectionBtn) {
         const action = sectionBtn.dataset.sectionAction;
-        let pending = collectSectionItems(sectionBtn.dataset.sectionKey)
+        const pending = collectSectionItems(sectionBtn.dataset.sectionKey)
           .filter((item) => ["draft", "stale"].includes(item.status));
         if (!pending.length) return;
         if (action === "reject") { openReasonDialog({ multi: pending }, "reject"); return; }
-        const blocked = pending.filter(relationEndpointBlocked);
-        if (blocked.length) {
-          $("#diseaseEndpointReview")?.scrollIntoView({ block: "start" });
-          const rest = pending.length - blocked.length;
-          const proceed = confirm(
-            `${blocked.length} 条关系涉及尚未通过的实体。请在上方「第 1 步」查看并勾选实体，通过后再审核关系。` +
-            (rest ? `\n\n确定后仅提交其余 ${rest} 条；` : "\n\n当前没有可提交条目；") + "取消则不做操作。"
-          );
-          if (!proceed) return;
-          pending = pending.filter((item) => !relationEndpointBlocked(item));
-          if (!pending.length) { toast("没有可提交的条目，请先审核相关端点节点", true); return; }
-        }
-        try {
-          const result = await api("/api/review/bulk", { json: {
-            items: pending.map(itemPayload),
-            action,
-            reviewer: reviewReviewer(),
-            note: "",
-          }});
-          markStale("graphVisual");
-          toast(`整组完成：成功 ${result.succeeded}，失败 ${result.failed}`, result.failed > 0);
-          await refresh();
-        } catch (error) { toast(error.message, true); }
+        // 通过走统一联动流程（draft/stale 端点随关系连带通过）
+        await bulkApproveRelations(pending, sectionBtn);
+      }
+      // —— 第 2 步工具栏：卡片级关系批量 ——
+      const relApproveSelected = event.target.closest("[data-rel-approve-selected]");
+      if (relApproveSelected) {
+        const selected = [...mount.querySelectorAll("[data-rel-select]:checked")]
+          .map((input) => state.byDiseaseItems.get(input.dataset.relSelect)).filter(Boolean);
+        if (!selected.length) { toast("请先勾选需要通过的关系", true); return; }
+        await bulkApproveRelations(selected, relApproveSelected);
+        return;
+      }
+      const relApproveAll = event.target.closest("[data-rel-approve-all]");
+      if (relApproveAll) {
+        const pending = [...(state.byDiseaseItems?.values() || [])]
+          .filter((item) => item.item_type === "graph_relation" && ["draft", "stale"].includes(item.status));
+        if (!pending.length) { toast("本卡没有待审关系", true); return; }
+        await bulkApproveRelations(pending, relApproveAll);
+        return;
+      }
+      const relRejectSelected = event.target.closest("[data-rel-reject-selected]");
+      if (relRejectSelected) {
+        const selected = [...mount.querySelectorAll("[data-rel-select]:checked")]
+          .map((input) => state.byDiseaseItems.get(input.dataset.relSelect)).filter(Boolean);
+        if (!selected.length) { toast("请先勾选需要拒绝的关系", true); return; }
+        openReasonDialog({ multi: selected }, "reject");
+        return;
       }
     };
   }
@@ -6128,7 +6613,7 @@
   }
 
   async function loadEditorDict(graphFilename = "") {
-    const kinds = ["disease", "syndrome", "lab", "symptom", "exam", "exam_finding", "medication", "tongue", "pulse", "sign", "constitution"];
+    const kinds = ["disease", "syndrome", "lab", "symptom", "exam", "exam_finding", "medication", "tongue", "pulse", "sign", "constitution", "pathogenesis"];
     if (!editorDictPromise) {
       editorDictPromise = Promise.all(kinds.map((kind) => api(`/api/vocab/entities/${kind}`).catch(() => [])))
         .then((items) => Object.fromEntries(kinds.map((kind, index) => [kind, items[index] || []])));
@@ -7152,12 +7637,13 @@
   }
 
   async function renderTcmInference() {
-    const [symptoms, tongues, pulses, signs, constitutions] = await Promise.all([
+    const [symptoms, tongues, pulses, signs, constitutions, pathogenesis] = await Promise.all([
       api("/api/vocab/entities/symptom"),
       api("/api/vocab/entities/tongue"),
       api("/api/vocab/entities/pulse"),
       api("/api/vocab/entities/sign"),
       api("/api/vocab/entities/constitution"),
+      api("/api/vocab/entities/pathogenesis"),
     ]);
     state.tcmTestCases = await api("/api/inference/demo-patients?domain=tcm");
     const optionGroup = (title, type, items, description) => panel(
@@ -7171,6 +7657,7 @@
       description,
     );
     pageEl.innerHTML = `
+      ${panel("中医病历文本", `<div class="field"><label>病历内容</label><textarea id="tcmRecordText" rows="5" placeholder="输入症状、舌象、脉象等病历内容"></textarea></div><button id="tcmParseRecord" class="btn primary">解析并核对观察项</button><div id="tcmParseSummary" class="muted">解析后核对下方勾选项，再运行辨证。</div>`)}
       ${panel("中医辨证运行", `
         <div class="inline-controls">
           <button id="tcmRunBtn" class="btn primary">运行辨证</button>
@@ -7186,11 +7673,20 @@
         ${optionGroup("症状（主症/次症）", "symptom", symptoms, "勾选病历中记录的症状")}
         ${optionGroup("舌象", "tongue", tongues, "舌质与舌苔分别勾选")}
         ${optionGroup("脉象", "pulse", pulses, "可多选复合脉象")}
+        ${optionGroup("已记录的病机", "pathogenesis", pathogenesis, "勾选病历中已独立判断并明确记录的病机")}
       </div>
       <div id="tcmInferenceResult">${state.tcmInferenceResult ? "" : '<div class="empty">选择观察项后运行辨证</div>'}</div>
       <div id="tcmTestResult">${state.tcmTestResult ? "" : '<div class="empty">选择测试用例后运行断言比对</div>'}</div>
     `;
     $("#tcmRunBtn").onclick = runTcmInference;
+    $("#tcmParseRecord").onclick = async () => {
+      try {
+        const parsed = await api("/api/inference/tcm/parse-record", {json: {text: $("#tcmRecordText").value}});
+        const selected = new Set(parsed.observations.map((item) => `${item.observation_type}:${item.code}`));
+        document.querySelectorAll("#tcmForm input[data-obs-key]").forEach((input) => { input.checked = selected.has(input.dataset.obsKey); });
+        $("#tcmParseSummary").textContent = `识别到 ${parsed.observations.length} 项肯定表现、${parsed.negated.length} 项否定表现。请核对勾选项；未勾选的内容不会参与推理。`;
+      } catch (error) { toast(error.message, true); }
+    };
     $("#tcmDemoBtn").onclick = async () => {
       try {
         const demo = await api("/api/inference/demo-patient?domain=tcm");
@@ -7310,7 +7806,8 @@
 
     const patternRows = patterns.map((item) => `
       <tr>
-        <td><strong>${esc(item.anchor_name || item.disease_name)}</strong><div class="mono muted">${esc(item.anchor_code || item.disease_code)}</div></td>
+        <td>${item.anchor_type === "disease" && item.suspected_disease_name ? "—" : `${item.clinical_intent === "suspected_diagnosis" ? "疑似 " : ""}<strong>${esc(item.anchor_name || item.disease_name)}</strong><div class="mono muted">${esc(item.anchor_code || item.disease_code)}</div>`}</td>
+        <td>${item.suspected_disease_name ? `疑似 ${esc(item.suspected_disease_name)}` : "—"}</td>
         <td>${item.score != null ? `${(item.score * 100).toFixed(1)}%` : "-"}<div class="muted">${item.matched_conditions}/${item.total_conditions}</div></td>
         <td>${badge(item.confidence || "medium")}</td>
         <td>${(item.evidence || []).map((trace) => `<div>${esc(trace.description)}${trace.source_ref ? `<div class="mono muted">${esc(trace.source_ref)}</div>` : ""}</div>`).join("") || "-"}</td>
@@ -7333,7 +7830,7 @@
 
     mount.innerHTML = `
       <div class="result-banner ${conclusions.length ? "ok" : "warning"}">共 ${conclusions.length} 条结论：证候 ${patterns.length} / 治法 ${treatments.length} / 方药 ${prescriptions.length} / 禁忌 ${contra.length}</div>
-      ${panel("证候结论", table(["证候", "评分", "置信度", "证据链", "指南溯源"], patternRows), "", "评分 = 命中的主症/次症/舌脉条目 ÷ 规则中的全部条目")}
+      ${panel("辨病辨证结果", table(["证候", "病名", "评分", "置信度", "证据链", "指南溯源"], patternRows), "", "评分 = 命中的主症/次症/舌脉条目 ÷ 规则中的全部条目")}
       ${panel("治法建议", table(["证候", "治法", "触发证候规则", "指南溯源"], treatmentRows))}
       ${panel("方药建议", table(["证候", "方剂", "组成（剂量/君臣佐使）", "指南溯源"], prescriptionRows))}
       ${contra.length ? panel("禁忌", table(["证候", "禁忌", "指南溯源"], contra.map((item) => `<tr><td>${esc(item.anchor_name)}</td><td>${esc(item.message)}</td><td class="mono">${esc(item.guideline_source || "-")}</td></tr>`))) : ""}
@@ -7361,7 +7858,7 @@
       const conclusion = item.conclusion || {};
       return `
         <tr>
-          <td>${badge(item.matched ? "high" : "low")} ${esc(conclusion.anchor_name || conclusion.disease_name || "-")}<div class="mono muted">${esc(conclusion.anchor_code || "-")}</div></td>
+          <td>${badge(item.matched ? "high" : "low")} ${esc(conclusion.anchor_name || conclusion.disease_name || "-")}<div class="mono muted">${esc(conclusion.anchor_code || "-")}</div>${conclusion.suspected_disease_name && conclusion.anchor_type === "syndrome" ? `<div>候选病名 ${esc(conclusion.suspected_disease_name)}</div>` : ""}</td>
           <td>${conclusion.score != null ? `${(conclusion.score * 100).toFixed(1)}%` : "-"}<div class="muted">阈值 ${esc(((conclusion.score_breakdown || {}).threshold ?? "-"))}</div></td>
           <td>${esc(categoryText(conclusion))}</td>
           <td>${(conclusion.matched_items || []).map((x) => `<div>${esc(x.code)}</div>`).join("") || "-"}</td>

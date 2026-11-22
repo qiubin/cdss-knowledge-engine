@@ -5,6 +5,10 @@ test('overview explanation documents the clinical questions and audited pipeline
  const text=ui.explanation();for(const expected of ['危险','鉴别','继续','监测','指南解析','诊疗依据','病例验证','没有记录','西医'])assert.ok(text.includes(expected));
  const app=fs.readFileSync('src/api/static/app.js','utf8');assert.ok(app.includes('id="clinicalDecisionHelp"'));assert.ok(app.includes('WesternDecision.showExplanation()'));
 });
+test('tcm explanation documents four examinations, pattern differentiation and safe recommendations',()=>{
+ const text=ui.tcmExplanation();
+ for(const expected of ['中医诊疗决策说明','四诊合参','舌象','脉象','主证','兼证','治法','方药','中医知识图谱','急危重症','没有记录','不自动形成处方'])assert.ok(text.includes(expected));
+});
 test('patient recommendation results distinguish strategies and do not invent dose',()=>{
  const html=ui.resultHtml([{rule_id:'R',name:'<script>bad</script>',status:'partial',combination:'alternatives',selection_group:'G',actions:[{kind:'medication',verb:'start',name:'药物',status:'strategy_only',regimen:{},missing_data:[{label:'体重'}],reasons:['剂量资料不足'],source:{quote:'原文'}}]}]);
  assert.ok(html.includes('仅治疗策略'));assert.ok(html.includes('替代选择'));assert.ok(html.includes('需补充：体重'));assert.ok(!html.includes('用法：'));assert.ok(!html.includes('<script>'));
@@ -27,7 +31,7 @@ test('fixed top button opens and closes the decision explanation independently o
  const document={getElementById:id=>id==='globalDecisionHelp'?{addEventListener:(event,callback)=>{handler=callback;}}:null,createElement:()=>dialog,body:{append(){}}};
  vm.runInNewContext(fs.readFileSync('src/api/static/western-decision.js','utf8'),{document});
  assert.equal(typeof handler,'function');handler();
- assert.equal(shown,true);assert.ok(dialog.innerHTML.includes('西医诊疗决策说明'));
+ assert.equal(shown,true);assert.ok(dialog.innerHTML.includes('西医诊疗决策说明'));assert.ok(dialog.innerHTML.includes('中医诊疗决策说明'));
  closeButton.onclick();assert.equal(removed,true);
  const index=fs.readFileSync('src/api/static/index.html','utf8');assert.ok(index.includes('id="globalDecisionHelp"'));
 });

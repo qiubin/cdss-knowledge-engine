@@ -9,6 +9,43 @@ def normalized(text):
     return re.sub(r"\s+", "", str(text or ""))
 
 
+def locate_single_page_quote(chunk, quote, reported_page, reported_line):
+    """Locate a literal quote in parsed text and return its single-page span."""
+    quote_text = normalized(quote)
+    if not quote_text:
+        return None
+    lines = str(chunk.get("text") or "").split("\n")
+    pages = chunk.get("page_numbers") or []
+    numbers = chunk.get("line_numbers") or []
+    if len(pages) != len(lines) or len(numbers) != len(lines):
+        if chunk.get("page_start") != chunk.get("page_end") or not chunk.get("page_start"):
+            return None
+        pages = [chunk["page_start"]] * len(lines)
+        first_line = chunk.get("line_start", 1)
+        numbers = list(range(first_line, first_line + len(lines)))
+    text = []
+    locations = []
+    for page, number, line in zip(pages, numbers, lines):
+        value = normalized(line)
+        text.append(value)
+        locations.extend([(page, number)] * len(value))
+    text = "".join(text)
+    matches = set()
+    offset = text.find(quote_text)
+    while offset != -1:
+        page, first = locations[offset]
+        last_page, last = locations[offset + len(quote_text) - 1]
+        if page == last_page:
+            matches.add((page, first, last))
+        offset = text.find(quote_text, offset + 1)
+    if len(matches) == 1:
+        return next(iter(matches))
+    for match in matches:
+        if str(match[0]) == str(reported_page) and str(match[1]) == str(reported_line):
+            return match
+    return None
+
+
 @lru_cache(maxsize=8)
 def _read_document(path, modified_ns, size):
     return json.loads(Path(path).read_text(encoding="utf-8"))

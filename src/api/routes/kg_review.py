@@ -19,7 +19,7 @@ from src.review.precheck import (
     load_endpoint_type_map,
     relation_flags,
 )
-from src.vocab.entity_vocabulary import EntityVocabularyRepository
+from src.vocab.entity_vocabulary import EntityVocabularyRepository, dictionary_type
 from src.review.queue import build_queue
 from src.review.service import ReviewService
 
@@ -148,11 +148,15 @@ class RelationReviewRequest(ReviewActionRequest):
     source_node_id: str
     relation_code: str
     target_node_id: str
+    # 通过关系时连带通过两端 draft/stale 实体（联动审核）；
+    # 被拒绝/失效/缺失的端点仍会拒绝该请求。
+    link_endpoints: bool = False
 
 
 class BulkReviewRequest(ReviewActionRequest):
     graph_filename: str
     items: List[dict] = Field(default_factory=list)
+    link_endpoints: bool = False
 
 
 class BulkReviewItem(BaseModel):
@@ -368,7 +372,7 @@ async def review_relation_with_ai(
                 "是否把检查项目与检查结果混淆、是否把仅提及误判为需开展、是否遗漏否定或适用条件。"
                 "如果源实体或目标实体名称是全英文、内部候选码或难以理解的机器名称，assessment应为revise，"
                 "issues.area写entity_name，并分别在suggested_source_name或suggested_target_name给出等义中文名称。"
-                "但标准ICD疾病实体是受保护主数据：如果原文疾病与其编码/名称不一致，必须assessment=reject，"
+                "但所属领域的规范疾病实体是受保护主数据：如果原文疾病与其编码/名称不一致，必须assessment=reject，"
                 "建议拒绝或重新绑定关系，绝不能建议修改该疾病名称。"
                 "特别注意：DISEASE_HAS_EXAM表示疾病需开展该检查；DISEASE_HAS_LAB表示需开展该检验；"
                 "DISEASE_HAS_DIAGNOSTIC_EVIDENCE表示目标结果构成诊断依据，不能仅因出现检查名称而成立；"
@@ -402,7 +406,7 @@ async def review_relation_with_ai(
     ):
         assessment = "revise"
     issues = result.get("issues") if isinstance(result.get("issues"), list) else []
-    disease_repository = EntityVocabularyRepository("disease")
+    disease_repository = EntityVocabularyRepository(dictionary_type("disease", graph.get("domain", "")))
     for endpoint, field, role in (
         (source, "suggested_source_name", "起点"),
         (target, "suggested_target_name", "目标"),
@@ -420,7 +424,7 @@ async def review_relation_with_ai(
                     f"{role}疾病编码 {canonical.code} 的标准名称为“{canonical.name}”，"
                     f"不能改为“{proposed}”"
                 ),
-                "evidence": "标准 ICD 疾病词典",
+                "evidence": "中医疾病词典" if disease_repository.entity_type == "tcm_disease" else "标准 ICD 疾病词典",
                 "suggestion": "拒绝或重新绑定该关系，不要修改标准疾病主数据",
             })
             result[field] = ""
@@ -478,6 +482,7 @@ async def review_relation(request: RelationReviewRequest, graph_filename: str):
         request.action,
         request.reviewer,
         _compose_note(request.note, request.reason),
+        link_endpoints=request.link_endpoints,
     )
 
 
@@ -489,6 +494,7 @@ async def review_bulk(request: BulkReviewRequest):
         request.action,
         request.reviewer,
         _compose_note(request.note, request.reason),
+        link_endpoints=request.link_endpoints,
     )
 
 
@@ -517,6 +523,19 @@ async def relation_impact(
 @router.get("/relations/groups")
 async def relation_groups(graph_filename: str, subject_type: str = "disease"):
     return service.relation_groups(graph_filename, subject_type=subject_type)
+
+
+class PendingRelationsBatchRequest(BaseModel):
+    graph_filename: str
+    subject_node_ids: List[str] = Field(default_factory=list)
+
+
+@router.post("/relations/pending-batch")
+async def relations_pending_batch(request: PendingRelationsBatchRequest):
+    """疾病组级一键审核：返回一组主体节点（疾病+名下证候）的全部待审出边。"""
+    return service.pending_relations_for_subjects(
+        request.graph_filename, request.subject_node_ids
+    )
 
 
 @router.get("/relations/groups/{subject_node_id}")

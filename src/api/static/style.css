@@ -1044,3 +1044,20 @@ tr:last-child td { border-bottom: 0; }
 #diseaseScenarioWorkbench details > summary { cursor: pointer; padding: 12px 0; font-weight: 600; }
 #diseaseScenarioWorkbench [data-scene-source] { max-height: 260px; overflow: auto; }
 #diseaseScenarioWorkbench [data-scene-feedback] { color: var(--danger); }
+
+/* 知识包列表：正在审核的包整行高亮，与审核台 review-row.selected 同语义 */
+.package-row.selected { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.package-row.selected td:first-child strong { color: var(--accent-dark); }
+
+/* 疾病审核工作台：疾病分组视图 */
+.subject-group { margin-bottom: 6px; }
+.subject-group-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; border-left: 3px solid var(--accent); }
+.subject-group-head .group-toggle { background: none; border: none; cursor: pointer; font-size: 12px; color: var(--muted); padding: 2px 4px; }
+.subject-sublist { margin: 2px 0 4px 14px; border-left: 1px dashed var(--border, #d9dee3); padding-left: 8px; }
+.subject-sublist .subject-card { padding: 5px 8px; font-size: 12px; }
+.subject-group-label { font-size: 12px; color: var(--muted); padding: 6px 2px 2px; }
+.type-chip.muted-chip { background: #eef1f4; color: var(--muted); }
+
+/* 第 2 步关系批量工具栏：勾选 + 计数 + 批量按钮 */
+.rel-batch-bar { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #d0d7de; flex-wrap: wrap; gap: 8px; }
+.rel-batch-bar label { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }

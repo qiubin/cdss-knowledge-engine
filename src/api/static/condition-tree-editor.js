@@ -56,7 +56,7 @@
       { key: "code", label: "用药项目", widget: "dict", dict: "medication", required: true },
     ],
     observation: [
-      { key: "observation_type", label: "观察类型", widget: "enum", required: true, options: ["symptom", "tongue", "pulse", "sign", "constitution"] },
+      { key: "observation_type", label: "观察类型", widget: "enum", required: true, options: ["symptom", "tongue", "pulse", "sign", "constitution", "pathogenesis"] },
       { key: "code", label: "观察项目", widget: "dict", dict: "observation", required: true },
       { key: "concept_code", label: "状态", widget: "enum", options: ["PRESENT", "ABSENT"] },
       { key: "weight", label: "权重", widget: "number" },

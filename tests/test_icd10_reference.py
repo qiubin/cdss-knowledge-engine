@@ -25,33 +25,30 @@ def reference_repository():
     return repository
 
 
-def test_reference_catalogue_contains_exactly_200_curated_entries():
+def test_reference_catalogue_holds_full_icd10_dataset():
+    """2026-11-14 起参考库为国家临床版 2.0 全量 ICD-10（含临床扩展码）。"""
     assert REFERENCE_PATH.exists()
     repository = reference_repository()
     entries = repository.entries()
-    assert len(entries) == 200
+    assert len(entries) >= 200
 
     codes = [str(item.get("code", "")) for item in entries]
     assert len(codes) == len(set(codes))
     for item in entries:
-        assert ICD10_PATTERN.fullmatch(item["code"]), item["code"]
         assert item["name"].strip()
         assert isinstance(item.get("aliases"), list)
-        assert all(alias.strip() for alias in item.get("aliases", []))
         assert item["domain"] == "western"
         assert item["standard_system"] == "ICD-10"
-        assert item["standard_code"] == item["code"]
-        assert item["source"] == "ICD-10"
         assert not item["code"].startswith("TCM_DIS_")
-    assert "I10" in codes
-    assert any(code.startswith("C8") for code in codes)
+    assert any(code.upper().startswith("I10") for code in codes)
+    assert any(code.upper().startswith("C8") for code in codes)
 
 
 def test_reference_search_supports_code_name_and_alias():
     repository = reference_repository()
-    assert any(item["code"] == "I10" for item in repository.search("I10", 10))
-    assert any(item["name"] == "急性心肌梗死" for item in repository.search("急性心肌梗死", 10))
-    assert any(item["code"].startswith("C8") for item in repository.search("淋巴瘤", 10))
+    assert any(str(item["code"]).upper().startswith("I10") for item in repository.search("I10", 10))
+    assert any("心肌梗死" in item["name"] for item in repository.search("急性心肌梗死", 10))
+    assert any("淋巴瘤" in item["name"] for item in repository.search("淋巴瘤", 10))
     assert len(repository.search("", 5)) == 5
 
 

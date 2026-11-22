@@ -31,6 +31,18 @@ class InferenceRequest(BaseModel):
     test_mode: bool = False
 
 
+class TcmRecordRequest(BaseModel):
+    text: str
+
+
+@router.post("/tcm/parse-record")
+def parse_tcm_record_endpoint(request: TcmRecordRequest):
+    from src.domains.tcm.record_parser import parse_tcm_record
+    if not request.text.strip():
+        raise HTTPException(422, "请填写中医病历内容")
+    return parse_tcm_record(request.text)
+
+
 class InferenceTestCaseRequest(BaseModel):
     patient: Dict[str, Any]
     expected: Optional[Dict[str, Any]] = None

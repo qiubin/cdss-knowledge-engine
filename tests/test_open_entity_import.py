@@ -7,7 +7,7 @@ from pathlib import Path
 import src.api.routes.kg as kg_routes
 import src.api.routes.pdf as pdf_module
 from src.api.routes.kg import GraphImportRequest, import_graph
-from src.api.routes.pdf import get_import_logs
+from src.api.routes.pdf import delete_import_log, get_import_logs
 
 
 def make_request():
@@ -90,11 +90,59 @@ class ImportLogTest(unittest.TestCase):
             "doc_id": "DOC-2", "doc_title": "指南B", "status": "failed",
             "mode": "llm", "stage": "parse", "error": "boom",
         })
-        rows = asyncio.run(get_import_logs(limit=10))
+        data = asyncio.run(get_import_logs(page=1, page_size=10))
+        rows = data["items"]
+        self.assertEqual(data["total"], 2)
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0]["doc_id"], "DOC-2")  # 最新在前
         self.assertIn("ts", rows[0])
         self.assertEqual(rows[1]["entity_count"], 10)
 
+    def test_pagination(self):
+        for index in range(5):
+            pdf_module._append_import_log({
+                "doc_id": f"DOC-{index}", "doc_title": f"指南{index}",
+                "status": "success", "mode": "llm",
+            })
+        data = asyncio.run(get_import_logs(page=2, page_size=2))
+        self.assertEqual(data["total"], 5)
+        self.assertEqual(data["page"], 2)
+        self.assertEqual(data["page_size"], 2)
+        self.assertEqual([row["doc_id"] for row in data["items"]], ["DOC-3", "DOC-2"])
+
     def test_empty_log_returns_empty(self):
-        self.assertEqual(asyncio.run(get_import_logs()), [])
+        data = asyncio.run(get_import_logs())
+        self.assertEqual(data["items"], [])
+        self.assertEqual(data["total"], 0)
+
+    def test_delete_removes_job_entries_and_doc_files(self):
+        doc_id = "DOC-DEL1"
+        original_upload = pdf_module.UPLOAD_DIR
+        pdf_module.UPLOAD_DIR = Path(self.tmp.name) / "uploads"
+        self.addCleanup(setattr, pdf_module, "UPLOAD_DIR", original_upload)
+        parsed_path = pdf_module.UPLOAD_DIR / f"{doc_id}{pdf_module._PARSED_SUFFIX}"
+        parsed_path.parent.mkdir(parents=True, exist_ok=True)
+        parsed_path.write_text("{}", encoding="utf-8")
+        pdf_module._append_import_log({
+            "doc_id": doc_id, "doc_title": "指南C", "status": "started",
+            "mode": "auto", "job_id": "JOB-DEL1",
+        })
+        pdf_module._append_import_log({
+            "doc_id": doc_id, "doc_title": "指南C", "status": "success",
+            "mode": "auto", "job_id": "JOB-DEL1", "entity_count": 3,
+        })
+        pdf_module._append_import_log({
+            "doc_id": "DOC-KEEP", "doc_title": "指南D", "status": "success",
+            "mode": "llm", "job_id": "JOB-KEEP",
+        })
+        result = asyncio.run(delete_import_log("JOB-DEL1"))
+        self.assertEqual(result["removed_entries"], 2)
+        self.assertEqual(result["deleted_doc_ids"], [doc_id])
+        rows = pdf_module._load_import_log()
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["job_id"], "JOB-KEEP")
+        self.assertFalse(parsed_path.exists())
+
+    def test_delete_unknown_job_returns_404(self):
+        with self.assertRaises(Exception):
+            asyncio.run(delete_import_log("JOB-NOPE"))

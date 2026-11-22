@@ -298,11 +298,11 @@ class GraphSemanticChecker:
             return
 
         condition_type = str(condition.get("type") or "")
-        if condition_type == "group":
+        if condition_type in {"group", "count_group", "weighted_group"}:
             children = condition.get("children")
             if not isinstance(children, list) or not children:
                 issues.append("逻辑组缺少子条件")
-            for child in children or []:
+            for child in [*(children or []), *(condition.get("required_children") or [])]:
                 self._walk(child, disease_code, issues, concepts)
             return
 

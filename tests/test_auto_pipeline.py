@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import AsyncMock, patch
 
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -14,6 +15,7 @@ sys.path.insert(0, str(project_root))
 from src.api.routes import kg as kg_routes
 from src.api.routes.guide_packages import _package_summary
 from src.extraction.auto_pipeline import _chunk_groups, run_auto_pipeline
+from src.llm import LLMError
 
 
 def make_chunk() -> dict:
@@ -84,6 +86,48 @@ async def fake_llm(_settings, _messages):
 
 
 class AutoPipelineTest(unittest.TestCase):
+    def test_disease_mention_survives_empty_statements_and_uses_parsed_line(self):
+        chunk = {
+            **make_chunk(), "line_start": 50, "line_end": 51,
+            "page_numbers": [1, 1], "line_numbers": [50, 51],
+            "text": "中医病名\n慢性心衰归属于中医学“心衰”的范畴，年老",
+        }
+        model = AsyncMock(return_value={"statements": [], "disease_mentions": [
+            {"name": "慢性心衰", "source": {
+                "chunk_id": "c1", "page_start": 9, "line_start": 90,
+                "quote": "慢性心衰归属于中医学“心衰”的范畴",
+            }},
+            {"name": "标题病名", "source": {"chunk_id": "c1", "quote": "标题病名"}},
+        ]})
+        with tempfile.TemporaryDirectory() as tmp, patch.object(
+            kg_routes, "import_graph", new_callable=AsyncMock, return_value={},
+        ), patch("src.extraction.auto_pipeline.UniversalTermResolver") as resolver:
+            resolver.return_value.resolve.return_value = {
+                "entity_type": "disease", "name": "慢性心衰", "code": "LOCAL-DIS-TEST",
+            }
+            resolver.return_value.resolved_terms = []
+            result = asyncio.run(run_auto_pipeline(
+                [chunk], "DOC-HEART", "标题病名", {}, data_root=Path(tmp), llm_call=model,
+            ))
+        self.assertEqual(model.await_count, 1)
+        resolver.return_value.resolve.assert_called_once()
+        self.assertEqual(
+            [(e["name"], e["page"], e["line_start"], e["line_end"]) for e in result["entities"]],
+            [("慢性心衰", 1, 51, 51)],
+        )
+
+    def test_no_body_mention_reports_coverage_without_creating_graph(self):
+        model = AsyncMock(return_value={"statements": [], "disease_mentions": [
+            {"name": "标题病名", "source": {"chunk_id": "c1", "quote": "标题病名"}},
+        ]})
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(LLMError, "模型响应 1 个.*疾病候选 1 个"):
+                asyncio.run(run_auto_pipeline(
+                    [make_chunk()], "DOC-NO-DISEASE", "标题病名", {},
+                    data_root=Path(tmp), llm_call=model,
+                ))
+            self.assertFalse((Path(tmp) / "kg").exists())
+
     def test_chunk_group_limit_batches_without_truncating(self):
         chunks = [
             {"chunk_id": f"C{i}", "text": "内容", "page_start": 1, "page_end": 1,

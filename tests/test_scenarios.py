@@ -58,6 +58,45 @@ def test_cross_document_association_rejected(scenario_env):
         scenarios.prepare(request(source={**source, "guideline_id": "OTHER"}), "SCENARIO.json")
 
 
+def test_scene_supports_advanced_condition_combinations(scenario_env):
+    service, _, _ = scenario_env
+    filename = "SCENARIO.json"
+    disease = "ENTITY:disease:I21.0"
+    symptom = "ENTITY:symptom:SYM_DRAFT"
+    code = "DISEASE_HAS_SYMPTOM"
+    service.review_node(filename, symptom, "approve", "医生")
+    service.review_relation(filename, disease, code, symptom, "approve", "医生")
+    selections = [*request().selections, scenarios.Selection(
+        relation_id=f"{disease}|{code}|{symptom}", role="condition",
+    )]
+    count = scenarios.prepare(request(operator="COUNT", min_count=2, selections=selections), filename)["basis"]
+    assert count["specification"]["conditions"]["type"] == "count_group"
+    assert count["specification"]["conditions"]["min_count"] == 2
+    assert not count["validation"]["issues"]
+    with pytest.raises(HTTPException, match="422"):
+        scenarios.prepare(request(operator="COUNT", min_count=3, selections=selections), filename)
+
+    weighted = scenarios.prepare(request(operator="WEIGHTED", threshold=0.75, selections=[
+        selection.model_copy(update={"weight": weight}) for selection, weight in zip(selections, (1.0, 3.0))
+    ]), filename)["basis"]
+    tree = weighted["specification"]["conditions"]
+    assert tree["type"] == "weighted_group"
+    assert tree["threshold"] == 0.75
+    assert [child["weight"] for child in tree["children"]] == [1.0, 3.0]
+    assert not weighted["validation"]["issues"]
+    with pytest.raises(HTTPException, match="422"):
+        scenarios.prepare(request(operator="WEIGHTED", threshold=0.75, selections=selections), filename)
+
+    custom = scenarios.prepare(request(operator="CUSTOM", selections=selections), filename)["basis"]
+    assert custom["specification"]["conditions"]["operator"] is None
+    assert custom["validation"]["issues"]
+    with pytest.raises(HTTPException, match="409"):
+        clinical_basis.review_basis(custom["basis_id"], clinical_basis.BasisReview(
+            action="approve", reviewer="医生", checks={key: True for key in CHECKS}), filename)
+    completed = clinical_basis.complete_basis_from_reviewed_graph(custom["basis_id"], filename)
+    assert completed["logic_questions"]
+
+
 def test_changed_scene_relation_blocks_generation(scenario_env):
     basis = scenarios.prepare(request(), "SCENARIO.json")["basis"]
     clinical_basis.review_basis(basis["basis_id"], clinical_basis.BasisReview(
@@ -67,6 +106,102 @@ def test_changed_scene_relation_blocks_generation(scenario_env):
     scenario_env[1].write_text(json.dumps(graph), encoding="utf-8")
     with pytest.raises(HTTPException):
         clinical_basis.generate_rule(basis["basis_id"], "SCENARIO.json")
+
+
+def test_reviewed_tcm_observations_generate_suspected_syndrome_and_disease(scenario_env):
+    from types import SimpleNamespace
+    from src.models.patient import Observation
+    from src.models.rule import Rule
+    from tests.test_engine import build_engine, make_patient
+
+    service, path, rules_path = scenario_env
+    disease = "ENTITY:disease:TCM_TEST"
+    syndrome = "ENTITY:syndrome:SYN_TEST"
+    symptom = "ENTITY:symptom:SYM_TEST"
+    tongue = "ENTITY:tongue:TONGUE_TEST"
+    mechanism = "ENTITY:pathogenesis:PATH_TEST"
+    membership = (disease, "DISEASE_HAS_SYNDROME", syndrome)
+    observations = [
+        (syndrome, "SYNDROME_HAS_SYMPTOM", symptom),
+        (syndrome, "SYNDROME_HAS_TONGUE", tongue),
+        (syndrome, "SYNDROME_HAS_PATHOGENESIS", mechanism),
+    ]
+    graph = {
+        "domain": "tcm",
+        "nodes": [
+            dict(id=disease, node_type="disease", code="TCM_TEST", name="测试病", review_status="active"),
+            dict(id=syndrome, node_type="syndrome", code="SYN_TEST", name="测试证", review_status="active"),
+            dict(id=symptom, node_type="symptom", code="SYM_TEST", name="测试症", review_status="active"),
+            dict(id=tongue, node_type="tongue", code="TONGUE_TEST", name="测试舌象", review_status="active"),
+            dict(id=mechanism, node_type="pathogenesis", code="PATH_TEST", name="测试病机", review_status="active"),
+        ],
+        "relations": [dict(source_node_id=start, relation_code=code, target_node_id=end,
+                           review_status="active", source_refs=["DOC-TEST_p1_l1-2"])
+                      for start, code, end in [membership, *observations]],
+    }
+    path.write_text(json.dumps(graph), encoding="utf-8")
+    payload = request(disease_code="TCM_TEST", operator="AND", selections=[
+        dict(relation_id="|".join(key), role="condition") for key in observations
+    ])
+    filename = "SCENARIO.json"
+    basis = scenarios.prepare(payload, filename)["basis"]
+    assert not basis["validation"]["issues"]
+    assert scenarios.overview(filename, "TCM_TEST")["scenes"][0]["bases"][0]["basis_id"] == basis["basis_id"]
+    syndrome_scene = scenarios.overview(filename, syndrome_code="SYN_TEST")
+    assert syndrome_scene["disease_code"] == "TCM_TEST"
+    assert syndrome_scene["owners"][0]["approved"]
+    assert {item["id"] for item in syndrome_scene["items"] if item["approved"]} == {
+        "|".join(key) for key in observations
+    }
+    assert syndrome_scene["scenes"][0]["bases"][0]["basis_id"] == basis["basis_id"]
+    saved_graph = service._load_graph(filename)
+    for key, rule_type, intent in [
+        ("CB-PATTERN", "tcm_pattern", "syndrome_identification"),
+        ("CB-FORMULA", "tcm_prescription", "treatment_recommendation"),
+    ]:
+        saved_graph["clinical_bases"].append({
+            "basis_id": key, "name": key, "status": "draft",
+            "specification": {"anchor_type": "syndrome", "disease_code": "SYN_TEST",
+                              "rule_type": rule_type, "clinical_intent": intent},
+        })
+    service._save_graph(saved_graph, filename)
+    for scoped in (scenarios.overview(filename, "TCM_TEST"), scenarios.overview(filename, syndrome_code="SYN_TEST")):
+        by_scene = {entry["key"]: entry["bases"] for entry in scoped["scenes"]}
+        assert [item["basis_id"] for item in by_scene["suspected_diagnosis"]] == [basis["basis_id"]]
+        assert [item["basis_id"] for item in by_scene["syndrome_identification"]] == ["CB-PATTERN"]
+        assert [item["basis_id"] for item in by_scene["treatment_recommendation"]] == ["CB-FORMULA"]
+    clinical_basis.review_basis(basis["basis_id"], clinical_basis.BasisReview(
+        action="approve", reviewer="医生", checks={key: True for key in CHECKS}), filename)
+    clinical_basis.generate_rule(basis["basis_id"], filename)
+    raw_rule = json.loads(rules_path.read_text(encoding="utf-8"))[0]
+    rule = Rule(**{**raw_rule, "status": "active"})
+    engine = build_engine()
+    engine.domain = "tcm"
+    engine.rule_repo = SimpleNamespace(list_all=lambda: [rule])
+    patient = make_patient(observations=[Observation(observation_type="symptom", code="SYM_TEST", present=True)])
+    assert not engine.run(patient)
+    patient.observations.append(Observation(observation_type="tongue", code="TONGUE_TEST", present=True))
+    assert not engine.run(patient)
+    patient.observations.append(Observation(observation_type="pathogenesis", code="PATH_TEST", present=True))
+    matched, = engine.run(patient)
+    assert matched.anchor_code == "SYN_TEST"
+    assert matched.suspected_disease_code == "TCM_TEST"
+    facts = {}
+    engine._materialize_facts(facts, [matched])
+    assert not facts
+
+    service.review_relation(filename, *membership, "retire", "医生")
+    assert basis["basis_id"] in {item["basis_id"] for item in clinical_basis.list_bases(filename)["items"]}
+    assert basis["basis_id"] not in {
+        item["basis_id"] for item in clinical_basis.list_bases(filename, reviewable_only=True)["items"]
+    }
+    blocked_scene = scenarios.overview(filename, syndrome_code="SYN_TEST")
+    assert not blocked_scene["scenes"][0]["bases"]
+    assert not blocked_scene["owners"][0]["approved"]
+    assert blocked_scene["items"] and all(item["review_blocker"] for item in blocked_scene["items"])
+    with pytest.raises(HTTPException, match="409"):
+        scenarios.prepare(payload, filename)
+    assert service._sync([raw_rule])["rules"][0]["dependency_status"] == "blocked"
 
 
 def test_reviewed_treatment_content_is_output_not_a_condition(scenario_env):

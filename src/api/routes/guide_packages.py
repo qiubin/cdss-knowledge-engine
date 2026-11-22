@@ -18,6 +18,7 @@ from src.extraction.graph_binding import resolve_template_graph_filename
 from src.extraction.concept_mapping import GENERIC_FINDING_BLOCKLIST
 from src.extraction.models import ExtractionTemplate
 from src.extraction.service import template_attribute_violations
+from src.vocab.entity_vocabulary import unregistered_tcm_diseases
 from src.vocab.repository import ConceptVocabularyRepository, collect_concept_codes
 
 from .kg import GraphImportRequest, import_graph
@@ -361,6 +362,63 @@ def _validate_graph_target_change(package: Dict[str, Any], target: Dict[str, Any
     changed = previous.get("filename") != target.get("filename")
     if changed and (package.get("import_result") or {}).get("success"):
         raise HTTPException(409, "知识包已成功导入；变更目标图谱必须显式确认重新导入")
+
+
+def _graph_doc_locations(doc_id: str, *, exclude: str = "") -> List[str]:
+    """Return every graph that already contains contributions from a document."""
+    locations: List[str] = []
+    for path in (ROOT / "data" / "kg").glob("*.json"):
+        if path.name == exclude:
+            continue
+        try:
+            graph = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        found = any(
+            doc_id in set(item.get("source_doc_ids") or [])
+            or any(str(ref).startswith(f"{doc_id}_") for ref in item.get("source_refs") or [])
+            for key in ("nodes", "relations")
+            for item in graph.get(key, [])
+            if isinstance(item, dict)
+        ) or any(source.get("doc_id") == doc_id for source in graph.get("sources", []))
+        if found:
+            locations.append(path.name)
+    return sorted(locations)
+
+
+def _remove_doc_from_graph(doc_id: str, filename: str) -> None:
+    """Remove only one document's contribution, preserving shared nodes/relations."""
+    path = ROOT / "data" / "kg" / _safe_graph_filename(filename)
+    if not path.exists():
+        return
+    graph = json.loads(path.read_text(encoding="utf-8"))
+
+    def strip(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        kept = []
+        for item in rows:
+            docs = set(item.get("source_doc_ids") or [])
+            refs = list(item.get("source_refs") or [])
+            owned = doc_id in docs or any(str(ref).startswith(f"{doc_id}_") for ref in refs)
+            if not owned:
+                kept.append(item)
+                continue
+            docs.discard(doc_id)
+            refs = [ref for ref in refs if not str(ref).startswith(f"{doc_id}_")]
+            if docs or refs:
+                item["source_doc_ids"] = sorted(docs)
+                item["source_refs"] = refs
+                item["orphaned_from"] = [value for value in item.get("orphaned_from", []) if value != doc_id]
+                kept.append(item)
+        return kept
+
+    graph["nodes"] = strip(list(graph.get("nodes") or []))
+    valid_ids = {item.get("id") for item in graph["nodes"]}
+    graph["relations"] = [
+        item for item in strip(list(graph.get("relations") or []))
+        if item.get("source_node_id") in valid_ids and item.get("target_node_id") in valid_ids
+    ]
+    graph["sources"] = [item for item in graph.get("sources", []) if item.get("doc_id") != doc_id]
+    path.write_text(json.dumps(graph, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _selected_target(
@@ -801,6 +859,14 @@ def _build_checks(package: Dict[str, Any]) -> List[Dict[str, Any]]:
     if domain != TCM:
         checks.append(_rule_quality_check(rules))
     if domain == TCM:
+        unknown = unregistered_tcm_diseases(entities)
+        checks.append({
+            "code": "tcm_disease_dictionary",
+            "title": "中医病名词典",
+            "status": "failed" if unknown else "passed",
+            "issues": [f"{name} 尚未登记。请审核登记并重新解析，或排除该候选后仅导入预审通过项。"
+                       for name in unknown],
+        })
         checks.extend(_tcm_checks(package))
     return checks
 
@@ -874,6 +940,20 @@ async def generate_package(request: GuidePackageGenerateRequest):
     package_id = f"PKG-{request.doc_id}"
     created_at = _now()
     existing_path = _package_path(package_id)
+    successful_for_doc = next(
+        (
+            item for item in _load_packages()
+            if item.get("doc_id") == request.doc_id
+            and (item.get("import_result") or {}).get("success")
+        ),
+        None,
+    )
+    if successful_for_doc:
+        raise HTTPException(
+            409,
+            f"文档 {request.doc_id} 已有成功导入的知识包 "
+            f"{successful_for_doc.get('package_id')}，请使用原知识包更新或迁移",
+        )
     if existing_path.exists():
         existing = _read(existing_path)
         created_at = existing.get("created_at", created_at)
@@ -883,8 +963,11 @@ async def generate_package(request: GuidePackageGenerateRequest):
             if not request.reimport_confirmed:
                 raise exc
         if (existing.get("import_result") or {}).get("success"):
-            package_id = f"PKG-{request.doc_id}-{uuid.uuid4().hex[:8].upper()}"
-            existing_path = _package_path(package_id)
+            raise HTTPException(
+                409,
+                f"文档 {request.doc_id} 已有成功导入的知识包 {existing.get('package_id') or package_id}，"
+                "请使用原知识包更新或迁移，不能创建第二个知识包",
+            )
 
     package = {
         "package_id": package_id,
@@ -947,6 +1030,7 @@ async def update_package(package_id: str, request: GuidePackageUpdateRequest):
     package = _load_package(package_id)
     profile = get_profile(package.get("domain"))
     if request.graph_target is not None:
+        previous_filename = str(package.get("graph_filename") or "")
         graph_target = _resolve_graph_target(
             request.graph_target,
             str(package.get("domain") or "western"),
@@ -958,6 +1042,13 @@ async def update_package(package_id: str, request: GuidePackageUpdateRequest):
                 raise HTTPException(409, "知识包已成功导入；变更目标图谱必须显式确认重新导入")
         package["graph_target"] = graph_target
         package["graph_filename"] = graph_target["filename"]
+        if previous_filename and previous_filename != graph_target["filename"]:
+            package["pending_graph_migration"] = {
+                "from": previous_filename,
+                "to": graph_target["filename"],
+                "confirmed": bool(request.reimport_confirmed),
+                "requested_at": _now(),
+            }
     if request.target_disease_code is not None:
         package["target_disease_code"] = _selected_target(
             package.get("entities", []),
@@ -984,6 +1075,32 @@ async def update_package(package_id: str, request: GuidePackageUpdateRequest):
         package["checks"] = _build_checks(package)
     _save_package(package)
     return package
+
+
+@router.delete("/{package_id}")
+async def delete_package(package_id: str, confirm: bool = False):
+    """删除知识包 JSON。
+
+    只删除包文件本身；已导入产生的图谱、规则、诊疗依据是独立数据，
+    不随包删除。已成功导入的包要求显式确认，防止误删唯一的过程记录。
+    """
+    package = _load_package(package_id)
+    imported = bool((package.get("import_result") or {}).get("success"))
+    if not confirm:
+        raise HTTPException(
+            409,
+            "删除知识包不可恢复；请在前端确认后重试（confirm=true）"
+            + ("。该包已导入图谱，删除后仅丢失导入前的候选记录" if imported else ""),
+        )
+    path = _package_path(package_id)
+    path.unlink(missing_ok=True)
+    return {
+        "deleted": package_id,
+        "doc_title": str(package.get("doc_title") or ""),
+        "imported": imported,
+        "graph_filename": str(package.get("graph_filename") or ""),
+        "note": "已导入的图谱与规则不受影响" if imported else "",
+    }
 
 
 @router.get("/{package_id}/items")
@@ -1047,6 +1164,21 @@ async def import_package(package_id: str, request: GuidePackageImportRequest):
     if request.mode not in {"draft", "approved_only"}:
         raise HTTPException(422, "无效的导入模式")
 
+    target_graph = str(package.get("graph_filename") or "")
+    migration = package.get("pending_graph_migration") or {}
+    migration_from = str(migration.get("from") or "")
+    allowed_previous = {migration_from} if migration.get("confirmed") else set()
+    occupied = [
+        filename for filename in _graph_doc_locations(package["doc_id"], exclude=target_graph)
+        if filename not in allowed_previous
+    ]
+    if occupied:
+        raise HTTPException(
+            409,
+            f"文档 {package['doc_id']} 已存在于其他知识图谱：{'、'.join(occupied)}；"
+            "为防止双图谱写入，请从原知识包发起迁移",
+        )
+
     entities = package.get("entities", [])
     relations = package.get("suggested_relations", [])
     candidate_rules = package.get("suggested_rules", [])
@@ -1074,9 +1206,24 @@ async def import_package(package_id: str, request: GuidePackageImportRequest):
         graph_filename=package.get("graph_filename", ""),
         candidate_rules=candidate_rules,
     )
+    kg_root = ROOT / "data" / "kg"
+    target_path = kg_root / _safe_graph_filename(target_graph)
+    old_path = kg_root / _safe_graph_filename(migration_from) if migration_from else None
+    target_backup = target_path.read_bytes() if target_path.exists() else None
+    old_backup = old_path.read_bytes() if old_path and old_path.exists() else None
     try:
         graph_result = await import_graph(graph_request)
+        if migration_from and migration_from != target_graph:
+            if not migration.get("confirmed"):
+                raise HTTPException(409, "目标图谱变更尚未确认，不能执行迁移")
+            _remove_doc_from_graph(package["doc_id"], migration_from)
     except HTTPException as exc:
+        if target_backup is None:
+            target_path.unlink(missing_ok=True)
+        else:
+            target_path.write_bytes(target_backup)
+        if old_path is not None and old_backup is not None:
+            old_path.write_bytes(old_backup)
         package["status"] = "failed"
         package["import_result"] = {
             "imported_at": _now(),
@@ -1087,6 +1234,20 @@ async def import_package(package_id: str, request: GuidePackageImportRequest):
         }
         _save_package(package)
         raise
+    except Exception as exc:
+        if target_backup is None:
+            target_path.unlink(missing_ok=True)
+        else:
+            target_path.write_bytes(target_backup)
+        if old_path is not None and old_backup is not None:
+            old_path.write_bytes(old_backup)
+        package["status"] = "failed"
+        package["import_result"] = {
+            "imported_at": _now(), "success": False, "graph": None,
+            "rules": None, "error": str(exc),
+        }
+        _save_package(package)
+        raise HTTPException(500, f"图谱迁移失败，已回滚：{exc}") from exc
 
     # Keep candidate conditions as unreviewed clinical specifications in the graph.
     rule_result = {"imported": 0, "replaced": 0, "errors": [], "pending_basis_count": len(candidate_rules)}
@@ -1101,6 +1262,7 @@ async def import_package(package_id: str, request: GuidePackageImportRequest):
         "error": "",
     }
     package["status"] = "imported"
+    package.pop("pending_graph_migration", None)
 
     # 自动生成一份阳性测试病历，供「病历测试」页即时验证（失败不阻断导入）。
     test_case = None

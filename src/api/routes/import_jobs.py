@@ -12,6 +12,7 @@ from src.api.import_job_manager import (
     FAILED, SUCCEEDED, STOPPED, ImportController, ImportJob, manager,
 )
 from src.extraction.auto_pipeline import run_auto_pipeline
+from src.extraction.domain_detection import detect_guideline_domain
 from src.extraction.graph_binding import resolve_upload_graph_filename
 from src.extraction.repository import ExtractionConfigRepository
 from .pdf import extraction_templates
@@ -85,11 +86,81 @@ async def _run_template_job(
 
 async def _run_auto_job(
     controller: ImportController, *, file_path: Path, doc_id: str, doc_title: str,
-    graph_filename: str, auto_activate: bool,
+    graph_filename: str, auto_activate: bool, domain: str = "auto", template_id: str = "",
 ) -> Dict[str, Any]:
     """一键自动作业体：镜像 auto_import.auto_import 的 pipeline 调用。"""
     from .pdf import parse_pdf, _persist_doc, _now
     parsed = parse_pdf(file_path, doc_id)
+    if template_id:
+        template = extraction_templates.get(template_id)
+        if template is None:
+            raise ValueError(f"解析模板不存在: {template_id}")
+        template_domain = str(template.domain or "western")
+        if domain != "auto" and domain != template_domain:
+            raise ValueError("所选指南领域与抽取模板领域不一致")
+        graph_name = resolve_upload_graph_filename(template, graph_filename or "")
+        result = await _run_template_job(
+            controller, file_path=file_path, doc_id=doc_id, doc_title=doc_title,
+            mode="template-llm", template_id=template.template_id,
+            graph_name=graph_name,
+        )
+        if not result.get("relation_count"):
+            raise ValueError("所选模板未生成任何关系，已停止自动入库，请检查抽取告警后重试")
+        from .guide_packages import (
+            GuidePackageGenerateRequest, GuidePackageImportRequest,
+            generate_package, import_package,
+        )
+        from .kg import KG_DIR
+        graph_mode = "existing" if (KG_DIR / graph_name).exists() else "new"
+        generated = await generate_package(GuidePackageGenerateRequest(
+            doc_id=doc_id, domain=template_domain, template_id=template.template_id,
+            graph_target={"mode": graph_mode, "filename": graph_name},
+        ))
+        package_id = generated["package"]["package_id"]
+        imported = await import_package(package_id, GuidePackageImportRequest())
+        result.update(
+            domain=template_domain,
+            template_id=template.template_id,
+            package_id=package_id,
+            graph_result=imported["graph"],
+            domain_detection={"domain": template_domain, "source": "selected_template"},
+        )
+        return result
+    detection = detect_guideline_domain(parsed["chunks"], doc_title, domain)
+    if detection["requires_confirmation"]:
+        raise ValueError(
+            "指南领域识别置信度不足，请明确选择中医或西医。识别依据："
+            + "；".join(detection["reasons"])
+        )
+    if detection["domain"] == "tcm":
+        template = extraction_templates.get("TCM_GUIDELINE_V3")
+        graph_name = resolve_upload_graph_filename(
+            template, graph_filename or f"KG-TCM-{doc_id}.json"
+        )
+        result = await _run_template_job(
+            controller, file_path=file_path, doc_id=doc_id, doc_title=doc_title,
+            mode="template-llm", template_id=template.template_id,
+            graph_name=graph_name,
+        )
+        result["domain"] = "tcm"
+        result["template_id"] = template.template_id
+        result["domain_detection"] = detection
+        result.setdefault("warnings", []).insert(0, "已识别为中医指南并使用中医专用模板")
+        if not result.get("relation_count"):
+            raise ValueError("中医专用模板未生成任何关系，已停止自动入库，请检查抽取告警后重试")
+        from .guide_packages import (
+            GuidePackageGenerateRequest, GuidePackageImportRequest,
+            generate_package, import_package,
+        )
+        generated = await generate_package(GuidePackageGenerateRequest(
+            doc_id=doc_id, domain="tcm", template_id=template.template_id,
+            graph_target={"mode": "new", "filename": graph_name},
+        ))
+        package_id = generated["package"]["package_id"]
+        imported = await import_package(package_id, GuidePackageImportRequest())
+        result["package_id"] = package_id
+        result["graph_result"] = imported["graph"]
+        return result
     _persist_doc({"doc_id": doc_id, "doc_title": doc_title, "parsed": parsed,
                   "file_path": str(file_path), "uploaded_at": _now()})
     result = await run_auto_pipeline(
@@ -97,7 +168,11 @@ async def _run_auto_job(
         ExtractionConfigRepository().load(),
         graph_filename=graph_filename, auto_activate=auto_activate,
         controller=controller,
+        require_import_quality=True,
     )
+    result["domain"] = "western"
+    result["template_id"] = "UNIVERSAL_GUIDELINE_V1"
+    result["domain_detection"] = detection
     _persist_doc({"doc_id": doc_id, "doc_title": doc_title, "parsed": parsed,
                   "file_path": str(file_path), "uploaded_at": _now(),
                   "extraction": {"metadata": result.get("metadata") or {}, "warnings": result.get("warnings") or []}})
@@ -111,11 +186,14 @@ async def create_import_job(
     template_id: str = Form(""),
     graph_filename: str = Form(""),
     auto_activate: str = Form("false"),
+    domain: str = Form("auto"),
 ):
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(400, "仅支持 PDF 文件")
     if mode not in _VALID_MODES:
         raise HTTPException(422, f"mode 必须是 {'/'.join(sorted(_VALID_MODES))}")
+    if domain not in {"auto", "western", "tcm"}:
+        raise HTTPException(422, "domain 必须是 auto、western 或 tcm")
     if mode in {"template-local", "template-llm"} and not template_id:
         raise HTTPException(422, "模板模式必须提供 template_id")
     resolved_graph = ""
@@ -139,6 +217,8 @@ async def create_import_job(
                 controller, file_path=file_path, doc_id=doc_id, doc_title=doc_title,
                 graph_filename=graph_filename,
                 auto_activate=auto_activate.lower() in {"1", "true", "yes"},
+                domain=domain,
+                template_id=template_id,
             )
         return _run_template_job(
             controller, file_path=file_path, doc_id=doc_id, doc_title=doc_title,

@@ -12,11 +12,23 @@
     <h3>系统实现路径</h3><p>指南解析 → 知识图谱草稿 → 图谱与判定标准审核 → 诊疗依据整理及审核 → 规则草稿 → 病例验证及发布 → 接入患者信息 → 判断和推荐。</p>
     <h3>每条建议依据什么</h3><p>诊断阶段、人群和分型、当前病情、既往治疗与反应、现用药、必要安全资料及禁忌。推荐项目和用法绑定指南原文；替代、联合、序贯关系必须明确。</p>
     <h3>结果如何理解</h3><ul><li>当前可推荐：必要条件满足，仍由医生确认实施。</li><li>仅治疗策略：可考虑治疗方向，但缺少明确用法或个体化剂量资料，不生成具体用量。</li><li>需补充资料：显示缺失信息；“没有记录”不等于“明确没有”。</li><li>当前不适用／存在禁忌：显示具体原因。</li><li>手术、鉴别和转诊：区分评估建议与具体实施决策。</li></ul>
-    <p>指南未明确的剂量、频次、疗程不自行补齐；已在使用的药物不重复推荐开始。建议不是自动医嘱。当前改造聚焦西医，中医流程独立维护。</p>`;
+    <p>指南未明确的剂量、频次、疗程不自行补齐；已在使用的药物不重复推荐开始。建议不是自动医嘱。西医与中医诊疗流程分别维护，并可按临床需要协同参考。</p>`;
+  }
+  function tcmExplanation() {
+    return `<h2>中医诊疗决策说明</h2><p>系统围绕当前患者回答“中医如何辨病、辨证与施治”。系统综合症状、体征、舌象、脉象、病因病机及兼夹情况，形成中医病名和证候判断，并结合诊疗指南、专家共识及院内规范提供治法、方药和调护建议。</p>
+    <p>中医辨证结果用于辅助医生判断，不替代医生四诊合参。遇有急危重症或需要排除器质性疾病的情况，应优先启动相应的急救、检查、转诊或中西医协同诊疗流程。</p>
+    <h3>医生需要回答的问题</h3><ol><li>是否存在急危重症表现，是否需要立即处置、检查或转诊？</li><li>当前属于什么中医病名，是否需要结合西医检查明确疾病性质？</li><li>患者的主证是什么，存在哪些兼证、证素或病机变化？</li><li>症状、舌象、脉象等辨证依据是否充分，是否还需补充四诊信息？</li><li>当前适宜采用什么治法、方剂、中成药或非药物疗法？</li><li>是否需要随证加减，是否存在配伍、剂量、禁忌或特殊人群风险？</li><li>如何观察证候变化、评价疗效，并安排复诊、调护和随访？</li></ol>
+    <h3>系统实现路径</h3><p>中医指南解析 → 中医知识图谱草稿 → 病名、症状、舌象、脉象、证候、治法和方药关系审核 → 诊疗依据整理及审核 → 辨证与治疗规则草稿 → 病例验证及发布 → 接入患者四诊信息 → 辨病辨证和诊疗建议。</p>
+    <h3>中医知识图谱的结构</h3><p>主干是「病 → 证 → 法 → 方 → 药」：中医疾病（如心衰）名下列出证候（如气虚血瘀证，分主证、次证），证候对应治法（如益气活血），治法落实为方剂（如补阳还五汤），方剂拆解为中药组成（含君臣佐使与剂量）。疾病是范围锚——界定「辨什么病、适用哪部指南」；证候是推理锚——治法与方药全部挂在证候上，同病异证则治法方药各异，此即同病异治。</p>
+    <p>主干之外有三条支撑分支：①辨证证据分支——证候关联主症、次症、舌象、脉象，是辨证的依据来源；推理从患者的症状、舌象、脉象出发，沿此分支加权归到证候，而不是从疾病直接推治法。②病机证素分支——证候关联病机与证素，解释「为什么这么辨」，支撑审核与回顾，不直接参与推理。③安全分支——证候与方剂关联配伍禁忌与慎用提示，在推荐方药时反向拦截。另有中西医对照分支（中医病名 ↔ 西医疾病，如心衰 ↔ 慢性心力衰竭），仅作对照与中西医协同参考，不参与辨证推理。</p>
+    <h3>每条建议依据什么</h3><p>每条建议综合考虑中医病名及当前诊疗阶段，主症、次症及症状组合，舌质、舌苔和脉象，病因、病位、病性及证素，主证、兼证和证候演变，特殊人群情况，既往治疗、当前用药及治疗反应，以及方药配伍、禁忌、不良反应和中西药联用风险。</p>
+    <p>治法、方剂、药物组成、剂量、用法、疗程及随证加减应与审核通过的原文依据绑定。系统不得仅凭单个症状直接确定证候，也不得在依据不足时自行补全处方内容。</p>
+    <h3>结果如何理解</h3><ul><li>辨证依据充分：当前四诊信息与证候判定条件基本相符，可作为医生辨证参考。</li><li>可能证候：部分条件符合，但仍存在其他证候可能，需要结合完整四诊信息鉴别。</li><li>兼证提示：在主证基础上存在兼夹证候，需由医生判断其主次关系。</li><li>需补充四诊信息：缺少关键症状、舌象、脉象或其他辨证资料；“没有记录”不等于“明确没有”。</li><li>治法建议：可提示治疗方向，但不等同于已经形成完整处方。</li><li>方药建议：适用条件和必要安全信息满足时，展示经审核的方剂或中成药建议。</li><li>仅提供方药策略：指南支持治疗方向，但缺少明确组成、剂量、用法或个体化资料，不生成具体用量。</li><li>不适用或存在禁忌：显示不适用条件、配伍风险或特殊人群风险。</li><li>证候发生变化：复诊信息提示证候演变时，应重新辨证，不机械沿用原有治法和方药。</li></ul>
+    <p>系统遵循辨病与辨证结合、四诊合参、同病异治和异病同治原则。指南未明确的药味、剂量、频次、疗程和加减方案不自行补齐；已有治疗不重复推荐开始。所有建议均为临床决策支持，不自动形成处方或医嘱，最终诊疗方案由医生审核确认。</p>`;
   }
   function showExplanation() {
     const dialog=document.createElement('dialog'); dialog.className='dialog';
-    dialog.innerHTML=`<div style="max-height:75vh;overflow:auto;padding:20px">${explanation()}<button type="button" class="btn primary" data-close>关闭说明</button></div>`;
+    dialog.innerHTML=`<div style="max-height:75vh;overflow:auto;padding:20px">${explanation()}<hr>${tcmExplanation()}<button type="button" class="btn primary" data-close>关闭说明</button></div>`;
     document.body.append(dialog);dialog.querySelector('[data-close]').onclick=()=>dialog.close();
     dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();
   }
@@ -85,7 +97,7 @@
     if (!items?.length) return '';
     return `<section><h3>西医患者级诊疗建议</h3>${items.map(r=>`<article class="evidence-card"><h4>${esc(r.clinical_question||r.name)} · ${esc(STATUS[r.status]||r.status)}</h4><p>方案关系：${esc({single:'单项',alternatives:'替代选择，不可视为联合',combined:'联合',sequential:'序贯'}[r.combination]||'')} ${esc(r.selection_group||'')}</p>${(r.reasons||[]).map(v=>`<p>${esc(v)}</p>`).join('')}${(r.actions||[]).map(a=>`<div class="evidence-card"><strong>${esc(KINDS[a.kind])} · ${esc(VERBS[a.verb])}${esc(a.name)} · ${esc(STATUS[a.status]||a.status)}</strong><p>${esc((a.reasons||[]).join('；'))}</p>${Object.keys(a.regimen||{}).length?`<p>用法：${Object.entries(a.regimen).filter(([,v])=>v).map(([k,v])=>esc(({dose:'剂量',route:'途径',frequency:'频次',course:'疗程',titration:'调整'})[k]||k)+'：'+esc(v)).join('；')}</p>`:''}<p>${(a.missing_data||[]).map(d=>'需补充：'+esc(d.label)).join('；')}</p><p>${esc((a.monitoring||[]).join('；'))}</p><details><summary>判断依据与原文</summary>${a.applicability?`<p>共同条件：${esc(conditionSummary(a.applicability.shared_conditions))}</p><p>动作条件：${esc(conditionSummary(a.applicability.action_conditions))}</p><p>禁忌：${(a.applicability.contraindications||[]).map(conditionSummary).map(esc).join('；')||'本条未配置'}</p>`:''}<p>${esc(a.source?.quote||r.source?.quote||'')}</p></details></div>`).join('')}<small>${esc(r.rule_id)}</small></article>`).join('')}</section>`;
   }
-  const api={explanation,showExplanation,mountEditor,resultHtml};
+  const api={explanation,tcmExplanation,showExplanation,mountEditor,resultHtml};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   root.WesternDecision=api;
   if (typeof document !== 'undefined') document.getElementById('globalDecisionHelp')?.addEventListener('click', showExplanation);

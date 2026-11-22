@@ -73,6 +73,18 @@ class TcmGraphSemanticChecker:
         elif anchor_type == "disease":
             self._require_node(issues, "disease", anchor_code)
 
+        suspected = (rule.get("clinical_context") or {}).get("suspected_tcm_diagnosis")
+        if suspected and anchor_type == "syndrome":
+            from src.review.service import SYNDROME_MEMBERSHIP_ROLES
+
+            disease_code = str(suspected.get("disease_code") or "")
+            relation = suspected.get("membership_relation")
+            self._require_node(issues, "disease", disease_code)
+            if relation in SYNDROME_MEMBERSHIP_ROLES:
+                self._require_relation(issues, _node_id("disease", disease_code), relation, self.anchor)
+            else:
+                issues.append("缺少疾病与证候的归属关系")
+
         self._walk(rule.get("conditions"), issues)
 
         conclusion = rule.get("conclusion") or {}
@@ -84,6 +96,35 @@ class TcmGraphSemanticChecker:
             if isinstance(herb, dict) and herb.get("code"):
                 self._require_node(issues, "herb", str(herb["code"]))
 
+        # Treatment bases generated from the graph must remain bound to the
+        # exact reviewed chain even when they are not V3 ClinicalContracts.
+        method, formula = conclusion.get("treatment_method_code"), conclusion.get("formula_code")
+        if rule.get("rule_type") == "tcm_treatment" and method:
+            self._require_relation(
+                issues, self.anchor, "SYNDROME_TREATED_BY_METHOD",
+                _node_id("treatment_method", method),
+            )
+        if rule.get("rule_type") == "tcm_prescription" and formula:
+            self._require_relation(
+                issues, self.anchor, "SYNDROME_RECOMMENDS_FORMULA",
+                _node_id("formula", formula),
+            )
+            if method:
+                self._require_relation(
+                    issues, self.anchor, "SYNDROME_TREATED_BY_METHOD",
+                    _node_id("treatment_method", method),
+                )
+                self._require_relation(
+                    issues, _node_id("treatment_method", method), "METHOD_HAS_FORMULA",
+                    _node_id("formula", formula),
+                )
+            for herb in conclusion.get("herbs") or []:
+                if isinstance(herb, dict) and herb.get("code"):
+                    self._require_relation(
+                        issues, _node_id("formula", formula), "FORMULA_CONTAINS_HERB",
+                        _node_id("herb", str(herb["code"])),
+                    )
+
         if self.strict:
             from .clinical_schema import validate_v3_rule
             issues.extend(validate_v3_rule(rule))
@@ -94,16 +135,8 @@ class TcmGraphSemanticChecker:
                 self._require_node(issues, "clinical_rule", contract_code)
                 relation = "ELEMENT_HAS_CLINICAL_RULE" if anchor_type == "syndrome_element" else "SYNDROME_HAS_CLINICAL_RULE"
                 self._require_relation(issues, self.anchor, relation, _node_id("clinical_rule", contract_code))
-            method, formula = conclusion.get("treatment_method_code"), conclusion.get("formula_code")
-            if method:
-                self._require_relation(issues, self.anchor, "SYNDROME_TREATED_BY_METHOD", _node_id("treatment_method", method))
-            if formula:
-                if not method:
-                    issues.append("方药规则缺少治法与方剂链路")
-                else:
-                    self._require_relation(issues, _node_id("treatment_method", method), "METHOD_HAS_FORMULA", _node_id("formula", formula))
-                for herb in conclusion.get("herbs") or []:
-                    self._require_relation(issues, _node_id("formula", formula), "FORMULA_CONTAINS_HERB", _node_id("herb", herb["code"]))
+            if formula and not method:
+                issues.append("方药规则缺少治法与方剂链路")
             for modification in conclusion.get("modification_rules") or []:
                 self._walk(modification.get("condition"), issues)
                 component = modification.get("component")
@@ -156,10 +189,12 @@ class TcmGraphSemanticChecker:
                 self._walk(child, issues)
             return
         if condition_type == "observation":
-            if self.strict:
-                kind = str(condition.get("observation_type") or "symptom")
-                relation = ("ELEMENT_HAS_" if self.anchor_type == "syndrome_element" else "SYNDROME_HAS_") + kind.upper()
-                self._require_relation(issues, self.anchor, relation, _node_id(kind, str(condition.get("code") or "")))
+            kind = str(condition.get("observation_type") or "symptom")
+            prefix = {"syndrome_element": "ELEMENT_HAS_", "disease": "DISEASE_HAS_"}.get(
+                self.anchor_type, "SYNDROME_HAS_"
+            )
+            relation = prefix + kind.upper()
+            self._require_relation(issues, self.anchor, relation, _node_id(kind, str(condition.get("code") or "")))
             self._require_node(
                 issues,
                 str(condition.get("observation_type") or "symptom"),
@@ -170,11 +205,10 @@ class TcmGraphSemanticChecker:
             self._require_node(issues, "symptom", str(condition.get("symptom_code") or ""))
             return
         if condition_type == "fact":
-            if self.strict:
-                fact_type, code = str(condition.get("fact_type") or ""), str(condition.get("code") or "")
-                self._require_node(issues, fact_type, code)
-                if self.anchor_type == "syndrome" and fact_type == "syndrome_element":
-                    self._require_relation(issues, self.anchor, "SYNDROME_HAS_ELEMENT", _node_id(fact_type, code))
+            fact_type, code = str(condition.get("fact_type") or ""), str(condition.get("code") or "")
+            self._require_node(issues, fact_type, code)
+            if self.strict and self.anchor_type == "syndrome" and fact_type == "syndrome_element":
+                self._require_relation(issues, self.anchor, "SYNDROME_HAS_ELEMENT", _node_id(fact_type, code))
             return
         if self.strict and condition_type == "past_history":
             code = str(condition.get("code") or "")

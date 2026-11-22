@@ -84,6 +84,8 @@ test("clear page previews without deletion and invalidates preview after scope c
   assert.equal(h.calls.at(-1).payload.dry_run, false);
   assert.equal(h.calls.at(-1).payload.clear_rules, false);
   assert.equal(h.elements.get("#clearExecuteBtn").hidden, true);
+  assert.doesNotMatch(h.elements.get("#clearGraphSelect").innerHTML, /west\.json/);
+  assert.equal(h.elements.get("#clearGraphSelect").value, "tcm.json");
 });
 
 test("clear page switches target graph without executing a clear", async () => {

@@ -58,7 +58,24 @@ def test_templates_do_not_add_tcm_disease_to_shared_dictionary():
         if template.get("domain") != "tcm":
             assert all(not entry.get("code", "").startswith("TCM_DIS_") for entry in disease.get("entries", []))
         else:
-            assert disease.get("entries"), "中医模板应保留本地中医病名"
+            # 中医病名集中维护在 tcm_disease 字典（GB/T 16751.1 标准名 + 别名），
+            # 模板本身不再内嵌词条；解析时经 resolve_template 合并生效。
+            assert not disease.get("entries"), "中医模板词条应集中在 tcm_disease 字典"
+            resolved = resolve_template(
+                ExtractionTemplateRepository().get(template["template_id"])
+            )
+            entries = next(
+                item for item in resolved.entity_types if item.entity_type == "disease"
+            ).entries
+            assert entries, "tcm_disease 字典应提供中医病名"
+            owners: dict = {}
+            for entry in entries:
+                assert entry.code.startswith("TCM_DIS_") and entry.domain == "tcm"
+                # 别名必须包含标准名本身：本地正则按别名表匹配，缺名即漏匹配。
+                assert entry.name in (entry.aliases or []), entry.name
+                # 别名跨条目冲突会破坏解析时的唯一别名归一。
+                for term in [entry.name, *(entry.aliases or [])]:
+                    assert owners.setdefault(term, entry.code) == entry.code, term
 
 
 def test_api_rejects_non_icd10_disease_entry():

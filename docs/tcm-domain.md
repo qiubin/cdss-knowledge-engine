@@ -23,7 +23,7 @@
 
 ## 2. 模板契约
 
-`TCM_GUIDELINE_V2` 是唯一的中医抽取模板，`graph_filename` 为空。导入时必须先
+`TCM_GUIDELINE_V3` 是默认中医抽取模板，`graph_filename` 为空。导入时必须先
 选择新建图谱或既有图谱，模板不再固定绑定 `tcm_graph.json`。
 
 V2 在 V1 基础上增加：
@@ -38,8 +38,12 @@ V2 在 V1 基础上增加：
 中药和禁忌；`capabilities` 保持 `tcm_pattern` / `tcm_treatment` /
 `tcm_prescription` / `tcm_contraindication`。
 
-实体编码采用「本地稳定码 + `standard_code` 映射」。种子数据在
-`data/vocab/entities/{syndrome,symptom,tongue,pulse,formula,herb,...}.json`。
+中医图谱的 `disease` 统一引用「实体字典 → 中医疾病」
+（`data/vocab/entities/tcm_disease.json`），采用 `TCM_DIS_` 本地稳定码。
+经核实的中医标准编码可作为词条的标准映射。抽取时可保留有正文页行的未登记病名作为候选，
+正式入库前须登记词条并重新解析，或在知识包预审后仅导入通过项。
+西医疾病词典仍独立维护 ICD-10。中医图谱中的西医诊断使用 `western_disease`，
+中西医对照须有可复核引文，同片段共现不会自动生成对照关系。
 
 ## 3. 图谱结构
 

@@ -24,13 +24,19 @@ from src.domains import TCM, get_profile, normalize_domain
 from src.domains.tcm.graph import ensure_tcm_semantic_layer
 from src.kg.schema import ConceptVocabulary
 from src.terminology.labels import default_labels
-from src.vocab.entity_vocabulary import EntityVocabularyRepository, find_shared_entry, resolve_template
+from src.vocab.entity_vocabulary import (
+    EntityVocabularyRepository, find_shared_entry, resolve_template,
+    tcm_disease_entries, unregistered_tcm_diseases,
+)
+from src.vocab.disease_mapping import DiseaseMappingRepository
+from src.review.quality import locate_single_page_quote
 
 router = APIRouter(prefix="/api/kg", tags=["kg"])
 
 KG_DIR = Path(__file__).parent.parent.parent.parent / "data" / "kg"
 TEMPLATE_PATH = KG_DIR.parent / "templates" / "extraction_templates.json"
 VOCAB_PATH = KG_DIR.parent / "vocab" / "concepts.json"
+DISEASE_MAPPING_PATH = KG_DIR.parent / "vocab" / "tcm_western_disease_mappings.json"
 DEFAULT_GRAPH_FILENAME = "stemi_graph.json"
 
 # Fallback for imports that carry no resolvable template; kept in sync with
@@ -48,6 +54,8 @@ LEGACY_SEMANTIC_RELATIONS = {
 }
 
 DEFAULT_RELATION_NAMES = {
+    "DISEASE_MAPS_TO_WESTERN": "中医疾病对照西医疾病",
+    "GUIDELINE_SUGGESTS_DISEASE_MAPPING": "指南提示中西医疾病对照",
     "DISEASE_HAS_LAB": "疾病关联检验",
     "DISEASE_HAS_EXAM": "疾病关联检查",
     "DISEASE_HAS_SYMPTOM": "疾病有症状",
@@ -181,6 +189,13 @@ class GraphImportRequest(BaseModel):
     candidate_standards: List[Dict[str, Any]] = []
 
 
+@router.get("/disease-mappings")
+def list_disease_mappings(active_only: bool = False):
+    """Expose the independent disease crosswalk for review and diagnostics."""
+    rows = DiseaseMappingRepository(DISEASE_MAPPING_PATH).list(active_only=active_only)
+    return {"total": len(rows), "active_only": active_only, "items": rows}
+
+
 def _semantic_node_id(node_type: str, code: str) -> str:
     return f"ENTITY:{node_type}:{code}"
 
@@ -251,6 +266,12 @@ def _relation_names(template_id: str = "") -> Dict[str, str]:
     return names
 
 
+def _now_iso() -> str:
+    # 微秒精度：同一次导入内节点可能被多次 upsert，秒级会与图级
+    # 导入时间错位，导致审核台「本次导入」判定失效。
+    return datetime.now(timezone.utc).isoformat()
+
+
 def _upsert_semantic_node(
     graph: Dict[str, Any],
     node_type: str,
@@ -264,7 +285,8 @@ def _upsert_semantic_node(
     node_id = _semantic_node_id(node_type, code)
     refs = [ref for ref in (source_refs or []) if ref]
     node = graph["nodes"].get(node_id)
-    if node is None and _normalize_entity_name(str(name or "")):
+    tcm_disease = node_type == "disease" and normalize_domain(graph.get("domain")) == TCM
+    if node is None and not tcm_disease and _normalize_entity_name(str(name or "")):
         normalized = _normalize_entity_name(str(name))
         for existing in graph["nodes"].values():
             if (
@@ -298,9 +320,18 @@ def _upsert_semantic_node(
             "attributes": dict(attributes or {}),
             "source_refs": list(dict.fromkeys(refs)),
             "review_status": "draft",
+            # 生成溯源：created_at 首次生成后不再变化；同一节点被后续
+            # 指南导入再次命中时只刷新 last_import_at，审核台据此区分
+            # 「本次新增」与「既有节点被再次引用」。
+            "created_at": _now_iso(),
+            "last_import_at": _now_iso(),
         }
         graph["nodes"][node_id] = node
     else:
+        # 存量节点（时间戳功能上线前导入）首次被再次纳管时补建 created_at，
+        # 否则它们永远显示不出生成时间。
+        node.setdefault("created_at", _now_iso())
+        node["last_import_at"] = _now_iso()
         if name and (not node.get("name") or node.get("name") == code):
             node["name"] = name
             node["display_name"] = _node_display_name(node_type, code, name)
@@ -339,9 +370,13 @@ def _upsert_semantic_relation(
             "attributes": dict(attributes or {}),
             "source_refs": list(dict.fromkeys(refs)),
             "review_status": "draft",
+            "created_at": _now_iso(),
+            "last_import_at": _now_iso(),
         }
         graph["relations"][key] = relation
     else:
+        relation.setdefault("created_at", _now_iso())
+        relation["last_import_at"] = _now_iso()
         if attributes:
             relation.setdefault("attributes", {}).update(attributes)
         relation["source_refs"] = list(dict.fromkeys([*(relation.get("source_refs") or []), *refs]))
@@ -754,7 +789,12 @@ def _resolve_import_template(template_id: str):
 @router.post("/import")
 async def import_graph(request: GraphImportRequest):
     """Import reviewed entities from an uploaded guideline into the JSON graph."""
-    template = _resolve_import_template(request.template_id)
+    # 图级导入时间取开始时刻：条目的 last_import_at >= 该值即「本次导入」。
+    import_started_at = _now_iso()
+    template_id = request.template_id
+    if not template_id and request.domain and normalize_domain(request.domain) == TCM:
+        template_id = get_profile(TCM).default_template_id
+    template = _resolve_import_template(template_id)
     requested_graph = str(request.graph_filename or "").strip()
     if not requested_graph and template is not None:
         requested_graph = resolve_template_graph_filename(template)
@@ -780,7 +820,28 @@ async def import_graph(request: GraphImportRequest):
     domain = normalize_domain(
         request.domain or graph.get("domain") or (template.domain if template else "")
     )
+    if not template_id and domain == TCM:
+        template = _resolve_import_template(get_profile(TCM).default_template_id)
     profile = get_profile(domain)
+    if template and normalize_domain(template.domain) != domain:
+        raise HTTPException(422, "图谱导入领域与抽取模板不一致")
+    if (KG_DIR / graph_filename).exists() and normalize_domain(graph.get("domain")) != domain:
+        raise HTTPException(422, "目标图谱与知识包的领域不一致")
+    tcm_diseases = tcm_disease_entries() if domain == TCM else {}
+    if domain == TCM:
+        disease_references = list(request.entities)
+        for relation in request.suggested_relations:
+            for side in ("source", "target"):
+                if (relation.get(f"{side}_entity_type") or relation.get(f"{side}_type")) == "disease":
+                    disease_references.append({
+                        "entity_type": "disease",
+                        "code": relation.get(f"{side}_code") or relation.get(f"{side}_concept_code"),
+                        "name": relation.get(f"{side}_name"),
+                    })
+        unknown = unregistered_tcm_diseases(disease_references, tcm_diseases)
+        if unknown:
+            raise HTTPException(422, "以下病名尚未登记到中医疾病词典，请审核登记并重新解析："
+                                + "、".join(unknown[:10]))
     graph["domain"] = domain
     if domain == TCM:
         graph["schema_version"] = max(2, int(graph.get("schema_version") or 1))
@@ -827,7 +888,7 @@ async def import_graph(request: GraphImportRequest):
             continue
         disease = {
             "code": code,
-            "name_cn": entity.get("name", code),
+            "name_cn": tcm_diseases[code].name if domain == TCM else entity.get("name", code),
             "name_en": "",
         }
         graph["diseases"].append(disease)
@@ -924,7 +985,8 @@ async def import_graph(request: GraphImportRequest):
             )
             entity_attrs = {**entity_attrs, "open_import": True}
         node = _upsert_semantic_node(
-            graph, node_type, code, entity.get("name", ""),
+            graph, node_type, code,
+            tcm_diseases[code].name if domain == TCM and node_type == "disease" else entity.get("name", ""),
             [entity.get("chunk_id", "")],
             attributes=entity_attrs,
         )
@@ -942,20 +1004,67 @@ async def import_graph(request: GraphImportRequest):
         relation_target_code = relation.get("target_code") or relation.get("target_concept_code") or ""
         if not relation_code or not source_type or not relation_target_code:
             continue
+        target_type = relation.get("target_entity_type") or relation.get("target_type") or ""
+        relation_attributes = relation.get("attributes") or {}
+        if relation_code == "DISEASE_MAPS_TO_WESTERN":
+            chunk = chunk_index.get(relation.get("chunk_id")) or {}
+            quote = relation.get("quote")
+            location = locate_single_page_quote(chunk, quote, relation.get("page"), relation.get("line_start"))
+            if source_type != "disease" or target_type != "western_disease" or location is None:
+                warnings.append("已跳过缺少可核对原文或端点不正确的中西医疾病对照")
+                continue
+            page, first, last = location
+            relation_attributes = {
+                **relation_attributes,
+                "source": {"chunk_id": chunk["chunk_id"], "page": page,
+                           "line_start": first, "line_end": last, "quote": quote},
+                "mapping_origin": "guideline_candidate",
+                "formal_mapping": False,
+            }
+            # A guideline can provide evidence for review, but it is not the
+            # authority that defines the cross-system disease master mapping.
+            relation_code = "GUIDELINE_SUGGESTS_DISEASE_MAPPING"
         source_id = _upsert_semantic_node(
             graph, source_type, relation.get("source_code", ""),
             source_refs=[relation.get("chunk_id", "")],
         )["id"]
         target_id = _upsert_semantic_node(
-            graph, relation.get("target_entity_type") or relation.get("target_type") or "",
+            graph, target_type,
             relation_target_code,
             source_refs=[relation.get("chunk_id", "")],
         )["id"]
         _upsert_semantic_relation(
             graph, source_id, relation_code, target_id, relation_names,
             [relation.get("chunk_id", "")],
-            attributes=relation.get("attributes") or {},
+            attributes=relation_attributes,
         )
+
+    if domain == TCM:
+        imported_tcm_codes = {
+            _entity_semantic_code(entity)
+            for entity in request.entities
+            if entity.get("entity_type") == "disease"
+        }
+        for mapping in DiseaseMappingRepository(DISEASE_MAPPING_PATH).active_for_tcm_codes(imported_tcm_codes):
+            source = _upsert_semantic_node(
+                graph, "disease", mapping["tcm_disease_code"], mapping.get("tcm_disease_name", "")
+            )
+            target = _upsert_semantic_node(
+                graph, "western_disease", mapping["western_disease_code"], mapping.get("western_disease_name", "")
+            )
+            formal = _upsert_semantic_relation(
+                graph, source["id"], "DISEASE_MAPS_TO_WESTERN", target["id"], relation_names,
+                attributes={
+                    "mapping_id": mapping["mapping_id"],
+                    "mapping_type": mapping["mapping_type"],
+                    "mapping_origin": "master_data",
+                    "formal_mapping": True,
+                    "scope": mapping.get("scope", ""),
+                    "source": mapping["source"],
+                    "source_version": mapping.get("source_version", ""),
+                },
+            )
+            formal["review_status"] = "active"
 
     entity_by_chunk: Dict[str, List[Dict[str, Any]]] = {}
     for entity in request.entities:
@@ -1003,6 +1112,16 @@ async def import_graph(request: GraphImportRequest):
                     "line_end": source.get("line_end"),
                     "quote": source.get("quote", ""),
                 })
+        from src.domains.tcm.basis_generation import generate_tcm_basis_candidates
+        from src.review.clinical_basis import stage_bases
+        graph_candidates = generate_tcm_basis_candidates(
+            graph, request.doc_id, graph_filename,
+        )
+        stage_bases(
+            graph,
+            [*request.candidate_rules, *graph_candidates],
+            graph_filename,
+        )
         _ensure_semantic_layer(graph, graph_filename)
         apply_import_review_metadata(
             graph, previous_hashes, request.doc_id,
@@ -1013,6 +1132,8 @@ async def import_graph(request: GraphImportRequest):
         same_name_merges = graph.pop("_same_name_merges", 0)
         if same_name_merges:
             warnings.append(f"同名实体自动合并 {same_name_merges} 处候选码")
+        graph["last_import_at"] = import_started_at
+        graph["last_import_doc"] = str(request.doc_id or "")
         _save_graph(graph, graph_filename)
         try:
             from src.review.service import sync_blocked_rules_for_graph
@@ -1031,6 +1152,7 @@ async def import_graph(request: GraphImportRequest):
             "nodes_added": max(0, len(graph["nodes"]) - initial_nodes),
             "relations_added": max(0, len(graph["relations"]) - initial_relations),
             "rule_semantics_added": 0,
+            "clinical_bases_added": len(graph_candidates),
             "graph_filename": graph_filename,
             "unknown_concepts": [],
             "warnings": sorted(set(warnings)),
@@ -1238,6 +1360,10 @@ async def import_graph(request: GraphImportRequest):
         warnings.append(f"同名实体自动合并 {same_name_merges} 处候选码")
     from src.review.clinical_basis import stage_bases
     stage_bases(graph, request.candidate_rules, graph_filename)
+    # 图级导入时间：审核台用它把 last_import_at 落在本次导入窗口内的
+    # 条目标成「本次导入」，与历史导入区分。
+    graph["last_import_at"] = import_started_at
+    graph["last_import_doc"] = str(request.doc_id or "")
     _save_graph(graph, graph_filename)
     try:
         from src.review.service import sync_blocked_rules_for_graph
@@ -1279,12 +1405,25 @@ async def import_graph(request: GraphImportRequest):
     }
 
 
+def is_cleared_graph(graph: Dict[str, Any], path: Path) -> bool:
+    if any(graph.get(key) for key in (
+        "nodes", "relations", "diseases", "syndromes", "evidences", "disease_evidence",
+        "sources", "standard_candidates", "clinical_bases",
+    )):
+        return False
+    return bool(graph.get("cleared")) or next(
+        path.parent.glob(f"{path.name}.bak-*-manual-clear"), None
+    ) is not None
+
+
 @router.get("/graphs")
 async def list_graphs(domain: Optional[str] = None):
     graphs = []
     for path in sorted(KG_DIR.glob("*.json")):
         try:
             item = json.loads(path.read_text(encoding="utf-8"))
+            if is_cleared_graph(item, path):
+                continue
             graph_domain = normalize_domain(item.get("domain"))
             if domain and normalize_domain(domain) != graph_domain:
                 continue
@@ -1438,6 +1577,7 @@ def clear_graph_and_rules(
             shutil.copy2(graph_path, backup_path)
             backups.append(backup_path.name)
         skeleton: Dict[str, Any] = {
+            "cleared": True,
             "domain": graph.get("domain") or "western",
             "schema_version": graph.get("schema_version", 1),
             "nodes": [],

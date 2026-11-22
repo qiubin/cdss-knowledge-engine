@@ -46,8 +46,8 @@ PATH_PANELS = (
     },
     {
         "title": "治法方药链路",
-        "description": "证候 → 治法 → 方剂 → 中药",
-        "spec": "syndrome->treatment_method->formula->herb",
+        "description": "证候 → 治法/推荐方剂 → 方剂组成中药",
+        "spec": "syndrome->treatment_method/formula->herb",
     },
     {
         "title": "病机证素链路",

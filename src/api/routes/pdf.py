@@ -41,6 +41,43 @@ def _append_import_log(entry: Dict[str, Any], path: Optional[Path] = None) -> No
     with target.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(payload, ensure_ascii=False, default=str) + "\n")
 
+
+def _load_import_log(path: Optional[Path] = None) -> List[Dict[str, Any]]:
+    """Read every import log entry, skipping corrupt lines (append-only file)."""
+    target = Path(path) if path is not None else IMPORT_LOG_PATH
+    if not target.exists():
+        return []
+    rows: List[Dict[str, Any]] = []
+    for line in target.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rows.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return rows
+
+
+def _write_import_log(rows: List[Dict[str, Any]], path: Optional[Path] = None) -> None:
+    target = Path(path) if path is not None else IMPORT_LOG_PATH
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with target.open("w", encoding="utf-8") as handle:
+        for row in rows:
+            handle.write(json.dumps(row, ensure_ascii=False, default=str) + "\n")
+
+
+def _remove_doc_files(doc_id: str) -> None:
+    """Drop a parsed document from the store and delete its uploaded files."""
+    if not re.fullmatch(r"DOC-[A-Za-z0-9-]+", doc_id or ""):
+        return
+    _doc_store.pop(doc_id, None)
+    for suffix in (_PARSED_SUFFIX, ".pdf"):
+        try:
+            (UPLOAD_DIR / f"{doc_id}{suffix}").unlink(missing_ok=True)
+        except OSError:
+            logger.warning("导入历史删除：无法移除文档文件 %s%s", doc_id, suffix)
+
 _doc_store: Dict[str, Dict[str, Any]] = {}
 _PARSED_SUFFIX = ".parsed.json"
 
@@ -489,20 +526,32 @@ async def upload_pdf(
 
 
 @router.get("/import-logs")
-async def get_import_logs(limit: int = 100):
-    """最近导入历史（含失败），每条记录一个文档的一次导入尝试。"""
-    if not IMPORT_LOG_PATH.exists():
-        return []
-    rows: List[Dict[str, Any]] = []
-    for line in IMPORT_LOG_PATH.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            rows.append(json.loads(line))
-        except json.JSONDecodeError:
-            continue
-    return rows[-max(1, int(limit)):][::-1]
+async def get_import_logs(page: int = 1, page_size: int = 10):
+    """导入历史（分页、倒序），每条记录一次导入尝试的事件留痕。"""
+    rows = _load_import_log()
+    total = len(rows)
+    page = max(1, int(page))
+    page_size = min(max(1, int(page_size)), 200)
+    start = (page - 1) * page_size
+    items = list(rows[start:start + page_size])
+    items.reverse()  # 最新在前
+    return {"items": items, "total": total, "page": page, "page_size": page_size}
+
+
+@router.delete("/import-logs/{job_id}")
+async def delete_import_log(job_id: str):
+    """删除一次导入尝试的全部日志留痕，并联动删除对应的已上传文档。"""
+    if not re.fullmatch(r"JOB-[A-Za-z0-9-]+", job_id or ""):
+        raise HTTPException(422, "导入任务标识无效")
+    rows = _load_import_log()
+    removed = [row for row in rows if row.get("job_id") == job_id]
+    if not removed:
+        raise HTTPException(404, "导入记录不存在")
+    _write_import_log([row for row in rows if row.get("job_id") != job_id])
+    doc_ids = sorted({row["doc_id"] for row in removed if row.get("doc_id")})
+    for doc_id in doc_ids:
+        _remove_doc_files(doc_id)
+    return {"removed_entries": len(removed), "deleted_doc_ids": doc_ids}
 
 
 @router.get("/{doc_id}/file")

@@ -16,7 +16,7 @@ from ..llm import LLMError, chat_json
 from .concept_mapping import CARDIAC_FINDINGS
 from ..models.rule import Rule
 from ..clinical_intent import normalize_clinical_intent
-from ..review.quality import normalized
+from ..review.quality import coverage_report, locate_single_page_quote, normalized
 from ..terminology.labels import default_labels
 from .terminology_resolver import (
     UNIVERSAL_TYPES,
@@ -94,6 +94,8 @@ def _auto_prompt(group: List[Dict[str, Any]], doc_title: str) -> List[Dict[str, 
         "treatment_plan, contraindication, monitoring_requirement, "
         "order_set, order_item, care_pathway, pathway_phase。"
         "每个实体必须有 name、entity_type、chunk_id、page、line_start、line_end、quote、confidence。"
+        "疾病实体的 quote 必须逐字引用对应片段，且包含病名或该病的原文别名。"
+        "不从文档标题字段推断疾病。"
         "实体 name 必须是完整临床术语（中文全称），缩写或标准码只写入 code 字段，"
         "不得用 CTN、MYO、SYM_FATIGUE 这类缩写代替完整名称。"
         "编码 code 只有在确定时填写；不确定时填 null，不得编造标准编码。"
@@ -219,7 +221,11 @@ def _auto_prompt(group: List[Dict[str, Any]], doc_title: str) -> List[Dict[str, 
 def _statement_prompt(group, doc_title):
     return [
         {"role": "system", "content": (
-            "阶段一：只抽取完整临床陈述，不生成编码、图谱或可执行规则。输出JSON对象{statements:[]}. "
+            "阶段一：抽取完整临床陈述和正文中的明确病名，不生成编码、图谱或可执行规则。"
+            "输出JSON对象，包含 statements 和 disease_mentions 两个数组。"
+            "disease_mentions 每项含 name 和 source（chunk_id/page_start/line_start/line_end/quote）。"
+            "即使没有临床陈述也要检查正文中的病名。中医病名与证候须区分，证候不列为疾病。"
+            "仅使用正文中的逐字病名及原句，不从文件名、文档标题字段或章节名推断。"
             "每条陈述字段：statement_id、disease_name、scene、population、subtype、phase、"
             "criteria（原文判断逻辑）、recommendation、exceptions（列表）、recommendation_strength、"
             "evidence_grade、missing_information（列表）、source（chunk_id/page_start/page_end/line_start/line_end/quote）。"
@@ -487,6 +493,7 @@ async def run_auto_pipeline(
     data_root: Optional[Path] = None,
     auto_import_disease: bool = False,
     controller: Any = None,
+    require_import_quality: bool = False,
 ) -> Dict[str, Any]:
     """Run the complete universal auto ingestion pipeline."""
     root = Path(data_root) if data_root else Path(__file__).resolve().parents[2] / "data"
@@ -515,6 +522,7 @@ async def run_auto_pipeline(
     completed_chunks = set()
     scheduled_chunks = {chunk["chunk_id"] for group in groups for chunk in group}
     statement_records = []
+    disease_mentions = []
 
     def merge_payload(payload: Dict[str, Any]) -> None:
         raw_entities.extend(payload.get("entities") or [])
@@ -525,8 +533,11 @@ async def run_auto_pipeline(
 
     async def call_group(chunk_group: List[Dict[str, Any]]) -> Dict[str, Any]:
         extracted = await call(settings, _statement_prompt(chunk_group, doc_title))
+        chunk_ids = {chunk["chunk_id"] for chunk in chunk_group}
         statements = extracted.get("statements")
         if not isinstance(statements, list):
+            if not isinstance(extracted.get("entities"), list):
+                raise LLMError("阶段一 JSON 缺少 statements 数组")
             # Retain older provider output as review-only candidates, never
             # silently certify it as a successfully structured statement.
             warnings.append(f"片段 {chunk_group[0]['chunk_id']} 未返回临床陈述结构，仅保留待审核候选")
@@ -534,9 +545,24 @@ async def run_auto_pipeline(
                 context = rule.setdefault("clinical_context", {})
                 context.setdefault("missing_information", []).append("临床陈述结构未生成，须重新核对人群、逻辑与建议")
             return extracted
+        def record_disease_mentions():
+            mentions = extracted.get("disease_mentions")
+            for item in [*(mentions if isinstance(mentions, list) else []), *statements]:
+                if not isinstance(item, dict):
+                    continue
+                source = item.get("source")
+                if not isinstance(source, dict) or source.get("chunk_id") not in chunk_ids:
+                    continue
+                disease_mentions.append({
+                    **source,
+                    "entity_type": "disease",
+                    "name": item.get("disease_name") or item.get("name"),
+                    "page": source.get("page_start"),
+                })
+
         if not statements:
-            return {"entities": [], "relations": [], "rules": [], "treatment_plans": []}
-        chunk_ids = {chunk["chunk_id"] for chunk in chunk_group}
+            record_disease_mentions()
+            return {}
         indexed = {}
         for index, statement in enumerate(statements):
             if not isinstance(statement, dict):
@@ -552,6 +578,8 @@ async def run_auto_pipeline(
         if controller is not None:
             await controller.checkpoint(stage="临床陈述编译为图谱与规则")
         compiled = await call(settings, messages)
+        if not isinstance(compiled.get("entities"), list):
+            raise LLMError("阶段二 JSON 缺少 entities 数组")
         for rule in compiled.get("rules") or []:
             statement = indexed.get(rule.get("clinical_statement_id"))
             if not statement:
@@ -576,6 +604,7 @@ async def run_auto_pipeline(
             if not normalized(rule["source"].get("quote")) or normalized(rule["source"].get("quote")) not in normalized(cited.get("text")):
                 rule["clinical_context"]["missing_information"] = [*(rule["clinical_context"].get("missing_information") or []), "临床陈述引文不匹配当前片段"]
         statement_records.extend(indexed.values())
+        record_disease_mentions()
         return compiled
 
     total_groups = len(groups)
@@ -618,8 +647,14 @@ async def run_auto_pipeline(
         merge_payload(payload)
         completed_chunks.update(chunk["chunk_id"] for chunk in group)
         succeeded += 1
+    coverage = coverage_report(chunks, completed_chunks, scheduled_chunks)
+    coverage_summary = (
+        f"片段共 {coverage['total']} 个，模型响应 {coverage['processed']} 个，"
+        f"失败 {coverage['failed']} 个，未安排 {coverage['not_scheduled']} 个"
+    )
     if not succeeded:
-        raise LLMError("大模型没有成功解析任何片段，请检查地址/API Key/模型配置")
+        detail = f"。{warnings[-1]}" if warnings else ""
+        raise LLMError(f"大模型没有成功解析任何片段。{coverage_summary}{detail}")
 
     if controller is not None:
         await controller.checkpoint(stage="术语映射与图谱整理")
@@ -627,30 +662,31 @@ async def run_auto_pipeline(
     chunk_map = {chunk["chunk_id"]: chunk for chunk in chunks}
     entities: List[Dict[str, Any]] = []
     seen = set()
-    for raw in raw_entities:
+    disease_names_by_chunk = set()
+    disease_candidate_count = 0
+    for index, raw in enumerate([*raw_entities, *disease_mentions]):
         if not isinstance(raw, dict):
             continue
+        entity_type = normalize_type(str(raw.get("entity_type") or ""))
+        if entity_type == "disease":
+            disease_candidate_count += 1
+        source = raw.get("source")
+        if isinstance(source, dict):
+            raw = {**source, **raw}
         chunk = chunk_map.get(str(raw.get("chunk_id") or ""))
         if chunk is None:
             warnings.append("实体引用了未知片段，已跳过该候选，不能用首段补造出处")
             continue
         if not chunk:
             continue
-        entity_type = normalize_type(str(raw.get("entity_type") or ""))
         if entity_type not in UNIVERSAL_TYPES:
             continue
         name = str(raw.get("name") or raw.get("term") or "").strip()
         if not name:
             continue
-        resolved = resolver.resolve(
-            entity_type,
-            name,
-            code=str(raw.get("code") or raw.get("standard_code") or ""),
-            aliases=list(raw.get("aliases") or []),
-            standard_system=str(raw.get("standard_system") or ""),
-            doc_id=doc_id,
-            attributes=dict(raw.get("attributes") or {}),
-        )
+        disease_key = (chunk["chunk_id"], normalized(name))
+        if index >= len(raw_entities) and disease_key in disease_names_by_chunk:
+            continue
         entity_quote = str(raw.get("quote") or "")
         if entity_type == "disease":
             # The quote must literally mention the disease (by name or any
@@ -661,7 +697,6 @@ async def run_auto_pipeline(
             mentions = [
                 name,
                 *[str(alias) for alias in (raw.get("aliases") or [])],
-                *[str(alias) for alias in resolved.get("aliases") or []],
             ]
             if not any(
                 len(str(mention).strip()) >= 2
@@ -672,6 +707,21 @@ async def run_auto_pipeline(
                     f"疾病候选「{name}」的引文未出现该病名或别名，已跳过，防止错绑：{entity_quote[:60]}"
                 )
                 continue
+            location = locate_single_page_quote(chunk, entity_quote, raw.get("page") or raw.get("page_start"),
+                                         raw.get("line_start"))
+            if location is None:
+                warnings.append(f"疾病候选「{name}」的引文无法定位到片段 {chunk['chunk_id']} 的唯一页行，已跳过")
+                continue
+            disease_names_by_chunk.add(disease_key)
+        resolved = resolver.resolve(
+            entity_type,
+            name,
+            code=str(raw.get("code") or raw.get("standard_code") or ""),
+            aliases=list(raw.get("aliases") or []),
+            standard_system=str(raw.get("standard_system") or ""),
+            doc_id=doc_id,
+            attributes=dict(raw.get("attributes") or {}),
+        )
         key = (entity_type, resolved["code"], chunk["chunk_id"])
         if key in seen:
             continue
@@ -679,6 +729,8 @@ async def run_auto_pipeline(
         page = _clamp(raw.get("page"), chunk.get("page_start", 1), chunk.get("page_end", 1), chunk.get("page_start", 1))
         line_start = _clamp(raw.get("line_start"), chunk.get("line_start", 1), chunk.get("line_end", 1), chunk.get("line_start", 1))
         line_end = _clamp(raw.get("line_end"), line_start, chunk.get("line_end", line_start), line_start)
+        if entity_type == "disease":
+            page, line_start, line_end = location
         try:
             entity_confidence = float(raw.get("confidence") or 0.7)
         except (TypeError, ValueError):
@@ -830,11 +882,20 @@ async def run_auto_pipeline(
 
     diseases = [entity for entity in entities if entity.get("entity_type") == "disease"]
     if not diseases:
-        raise LLMError("未抽取到有原文定位的疾病实体，不能用文档标题虚构疾病入口；请检查解析覆盖与模型输出")
+        detail = f"。最近的抽取告警：{warnings[-1]}" if warnings else ""
+        raise LLMError(f"未抽取到有原文定位的疾病实体。{coverage_summary}，"
+                       f"模型返回疾病候选 {disease_candidate_count} 个{detail}")
     target_code = max(
         diseases,
         key=lambda item: sum(1 for e in diseases if e.get("code") == item.get("code")),
     ).get("code", "")
+
+    if require_import_quality and not coverage["complete"]:
+        raise LLMError(
+            f"解析覆盖不完整，已停止自动入库：{coverage_summary}。请重试失败片段"
+        )
+    if require_import_quality and not relations:
+        raise LLMError("未生成任何实体关系，已停止自动入库；请检查领域选择、模板和抽取告警")
 
     # Import graph and rules.
     if controller is not None:
@@ -892,8 +953,6 @@ async def run_auto_pipeline(
         },
         "error": "",
     }
-    from src.review.quality import coverage_report
-    coverage = coverage_report(chunks, completed_chunks, scheduled_chunks)
     if not coverage["complete"]:
         warnings.append(f"解析覆盖不完整：共 {coverage['total']} 个片段，已处理 {coverage['processed']}，失败 {coverage['failed']}，未安排 {coverage['not_scheduled']}；请查看覆盖报告")
     metadata = {
@@ -908,6 +967,7 @@ async def run_auto_pipeline(
         "groups_succeeded": succeeded,
         "terms_total": len(resolver.resolved_terms),
         "local_terms": len([item for item in resolver.resolved_terms if item.get("standard_system") == "LOCAL"]),
+        "warnings": list(warnings),
         "created_at": created_at,
     }
     package = _package_record(

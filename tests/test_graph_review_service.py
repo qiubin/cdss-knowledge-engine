@@ -95,6 +95,58 @@ class ReviewServiceTest(unittest.TestCase):
             )
         self.assertEqual(ctx.exception.status_code, 422)
 
+    def test_tcm_membership_approval_also_approves_pending_endpoints(self):
+        filename = "REVIEW-TCM.json"
+        disease_id = "ENTITY:disease:TCM_TEST"
+        syndrome_id = "ENTITY:syndrome:SYNDROME_TEST"
+        other_syndrome_id = "ENTITY:syndrome:SYNDROME_OTHER"
+        code = "DISEASE_HAS_SYNDROME"
+        graph = {
+            "domain": "tcm",
+            "nodes": [
+                {"id": disease_id, "node_type": "disease", "name": "心衰", "review_status": "draft"},
+                {"id": syndrome_id, "node_type": "syndrome", "name": "气虚血瘀证", "review_status": "rejected"},
+                {"id": other_syndrome_id, "node_type": "syndrome", "name": "安全性证", "review_status": "draft"},
+            ],
+            "relations": [{
+                "source_node_id": disease_id, "relation_code": code,
+                "target_node_id": syndrome_id, "review_status": "draft",
+            }, {
+                "source_node_id": disease_id, "relation_code": code,
+                "target_node_id": other_syndrome_id, "review_status": "draft",
+            }],
+        }
+        path = self.graph_dir / filename
+        path.write_text(json.dumps(graph), encoding="utf-8")
+        with self.assertRaises(ReviewError):
+            self.service.review_relation(filename, disease_id, code, syndrome_id, "approve", "审核员")
+        saved = self.service._load_graph(filename)
+        self.assertEqual(saved["nodes"][disease_id]["review_status"], "draft")
+        self.assertEqual(saved["relations"][(disease_id, code, syndrome_id)]["review_status"], "draft")
+
+        graph["nodes"][1]["review_status"] = "stale"
+        path.write_text(json.dumps(graph), encoding="utf-8")
+        detail = self.service.relation_group_detail(filename, disease_id)
+        self.assertTrue(detail["sections"][0]["items"][0]["approves_endpoints"])
+        result = self.service.review_relation(filename, disease_id, code, syndrome_id, "approve", "审核员")
+        self.assertEqual(result["status"], "active")
+        saved = self.service._load_graph(filename)
+        for endpoint in (disease_id, syndrome_id):
+            self.assertEqual(saved["nodes"][endpoint]["review_status"], "active")
+            audit = self.service.audit_records(entity_id=endpoint)
+            self.assertEqual(audit[0]["trigger_relation_id"], f"{disease_id}|{code}|{syndrome_id}")
+
+        result = self.service.review_relation(
+            filename, disease_id, code, other_syndrome_id, "reject", "审核员",
+        )
+        self.assertEqual(result["status"], "rejected")
+        saved = self.service._load_graph(filename)
+        self.assertEqual(saved["nodes"][disease_id]["review_status"], "active")
+        self.assertEqual(saved["nodes"][syndrome_id]["review_status"], "active")
+        self.assertEqual(saved["nodes"][other_syndrome_id]["review_status"], "draft")
+        self.assertEqual(saved["relations"][(disease_id, code, syndrome_id)]["review_status"], "active")
+        self.assertEqual(saved["relations"][(disease_id, code, other_syndrome_id)]["review_status"], "rejected")
+
     def test_retiring_node_blocks_dependent_active_rule(self):
         result = self.service.review_node(
             "REVIEW-TEST.json", "ENTITY:symptom:SYM_TEST", "retire", "张医生", "指南更新"

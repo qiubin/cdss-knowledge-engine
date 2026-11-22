@@ -27,7 +27,7 @@ from src.vocab.cascade import (
     usage_in_graphs,
 )
 from src.vocab.entity_classification import classify_entries
-from src.vocab.entity_vocabulary import EntityVocabularyRepository, graph_usage
+from src.vocab.entity_vocabulary import EntityVocabularyRepository, dictionary_type, graph_usage
 from src.vocab.reference_vocabulary import (
     REFERENCE_CATALOGS,
     ReferenceBundleRepository,
@@ -52,8 +52,9 @@ def _template_references() -> Dict[str, List[Dict[str, str]]]:
         return references
     for template in json.loads(TEMPLATES_PATH.read_text(encoding="utf-8")):
         for type_def in template.get("entity_types", []):
-            if type_def.get("vocabulary"):
-                references.setdefault(str(type_def.get("entity_type")), []).append({
+            key = dictionary_type(str(type_def.get("entity_type")), template.get("domain", ""))
+            if type_def.get("vocabulary") or key == "tcm_disease":
+                references.setdefault(key, []).append({
                     "template_id": str(template.get("template_id", "")),
                     "name": str(template.get("name", "")),
                     "status": str(template.get("status", "active")),
@@ -77,8 +78,7 @@ def _validate_entry(entity_type: str, entry: TemplateEntityEntry) -> TemplateEnt
     """Normalize and enforce the shared disease dictionary contract.
 
     The shared disease dictionary is maintained only as ICD-10 western
-    diseases. TCM diseases stay as template-local entries, so they cannot be
-    created here or leak into every western guideline through shared merging.
+    diseases. TCM diseases use a separate dictionary.
     """
     if entity_type != "disease":
         return entry
@@ -88,7 +88,7 @@ def _validate_entry(entity_type: str, entry: TemplateEntityEntry) -> TemplateEnt
     if domain not in {"", "western"} or system.upper() not in {"", "ICD-10", "ICD-10-CM"}:
         raise HTTPException(
             422,
-            "共享疾病实体字典只能维护 ICD-10 西医疾病；中医病名请保留在中医模板本地条目中",
+            "西医疾病词典仅维护 ICD-10 西医疾病；请在「中医疾病」词典维护中医病名",
         )
     if not ICD10_CODE_PATTERN.fullmatch(entry.code):
         raise HTTPException(422, f"疾病编码必须是 ICD-10 编码: {entry.code}")
@@ -501,7 +501,8 @@ async def update_entity_entry(entity_type: str, code: str, entry: Dict):
     default_labels.cache_clear()
     if previous is not None and previous.name != saved.name:
         # 字典已保存新名，标签级联基于现名重生成
-        apply_name_cascade(entity_type, code, saved.name, rules_path=vocab_cascade.RULES_PATH)
+        apply_name_cascade("disease" if entity_type == "tcm_disease" else entity_type,
+                           code, saved.name, rules_path=vocab_cascade.RULES_PATH)
     return classify_entries(entity_type, [saved.model_dump()])[0]
 
 
@@ -510,10 +511,11 @@ async def delete_entity_entry(entity_type: str, code: str):
     repository = EntityVocabularyRepository(entity_type)
     if repository.find(code) is None:
         raise HTTPException(404, f"共享词表 {entity_type} 中不存在编码 {code}")
-    referencing = graph_usage(entity_type, code, kg_dir=entity_vocabulary.KG_DIR)
+    graph_type = "disease" if entity_type == "tcm_disease" else entity_type
+    referencing = graph_usage(graph_type, code, kg_dir=entity_vocabulary.KG_DIR)
     if referencing:
         raise HTTPException(409, f"共享实体 {code} 已被图谱 {'、'.join(referencing)} 引用，不能删除")
-    referenced_rules = affected_rule_ids(entity_type, code, _load_all_rules(vocab_cascade.RULES_PATH))
+    referenced_rules = affected_rule_ids(graph_type, code, _load_all_rules(vocab_cascade.RULES_PATH))
     if referenced_rules:
         raise HTTPException(
             409,

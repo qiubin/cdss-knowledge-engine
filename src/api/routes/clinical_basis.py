@@ -33,23 +33,68 @@ def load(filename):
     return filename, service._load_graph(filename)
 
 @router.get("")
-def list_bases(graph_filename: str):
+def list_bases(graph_filename: str, reviewable_only: bool = False):
     filename, graph = load(graph_filename)
-    return {"items": [{**basis, "validation": check_basis(service, filename, graph, basis)}
-                      for basis in graph.get("clinical_bases", [])]}
+    bases = graph.get("clinical_bases", [])
+    sync_results = batch_sync_results(service, filename, bases)
+    items = []
+    for basis, sync_result in zip(bases, sync_results):
+        validation = check_basis(service, filename, graph, basis, sync_result=sync_result)
+        if not reviewable_only or validation["dependencies_approved"]:
+            items.append({**basis, "validation": validation})
+    return {"items": items}
+
+
+def batch_sync_results(service, filename, bases):
+    """整批预计算图谱语义核对结果。
+
+    原先 check_basis 逐份执行 service._sync，每份都重新从磁盘加载整图并
+    重建语义核对器（含词表重读），143 份依据实测 ~10.6s（96% 耗在这里）。
+    check_rule_sync 按文件分组且按序返回结果，同一图谱内顺序一一对应。
+    批量失败时退回逐份（结果列表置 None，check_basis 走原路径）。
+    """
+    specs = [{**(basis.get("specification") or {}), "graph_filename": filename} for basis in bases]
+    try:
+        results = service._sync(specs)["rules"]
+    except Exception:
+        return [None] * len(bases)
+    return results if len(results) == len(bases) else [None] * len(bases)
 
 
 @router.get("/quality-report")
 def quality_report(graph_filename: str):
     filename, graph = load(graph_filename)
+    bases = graph.get("clinical_bases", [])
+    sync_results = batch_sync_results(service, filename, bases)
     items = []
-    for basis in graph.get("clinical_bases", []):
-        validation = check_basis(service, filename, graph, basis)
+    for i, basis in enumerate(bases):
+        validation = check_basis(service, filename, graph, basis, sync_result=sync_results[i])
         items.append({"basis_id": basis["basis_id"], "name": basis.get("name"),
                       "status": validation["status"], "issues": validation["issues"],
                       "source_status": validation["provenance"]["status"]})
     return {"total": len(items), "needs_review": sum(bool(item["issues"]) for item in items),
             "verified_sources": sum(item["source_status"] == "verified" for item in items), "items": items}
+
+
+@router.get("/batch-readiness")
+def batch_readiness(graph_filename: str):
+    """Show exactly which graph-derived bases can safely advance to review."""
+    filename, graph = load(graph_filename)
+    from src.engine.drools.compiler import describe_uncompilable
+    tcm_bases = [b for b in graph.get("clinical_bases", [])
+                 if (b.get("specification") or {}).get("domain") == "tcm"]
+    sync_results = batch_sync_results(service, filename, tcm_bases)
+    items = []
+    for basis, sync_result in zip(tcm_bases, sync_results):
+        spec = basis.get("specification") or {}
+        validation = check_basis(service, filename, graph, basis, sync_result=sync_result)
+        reason = describe_uncompilable(Rule(**spec).conditions)
+        items.append({"basis_id": basis["basis_id"], "rule_type": spec.get("rule_type"),
+                      "ready": not validation["issues"] and validation["status"] == "active",
+                      "issues": validation["issues"], "drools_compilable": reason is None,
+                      "drools_reason": reason or "", "generated_rule_id": basis.get("generated_rule_id")})
+    return {"total": len(items), "ready": sum(item["ready"] for item in items),
+            "items": items}
 
 
 def ai_report_path(filename, basis_id):
@@ -235,6 +280,16 @@ def prepare_existing(graph_filename: str):
     candidates.extend(rule for rule in service._rules_for_graph(service._load_rules(), filename)
                       if not str(rule.get("rule_id", "")).startswith("RULE-CB-")
                       and not any(str(tag).startswith("clinical-basis:") for tag in rule.get("tags", [])))
+    if str(graph.get("domain") or "").lower() == "tcm":
+        from src.domains.tcm.basis_generation import (
+            generate_tcm_basis_candidates, materialize_syndrome_formula_relations,
+        )
+        materialize_syndrome_formula_relations(graph)
+        candidates.extend(generate_tcm_basis_candidates(
+            graph,
+            str(graph.get("last_import_doc") or "TCM-GRAPH"),
+            filename,
+        ))
     # Prefer existing reviewed candidate specifications over duplicates.
     by_id = {item.get("rule_id"): item for item in candidates if item.get("rule_id")}
     stage_bases(graph, list(by_id.values()), filename)
@@ -269,6 +324,15 @@ def complete_basis_from_reviewed_graph(basis_id: str, graph_filename: str):
     basis = get_basis(graph, basis_id)
     if basis.get("generated_rule_id"):
         raise HTTPException(409, "该依据已生成规则，不能覆盖；请新增修订依据")
+    if basis.get("scenario_review"):
+        from src.review.condition_completion import unresolved_logic_questions
+
+        return {
+            "basis": {**basis, "validation": check_basis(service, filename, graph, basis)},
+            "changed": False,
+            "reason": "已带入本场景选定的判断条件，请核对指南原文和组合方式。",
+            "logic_questions": unresolved_logic_questions(basis["specification"].get("conditions")),
+        }
     if str(basis.get("specification", {}).get("rule_type") or "diagnosis") != "diagnosis":
         links = collect_reviewed_treatment_links(graph, basis["specification"])
         spec = copy.deepcopy(basis["specification"])

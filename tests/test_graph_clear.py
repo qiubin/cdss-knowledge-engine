@@ -2,16 +2,19 @@
 from __future__ import annotations
 
 import json
+import asyncio
 import shutil
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.api.routes.kg import GraphClearRequest, clear_graph_and_rules
+from src.api.routes import kg
 
 
 def _write_graph(path: Path, node_count: int = 2) -> None:
@@ -101,6 +104,27 @@ class ClearGraphAndRulesTest(unittest.TestCase):
         self.assertEqual(len(snapshots), 2)
         # Graph untouched when clear_graph=False.
         self.assertEqual(len(json.loads((self.kg_dir / "test_graph.json").read_text())["nodes"]), 2)
+
+    def test_graph_list_hides_cleared_graphs_and_shows_reimported_graphs(self):
+        filename = "test_graph.json"
+        graph_path = self.kg_dir / filename
+        legacy_path = self.kg_dir / "legacy.json"
+        legacy_path.write_text('{"nodes": [], "relations": []}', encoding="utf-8")
+        (self.kg_dir / "legacy.json.bak-20261121-manual-clear").touch()
+        empty_path = self.kg_dir / "new.json"
+        empty_path.write_text('{"nodes": [], "relations": []}', encoding="utf-8")
+        with patch.object(kg, "KG_DIR", self.kg_dir):
+            listed = lambda: {item["graph_filename"] for item in asyncio.run(kg.list_graphs())}
+            self.assertEqual(listed(), {filename, empty_path.name})
+            clear_graph_and_rules(
+                self._request(dry_run=False, clear_rules=False), kg_dir=self.kg_dir,
+                rules_path=self.rules_path, snapshot_dir=self.snapshot_dir,
+            )
+            self.assertEqual(listed(), {empty_path.name})
+            graph = json.loads(graph_path.read_text(encoding="utf-8"))
+            graph["nodes"] = [{"id": "NEW", "node_type": "disease"}]
+            graph_path.write_text(json.dumps(graph), encoding="utf-8")
+            self.assertEqual(listed(), {filename, empty_path.name})
 
     def test_preview_respects_selected_scope(self):
         for clear_graph, clear_rules in ((True, False), (False, True)):

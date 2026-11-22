@@ -31,6 +31,8 @@ class Conclusion(BaseModel):
     anchor_name: Optional[str] = None
     disease_code: str
     disease_name: str = ""
+    suspected_disease_code: Optional[str] = None
+    suspected_disease_name: Optional[str] = None
     # Treatment extension
     conclusion_type: Optional[str] = None      # treatment / monitoring / prescription / contraindication
     treatment_plan_id: Optional[str] = None    # e.g. TP-STEMI-PRIMARY-PCI

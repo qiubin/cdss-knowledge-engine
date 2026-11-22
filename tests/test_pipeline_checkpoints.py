@@ -218,7 +218,8 @@ class AutoPipelineCheckpointTest(unittest.IsolatedAsyncioTestCase):
         controller.checkpoint = spy_checkpoint  # type: ignore[assignment]
 
         result = await run_auto_pipeline(
-            _chunks(2), "DOC-AP", "自动管线指南",
+            [{**chunk, "text": "肺腺癌患者可表现为咳嗽"} for chunk in _chunks(2)],
+            "DOC-AP", "自动管线指南",
             {"llm": {"max_chunks": 80, "max_chunk_chars": 10}},
             llm_call=_fake_auto_llm,
             data_root=root,

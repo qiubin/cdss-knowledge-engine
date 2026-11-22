@@ -12,6 +12,9 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
+
+from fastapi import HTTPException
 
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -19,17 +22,21 @@ sys.path.insert(0, str(project_root))
 from src.api.routes import guide_packages, kg as kg_routes
 from src.api.routes.vocab import _validate_entry
 from src.domains import get_profile, normalize_domain
+from src.domains.tcm.basis_generation import (
+    generate_tcm_basis_candidates, materialize_syndrome_formula_relations,
+)
+from src.domains.tcm.checks import TcmGraphSemanticChecker
 from src.engine import InferenceEngine
 from src.extraction.models import TemplateEntityEntry
 from src.extraction.repository import ExtractionTemplateRepository
-from src.extraction.service import extract_local
+from src.extraction.service import _validate_llm_payload, complete_tcm_formula_relations, extract_local
 from src.kg.client import JsonGraphClient
 from src.kg.schema import ConceptVocabulary
 from src.models.patient import PatientSnapshot
 from src.models.rule import Rule
 from src.rules.repository import JsonRuleRepository
 from src.standards.repository import JsonStandardRepository
-from src.vocab.entity_vocabulary import resolve_template
+from src.vocab.entity_vocabulary import EntityVocabularyRepository, resolve_template
 
 
 def make_chunk(chunk_id: str, text: str, page: int = 1) -> dict:
@@ -87,10 +94,114 @@ class DiseaseDictionaryTest(unittest.TestCase):
         self.assertIn("C83.3", codes)
         self.assertNotIn("TCM_DIS_XIONG_BI_XIN_TONG", codes)
 
-    def test_tcm_template_uses_local_tcm_diseases_without_icd10_leakage(self):
+    def test_tcm_template_uses_shared_tcm_diseases_without_icd10_leakage(self):
         codes = self._disease_codes("TCM_GUIDELINE_V2")
         self.assertIn("TCM_DIS_XIONG_BI_XIN_TONG", codes)
+        self.assertIn("TCM_DIS_XIN_SHUAI", self._disease_codes("TCM_GUIDELINE_V3"))
         self.assertNotIn("I21.0", codes)
+
+    def test_tcm_dictionary_rejects_icd10_and_keeps_stable_codes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = EntityVocabularyRepository("tcm_disease", Path(directory))
+            with self.assertRaises(HTTPException):
+                repo.save(TemplateEntityEntry(code="I50.9", name="心力衰竭"), is_new=True)
+            entry = repo.save(TemplateEntityEntry(code="TCM_DIS_TEST", name="测试病名"), is_new=True)
+            self.assertEqual(entry.domain, "tcm")
+            self.assertEqual(repo.find("TCM_DIS_TEST").name, "测试病名")
+
+    def test_tcm_graph_rejects_icd10_in_entities_and_relation_endpoints(self):
+        entity = {"entity_type": "disease", "code": "I50.9", "name": "心力衰竭"}
+        relation = {"source_type": "disease", "source_code": "I50.9",
+                    "relation_code": "DISEASE_MAPS_TO_WESTERN",
+                    "target_type": "western_disease", "target_code": "I50.9"}
+        with tempfile.TemporaryDirectory() as directory, patch.object(kg_routes, "KG_DIR", Path(directory)):
+            for entities, relations in [([entity], []), ([], [relation])]:
+                request = kg_routes.GraphImportRequest(
+                    doc_id="DOC-TCM-T", doc_title="测试指南", domain="tcm",
+                    graph_filename="tcm_test.json", entities=entities, chunks=[],
+                    suggested_relations=relations,
+                )
+                with self.assertRaisesRegex(HTTPException, "尚未登记到中医疾病词典"):
+                    asyncio.run(kg_routes.import_graph(request))
+            self.assertFalse((Path(directory) / "tcm_test.json").exists())
+
+    def test_local_tcm_extraction_maps_heart_failure_aliases_to_dictionary(self):
+        template = ExtractionTemplateRepository().get("TCM_GUIDELINE_V3")
+        chunk = make_chunk("c1", "慢性心力衰竭\n慢性心衰归属于中医学“心衰”的范畴。")
+        result = extract_local([chunk], template, "DOC-TCM-T", "测试指南")
+        diseases = [item for item in result.entities if item["entity_type"] == "disease"]
+        # 指南里的“慢性心力衰竭”经字典别名归一到标准病名心衰（GB/T 16751.1），
+        # 证据锚定在该 chunk 中最早出现的别名上，同一 chunk 只留一条记录。
+        self.assertEqual([item["code"] for item in diseases], ["TCM_DIS_XIN_SHUAI"])
+        self.assertEqual(diseases[0]["name"], "心衰")
+        self.assertEqual(diseases[0]["line_start"], 1)
+        self.assertIn("慢性心力衰竭", diseases[0]["quote"])
+
+    def test_llm_tcm_disease_alias_maps_to_dictionary_code(self):
+        template = resolve_template(ExtractionTemplateRepository().get("TCM_GUIDELINE_V3"))
+        chunk = make_chunk("c1", "慢性心力衰竭患者中医辨证常属气虚血瘀证。")
+        payload = {"entities": [
+            {"entity_type": "disease", "name": "慢性心力衰竭", "code": "",
+             "quote": "慢性心力衰竭", "chunk_id": "c1"},
+        ]}
+        entities, _, _, warnings, *_ = _validate_llm_payload(
+            payload, [chunk], template, "DOC-TCM-T", "测试指南",
+        )
+        # 模型返回指南原文写法而非标准病名时，按字典别名唯一命中归一编码。
+        self.assertEqual([item["code"] for item in entities], ["TCM_DIS_XIN_SHUAI"])
+        self.assertEqual(entities[0]["name"], "心衰")
+        self.assertNotIn("慢性心力衰竭", {item["name"] for item in entities})
+
+    def test_llm_tcm_diseases_keep_dictionary_codes_and_require_located_quotes(self):
+        template = resolve_template(ExtractionTemplateRepository().get("TCM_GUIDELINE_V3"))
+        chunk = make_chunk("c1", "慢性心衰归属于中医学“心衰”的范畴。另载某试验病。")
+        candidates = [
+            {"entity_type": "disease", "name": "心衰", "code": "I50.9", "quote": "“心衰”"},
+            {"entity_type": "disease", "name": "某试验病", "code": "D999", "quote": "某试验病"},
+            {"entity_type": "disease", "name": "标题病名", "quote": "标题病名"},
+            {"entity_type": "western_disease", "name": "心力衰竭", "code": "I50.9", "quote": "慢性心衰"},
+        ]
+        payload = {"entities": [{**item, "chunk_id": "c1"} for item in candidates]}
+        entities, _, _, warnings, *_ = _validate_llm_payload(
+            payload, [chunk], template, "DOC-TCM-T", "标题病名",
+        )
+        by_name = {item["name"]: item for item in entities}
+        self.assertEqual(by_name["心衰"]["code"], "TCM_DIS_XIN_SHUAI")
+        self.assertEqual(by_name["某试验病"]["candidate_status"], "pending")
+        self.assertEqual(by_name["心力衰竭"]["code"], "I50.9")
+        self.assertNotIn("标题病名", by_name)
+        self.assertTrue(any("标题病名" in warning for warning in warnings))
+
+    def test_tcm_graph_requires_literal_quote_for_cross_diagnosis_mapping(self):
+        text = "慢性心衰归属于中医学“心衰”的范畴。"
+        chunk = make_chunk("c1", text)
+        entities = [
+            {"entity_type": "disease", "code": "TCM_DIS_XIN_SHUAI", "name": "心衰", "chunk_id": "c1"},
+            {"entity_type": "western_disease", "code": "WESTERN-TEST", "name": "慢性心衰", "chunk_id": "c1"},
+        ]
+        relation = {"source_type": "disease", "source_code": "TCM_DIS_XIN_SHUAI",
+                    "relation_code": "DISEASE_MAPS_TO_WESTERN",
+                    "target_type": "western_disease", "target_code": "WESTERN-TEST", "chunk_id": "c1"}
+        with tempfile.TemporaryDirectory() as directory, patch.object(kg_routes, "KG_DIR", Path(directory)):
+            for index, quote in enumerate(("", text)):
+                filename = f"tcm_mapping_test_{index}.json"
+                request = kg_routes.GraphImportRequest(
+                    doc_id="DOC-TCM-T", doc_title="测试指南", domain="tcm",
+                    graph_filename=filename, entities=entities, chunks=[chunk],
+                    suggested_relations=[{**relation, "quote": quote}],
+                )
+                asyncio.run(kg_routes.import_graph(request))
+                graph = json.loads((Path(directory) / filename).read_text(encoding="utf-8"))
+                # 导入时 DISEASE_MAPS_TO_WESTERN 一律降级为评审候选
+                # GUIDELINE_SUGGESTS_DISEASE_MAPPING；无逐字引文时整条丢弃。
+                mappings = [
+                    item for item in graph["relations"]
+                    if item["relation_code"] == "GUIDELINE_SUGGESTS_DISEASE_MAPPING"
+                ]
+                self.assertEqual(len(mappings), int(bool(quote)))
+                if mappings:
+                    source = mappings[0]["attributes"]["source"]
+                    self.assertEqual((source["page"], source["line_start"], source["quote"]), (1, 1, text))
 
     def test_disease_entries_are_icd10_only(self):
         western = _validate_entry("disease", TemplateEntityEntry(
@@ -120,6 +231,67 @@ class TcmTemplateTest(unittest.TestCase):
         self.assertEqual(template.graph_filename, "")
         self.assertIn("tcm_pattern", template.capabilities)
         self.assertIn("FORMULA_CONTAINS_HERB", {item.relation_code for item in template.relations})
+        self.assertIn("SYNDROME_RECOMMENDS_FORMULA", {item.relation_code for item in template.relations})
+
+    def test_formula_chain_is_materialized_for_direct_query(self):
+        template = tcm_template()
+        entities = [
+            {"entity_type": "syndrome", "code": "S1", "chunk_id": "c1"},
+            {"entity_type": "treatment_method", "code": "M1", "chunk_id": "c1"},
+            {"entity_type": "formula", "code": "F1", "chunk_id": "c1", "quote": "治以益气养阴，方用生脉散"},
+        ]
+        relations = [
+            {"relation_code": "SYNDROME_TREATED_BY_METHOD", "source_code": "S1", "target_code": "M1", "chunk_id": "c1"},
+            {"relation_code": "METHOD_HAS_FORMULA", "source_code": "M1", "target_code": "F1", "chunk_id": "c1", "quote": "方用生脉散", "confidence": 0.8},
+        ]
+        completed = complete_tcm_formula_relations(entities, relations, template)
+        direct = [item for item in completed if item["relation_code"] == "SYNDROME_RECOMMENDS_FORMULA"]
+        self.assertEqual([(item["source_code"], item["target_code"]) for item in direct], [("S1", "F1")])
+
+    def test_graph_chain_generates_reviewable_pattern_treatment_and_prescription_bases(self):
+        def node(kind, code, name):
+            return {"id": f"ENTITY:{kind}:{code}", "node_type": kind, "code": code,
+                    "name": name, "review_status": "active", "attributes": {}}
+        nodes = [
+            node("syndrome", "S1", "气阴两虚证"), node("symptom", "Y1", "气短"),
+            node("treatment_method", "M1", "益气养阴"), node("formula", "F1", "生脉散"),
+            node("herb", "H1", "人参"),
+        ]
+        relations = []
+        for source, code, target in [
+            ("ENTITY:syndrome:S1", "SYNDROME_HAS_SYMPTOM", "ENTITY:symptom:Y1"),
+            ("ENTITY:syndrome:S1", "SYNDROME_TREATED_BY_METHOD", "ENTITY:treatment_method:M1"),
+            ("ENTITY:syndrome:S1", "SYNDROME_RECOMMENDS_FORMULA", "ENTITY:formula:F1"),
+            ("ENTITY:treatment_method:M1", "METHOD_HAS_FORMULA", "ENTITY:formula:F1"),
+            ("ENTITY:formula:F1", "FORMULA_CONTAINS_HERB", "ENTITY:herb:H1"),
+        ]:
+            relations.append({"source_node_id": source, "relation_code": code,
+                              "target_node_id": target, "source_refs": ["c1"],
+                              "review_status": "active"})
+        graph = {"nodes": nodes, "relations": relations, "sources": [{
+            "chunk_id": "c1", "doc_id": "D1", "doc_title": "指南", "page_start": 1,
+            "page_end": 1, "line_start": 1, "line_end": 2, "quote": "气阴两虚，治以益气养阴，方用生脉散。",
+        }]}
+        candidates = generate_tcm_basis_candidates(graph, "D1", "tcm.json")
+        self.assertEqual({item["rule_type"] for item in candidates},
+                         {"tcm_pattern", "tcm_treatment", "tcm_prescription"})
+        prescription = next(item for item in candidates if item["rule_type"] == "tcm_prescription")
+        self.assertEqual(prescription["conclusion"]["herbs"][0]["name"], "人参")
+        checked = TcmGraphSemanticChecker(graph).check_rule(prescription)
+        self.assertEqual(checked["semantic_status"], "consistent")
+        self.assertEqual(checked["dependency_status"], "passed")
+
+    def test_existing_method_formula_chain_backfills_reviewable_direct_edge(self):
+        graph = {"relations": [
+            {"source_node_id": "ENTITY:syndrome:S1", "relation_code": "SYNDROME_TREATED_BY_METHOD",
+             "target_node_id": "ENTITY:treatment_method:M1", "source_refs": ["c1"]},
+            {"source_node_id": "ENTITY:treatment_method:M1", "relation_code": "METHOD_HAS_FORMULA",
+             "target_node_id": "ENTITY:formula:F1", "source_refs": ["c1"]},
+        ]}
+        self.assertEqual(materialize_syndrome_formula_relations(graph), 1)
+        direct = graph["relations"][-1]
+        self.assertEqual(direct["relation_code"], "SYNDROME_RECOMMENDS_FORMULA")
+        self.assertEqual(direct["review_status"], "draft")
 
     def test_v2_is_the_only_active_tcm_template(self):
         templates = [item for item in ExtractionTemplateRepository().list_available() if item.domain == "tcm"]

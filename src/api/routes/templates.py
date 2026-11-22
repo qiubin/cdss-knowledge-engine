@@ -29,6 +29,7 @@ from ...llm import (
 )
 from ...vocab.entity_vocabulary import (
     EntityVocabularyRepository,
+    dictionary_type,
     graph_usage,
     resolve_template,
     template_private_entries,
@@ -144,9 +145,9 @@ def _validate_and_save(template: ExtractionTemplate) -> Dict[str, Any]:
     return _save_default(template)
 
 
-def _entity_vocabulary_for(owner):
+def _entity_vocabulary_for(owner, domain):
     """Shared dictionary handle for a vocabulary-backed entity type."""
-    return EntityVocabularyRepository(owner.entity_type)
+    return EntityVocabularyRepository(dictionary_type(owner.entity_type, domain))
 
 
 def public_config() -> Dict[str, Any]:
@@ -251,7 +252,7 @@ async def get_template_structure(template_id: str):
     payload = template.model_dump()
     entity_types = []
     for raw_type, resolved_type in zip(raw.entity_types, template.entity_types):
-        private_entries = template_private_entries(raw_type)
+        private_entries = template_private_entries(raw_type, template_domain=raw.domain)
         private_codes = {entry.code for entry in private_entries}
         item = resolved_type.model_dump()
         item["private_entries"] = [entry.model_dump() for entry in private_entries]
@@ -328,10 +329,10 @@ async def create_template_entity(template_id: str, payload: ItemPayload):
         item = TemplateEntityEntry(**{key: value for key, value in payload.item.items() if key != "entity_type"})
     except ValidationError as error:
         raise HTTPException(422, error.errors())
-    if owner.vocabulary:
+    if owner.vocabulary or dictionary_type(owner.entity_type, template.domain) == "tcm_disease":
         # Vocabulary-backed types manage their entities in the shared
         # dictionary so every referencing template benefits at once.
-        vocabulary = _entity_vocabulary_for(owner)
+        vocabulary = _entity_vocabulary_for(owner, template.domain)
         if vocabulary.find(item.code):
             raise HTTPException(409, f"共享词表 {owner.entity_type} 中编码 {item.code} 已存在")
         _check_concept_entry(owner, item.code)
@@ -353,8 +354,8 @@ async def update_template_entity(template_id: str, entity_type: str, code: str, 
         raise HTTPException(422, error.errors())
     if item.code != code:
         raise HTTPException(400, "实体编码不允许修改；请新建实体")
-    if owner is not None and owner.vocabulary:
-        vocabulary = _entity_vocabulary_for(owner)
+    if owner is not None and (owner.vocabulary or dictionary_type(owner.entity_type, template.domain) == "tcm_disease"):
+        vocabulary = _entity_vocabulary_for(owner, template.domain)
         if vocabulary.find(item.code) is not None:
             _check_concept_entry(owner, item.code)
             vocabulary.save(item)
@@ -375,8 +376,8 @@ async def delete_template_entity(template_id: str, entity_type: str, code: str):
         if item.source_entity_type == entity_type or item.target_entity_type == entity_type
     ):
         raise HTTPException(409, "该实体仍被关系引用，不能删除")
-    if owner is not None and owner.vocabulary:
-        vocabulary = _entity_vocabulary_for(owner)
+    if owner is not None and (owner.vocabulary or dictionary_type(owner.entity_type, template.domain) == "tcm_disease"):
+        vocabulary = _entity_vocabulary_for(owner, template.domain)
         if vocabulary.find(code) is not None:
             referencing = graph_usage(owner.entity_type, code)
             if referencing:

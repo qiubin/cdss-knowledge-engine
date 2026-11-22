@@ -6,7 +6,7 @@ def condition_structure_issues(rule):
         if not isinstance(node, dict) or not node.get("type"):
             issues.append("条件结构缺失或无效")
             return
-        if node["type"] not in {"group", "weighted_group"}:
+        if node["type"] not in {"group", "count_group", "weighted_group"}:
             return
         children = node.get("children")
         implicit = (root and rule.get("rule_type") == "treatment" and node["type"] == "group"
@@ -21,6 +21,10 @@ def condition_structure_issues(rule):
                 issues.append("还差一步：请选择这些条件是全部满足还是任意一项")
             if node.get("operator") == "NOT" and len(children) != 1:
                 issues.append("非条件组必须且只能包含一个子条件")
+        elif node["type"] == "count_group":
+            minimum = node.get("min_count")
+            if type(minimum) is not int or not 1 <= minimum <= len(children):
+                issues.append("至少满足的数量须介于 1 与子条件数之间")
         elif node.get("threshold") is None:
             issues.append("加权条件组缺少评分阈值")
         for child in children:

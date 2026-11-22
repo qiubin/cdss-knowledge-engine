@@ -5,7 +5,7 @@ import json
 from collections import Counter
 from typing import Any, Dict, List, Optional
 
-from src.api.routes.kg import normalize_graph_filename
+from src.api.routes.kg import is_cleared_graph, normalize_graph_filename
 from src.api.routes.rules import _load_all_rules, check_rule_sync
 from src.domains import normalize_domain
 from src.review.service import ReviewService
@@ -59,11 +59,16 @@ def build_queue(
     want_packages = not clinical_intent and item_type in (None, "", "package")
 
     items: List[Dict[str, Any]] = []
+    cleared_graphs = set()
     for filename in graph_files:
         graph = service._load_graph(filename)
+        if is_cleared_graph(graph, service.graph_dir / filename):
+            cleared_graphs.add(filename)
+            continue
         graph_domain = normalize_domain(graph.get("domain") or "western")
         if target_domain and graph_domain != target_domain:
             continue
+        graph_last_import = str(graph.get("last_import_at") or "")
         if want_graph:
             wanted = (
                 "node" if item_type == "graph_node"
@@ -79,9 +84,12 @@ def build_queue(
                     "item_type": "graph_node" if item["item_type"] == "node" else "graph_relation",
                     "graph_filename": filename,
                     "domain": graph_domain,
+                    # 条目 last_import_at 等于图级时间即「本次导入」生成/更新。
+                    "graph_last_import_at": graph_last_import,
                 })
 
     rules = service._load_rules()
+    rules = [rule for rule in rules if rule.get("graph_filename") not in cleared_graphs]
     if want_rules and rules:
         sync = check_rule_sync(rules, graph_loader=service._load_graph)
         by_id = {item["rule_id"]: item for item in sync["rules"]}

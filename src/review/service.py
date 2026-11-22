@@ -21,7 +21,7 @@ from src.api.routes.rules import (
     _save_all_rules,
     check_rule_sync,
 )
-from src.vocab.entity_vocabulary import EntityVocabularyRepository
+from src.vocab.entity_vocabulary import EntityVocabularyRepository, dictionary_type
 from .audit import AUDIT_PATH, append_audit, load_audit
 from .errors import ReviewError
 from .metadata import node_content_hash, relation_content_hash
@@ -47,6 +47,20 @@ def _relation_key(relation: Dict[str, Any]) -> Tuple[str, str, str]:
 
 # 按病分组视图中，目标端为这些类型时展开其出边作为嵌套小节（仅一层）。
 CONTAINER_NODE_TYPES: Tuple[str, ...] = ("treatment_plan", "care_pathway", "order_set", "lab", "exam")
+SYNDROME_MEMBERSHIP_ROLES = {
+    "DISEASE_HAS_MAIN_SYNDROME": "主证",
+    "DISEASE_HAS_SECONDARY_SYNDROME": "次证",
+    "DISEASE_HAS_SYNDROME": "证候",
+}
+
+
+def _approves_endpoints(graph: Dict[str, Any], key: Tuple[str, str, str]) -> bool:
+    return (
+        graph.get("domain") == "tcm"
+        and key[1] in SYNDROME_MEMBERSHIP_ROLES
+        and (graph["nodes"].get(key[0]) or {}).get("node_type") == "disease"
+        and (graph["nodes"].get(key[2]) or {}).get("node_type") == "syndrome"
+    )
 
 
 def _relation_id(key: Tuple[str, str, str]) -> str:
@@ -129,6 +143,8 @@ class ReviewService:
         rules = self._rules_for_graph(self._load_rules(), filename)
         return {
             "graph_filename": filename,
+            "last_import_at": str(graph.get("last_import_at") or ""),
+            "last_import_doc": str(graph.get("last_import_doc") or ""),
             "nodes": dict(Counter(_status(item) for item in graph["nodes"].values())),
             "relations": dict(Counter(_status(item) for item in graph["relations"].values())),
             "rules": dict(Counter(str(item.get("status") or "draft") for item in rules)),
@@ -186,9 +202,12 @@ class ReviewService:
             "target_code": str(target_node.get("code") or target_node.get("concept_code") or ""),
             "target_status": _status(target_node) if target_node else "missing",
             "target_node_type": str(target_node.get("node_type") or ""),
+            "approves_endpoints": _approves_endpoints(graph, key),
             "source_refs": list(relation.get("source_refs") or []),
             "dependent_rule_count": int(relation_counts.get(_relation_id(key), 0)),
             "updated_at": str(relation.get("reviewed_at") or ""),
+            "created_at": str(relation.get("created_at") or ""),
+            "last_import_at": str(relation.get("last_import_at") or ""),
             "orphaned_from": list(relation.get("orphaned_from") or []),
             "orphaned": bool(relation.get("orphaned_from")),
             "flags": relation_flags(relation, source_node, target_node, endpoint_type_map, duplicate_pairs),
@@ -228,6 +247,8 @@ class ReviewService:
                     "source_refs": list(node.get("source_refs") or []),
                     "dependent_rule_count": int(node_counts.get(node_id, 0)),
                     "updated_at": str(node.get("reviewed_at") or ""),
+                    "created_at": str(node.get("created_at") or ""),
+                    "last_import_at": str(node.get("last_import_at") or ""),
                     "orphaned_from": list(node.get("orphaned_from") or []),
                     "orphaned": bool(node.get("orphaned_from")),
                 })
@@ -307,6 +328,10 @@ class ReviewService:
             if flags:
                 entry["suspect"] += 1
         subjects = []
+        if allowed is not None:
+            for node_id, node in graph["nodes"].items():
+                if node.get("node_type") in allowed:
+                    stats.setdefault(node_id, Counter())
         for node_id, entry in stats.items():
             node = graph["nodes"][node_id]
             subjects.append({
@@ -319,9 +344,83 @@ class ReviewService:
                 "out_relation_count": int(entry["total"]),
                 "pending_count": int(entry["pending"]),
                 "suspect_count": int(entry["suspect"]),
+                "created_at": str(node.get("created_at") or ""),
+                "last_import_at": str(node.get("last_import_at") or ""),
             })
         subjects.sort(key=lambda item: (-item["pending_count"], item["name"]))
-        return {"graph_filename": filename, "subjects": subjects}
+        # 疾病→证候归属分组：审核工作台以疾病为锚点展开业务链路。
+        # 证候通过 DISEASE_HAS_(MAIN_|SECONDARY_)SYNDROME 关系归属疾病；
+        # 没有任何疾病连接的证候进入 orphan_syndromes，保证仍有审核入口。
+        subject_index = {item["node_id"]: item for item in subjects}
+        role_by_code = SYNDROME_MEMBERSHIP_ROLES
+        # 同一证候与同一疾病之间可能同时存在 证候/主证/次证 三种关系，
+        # 归属时按 node_id 去重，角色取信息量最高的（主证 > 次证 > 证候）。
+        # 已拒绝/失效的归属关系不参与分组；待审归属照常分组但携带状态，
+        # 前端标注「归属待审」，不与已确认归属混淆。
+        role_rank = {"DISEASE_HAS_MAIN_SYNDROME": 0, "DISEASE_HAS_SECONDARY_SYNDROME": 1, "DISEASE_HAS_SYNDROME": 2}
+        memberships: Dict[str, Dict[str, Dict[str, Any]]] = {}
+        for key, relation in graph["relations"].items():
+            source = graph["nodes"].get(key[0])
+            target = graph["nodes"].get(key[2])
+            if not source or not target:
+                continue
+            if (
+                str(source.get("node_type") or "") == "disease"
+                and str(target.get("node_type") or "") == "syndrome"
+                and key[1] in role_by_code
+            ):
+                rel_status = _status(relation)
+                if rel_status in ("rejected", "retired"):
+                    continue
+                bucket = memberships.setdefault(key[0], {})
+                existing = bucket.get(key[2])
+                if existing is None or role_rank[key[1]] < role_rank[existing["_code"]]:
+                    bucket[key[2]] = {
+                        "node_id": key[2],
+                        "role": role_by_code[key[1]],
+                        "_code": key[1],
+                        "_status": rel_status,
+                    }
+        disease_groups = []
+        claimed = set()
+        for subject in subjects:
+            if subject["node_type"] != "disease":
+                continue
+            members = []
+            for member in memberships.get(subject["node_id"], {}).values():
+                entry = subject_index.get(member["node_id"])
+                if entry:
+                    members.append({
+                        **entry,
+                        "role": member["role"],
+                        "membership_status": member["_status"],
+                    })
+                    claimed.add(member["node_id"])
+            members.sort(key=lambda item: (-item["pending_count"], item["name"]))
+            disease_groups.append({
+                "disease": subject,
+                "syndromes": members,
+                "pending_total": subject["pending_count"]
+                + sum(item["pending_count"] for item in members),
+                "suspect_total": subject["suspect_count"]
+                + sum(item["suspect_count"] for item in members),
+            })
+        disease_groups.sort(key=lambda item: (-item["pending_total"], item["disease"]["name"]))
+        orphan_syndromes = [
+            item for item in subjects
+            if item["node_type"] == "syndrome"
+            and item["node_id"] not in claimed
+            # 已通过/已拒绝的孤立项不再需要审核入口，不进列表。
+            and item["review_status"] in ("draft", "stale")
+        ]
+        orphan_syndromes.sort(key=lambda item: (-item["pending_count"], item["name"]))
+        return {
+            "graph_filename": filename,
+            "last_import_at": str(graph.get("last_import_at") or ""),
+            "subjects": subjects,
+            "disease_groups": disease_groups,
+            "orphan_syndromes": orphan_syndromes,
+        }
 
     def relation_group_detail(self, graph_filename: str, subject_node_id: str) -> Dict[str, Any]:
         filename = normalize_graph_filename(graph_filename)
@@ -425,6 +524,50 @@ class ReviewService:
                 "suspect": suspect,
             },
             "sections": sections_out,
+        }
+
+    def pending_relations_for_subjects(
+        self, graph_filename: str, subject_node_ids: List[str]
+    ) -> Dict[str, Any]:
+        """疾病组级一键审核：收集一组主体节点（疾病+名下证候）的全部待审出边。
+
+        只统计 draft/stale 关系；同时给出硬阻塞数（端点被拒/失效/缺失），
+        前端确认框据此提示可提交量，提交仍走 /review/bulk（link_endpoints）。
+        """
+        filename = normalize_graph_filename(graph_filename)
+        graph = self._load_graph(filename)
+        wanted = {str(node_id) for node_id in (subject_node_ids or []) if node_id}
+        hard_blocked = ("rejected", "retired", "missing")
+        items = []
+        blocked_count = 0
+        for key, relation in graph["relations"].items():
+            if key[0] not in wanted or _status(relation) not in ("draft", "stale"):
+                continue
+            source = graph["nodes"].get(key[0]) or {}
+            target = graph["nodes"].get(key[2]) or {}
+            source_status = _status(source) if source else "missing"
+            target_status = _status(target) if target else "missing"
+            blocked = source_status in hard_blocked or target_status in hard_blocked
+            blocked_count += int(blocked)
+            items.append({
+                "item_type": "graph_relation",
+                "source_node_id": key[0],
+                "relation_code": key[1],
+                "target_node_id": key[2],
+                "source_name": str(source.get("name") or key[0]),
+                "target_name": str(target.get("name") or key[2]),
+                "source_status": source_status,
+                "target_status": target_status,
+                "status": _status(relation),
+                "blocked": blocked,
+            })
+        return {
+            "graph_filename": filename,
+            "subjects": sorted(wanted),
+            "total": len(items),
+            "blocked": blocked_count,
+            "submittable": len(items) - blocked_count,
+            "items": items,
         }
 
     def node_detail(self, graph_filename: str, node_id: str) -> Dict[str, Any]:
@@ -719,6 +862,10 @@ class ReviewService:
             raise ReviewError("实体名称不能为空", 422)
         if len(cleaned) > 200:
             raise ReviewError("实体名称不能超过 200 个字符", 422)
+        if dictionary_type(node.get("node_type", ""), graph.get("domain", "")) == "tcm_disease":
+            canonical = EntityVocabularyRepository("tcm_disease").find(str(node.get("code") or ""))
+            if canonical and cleaned != canonical.name:
+                raise ReviewError("中医疾病名称请在中医疾病词典统一维护", 422)
         previous_name = str(node.get("name") or "")
         if cleaned == previous_name:
             raise ReviewError("实体名称没有变化", 422)
@@ -786,6 +933,7 @@ class ReviewService:
         action: str,
         reviewer: str,
         note: str = "",
+        link_endpoints: bool = False,
     ) -> Dict[str, Any]:
         filename = normalize_graph_filename(graph_filename)
         graph = self._load_graph(filename)
@@ -798,34 +946,57 @@ class ReviewService:
             target = next_graph_status(current, action)
         except StatusTransitionError as exc:
             raise ReviewError(str(exc), 422) from exc
+        endpoint_approvals = {}
         if action == "approve":
+            approves_endpoints = _approves_endpoints(graph, key) or link_endpoints
             problems = []
             for endpoint in (source_node_id, target_node_id):
                 endpoint_node = graph["nodes"].get(endpoint)
-                if endpoint_node is None or _status(endpoint_node) != "active":
-                    problems.append(
-                        f"{endpoint} 状态为 {(_status(endpoint_node) if endpoint_node else 'missing')}"
-                    )
+                status = _status(endpoint_node) if endpoint_node is not None else "missing"
+                if status == "active":
+                    continue
+                if approves_endpoints and status in {"draft", "stale"}:
+                    endpoint_approvals[endpoint] = status
+                else:
+                    # 被拒绝/已失效/缺失的端点是明确的人工决定或缺数据，
+                    # 不允许随关系静默激活，必须先恢复或补全实体。
+                    problems.append(f"{endpoint} 状态为 {status}")
             if problems:
                 raise ReviewError(
-                    "关系两端节点必须先通过审核: " + "; ".join(problems), 422
+                    "关系端点存在被拒绝/失效/缺失的实体，请先恢复或补全后再审核: " + "; ".join(problems), 422
                 )
 
         previous_graph = copy.deepcopy(graph)
         previous_rules = self._load_rules()
         rules = copy.deepcopy(previous_rules)
         now = _now()
-        relation.update({
+        review_metadata = {
             "review_status": target,
             "reviewed_by": reviewer or "未署名",
             "reviewed_at": now,
             "review_note": note,
-        })
+        }
+        linked_note = f"{note}（随关系 {source_node_id} -{relation_code}-> {target_node_id} 审核连带通过）"
+        for endpoint in endpoint_approvals:
+            graph["nodes"][endpoint].update({**review_metadata, "review_note": linked_note})
+        relation.update(review_metadata)
         # Persist the graph before re-syncing rules: check_rule_sync reloads
         # the graph from disk and must see the new status.
         self._save_graph(graph, filename)
         affected = self._sync_blocked_rules(rules, filename)
         audit = [{
+            "action": action,
+            "entity_type": "node",
+            "entity_id": endpoint,
+            "graph_filename": filename,
+            "before_status": status,
+            "after_status": target,
+            "reviewer": reviewer or "未署名",
+            "note": note,
+            "trigger_relation_id": _relation_id(key),
+            "affected_rules": affected,
+        } for endpoint, status in endpoint_approvals.items()]
+        audit.append({
             "action": action,
             "entity_type": "relation",
             "entity_id": _relation_id(key),
@@ -835,9 +1006,10 @@ class ReviewService:
             "reviewer": reviewer or "未署名",
             "note": note,
             "affected_rules": affected,
-        }]
+        })
         self._persist(filename, previous_graph, graph, previous_rules, rules, audit)
-        return {"item": relation, "status": target, "affected_rules": affected}
+        return {"item": relation, "status": target, "affected_rules": affected,
+                "linked_endpoints": list(endpoint_approvals)}
 
     def apply_relation_correction(
         self,
@@ -869,7 +1041,7 @@ class ReviewService:
         for value in (source_name, target_name):
             if len(value) > 200:
                 raise ReviewError("实体名称不能超过 200 个字符", 422)
-        disease_repository = EntityVocabularyRepository("disease")
+        disease_repository = EntityVocabularyRepository(dictionary_type("disease", graph.get("domain", "")))
         for endpoint, proposed_name, role in (
             (source, source_name, "起点"), (target, target_name, "目标"),
         ):
@@ -879,7 +1051,7 @@ class ReviewService:
             if canonical and proposed_name != canonical.name:
                 raise ReviewError(
                     f"{role}疾病编码 {canonical.code} 的标准名称是“{canonical.name}”，"
-                    "关系 AI 不能改写标准 ICD 疾病主数据；请拒绝或重新绑定关系",
+                    "请在对应疾病词典维护标准名称，或重新绑定关系",
                     422,
                 )
         new_code = str(suggested_relation_code or relation_code).strip()
@@ -995,6 +1167,7 @@ class ReviewService:
             "item": relation,
             "status": "draft",
             "relation_id": _relation_id(new_key),
+            "approves_endpoints": _approves_endpoints(graph, new_key),
             "changes": changes,
             "affected_rules": affected,
         }
@@ -1006,17 +1179,20 @@ class ReviewService:
         action: str,
         reviewer: str,
         note: str = "",
+        link_endpoints: bool = False,
     ) -> Dict[str, Any]:
         results = []
         for item in items:
             try:
-                if item.get("item_type") == "relation":
+                # 队列契约用 "relation"，疾病工作台分组契约用 "graph_relation"，
+                # 两者都按关系审核分发；其余（graph_node/rule）走节点审核。
+                if item.get("item_type") in ("relation", "graph_relation"):
                     result = self.review_relation(
                         graph_filename,
                         str(item.get("source_node_id") or ""),
                         str(item.get("relation_code") or ""),
                         str(item.get("target_node_id") or ""),
-                        action, reviewer, note,
+                        action, reviewer, note, link_endpoints,
                     )
                 else:
                     result = self.review_node(

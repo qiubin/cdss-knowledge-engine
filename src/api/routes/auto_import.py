@@ -42,6 +42,7 @@ async def auto_import(
             config,
             graph_filename=str(graph_filename or ""),
             auto_activate=str(auto_activate or "false").lower() not in {"false", "0", "no"},
+            require_import_quality=True,
         )
     except Exception as error:
         from .pdf import _append_import_log

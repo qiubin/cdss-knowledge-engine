@@ -41,7 +41,7 @@ def stage_bases(graph, candidates, graph_filename):
     return groups
 
 
-def check_basis(service, filename, graph, basis):
+def check_basis(service, filename, graph, basis, sync_result=None):
     issues = []
     spec = basis["specification"]
     from src.domains.western.recommendations import recommendation_issues
@@ -61,7 +61,7 @@ def check_basis(service, filename, graph, basis):
         if not isinstance(condition, dict) or not condition.get("type"):
             issues.append("条件为空")
             return
-        if condition.get("type") in ("group", "weighted_group"):
+        if condition.get("type") in ("group", "count_group", "weighted_group"):
             children = condition.get("children") or []
             if not isinstance(children, list):
                 issues.append("子条件必须是列表")
@@ -99,7 +99,9 @@ def check_basis(service, filename, graph, basis):
     # verify_source validates page-aware ranges: a later page may legitimately
     # end at a smaller line number than the first page starts.
     try:
-        sync = service._sync([{**spec, "graph_filename": filename}])["rules"][0]
+        # sync_result 可由调用方整批预计算注入（性能：避免每份依据重复
+        # 加载整图与词表）；为 None 时保持旧的逐份核对行为。
+        sync = sync_result if sync_result is not None else service._sync([{**spec, "graph_filename": filename}])["rules"][0]
     except Exception as error:
         sync = {"semantic_status": "inconsistent", "issues": ["无法解析图谱依赖：" + str(error)], "references": []}
     if sync.get("semantic_status") != "consistent":
@@ -107,14 +109,18 @@ def check_basis(service, filename, graph, basis):
     refs = sync.get("references") or []
     if not refs:
         issues.append("没有可核对的图谱依赖")
-    if sync.get("dependency_status") != "passed":
+    dependencies_approved = bool(refs) and sync.get("dependency_status") == "passed"
+    if not dependencies_approved:
         issues.append("所需实体或关系尚未全部审核通过")
     snapshots = []
     if scenario:
         from src.api.routes.scenarios import inventory
-        selected = {item["id"]: item for item in inventory(graph, spec.get("disease_code"))}
+        disease_code = scenario.get("disease_code") or spec.get("disease_code")
+        selected = {item["id"]: item for item in inventory(graph, disease_code)}
         for selection in scenario.get("selections") or []:
             item = selected.get(selection["relation_id"])
+            if not item or not item["approved"]:
+                dependencies_approved = False
             if not item or not item["approved"] or item["fingerprint"] != selection["fingerprint"]:
                 issues.append("场景关联已变化或未通过，请重新核对场景依据")
             snapshots.append([selection["relation_id"], item["fingerprint"] if item else None])
@@ -143,6 +149,7 @@ def check_basis(service, filename, graph, basis):
     fingerprint = digest([spec, basis.get("scope_summary"), snapshots, evidences, links, scenario])
     changed = bool(basis.get("approved_fingerprint") and basis["approved_fingerprint"] != fingerprint)
     return {"issues": list(dict.fromkeys(issues)), "references": refs, "fingerprint": fingerprint,
+            "dependencies_approved": dependencies_approved,
             "provenance": provenance, "statement": statement_for(spec, basis.get("scope_summary") or ""),
             "status": "draft" if (changed or issues) and basis.get("status") == "active" else basis.get("status", "draft"), "changed": changed}
 

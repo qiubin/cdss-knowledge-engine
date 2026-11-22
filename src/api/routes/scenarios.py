@@ -4,8 +4,10 @@ from typing import Literal, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from src.api.routes.kg import normalize_graph_filename
+from src.api.routes.clinical_basis import batch_sync_results
 from src.models.rule import Rule
-from src.review.service import ReviewService
+from src.domains.tcm.basis_generation import OBSERVATION_RELATIONS
+from src.review.service import ReviewService, SYNDROME_MEMBERSHIP_ROLES
 from src.review.clinical_basis import digest, stage_bases, now, check_basis
 from src.review.metadata import node_content_hash, relation_content_hash
 
@@ -14,6 +16,8 @@ service = ReviewService()
 SCENES = {"suspected_diagnosis": "疑似诊断", "diagnosis_confirmation": "确诊／分型",
           "treatment_recommendation": "治疗方案", "treatment_selection": "用药决策"}
 ROLES = {"condition", "recommendation", "contraindication", "monitoring"}
+DISEASE_OBSERVATIONS = {"DISEASE_HAS_SYMPTOM": "symptom", "DISEASE_HAS_SIGN": "sign"}
+SYNDROME_SCENE_EVIDENCE = {**OBSERVATION_RELATIONS, "SYNDROME_HAS_PATHOGENESIS": "pathogenesis"}
 
 
 def inventory(graph, disease_code):
@@ -37,6 +41,29 @@ def inventory(graph, disease_code):
                                 "fingerprint": digest([upstream.get("fingerprint"), relation_content_hash(edge), node_content_hash(target)])}
                 reachable.add(key[2])
     items = []
+    tcm = graph.get("domain") == "tcm"
+    if tcm:
+        memberships = {}
+        for key, edge in edges:
+            if key[0] not in anchors or key[1] not in SYNDROME_MEMBERSHIP_ROLES:
+                continue
+            syndrome = nodes.get(key[2], {})
+            if syndrome.get("node_type") != "syndrome":
+                continue
+            approved = paths[key[0]]["approved"] and all(
+                item.get("review_status") == "active" for item in (edge, syndrome)
+            )
+            rank = (not approved, list(SYNDROME_MEMBERSHIP_ROLES).index(key[1]), key)
+            if key[2] not in memberships or rank < memberships[key[2]]:
+                memberships[key[2]] = rank
+        for syndrome_id, (blocked, _, key) in memberships.items():
+            paths[syndrome_id] = {
+                "approved": not blocked, "membership": key,
+                "fingerprint": digest([paths[key[0]]["fingerprint"],
+                                       relation_content_hash(graph["relations"][key])]),
+            }
+        edges.extend((key, edge) for key, edge in graph.get("relations", {}).items()
+                     if key[0] in memberships and key[1] in SYNDROME_SCENE_EVIDENCE)
     for key, edge in edges:
         source, target = nodes.get(key[0], {}), nodes.get(key[2], {})
         passed = bool(paths.get(key[0], {}).get("approved")) and all(item.get("review_status") == "active" for item in (edge, source, target))
@@ -50,31 +77,104 @@ def inventory(graph, disease_code):
         items[-1]["suggested_scenes"] = (["suspected_diagnosis", "diagnosis_confirmation"] if clinical_condition else
             ["treatment_recommendation", "treatment_selection"] if target.get("node_type") in {"medication", "intervention", "treatment_plan"} else
             ["suspected_diagnosis", "diagnosis_confirmation", "treatment_recommendation", "treatment_selection"])
+        if tcm:
+            membership = paths.get(key[0], {}).get("membership")
+            kind = (SYNDROME_SCENE_EVIDENCE.get(key[1]) if membership else
+                    DISEASE_OBSERVATIONS.get(key[1]) if key[0] in anchors else None)
+            if kind and target.get("node_type") == kind and target.get("code"):
+                items[-1].update(observation_type=kind, membership=membership, suggested_role="condition",
+                                 suggested_scenes=["suspected_diagnosis"])
+                if membership and not paths[key[0]]["approved"]:
+                    items[-1]["review_blocker"] = "请先通过所属疾病与该证候的分型或归属关系"
+                elif source.get("review_status") != "active" or target.get("review_status") != "active":
+                    items[-1]["review_blocker"] = "请先通过这条观察关系两端的实体"
+                elif edge.get("review_status") != "active":
+                    items[-1]["review_blocker"] = "请先通过这条观察关系"
     return items
 
 
 @router.get("")
-def overview(graph_filename: str, disease_code: str):
+def overview(graph_filename: str, disease_code: str = "", syndrome_code: str = ""):
     filename = normalize_graph_filename(graph_filename)
     graph = service._load_graph(filename)
-    items = inventory(graph, disease_code)
-    bases = [basis for basis in graph.get("clinical_bases", []) if basis.get("specification", {}).get("disease_code") == disease_code]
-    return {"items": items, "scenes": [{"key": key, "name": name,
+    owners = {}
+    if syndrome_code and graph.get("domain") == "tcm":
+        nodes = graph["nodes"]
+        for (source_id, code, target_id), edge in graph["relations"].items():
+            source, target = nodes.get(source_id, {}), nodes.get(target_id, {})
+            if (code not in SYNDROME_MEMBERSHIP_ROLES or source.get("node_type") != "disease"
+                    or target.get("node_type") != "syndrome" or target.get("code") != syndrome_code
+                    or not source.get("code")):
+                continue
+            approved = all(item.get("review_status") == "active" for item in (source, edge, target))
+            owner = owners.setdefault(source["code"], {"code": source["code"], "name": source["name"], "approved": False})
+            owner["approved"] |= approved
+        owners = dict(sorted(owners.items(), key=lambda entry: (not entry[1]["approved"], entry[1]["name"], entry[0])))
+        if disease_code not in owners:
+            disease_code = next(iter(owners), "")
+    items = inventory(graph, disease_code) if disease_code else []
+    tcm = graph.get("domain") == "tcm"
+    linked_syndromes = {
+        item["code"] for item in items
+        if item["relation_code"] in SYNDROME_MEMBERSHIP_ROLES and item["node_type"] == "syndrome"
+        and item["approved"]
+    } if tcm else set()
+    bases = []
+    for basis in graph.get("clinical_bases", []):
+        if basis.get("disposition") == "discarded":
+            continue
+        spec = basis.get("specification") or {}
+        anchor_code = spec.get("disease_code")
+        scenario_disease = (basis.get("scenario_review") or {}).get("disease_code")
+        is_syndrome = tcm and spec.get("anchor_type") == "syndrome"
+        if syndrome_code and (not is_syndrome or anchor_code != syndrome_code):
+            continue
+        if scenario_disease:
+            in_scope = scenario_disease == disease_code
+        elif is_syndrome:
+            in_scope = anchor_code in linked_syndromes or anchor_code == syndrome_code
+        else:
+            in_scope = anchor_code == disease_code
+        if in_scope:
+            bases.append(basis)
+    sync_results = batch_sync_results(service, filename, bases)
+    reviewable = []
+    for basis, sync_result in zip(bases, sync_results):
+        if sync_result is not None and sync_result.get("dependency_status") != "passed":
+            continue
+        validation = check_basis(service, filename, graph, basis, sync_result=sync_result)
+        if validation["dependencies_approved"]:
+            reviewable.append((basis, validation["status"]))
+    if syndrome_code:
+        items = [item for item in items if item.get("observation_type")
+                 and item["source_node"].get("node_type") == "syndrome"
+                 and item["source_node"].get("code") == syndrome_code]
+    scenes = dict(SCENES)
+    if tcm:
+        scenes["syndrome_identification"] = "辨证判断"
+        scenes["treatment_recommendation"] = "治法与方药"
+    return {"items": items, "domain": graph.get("domain"), "disease_code": disease_code,
+            "owners": list(owners.values()), "scenes": [{"key": key, "name": name,
+        "existing_only": key == "syndrome_identification" or bool(tcm and syndrome_code and key != "suspected_diagnosis"),
         "bases": [{"basis_id": basis["basis_id"], "name": basis["name"], "generated_rule_id": basis.get("generated_rule_id"),
-                   "status": check_basis(service, filename, graph, basis)["status"]} for basis in bases
-                  if basis.get("specification", {}).get("clinical_intent") == key]} for key, name in SCENES.items()]}
+                   "status": status} for basis, status in reviewable
+                  if basis.get("specification", {}).get("clinical_intent") == key]} for key, name in scenes.items()
+                if not syndrome_code or key in {"suspected_diagnosis", "syndrome_identification", "treatment_recommendation"}]}
 
 
 class Selection(BaseModel):
     relation_id: str
     role: Literal["condition", "recommendation", "contraindication", "monitoring"]
+    weight: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
 
 
 class Prepare(BaseModel):
     disease_code: str
     scene: str
     selections: list[Selection]
-    operator: Literal["AND", "OR"]
+    operator: Literal["AND", "OR", "COUNT", "CUSTOM", "WEIGHTED"]
+    min_count: Optional[int] = Field(default=None, ge=1)
+    threshold: Optional[float] = Field(default=None, gt=0, le=1, allow_inf_nan=False)
     source: dict
     scope_summary: str
     reviewer: str
@@ -112,6 +212,9 @@ def prepare(request: Prepare, graph_filename: str):
     if source["line_end"] < source["line_start"]:
         raise HTTPException(422, "原文行号范围倒置")
     lookup = {item["id"]: item for item in inventory(graph, request.disease_code)}
+    tcm_suspected = graph.get("domain") == "tcm" and request.scene == "suspected_diagnosis"
+    anchor = None
+    membership = None
     selected, conditions, recommendations = [], [], []
     seen = set()
     for choice in request.selections:
@@ -126,7 +229,24 @@ def prepare(request: Prepare, graph_filename: str):
             raise HTTPException(409, f"{item['target']} 没有当前指南的关系出处，请选择同一指南的依据")
         selected.append({"relation_id": item["id"], "role": choice.role, "fingerprint": item["fingerprint"]})
         if choice.role == "condition":
-            candidate = condition_for(item)
+            if tcm_suspected:
+                if not item.get("observation_type"):
+                    raise HTTPException(422, "请选择已审的症见、体征、舌象、脉象或病机")
+                if anchor and anchor["id"] != item["source_node"]["id"]:
+                    raise HTTPException(422, "请为每个证候或病名单独整理疑似诊断依据")
+                anchor = item["source_node"]
+                membership = item["membership"]
+                candidate = {"type": "observation", "observation_type": item["observation_type"],
+                             "code": item["code"], "label": item["target"]}
+            else:
+                candidate = condition_for(item)
+            if request.operator == "WEIGHTED":
+                if choice.weight is None:
+                    raise HTTPException(422, f"请填写「{item['target']}」的正数权重")
+                if any({key: value for key, value in existing.items() if key != "weight"} == candidate
+                       for existing in conditions):
+                    raise HTTPException(422, f"加权评分中「{item['target']}」只能计分一次")
+                candidate["weight"] = choice.weight
             if candidate not in conditions:
                 conditions.append(candidate)
         elif choice.role == "recommendation":
@@ -142,16 +262,45 @@ def prepare(request: Prepare, graph_filename: str):
         raise HTTPException(422, "仅使用诊断前提时请选择全部满足；或条件组不能为空")
     if not treatment and recommendations:
         raise HTTPException(422, "诊断场景请选择判断条件；建议项目请在治疗方案场景中整理")
+    condition_tree = {"type": "group", "operator": None if request.operator == "CUSTOM" else request.operator,
+                      "children": conditions}
+    if request.operator == "COUNT":
+        if request.min_count is None or request.min_count > len(conditions):
+            raise HTTPException(422, "至少满足的数量须介于 1 与有效判断条件数之间")
+        condition_tree = {"type": "count_group", "min_count": request.min_count, "children": conditions}
+    elif request.operator == "WEIGHTED":
+        if request.threshold is None:
+            raise HTTPException(422, "请填写加权评分阈值")
+        condition_tree = {"type": "weighted_group", "scoring": "normalized_weight_sum",
+                          "threshold": request.threshold, "children": conditions}
     name = request.name.strip() or f"{request.disease_code} · {SCENES[request.scene]}"
-    identity = digest([request.model_dump(), selected])[:20]
-    spec = Rule(rule_id="SCENE-" + identity, name=name, disease_code=request.disease_code,
-                rule_type="treatment" if treatment else "diagnosis", clinical_intent=request.scene,
+    clinical_context = dict(request.clinical_context)
+    if tcm_suspected:
+        disease = graph["nodes"][membership[0]] if membership else anchor
+        clinical_context["suspected_tcm_diagnosis"] = {
+            "disease_code": disease["code"],
+            "disease_name": disease["name"],
+            "membership_relation": membership[1] if membership else None,
+        }
+        name = request.name.strip() or " · ".join(dict.fromkeys([disease["name"], anchor["name"], "疑似诊断"]))
+    identity_input = request.model_dump(exclude={
+        **({"min_count": True} if request.operator != "COUNT" else {}),
+        **({"threshold": True, "selections": {"__all__": {"weight"}}} if request.operator != "WEIGHTED" else {}),
+    })
+    identity = digest([identity_input, selected])[:20]
+    anchor_code = anchor["code"] if tcm_suspected else request.disease_code
+    spec = Rule(rule_id="SCENE-" + identity, name=name, disease_code=anchor_code,
+                disease_name=anchor["name"] if tcm_suspected else "",
+                domain="tcm" if tcm_suspected else "western",
+                anchor_type=anchor["node_type"] if tcm_suspected else "disease",
+                rule_type="tcm_pattern" if tcm_suspected else "treatment" if treatment else "diagnosis",
+                clinical_intent=request.scene,
                 graph_filename=filename, status="draft",
-                conditions={"type": "group", "operator": request.operator, "children": conditions},
-                conclusion={"diagnosis": request.disease_code, "message": name,
+                conditions=condition_tree,
+                conclusion={"diagnosis": anchor_code, "message": name,
                             "treatment_items": recommendations}, source=source,
                 diagnosis_prerequisite=request.diagnosis_prerequisite if treatment else None,
-                clinical_context=request.clinical_context).model_dump()
+                clinical_context=clinical_context).model_dump()
     if request.western_recommendation:
         spec["clinical_context"]["western_recommendation"] = request.western_recommendation
     elif treatment:
@@ -166,6 +315,7 @@ def prepare(request: Prepare, graph_filename: str):
     if basis.get("scenario_review"):
         return {"basis": {**basis, "validation": check_basis(service, filename, graph, basis)}}
     basis.update(scope_summary=request.scope_summary, scenario_review={"scene": request.scene,
+                 **({"disease_code": request.disease_code} if tcm_suspected else {}),
                  "selections": selected, "reviewer": request.reviewer, "reviewed_at": now(),
                  "scope_confirmed": True})
     rules = service._load_rules()

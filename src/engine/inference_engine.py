@@ -362,6 +362,8 @@ class InferenceEngine:
         conclusions: List[Conclusion],
     ) -> None:
         for conclusion in conclusions:
+            if conclusion.rule_type == "tcm_pattern" and conclusion.suspected_disease_code:
+                continue
             code = conclusion.anchor_code or conclusion.disease_code
             if code:
                 facts.setdefault(conclusion.anchor_type or "disease", {})[code] = conclusion
@@ -1023,7 +1025,7 @@ class InferenceEngine:
             "concept_code": condition.concept_code or "PRESENT",
         })
         kind = observation_type if observation_type in {
-            "symptom", "tongue", "pulse", "sign"
+            "symptom", "tongue", "pulse", "sign", "pathogenesis"
         } else ""
         label = self._term(kind, code) if kind else f"{observation_type}:{code}"
         present = bool((result.detail or {}).get("present"))
@@ -1204,6 +1206,9 @@ class InferenceEngine:
         if rule.rule_type == "tcm_pattern" and score is not None and (rule.clinical_context or {}).get("schema_version") != 3:
             confidence = "high" if score >= 0.8 else "medium" if score >= 0.6 else "low"
         now = datetime.now(timezone.utc).isoformat()
+        suspected = {}
+        if self.domain == "tcm" and rule.rule_type == "tcm_pattern" and rule.clinical_intent == "suspected_diagnosis":
+            suspected = (rule.clinical_context or {}).get("suspected_tcm_diagnosis") or {}
 
         return Conclusion(
             rule_id=rule.rule_id,
@@ -1215,6 +1220,8 @@ class InferenceEngine:
             anchor_name=anchor_name,
             disease_code=rule.disease_code,
             disease_name=anchor_name,
+            suspected_disease_code=suspected.get("disease_code"),
+            suspected_disease_name=suspected.get("disease_name"),
             confidence=confidence,
             message=rule.conclusion.message,
             suggested_action=rule.conclusion.action,

@@ -9,6 +9,7 @@ separation the concept vocabulary (concepts.json) already provides.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import List, Optional
 
@@ -20,6 +21,27 @@ from src.extraction.models import ExtractionTemplate, TemplateEntityEntry, Templ
 ROOT = Path(__file__).parent.parent.parent
 ENTITY_VOCAB_DIR = ROOT / "data" / "vocab" / "entities"
 KG_DIR = ROOT / "data" / "kg"
+TCM_DISEASE_DICTIONARY = "tcm_disease"
+TCM_DISEASE_CODE = re.compile(r"TCM_DIS_[A-Z0-9_]+")
+
+
+def dictionary_type(entity_type: str, domain: str = "") -> str:
+    if entity_type == "disease" and normalize_domain(domain) == "tcm":
+        return TCM_DISEASE_DICTIONARY
+    return entity_type
+
+
+def tcm_disease_entries() -> dict[str, TemplateEntityEntry]:
+    return {entry.code: entry for entry in EntityVocabularyRepository(TCM_DISEASE_DICTIONARY).list()}
+
+
+def unregistered_tcm_diseases(entities, registered=None) -> list[str]:
+    codes = tcm_disease_entries() if registered is None else registered
+    return sorted({
+        f"{item.get('name') or '未命名'}（{item.get('code') or '无码'}）"
+        for item in entities
+        if item.get("entity_type") == "disease" and item.get("code") not in codes
+    })
 
 
 class EntityVocabularyRepository:
@@ -61,6 +83,13 @@ class EntityVocabularyRepository:
         return TemplateEntityEntry(**item) if item else None
 
     def save(self, entry: TemplateEntityEntry, is_new: bool = False) -> TemplateEntityEntry:
+        if self.entity_type == TCM_DISEASE_DICTIONARY:
+            systems = [entry.standard_system, *(item.get("system") for item in entry.standard_mappings)]
+            if (not TCM_DISEASE_CODE.fullmatch(entry.code)
+                    or entry.domain not in {"", "tcm"}
+                    or any(str(system or "").strip().upper().startswith(("ICD-10", "ICD10")) for system in systems)):
+                raise HTTPException(422, "中医疾病请使用 TCM_DIS_ 本地稳定编码；ICD-10 仅用于西医疾病对照")
+            entry = entry.model_copy(update={"domain": "tcm"})
         concepts = self._concept_repository()
         if concepts is not None:
             concept = concepts.get(entry.code)
@@ -92,6 +121,8 @@ class EntityVocabularyRepository:
         return {"deleted": code}
 
     def remap_code(self, old_code: str, new_code: str) -> dict:
+        if self.entity_type == TCM_DISEASE_DICTIONARY:
+            raise HTTPException(422, "中医病名使用稳定编码；请新增规范词条并审核迁移")
         if self._concept_repository() is not None:
             raise HTTPException(422, "抽象概念编码不可直接修改，请新增概念并迁移引用")
         items = self._read()
@@ -117,8 +148,12 @@ def merged_entries(
 
     Shared entries may declare a ``domain`` (western / tcm).  Domain-specific
     entries are only merged into templates of the same discipline. The shared
-    disease file is ICD-10 western only; TCM diseases remain template-local.
+    disease file is ICD-10 western only. TCM disease entries use their own
+    dictionary as the authoritative source.
     """
+    dictionary = dictionary_type(type_def.entity_type, template_domain)
+    if dictionary == TCM_DISEASE_DICTIONARY:
+        return EntityVocabularyRepository(dictionary, directory).list()
     entries = list(type_def.entries)
     if not type_def.vocabulary:
         return entries
@@ -143,6 +178,7 @@ def merged_entries(
 def template_private_entries(
     type_def: TemplateEntityType,
     directory: Path = ENTITY_VOCAB_DIR,
+    template_domain: str = "",
 ) -> List[TemplateEntityEntry]:
     """Return template-local entries that are not owned by the shared dictionary.
 
@@ -151,9 +187,12 @@ def template_private_entries(
     The structure-management UI only needs the genuinely private subset; codes
     already present in the shared dictionary must be maintained centrally.
     """
+    dictionary = dictionary_type(type_def.entity_type, template_domain)
+    if dictionary == TCM_DISEASE_DICTIONARY:
+        return []
     shared_codes = {
         entry.code
-        for entry in EntityVocabularyRepository(type_def.entity_type, directory).list()
+        for entry in EntityVocabularyRepository(dictionary, directory).list()
     }
     return [entry for entry in type_def.entries if entry.code not in shared_codes]
 
@@ -184,6 +223,8 @@ def find_shared_entry(
     """Look up a display name in the shared dictionary for one entity type."""
     if not code:
         return None
+    if entity_type == "disease" and TCM_DISEASE_CODE.fullmatch(code):
+        entity_type = TCM_DISEASE_DICTIONARY
     return EntityVocabularyRepository(entity_type, directory).find(code)
 
 
