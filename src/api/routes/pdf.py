@@ -532,8 +532,9 @@ async def get_import_logs(page: int = 1, page_size: int = 10):
     total = len(rows)
     page = max(1, int(page))
     page_size = min(max(1, int(page_size)), 200)
-    start = (page - 1) * page_size
-    items = list(rows[start:start + page_size])
+    end = total - (page - 1) * page_size  # 日志按时间正序追加，从尾部倒着取
+    start = max(0, end - page_size)
+    items = list(rows[start:end])
     items.reverse()  # 最新在前
     return {"items": items, "total": total, "page": page, "page_size": page_size}
 

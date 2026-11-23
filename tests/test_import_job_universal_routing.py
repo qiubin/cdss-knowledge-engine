@@ -70,7 +70,8 @@ class WesternImportRoutingTest(unittest.TestCase):
         from src.api.routes.pdf import _doc_store
         _doc_store.pop("DOC-T1", None)
 
-    def test_tcm_document_rejected_in_western_pipeline_before_llm(self):
+    def test_tcm_document_rejected_only_in_auto_fallback(self):
+        # 仅 auto 兜底（未显式选择领域/模板）时守卫拦截，避免中医内容白耗 LLM
         with mock.patch.object(import_jobs, "run_auto_pipeline") as pipeline, \
              mock.patch("src.api.routes.pdf.parse_pdf", return_value={"chunks": [
                  {"text": "中医辨证分型：气虚血瘀证、气阴两虚证。舌质淡，脉细，治法益气活血，方剂随证加减。"}]}):
@@ -78,8 +79,32 @@ class WesternImportRoutingTest(unittest.TestCase):
                 asyncio.run(import_jobs._run_auto_job(None, file_path=Path("/tmp/tcm.pdf"),
                     doc_id="DOC-GUARD", doc_title="慢性心力衰竭中医诊疗指南（2022年）",
                     graph_filename="", auto_activate=False,
-                    domain="western", template_id="GENERIC_GUIDELINE_V1"))
+                    domain="auto", template_id=""))
         pipeline.assert_not_called()
+
+    def test_explicit_western_selection_skips_tcm_guard(self):
+        # 显式西医链路（西医面板选模板上传）不做中医内容识别，按用户选择执行
+        async def fake_pipeline(chunks, doc_id, doc_title, config, **kwargs):
+            return {
+                "doc_id": doc_id, "doc_title": doc_title,
+                "graph_filename": kwargs.get("graph_filename") or "KG-W.json",
+                "entities": [], "relations": [], "rules": [], "warnings": [],
+                "metadata": {},
+            }
+
+        with _patch_template("GENERIC_GUIDELINE_V1", "western"), \
+             mock.patch.object(import_jobs, "run_auto_pipeline", side_effect=fake_pipeline) as pipeline, \
+             mock.patch("src.api.routes.pdf.parse_pdf", return_value={"chunks": [
+                 {"text": "中医辨证分型：气虚血瘀证。舌质淡，脉细，方剂随证加减。"}]}), \
+             mock.patch("src.api.routes.pdf._persist_doc"):
+            result = asyncio.run(import_jobs._run_auto_job(None, file_path=Path("/tmp/tcm.pdf"),
+                doc_id="DOC-WGUARD", doc_title="慢性心力衰竭中医诊疗指南（2022年）",
+                graph_filename="", auto_activate=False,
+                domain="western", template_id="GENERIC_GUIDELINE_V1"))
+        pipeline.assert_called_once()
+        self.assertEqual(result["domain"], "western")
+        from src.api.routes.pdf import _doc_store
+        _doc_store.pop("DOC-WGUARD", None)
 
     def test_domain_template_mismatch_raises(self):
         with _patch_template("TCM_GUIDELINE_V3", "tcm"), \

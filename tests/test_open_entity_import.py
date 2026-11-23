@@ -108,7 +108,8 @@ class ImportLogTest(unittest.TestCase):
         self.assertEqual(data["total"], 5)
         self.assertEqual(data["page"], 2)
         self.assertEqual(data["page_size"], 2)
-        self.assertEqual([row["doc_id"] for row in data["items"]], ["DOC-3", "DOC-2"])
+        # 分页在“最新在前”的整体排序上切页：第 1 页 DOC-4/DOC-3，第 2 页 DOC-2/DOC-1
+        self.assertEqual([row["doc_id"] for row in data["items"]], ["DOC-2", "DOC-1"])
 
     def test_empty_log_returns_empty(self):
         data = asyncio.run(get_import_logs())

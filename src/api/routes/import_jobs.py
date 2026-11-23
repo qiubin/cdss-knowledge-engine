@@ -156,20 +156,23 @@ async def _run_tcm_template_job(controller, *, parsed, file_path, doc_id, doc_ti
 
 
 async def _run_western_statement_job(controller, *, parsed, file_path, doc_id, doc_title,
-                                     graph_filename: str, template, auto_activate: bool) -> Dict[str, Any]:
+                                     graph_filename: str, template, auto_activate: bool,
+                                     guard_tcm: bool = False) -> Dict[str, Any]:
     """西医指南作业体：两阶段临床陈述流水线（陈述 → 图谱/规则/开放术语）。
 
     单轮模板抽取无法达到同等结构化质量——曾导致整本指南只产出个别疾病、
-    无实体无关系，因此西医导入统一走本流水线。入流水线前做 TCM 内容守卫，
-    防止把中医指南误送西医链路白耗 LLM。
+    无实体无关系，因此西医导入统一走本流水线。仅在 auto 兜底（用户未显式
+    选择领域/模板）时做 TCM 内容守卫，防止把中医指南误送西医链路白耗 LLM；
+    显式选择西医链路则完全不做领域识别，按用户选择执行。
     """
     from .pdf import _persist_doc, _now
-    detected = detect_guideline_domain(parsed["chunks"], doc_title, "auto")
-    if detected["domain"] == "tcm" and not detected["requires_confirmation"]:
-        raise ValueError(
-            "检测到中医指南，但这是西医指南导入链路；"
-            "请改用「中医指南导入」面板并选择中医模板后重试"
-        )
+    if guard_tcm:
+        detected = detect_guideline_domain(parsed["chunks"], doc_title, "auto")
+        if detected["domain"] == "tcm" and not detected["requires_confirmation"]:
+            raise ValueError(
+                "检测到中医指南，但这是西医指南导入链路；"
+                "请改用「中医指南导入」面板并选择中医模板后重试"
+            )
     graph_name = (
         resolve_upload_graph_filename(template, graph_filename or "")
         if template else (graph_filename or "")
@@ -222,6 +225,7 @@ async def _run_auto_job(
         controller, parsed=parsed, file_path=file_path, doc_id=doc_id,
         doc_title=doc_title, graph_filename=graph_filename, template=template,
         auto_activate=auto_activate,
+        guard_tcm=(template is None and domain == "auto"),
     )
 
 
