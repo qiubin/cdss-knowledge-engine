@@ -5,12 +5,14 @@
     "name": "心力衰竭",
     "local_code": "I50.900",
     "aliases": [
-      "心力衰竭"
+      "心力衰竭",
+      "心衰"
     ],
     "source_doc_ids": [
       "DOC-1ebe1380",
       "DOC-98550d90",
-      "DOC-a1fd4731"
+      "DOC-a1fd4731",
+      "DOC-d6ecc534"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -21,11 +23,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 5,
+    "occurrences": 8,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:28.821958+00:00",
-    "updated_at": "2026-11-23T08:55:57.841055+00:00"
+    "updated_at": "2026-11-23T16:21:04.989909+00:00"
   },
   {
     "candidate_id": "TERM-0C9C13D20C18A183",
@@ -68,7 +70,8 @@
     "source_doc_ids": [
       "DOC-1ebe1380",
       "DOC-98550d90",
-      "DOC-a1fd4731"
+      "DOC-a1fd4731",
+      "DOC-d6ecc534"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -79,11 +82,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 10,
+    "occurrences": 11,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:29.560252+00:00",
-    "updated_at": "2026-11-23T08:55:58.029680+00:00"
+    "updated_at": "2026-11-23T16:21:12.961733+00:00"
   },
   {
     "candidate_id": "TERM-C142ADFB93CFB6FB",
@@ -543,11 +546,13 @@
     "name": "扩张型心肌病",
     "local_code": "I42.000",
     "aliases": [
+      "DCM",
       "扩张型心肌病"
     ],
     "source_doc_ids": [
       "DOC-98550d90",
-      "DOC-a1fd4731"
+      "DOC-a1fd4731",
+      "DOC-d6ecc534"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -558,11 +563,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 5,
+    "occurrences": 10,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:35.737044+00:00",
-    "updated_at": "2026-11-23T07:08:40.170861+00:00"
+    "updated_at": "2026-11-23T16:21:06.519677+00:00"
   },
   {
     "candidate_id": "TERM-193075F69988F5E8",
@@ -934,7 +939,8 @@
       "缺血性心脏病"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-d6ecc534"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -945,11 +951,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:42.813720+00:00",
-    "updated_at": "2026-11-21T04:28:42.813720+00:00"
+    "updated_at": "2026-11-23T16:20:59.679973+00:00"
   },
   {
     "candidate_id": "TERM-B639F09864D2B87A",
@@ -1084,7 +1090,8 @@
       "高血压"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-d6ecc534"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -1095,11 +1102,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:45.243101+00:00",
-    "updated_at": "2026-11-21T04:28:45.243101+00:00"
+    "updated_at": "2026-11-23T16:20:57.980842+00:00"
   },
   {
     "candidate_id": "TERM-680D5E84B6FDC28D",
@@ -2574,7 +2581,8 @@
       "心律失常"
     ],
     "source_doc_ids": [
-      "DOC-1ebe1380"
+      "DOC-1ebe1380",
+      "DOC-d6ecc534"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -2585,11 +2593,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-23T08:55:55.171328+00:00",
-    "updated_at": "2026-11-23T08:55:55.171328+00:00"
+    "updated_at": "2026-11-23T16:21:05.262415+00:00"
   },
   {
     "candidate_id": "TERM-34038851D955C42C",
@@ -2619,7 +2627,8 @@
       "心衰"
     ],
     "source_doc_ids": [
-      "DOC-1ebe1380"
+      "DOC-1ebe1380",
+      "DOC-d6ecc534"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -2654,11 +2663,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 2,
+    "occurrences": 3,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-23T08:55:57.614300+00:00",
-    "updated_at": "2026-11-23T08:56:00.308848+00:00"
+    "updated_at": "2026-11-23T16:21:07.103412+00:00"
   },
   {
     "candidate_id": "TERM-E29FB533EB3D3368",
@@ -3079,5 +3088,564 @@
     "review_note": "",
     "created_at": "2026-11-23T08:56:02.353914+00:00",
     "updated_at": "2026-11-23T08:56:02.353914+00:00"
+  },
+  {
+    "candidate_id": "TERM-B4AE6EDA007C70CB",
+    "entity_type": "disease",
+    "name": "心脏瓣膜病",
+    "local_code": "I38.X01",
+    "aliases": [
+      "心脏瓣膜病"
+    ],
+    "source_doc_ids": [
+      "DOC-d6ecc534"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I38.X01",
+        "name": "心脏瓣膜病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T16:20:58.362492+00:00",
+    "updated_at": "2026-11-23T16:20:58.362492+00:00"
+  },
+  {
+    "candidate_id": "TERM-A065B26FB9241574",
+    "entity_type": "disease",
+    "name": "先天性心脏病",
+    "local_code": "LOCAL-DIS-B20A8B284D",
+    "aliases": [
+      "先天性心脏病"
+    ],
+    "source_doc_ids": [
+      "DOC-d6ecc534"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "P00.301",
+        "name": "母体先天性心脏病新生儿",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "O99.800X412",
+        "name": "妊娠合并先天性心脏病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "O35.800X013",
+        "name": "胎儿先天性心脏病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "Z98.800X405",
+        "name": "先天性心脏病术后",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I51.900",
+        "name": "心脏病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T16:20:58.782294+00:00",
+    "updated_at": "2026-11-23T16:20:58.782294+00:00"
+  },
+  {
+    "candidate_id": "TERM-DDF6FBE28D7B3927",
+    "entity_type": "disease",
+    "name": "全身性疾病",
+    "local_code": "LOCAL-DIS-8397242332",
+    "aliases": [
+      "全身性疾病"
+    ],
+    "source_doc_ids": [
+      "DOC-d6ecc534"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "K08.000",
+        "name": "全身性疾病引起的牙脱落",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T16:21:00.114827+00:00",
+    "updated_at": "2026-11-23T16:21:00.114827+00:00"
+  },
+  {
+    "candidate_id": "TERM-6E413656A4C11EC6",
+    "entity_type": "disease",
+    "name": "缺血性心肌病",
+    "local_code": "I25.500",
+    "aliases": [
+      "ICM",
+      "缺血性心肌病"
+    ],
+    "source_doc_ids": [
+      "DOC-d6ecc534"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I25.500",
+        "name": "缺血性心肌病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T16:21:02.088359+00:00",
+    "updated_at": "2026-11-23T16:21:02.088359+00:00"
+  },
+  {
+    "candidate_id": "TERM-2F617C2F2280735A",
+    "entity_type": "disease",
+    "name": "快速心房颤动",
+    "local_code": "LOCAL-DIS-66CBDDFD1A",
+    "aliases": [
+      "快速心房颤动",
+      "快速房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-d6ecc534"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I48.X01",
+        "name": "心房颤动",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T16:21:04.108141+00:00",
+    "updated_at": "2026-11-23T16:21:04.108141+00:00"
+  },
+  {
+    "candidate_id": "TERM-E7B75B90E7E57E27",
+    "entity_type": "disease",
+    "name": "猝死",
+    "local_code": "R96.000X001",
+    "aliases": [
+      "猝死"
+    ],
+    "source_doc_ids": [
+      "DOC-d6ecc534"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "R96.000X001",
+        "name": "猝死",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T16:21:05.794681+00:00",
+    "updated_at": "2026-11-23T16:21:05.794681+00:00"
+  },
+  {
+    "candidate_id": "TERM-EC90A661F868AC11",
+    "entity_type": "disease",
+    "name": "病毒性心肌炎",
+    "local_code": "I40.001",
+    "aliases": [
+      "病毒性心肌炎"
+    ],
+    "source_doc_ids": [
+      "DOC-d6ecc534"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I40.001",
+        "name": "病毒性心肌炎",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T16:21:06.209160+00:00",
+    "updated_at": "2026-11-23T16:21:06.209160+00:00"
+  },
+  {
+    "candidate_id": "TERM-2E710FD66B81D910",
+    "entity_type": "disease",
+    "name": "心肌炎",
+    "local_code": "I51.400",
+    "aliases": [
+      "心肌炎"
+    ],
+    "source_doc_ids": [
+      "DOC-d6ecc534"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I51.400",
+        "name": "心肌炎",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T16:21:07.563136+00:00",
+    "updated_at": "2026-11-23T16:21:07.563136+00:00"
+  },
+  {
+    "candidate_id": "TERM-95CEDE58173D6E30",
+    "entity_type": "disease",
+    "name": "持续性室性心动过速",
+    "local_code": "I47.203",
+    "aliases": [
+      "持续性室性心动过速"
+    ],
+    "source_doc_ids": [
+      "DOC-d6ecc534"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I47.203",
+        "name": "持续性室性心动过速",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T16:21:07.910637+00:00",
+    "updated_at": "2026-11-23T16:21:07.910637+00:00"
+  },
+  {
+    "candidate_id": "TERM-4282678A50CF5151",
+    "entity_type": "disease",
+    "name": "白塞氏病",
+    "local_code": "LOCAL-DIS-65DA3D049A",
+    "aliases": [
+      "白塞氏病"
+    ],
+    "source_doc_ids": [
+      "DOC-d6ecc534"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T16:21:08.480149+00:00",
+    "updated_at": "2026-11-23T16:21:08.480149+00:00"
+  },
+  {
+    "candidate_id": "TERM-EC3809E2C83817BF",
+    "entity_type": "disease",
+    "name": "特发性扩张型心肌病",
+    "local_code": "LOCAL-DIS-EAECFE455E",
+    "aliases": [
+      "特发性扩张型心肌病"
+    ],
+    "source_doc_ids": [
+      "DOC-d6ecc534"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I42.000",
+        "name": "扩张型心肌病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I42.900",
+        "name": "心肌病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G72.900",
+        "name": "肌病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T16:21:08.957723+00:00",
+    "updated_at": "2026-11-23T16:21:08.957723+00:00"
+  },
+  {
+    "candidate_id": "TERM-6C8421417EF787FF",
+    "entity_type": "disease",
+    "name": "家族性扩张型心肌病（FDCM）",
+    "local_code": "LOCAL-DIS-5E547F8493",
+    "aliases": [
+      "家族性扩张型心肌病（FDCM）"
+    ],
+    "source_doc_ids": [
+      "DOC-d6ecc534"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I42.000",
+        "name": "扩张型心肌病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I42.900",
+        "name": "心肌病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G72.900",
+        "name": "肌病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T16:21:09.375348+00:00",
+    "updated_at": "2026-11-23T16:21:09.375348+00:00"
+  },
+  {
+    "candidate_id": "TERM-29C4C761F358C1A7",
+    "entity_type": "disease",
+    "name": "家族性扩张型心肌病",
+    "local_code": "LOCAL-DIS-D4AB87F03E",
+    "aliases": [
+      "家族性扩张型心肌病"
+    ],
+    "source_doc_ids": [
+      "DOC-d6ecc534"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I42.000",
+        "name": "扩张型心肌病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I42.900",
+        "name": "心肌病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G72.900",
+        "name": "肌病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T16:21:09.965867+00:00",
+    "updated_at": "2026-11-23T16:21:09.965867+00:00"
+  },
+  {
+    "candidate_id": "TERM-4F920116A1DC46B6",
+    "entity_type": "disease",
+    "name": "心动过速性心肌病",
+    "local_code": "I42.802",
+    "aliases": [
+      "心动过速性心肌病"
+    ],
+    "source_doc_ids": [
+      "DOC-d6ecc534"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I42.802",
+        "name": "心动过速性心肌病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T16:21:10.394204+00:00",
+    "updated_at": "2026-11-23T16:21:10.394204+00:00"
+  },
+  {
+    "candidate_id": "TERM-DEDD6E46C1287685",
+    "entity_type": "disease",
+    "name": "自身免疫性心肌病",
+    "local_code": "LOCAL-DIS-B47A2ECFF7",
+    "aliases": [
+      "自身免疫性心肌病"
+    ],
+    "source_doc_ids": [
+      "DOC-d6ecc534"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I42.900",
+        "name": "心肌病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G72.900",
+        "name": "肌病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T16:21:10.794982+00:00",
+    "updated_at": "2026-11-23T16:21:10.794982+00:00"
+  },
+  {
+    "candidate_id": "TERM-E243EBE7D7C236C4",
+    "entity_type": "disease",
+    "name": "代谢内分泌性和营养性疾病继发的心肌病",
+    "local_code": "LOCAL-DIS-1F06F15BD4",
+    "aliases": [
+      "代谢内分泌性和营养性疾病继发的心肌病"
+    ],
+    "source_doc_ids": [
+      "DOC-d6ecc534"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I42.900",
+        "name": "心肌病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G72.900",
+        "name": "肌病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T16:21:11.450142+00:00",
+    "updated_at": "2026-11-23T16:21:11.450142+00:00"
+  },
+  {
+    "candidate_id": "TERM-CB7E76637AA3C520",
+    "entity_type": "disease",
+    "name": "扩张型心肌病（心衰合并快速房颤）",
+    "local_code": "LOCAL-DIS-CB5E68FFA4",
+    "aliases": [
+      "扩张型心肌病（心衰合并快速房颤）"
+    ],
+    "source_doc_ids": [
+      "DOC-d6ecc534"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I42.000",
+        "name": "扩张型心肌病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I42.900",
+        "name": "心肌病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G72.900",
+        "name": "肌病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T16:21:12.009146+00:00",
+    "updated_at": "2026-11-23T16:21:12.009146+00:00"
+  },
+  {
+    "candidate_id": "TERM-AE9F567D561D58B3",
+    "entity_type": "disease",
+    "name": "扩张型心肌病（心衰）",
+    "local_code": "LOCAL-DIS-A9338EDDD5",
+    "aliases": [
+      "扩张型心肌病（心衰）"
+    ],
+    "source_doc_ids": [
+      "DOC-d6ecc534"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I42.000",
+        "name": "扩张型心肌病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I42.900",
+        "name": "心肌病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G72.900",
+        "name": "肌病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T16:21:12.398326+00:00",
+    "updated_at": "2026-11-23T16:21:12.398326+00:00"
   }
 ]

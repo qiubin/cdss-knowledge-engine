@@ -227,7 +227,7 @@
         "DOC-bb496e56_p3_l101-14",
         "DOC-bb496e56_p4_l15-63"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "created_at": "2026-11-23T10:00:42.792888+00:00",
       "last_import_at": "2026-11-23T10:00:42.801844+00:00",
       "version": 1,
@@ -236,7 +236,10 @@
       "source_doc_ids": [
         "DOC-bb496e56"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-23T15:00:23.635568+00:00",
+      "review_note": "按疾病查看：人工核对后通过勾选实体"
     },
     {
       "id": "ENTITY:western_disease:LOCAL-DC6A19957F",
@@ -549,7 +552,7 @@
         "DOC-bb496e56_p3_l89-100",
         "DOC-bb496e56_p4_l15-63"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "created_at": "2026-11-23T10:00:42.792973+00:00",
       "last_import_at": "2026-11-23T10:00:42.801766+00:00",
       "version": 1,
@@ -558,7 +561,10 @@
       "source_doc_ids": [
         "DOC-bb496e56"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-23T15:00:23.711311+00:00",
+      "review_note": "按疾病查看：人工核对后通过勾选实体"
     },
     {
       "id": "ENTITY:syndrome:TCM_SYN_QI_YIN_XU_XUE_YU",
@@ -578,7 +584,7 @@
         "DOC-bb496e56_p3_l101-14",
         "DOC-bb496e56_p4_l15-63"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "created_at": "2026-11-23T10:00:42.792981+00:00",
       "last_import_at": "2026-11-23T10:00:42.801790+00:00",
       "version": 1,
@@ -587,7 +593,10 @@
       "source_doc_ids": [
         "DOC-bb496e56"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-23T15:00:23.798654+00:00",
+      "review_note": "按疾病查看：人工核对后通过勾选实体"
     },
     {
       "id": "ENTITY:syndrome:TCM_SYN_YANG_QI_KUI_XU_XUE_YU",
@@ -607,7 +616,7 @@
         "DOC-bb496e56_p4_l15-63",
         "DOC-bb496e56_p4_l72-4"
       ],
-      "review_status": "draft",
+      "review_status": "active",
       "created_at": "2026-11-23T10:00:42.792988+00:00",
       "last_import_at": "2026-11-23T10:00:42.801885+00:00",
       "version": 1,
@@ -616,7 +625,10 @@
       "source_doc_ids": [
         "DOC-bb496e56"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-23T15:00:23.877330+00:00",
+      "review_note": "按疾病查看：人工核对后通过勾选实体"
     },
     {
       "id": "ENTITY:syndrome:LOCAL-7F2D45314E",

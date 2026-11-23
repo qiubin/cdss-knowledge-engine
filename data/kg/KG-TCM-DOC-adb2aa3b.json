@@ -3364,7 +3364,7 @@
       "source_refs": [
         "DOC-adb2aa3b_p4_l65-71"
       ],
-      "review_status": "draft",
+      "review_status": "rejected",
       "created_at": "2026-11-23T11:54:29.934044+00:00",
       "last_import_at": "2026-11-23T11:54:29.934044+00:00",
       "version": 1,
@@ -3373,7 +3373,10 @@
       "source_doc_ids": [
         "DOC-adb2aa3b"
       ],
-      "orphaned_from": []
+      "orphaned_from": [],
+      "reviewed_by": "丘丘",
+      "reviewed_at": "2026-11-23T15:01:35.401602+00:00",
+      "review_note": "[证据不足]"
     },
     {
       "id": "ENTITY:care_guidance:LOCAL-52896CCA7A",
