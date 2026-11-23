@@ -8,7 +8,9 @@
       "心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-1ebe1380",
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -19,11 +21,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 5,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:28.821958+00:00",
-    "updated_at": "2026-11-21T04:28:28.821958+00:00"
+    "updated_at": "2026-11-23T08:55:57.841055+00:00"
   },
   {
     "candidate_id": "TERM-0C9C13D20C18A183",
@@ -34,7 +36,8 @@
       "充血性心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -45,11 +48,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 2,
+    "occurrences": 4,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:29.199645+00:00",
-    "updated_at": "2026-11-21T04:28:41.538278+00:00"
+    "updated_at": "2026-11-23T07:08:39.780016+00:00"
   },
   {
     "candidate_id": "TERM-454E8CC4AD2ADB64",
@@ -57,10 +60,15 @@
     "name": "慢性心力衰竭",
     "local_code": "I50.908",
     "aliases": [
+      "HFpEF",
+      "HFrEF",
+      "心衰",
       "慢性心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-1ebe1380",
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -71,11 +79,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 2,
+    "occurrences": 10,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:29.560252+00:00",
-    "updated_at": "2026-11-21T04:28:39.188844+00:00"
+    "updated_at": "2026-11-23T08:55:58.029680+00:00"
   },
   {
     "candidate_id": "TERM-C142ADFB93CFB6FB",
@@ -86,7 +94,8 @@
       "缺血性心肌病心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -115,11 +124,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:30.056056+00:00",
-    "updated_at": "2026-11-21T04:28:30.056056+00:00"
+    "updated_at": "2026-11-23T07:08:31.080820+00:00"
   },
   {
     "candidate_id": "TERM-734C39A676CF8BAF",
@@ -130,7 +139,8 @@
       "射血分数降低性心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -141,11 +151,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:30.475937+00:00",
-    "updated_at": "2026-11-21T04:28:30.475937+00:00"
+    "updated_at": "2026-11-23T07:08:31.518147+00:00"
   },
   {
     "candidate_id": "TERM-CBDC701DA911772E",
@@ -156,7 +166,8 @@
       "缺血性心肌病心功能不全"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -185,11 +196,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:30.916865+00:00",
-    "updated_at": "2026-11-21T04:28:30.916865+00:00"
+    "updated_at": "2026-11-23T07:08:31.730415+00:00"
   },
   {
     "candidate_id": "TERM-FDE54179B9607AE3",
@@ -200,7 +211,8 @@
       "扩张性心肌病心衰"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -217,11 +229,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:31.329018+00:00",
-    "updated_at": "2026-11-21T04:28:31.329018+00:00"
+    "updated_at": "2026-11-23T07:08:31.928215+00:00"
   },
   {
     "candidate_id": "TERM-AF6A93617F546566",
@@ -232,7 +244,8 @@
       "慢性充血性心功能不全"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -243,11 +256,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:31.847284+00:00",
-    "updated_at": "2026-11-21T04:28:31.847284+00:00"
+    "updated_at": "2026-11-23T07:08:32.127363+00:00"
   },
   {
     "candidate_id": "TERM-CE4A827D2E9B9078",
@@ -258,7 +271,8 @@
       "缺血性心脏病心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -281,11 +295,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:32.309951+00:00",
-    "updated_at": "2026-11-21T04:28:32.309951+00:00"
+    "updated_at": "2026-11-23T07:08:32.514470+00:00"
   },
   {
     "candidate_id": "TERM-00060D9463F48DDD",
@@ -296,7 +310,8 @@
       "扩张型心肌病心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -325,11 +340,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 3,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:32.749845+00:00",
-    "updated_at": "2026-11-21T04:28:32.749845+00:00"
+    "updated_at": "2026-11-23T07:08:36.422963+00:00"
   },
   {
     "candidate_id": "TERM-624A549AE3D68DFB",
@@ -340,7 +355,8 @@
       "慢性心力衰竭并低血压"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -363,11 +379,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:33.275917+00:00",
-    "updated_at": "2026-11-21T04:28:33.275917+00:00"
+    "updated_at": "2026-11-23T07:08:33.123298+00:00"
   },
   {
     "candidate_id": "TERM-A00E80284A6C4C38",
@@ -378,7 +394,8 @@
       "慢性收缩性心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -389,11 +406,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 4,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:33.677448+00:00",
-    "updated_at": "2026-11-21T04:28:33.677448+00:00"
+    "updated_at": "2026-11-23T07:08:38.760096+00:00"
   },
   {
     "candidate_id": "TERM-1BF23DCEF4D95E65",
@@ -404,7 +421,8 @@
       "难治性心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -415,11 +433,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:34.039107+00:00",
-    "updated_at": "2026-11-21T04:28:34.039107+00:00"
+    "updated_at": "2026-11-23T07:08:33.689779+00:00"
   },
   {
     "candidate_id": "TERM-6A22D1E888C88FA2",
@@ -430,7 +448,8 @@
       "扩张型心肌病并心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -459,11 +478,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:34.459857+00:00",
-    "updated_at": "2026-11-21T04:28:34.459857+00:00"
+    "updated_at": "2026-11-23T07:08:33.889181+00:00"
   },
   {
     "candidate_id": "TERM-608A42525941E9DB",
@@ -474,7 +493,8 @@
       "重度心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -485,11 +505,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:34.878837+00:00",
-    "updated_at": "2026-11-21T04:28:34.878837+00:00"
+    "updated_at": "2026-11-23T07:08:34.078088+00:00"
   },
   {
     "candidate_id": "TERM-EDB396A77AC631E4",
@@ -526,7 +546,8 @@
       "扩张型心肌病"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -537,11 +558,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 2,
+    "occurrences": 5,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:35.737044+00:00",
-    "updated_at": "2026-11-21T04:28:40.401500+00:00"
+    "updated_at": "2026-11-23T07:08:40.170861+00:00"
   },
   {
     "candidate_id": "TERM-193075F69988F5E8",
@@ -552,15 +573,17 @@
       "慢性心衰"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-1ebe1380",
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "unmatched",
     "suggested_mappings": [],
-    "occurrences": 1,
+    "occurrences": 7,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:36.145643+00:00",
-    "updated_at": "2026-11-21T04:28:36.145643+00:00"
+    "updated_at": "2026-11-23T08:55:59.692946+00:00"
   },
   {
     "candidate_id": "TERM-6BB0E07E39BA3FE2",
@@ -641,7 +664,8 @@
       "高血压心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -658,11 +682,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:37.502627+00:00",
-    "updated_at": "2026-11-21T04:28:37.502627+00:00"
+    "updated_at": "2026-11-23T07:08:37.604091+00:00"
   },
   {
     "candidate_id": "TERM-FB6E41FBFB7A2864",
@@ -673,7 +697,8 @@
       "老年收缩性心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -684,11 +709,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:37.906815+00:00",
-    "updated_at": "2026-11-21T04:28:37.906815+00:00"
+    "updated_at": "2026-11-23T07:08:37.804832+00:00"
   },
   {
     "candidate_id": "TERM-04D301283ACDEE91",
@@ -743,7 +768,8 @@
       "收缩性心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -754,11 +780,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:38.793419+00:00",
-    "updated_at": "2026-11-21T04:28:38.793419+00:00"
+    "updated_at": "2026-11-23T07:08:38.544246+00:00"
   },
   {
     "candidate_id": "TERM-E7EFE078D41BB9D4",
@@ -795,7 +821,8 @@
       "慢性充血性心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -812,11 +839,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 3,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:40.052242+00:00",
-    "updated_at": "2026-11-21T04:28:40.052242+00:00"
+    "updated_at": "2026-11-23T07:08:38.346672+00:00"
   },
   {
     "candidate_id": "TERM-FDDF47D4038B4FD4",
@@ -827,7 +854,8 @@
       "终末期心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -838,11 +866,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:40.808078+00:00",
-    "updated_at": "2026-11-21T04:28:40.808078+00:00"
+    "updated_at": "2026-11-23T07:08:39.385315+00:00"
   },
   {
     "candidate_id": "TERM-27761841059A678E",
@@ -853,7 +881,8 @@
       "顽固性心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -864,11 +893,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:41.189671+00:00",
-    "updated_at": "2026-11-21T04:28:41.189671+00:00"
+    "updated_at": "2026-11-23T07:08:39.596153+00:00"
   },
   {
     "candidate_id": "TERM-B9F0D1EE814B552D",
@@ -1002,7 +1031,8 @@
       "舒张性心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -1013,11 +1043,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:44.466517+00:00",
-    "updated_at": "2026-11-21T04:28:44.466517+00:00"
+    "updated_at": "2026-11-23T07:08:40.549586+00:00"
   },
   {
     "candidate_id": "TERM-D919C7C72F0D95E0",
@@ -1125,7 +1155,8 @@
       "心肌梗死后心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-a1fd4731"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -1142,11 +1173,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:46.592337+00:00",
-    "updated_at": "2026-11-21T04:28:46.592337+00:00"
+    "updated_at": "2026-11-23T07:08:41.178221+00:00"
   },
   {
     "candidate_id": "TERM-24ECC85B691EC4EE",
@@ -1166,5 +1197,1887 @@
     "review_note": "",
     "created_at": "2026-11-21T04:28:47.018499+00:00",
     "updated_at": "2026-11-21T04:28:47.018499+00:00"
+  },
+  {
+    "candidate_id": "TERM-EA837162AF322221",
+    "entity_type": "disease",
+    "name": "肥厚型心肌病",
+    "local_code": "LOCAL-DIS-7CA8570E19",
+    "aliases": [
+      "HCM",
+      "肥厚型心肌病"
+    ],
+    "source_doc_ids": [
+      "DOC-482cabea"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I42.200",
+        "name": "肥厚型心肌病，其他的",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I42.100",
+        "name": "梗阻性肥厚型心肌病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I42.201",
+        "name": "心尖肥厚型心肌病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I42.900",
+        "name": "心肌病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G72.900",
+        "name": "肌病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 3,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T06:57:37.347339+00:00",
+    "updated_at": "2026-11-23T07:21:00.078207+00:00"
+  },
+  {
+    "candidate_id": "TERM-4255ED582BA8ABF9",
+    "entity_type": "disease",
+    "name": "hypertrophic cardiomyopathy",
+    "local_code": "LOCAL-DIS-7C311F73F5",
+    "aliases": [
+      "hypertrophic cardiomyopathy"
+    ],
+    "source_doc_ids": [
+      "DOC-482cabea"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T06:57:37.541704+00:00",
+    "updated_at": "2026-11-23T06:57:37.541704+00:00"
+  },
+  {
+    "candidate_id": "TERM-B3155FB0B9975E88",
+    "entity_type": "disease",
+    "name": "heart failure with preserved ejection fraction",
+    "local_code": "LOCAL-DIS-B43864F745",
+    "aliases": [
+      "heart failure with preserved ejection fraction"
+    ],
+    "source_doc_ids": [
+      "DOC-482cabea"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T06:57:37.739937+00:00",
+    "updated_at": "2026-11-23T06:57:37.739937+00:00"
+  },
+  {
+    "candidate_id": "TERM-083C3EACD0990D90",
+    "entity_type": "disease",
+    "name": "hypertrophic cardiomyopathy with restrictive phenotype",
+    "local_code": "LOCAL-DIS-D58676DDD8",
+    "aliases": [
+      "hypertrophic cardiomyopathy with restrictive phenotype"
+    ],
+    "source_doc_ids": [
+      "DOC-482cabea"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T06:57:37.942650+00:00",
+    "updated_at": "2026-11-23T06:57:37.942650+00:00"
+  },
+  {
+    "candidate_id": "TERM-3275E53B3F91A136",
+    "entity_type": "disease",
+    "name": "exercise-induced pulmonary hypertension",
+    "local_code": "LOCAL-DIS-BB3B9149B9",
+    "aliases": [
+      "exercise-induced pulmonary hypertension"
+    ],
+    "source_doc_ids": [
+      "DOC-482cabea"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T06:57:38.144314+00:00",
+    "updated_at": "2026-11-23T06:57:38.144314+00:00"
+  },
+  {
+    "candidate_id": "TERM-B79E4D9043F48B2F",
+    "entity_type": "disease",
+    "name": "symptomatic hypertrophic obstructive cardiomyopathy",
+    "local_code": "LOCAL-DIS-95013D25F6",
+    "aliases": [
+      "symptomatic hypertrophic obstructive cardiomyopathy"
+    ],
+    "source_doc_ids": [
+      "DOC-482cabea"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T06:57:38.344880+00:00",
+    "updated_at": "2026-11-23T06:57:38.344880+00:00"
+  },
+  {
+    "candidate_id": "TERM-C6D3D3E20283C831",
+    "entity_type": "disease",
+    "name": "obstructive hypertrophic cardiomyopathy",
+    "local_code": "LOCAL-DIS-720A33A3C3",
+    "aliases": [
+      "obstructive hypertrophic cardiomyopathy"
+    ],
+    "source_doc_ids": [
+      "DOC-482cabea"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T06:57:38.549712+00:00",
+    "updated_at": "2026-11-23T06:57:38.549712+00:00"
+  },
+  {
+    "candidate_id": "TERM-78422A68438C3EB5",
+    "entity_type": "disease",
+    "name": "转甲状腺素蛋白相关心脏淀粉样变",
+    "local_code": "LOCAL-DIS-E9A44017C2",
+    "aliases": [
+      "转甲状腺素蛋白相关心脏淀粉样变"
+    ],
+    "source_doc_ids": [
+      "DOC-482cabea"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "E85.900",
+        "name": "淀粉样变",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T06:57:38.705800+00:00",
+    "updated_at": "2026-11-23T06:57:38.705800+00:00"
+  },
+  {
+    "candidate_id": "TERM-3F959B4401569083",
+    "entity_type": "disease",
+    "name": "转甲状腺素蛋白心脏淀粉样变",
+    "local_code": "LOCAL-DIS-97CDA039E6",
+    "aliases": [
+      "转甲状腺素蛋白心脏淀粉样变"
+    ],
+    "source_doc_ids": [
+      "DOC-482cabea"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "E85.900",
+        "name": "淀粉样变",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T06:57:38.947816+00:00",
+    "updated_at": "2026-11-23T06:57:38.947816+00:00"
+  },
+  {
+    "candidate_id": "TERM-995BC3963FF749A1",
+    "entity_type": "disease",
+    "name": "Anderson-Fabry disease",
+    "local_code": "LOCAL-DIS-08C547F952",
+    "aliases": [
+      "Anderson-Fabry disease"
+    ],
+    "source_doc_ids": [
+      "DOC-482cabea"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T06:57:39.145284+00:00",
+    "updated_at": "2026-11-23T06:57:39.145284+00:00"
+  },
+  {
+    "candidate_id": "TERM-CC44E29C795C554D",
+    "entity_type": "disease",
+    "name": "Danon disease",
+    "local_code": "LOCAL-DIS-08AF754CD5",
+    "aliases": [
+      "Danon disease"
+    ],
+    "source_doc_ids": [
+      "DOC-482cabea"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T06:57:39.342339+00:00",
+    "updated_at": "2026-11-23T06:57:39.342339+00:00"
+  },
+  {
+    "candidate_id": "TERM-076C379601A8E868",
+    "entity_type": "disease",
+    "name": "Wolff-Parkinson-White syndrome",
+    "local_code": "LOCAL-DIS-4E59D99D73",
+    "aliases": [
+      "Wolff-Parkinson-White syndrome"
+    ],
+    "source_doc_ids": [
+      "DOC-482cabea"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T06:57:39.541937+00:00",
+    "updated_at": "2026-11-23T06:57:39.541937+00:00"
+  },
+  {
+    "candidate_id": "TERM-75F69F1177A223AA",
+    "entity_type": "disease",
+    "name": "Adenosine monophosphate-activated protein kinase disease",
+    "local_code": "LOCAL-DIS-AFD62F28BC",
+    "aliases": [
+      "Adenosine monophosphate-activated protein kinase disease"
+    ],
+    "source_doc_ids": [
+      "DOC-482cabea"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T06:57:39.694737+00:00",
+    "updated_at": "2026-11-23T06:57:39.694737+00:00"
+  },
+  {
+    "candidate_id": "TERM-FEE6081FD4ADA58A",
+    "entity_type": "disease",
+    "name": "Glycogen storage cardiomyopathy (PRKAG2)",
+    "local_code": "LOCAL-DIS-1822C1CA10",
+    "aliases": [
+      "Glycogen storage cardiomyopathy (PRKAG2)"
+    ],
+    "source_doc_ids": [
+      "DOC-482cabea"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T06:57:39.932227+00:00",
+    "updated_at": "2026-11-23T06:57:39.932227+00:00"
+  },
+  {
+    "candidate_id": "TERM-B0DED8156E414225",
+    "entity_type": "disease",
+    "name": "Friedreich ataxia cardiomyopathy",
+    "local_code": "LOCAL-DIS-3E87AF3464",
+    "aliases": [
+      "Friedreich ataxia cardiomyopathy"
+    ],
+    "source_doc_ids": [
+      "DOC-482cabea"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T06:57:40.134447+00:00",
+    "updated_at": "2026-11-23T06:57:40.134447+00:00"
+  },
+  {
+    "candidate_id": "TERM-02B6713059D3C434",
+    "entity_type": "disease",
+    "name": "RASopathies",
+    "local_code": "LOCAL-DIS-CA341CE3DF",
+    "aliases": [
+      "RASopathies"
+    ],
+    "source_doc_ids": [
+      "DOC-482cabea"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T06:57:40.286309+00:00",
+    "updated_at": "2026-11-23T06:57:40.286309+00:00"
+  },
+  {
+    "candidate_id": "TERM-D8640867528D01E8",
+    "entity_type": "disease",
+    "name": "肥厚型梗阻性心肌病",
+    "local_code": "I42.101",
+    "aliases": [
+      "肥厚型梗阻性心肌病"
+    ],
+    "source_doc_ids": [
+      "DOC-482cabea"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I42.101",
+        "name": "肥厚型梗阻性心肌病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T06:57:40.493172+00:00",
+    "updated_at": "2026-11-23T06:57:40.493172+00:00"
+  },
+  {
+    "candidate_id": "TERM-256658FB03760486",
+    "entity_type": "disease",
+    "name": "老年慢性心力衰竭",
+    "local_code": "LOCAL-DIS-2CC6F7DBE8",
+    "aliases": [
+      "老年慢性心力衰竭"
+    ],
+    "source_doc_ids": [
+      "DOC-a1fd4731"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.908",
+        "name": "慢性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T07:08:30.881572+00:00",
+    "updated_at": "2026-11-23T07:08:36.766755+00:00"
+  },
+  {
+    "candidate_id": "TERM-C0DFAA7C806E328F",
+    "entity_type": "disease",
+    "name": "冠心病心力衰竭",
+    "local_code": "LOCAL-DIS-497DDD51A0",
+    "aliases": [
+      "冠心病心力衰竭"
+    ],
+    "source_doc_ids": [
+      "DOC-a1fd4731"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T07:08:31.275090+00:00",
+    "updated_at": "2026-11-23T07:08:35.817009+00:00"
+  },
+  {
+    "candidate_id": "TERM-F31759137A67AE75",
+    "entity_type": "disease",
+    "name": "慢性心力衰竭（气阴两虚、心血瘀阻证）",
+    "local_code": "LOCAL-DIS-0DCDA636E2",
+    "aliases": [
+      "慢性心力衰竭（气阴两虚、心血瘀阻证）"
+    ],
+    "source_doc_ids": [
+      "DOC-a1fd4731"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.908",
+        "name": "慢性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "ZZXX30",
+        "name": "心血瘀阻证",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T07:08:32.921493+00:00",
+    "updated_at": "2026-11-23T07:08:32.921493+00:00"
+  },
+  {
+    "candidate_id": "TERM-B1026CD791CB6244",
+    "entity_type": "disease",
+    "name": "气阴两虚型慢性心力衰竭",
+    "local_code": "LOCAL-DIS-28E8983B4A",
+    "aliases": [
+      "气阴两虚型慢性心力衰竭"
+    ],
+    "source_doc_ids": [
+      "DOC-a1fd4731"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.908",
+        "name": "慢性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T07:08:33.320885+00:00",
+    "updated_at": "2026-11-23T07:08:33.320885+00:00"
+  },
+  {
+    "candidate_id": "TERM-D1A0FFB3236EEC9A",
+    "entity_type": "disease",
+    "name": "冠心病心力衰竭合并心绞痛",
+    "local_code": "LOCAL-DIS-6CFF997A14",
+    "aliases": [
+      "冠心病心力衰竭合并心绞痛"
+    ],
+    "source_doc_ids": [
+      "DOC-a1fd4731"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I20.900",
+        "name": "心绞痛",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T07:08:34.266931+00:00",
+    "updated_at": "2026-11-23T07:08:34.266931+00:00"
+  },
+  {
+    "candidate_id": "TERM-5083E8158672E8F1",
+    "entity_type": "disease",
+    "name": "慢性心力衰竭伴低血压",
+    "local_code": "LOCAL-DIS-008D164C6C",
+    "aliases": [
+      "慢性心力衰竭伴低血压"
+    ],
+    "source_doc_ids": [
+      "DOC-a1fd4731"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.908",
+        "name": "慢性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I95.900",
+        "name": "低血压",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T07:08:34.781229+00:00",
+    "updated_at": "2026-11-23T07:08:34.781229+00:00"
+  },
+  {
+    "candidate_id": "TERM-B8528F4196FF3FC5",
+    "entity_type": "disease",
+    "name": "慢性心衰（阳虚水泛型）",
+    "local_code": "LOCAL-DIS-813EE473EE",
+    "aliases": [
+      "慢性心衰（阳虚水泛型）"
+    ],
+    "source_doc_ids": [
+      "DOC-a1fd4731"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T07:08:35.028806+00:00",
+    "updated_at": "2026-11-23T07:08:35.028806+00:00"
+  },
+  {
+    "candidate_id": "TERM-8F648D9C031D04BD",
+    "entity_type": "disease",
+    "name": "心肾阳虚型慢性心力衰竭",
+    "local_code": "LOCAL-DIS-987BE46FBE",
+    "aliases": [
+      "心肾阳虚型慢性心力衰竭"
+    ],
+    "source_doc_ids": [
+      "DOC-a1fd4731"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.908",
+        "name": "慢性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T07:08:35.230488+00:00",
+    "updated_at": "2026-11-23T07:08:35.230488+00:00"
+  },
+  {
+    "candidate_id": "TERM-3469666233952F72",
+    "entity_type": "disease",
+    "name": "射血分数降低的慢性心力衰竭（阳虚水泛证）",
+    "local_code": "LOCAL-DIS-18CB9229A6",
+    "aliases": [
+      "射血分数降低的慢性心力衰竭（阳虚水泛证）"
+    ],
+    "source_doc_ids": [
+      "DOC-a1fd4731"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.908",
+        "name": "慢性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "ZYAT20",
+        "name": "阳虚水泛证",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T07:08:35.436074+00:00",
+    "updated_at": "2026-11-23T07:08:35.436074+00:00"
+  },
+  {
+    "candidate_id": "TERM-7719726A91A44B08",
+    "entity_type": "disease",
+    "name": "慢性心力衰竭阳虚水泛证",
+    "local_code": "LOCAL-DIS-4E9FBEC750",
+    "aliases": [
+      "慢性心力衰竭阳虚水泛证"
+    ],
+    "source_doc_ids": [
+      "DOC-a1fd4731"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.908",
+        "name": "慢性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "ZYAT20",
+        "name": "阳虚水泛证",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T07:08:36.019741+00:00",
+    "updated_at": "2026-11-23T07:08:36.019741+00:00"
+  },
+  {
+    "candidate_id": "TERM-174BCCEFC3716240",
+    "entity_type": "disease",
+    "name": "阳虚血瘀型慢性收缩性心力衰竭",
+    "local_code": "LOCAL-DIS-C42804A26A",
+    "aliases": [
+      "阳虚血瘀型慢性收缩性心力衰竭"
+    ],
+    "source_doc_ids": [
+      "DOC-a1fd4731"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T07:08:36.218485+00:00",
+    "updated_at": "2026-11-23T07:08:36.218485+00:00"
+  },
+  {
+    "candidate_id": "TERM-5A7CD245BBDE1D8A",
+    "entity_type": "disease",
+    "name": "老年充血性心力衰竭",
+    "local_code": "LOCAL-DIS-1576AD9C56",
+    "aliases": [
+      "老年充血性心力衰竭"
+    ],
+    "source_doc_ids": [
+      "DOC-a1fd4731"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.000",
+        "name": "充血性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T07:08:36.618928+00:00",
+    "updated_at": "2026-11-23T07:08:36.618928+00:00"
+  },
+  {
+    "candidate_id": "TERM-1EC698584E602F7C",
+    "entity_type": "disease",
+    "name": "急性心肌梗死后心力衰竭合并低血压状态",
+    "local_code": "LOCAL-DIS-6C19B24D84",
+    "aliases": [
+      "急性心肌梗死后心力衰竭合并低血压状态"
+    ],
+    "source_doc_ids": [
+      "DOC-a1fd4731"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I21.900",
+        "name": "急性心肌梗死",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I21.900X011",
+        "name": "心肌梗死",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I95.900",
+        "name": "低血压",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T07:08:37.404651+00:00",
+    "updated_at": "2026-11-23T07:08:37.404651+00:00"
+  },
+  {
+    "candidate_id": "TERM-8493277E4CF0B890",
+    "entity_type": "disease",
+    "name": "扩张型心肌病致心力衰竭",
+    "local_code": "LOCAL-DIS-DF5AFC1E7F",
+    "aliases": [
+      "扩张型心肌病致心力衰竭"
+    ],
+    "source_doc_ids": [
+      "DOC-a1fd4731"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I42.000",
+        "name": "扩张型心肌病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I42.900",
+        "name": "心肌病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G72.900",
+        "name": "肌病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T07:08:38.982295+00:00",
+    "updated_at": "2026-11-23T07:08:38.982295+00:00"
+  },
+  {
+    "candidate_id": "TERM-5066C7071CBD1BF9",
+    "entity_type": "disease",
+    "name": "窦性心动过缓",
+    "local_code": "R00.100X001",
+    "aliases": [
+      "窦性心动过缓"
+    ],
+    "source_doc_ids": [
+      "DOC-a1fd4731"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "R00.100X001",
+        "name": "窦性心动过缓",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T07:08:39.132664+00:00",
+    "updated_at": "2026-11-23T07:08:39.132664+00:00"
+  },
+  {
+    "candidate_id": "TERM-A20AA0EAEC1009D3",
+    "entity_type": "disease",
+    "name": "冠心病慢性心力衰竭",
+    "local_code": "LOCAL-DIS-9CC69FCEA1",
+    "aliases": [
+      "冠心病慢性心力衰竭"
+    ],
+    "source_doc_ids": [
+      "DOC-a1fd4731"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.908",
+        "name": "慢性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T07:08:39.989784+00:00",
+    "updated_at": "2026-11-23T07:08:41.388388+00:00"
+  },
+  {
+    "candidate_id": "TERM-929B18F2D62AB7B7",
+    "entity_type": "disease",
+    "name": "缺血性心脏病合并心力衰竭",
+    "local_code": "LOCAL-DIS-3F562B1503",
+    "aliases": [
+      "缺血性心脏病合并心力衰竭"
+    ],
+    "source_doc_ids": [
+      "DOC-a1fd4731"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I25.900X002",
+        "name": "缺血性心脏病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I51.900",
+        "name": "心脏病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T07:08:40.325569+00:00",
+    "updated_at": "2026-11-23T07:08:40.325569+00:00"
+  },
+  {
+    "candidate_id": "TERM-1A8E6A603D6B3029",
+    "entity_type": "disease",
+    "name": "高血压并舒张性心力衰竭",
+    "local_code": "LOCAL-DIS-FF36EA86EA",
+    "aliases": [
+      "高血压并舒张性心力衰竭"
+    ],
+    "source_doc_ids": [
+      "DOC-a1fd4731"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.900X019",
+        "name": "舒张性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I10.X00X002",
+        "name": "高血压",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T07:08:40.757992+00:00",
+    "updated_at": "2026-11-23T07:08:40.757992+00:00"
+  },
+  {
+    "candidate_id": "TERM-5DA55F4C6393396C",
+    "entity_type": "disease",
+    "name": "糖尿病伴射血分数保留心力衰竭",
+    "local_code": "LOCAL-DIS-4144A3AB9F",
+    "aliases": [
+      "糖尿病伴射血分数保留心力衰竭"
+    ],
+    "source_doc_ids": [
+      "DOC-a1fd4731"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "E14.900X001",
+        "name": "糖尿病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "R81.X00",
+        "name": "糖尿",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T07:08:40.965274+00:00",
+    "updated_at": "2026-11-23T07:08:40.965274+00:00"
+  },
+  {
+    "candidate_id": "TERM-BA2099A2AC0EE0AD",
+    "entity_type": "disease",
+    "name": "射血分数降低的心力衰竭",
+    "local_code": "LOCAL-DIS-88342BF8C3",
+    "aliases": [
+      "HFrEF",
+      "heart failure with reduced ejection fraction",
+      "射血分数降低的心力衰竭",
+      "心衰"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.000X005",
+        "name": "右心室衰竭(继发于左心衰竭)",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.103",
+        "name": "左心衰竭合并急性肺水肿",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "O99.400X023",
+        "name": "妊娠合并左心衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.000X006",
+        "name": "急性右心衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.101",
+        "name": "急性左心衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:51.194877+00:00",
+    "updated_at": "2026-11-23T08:55:52.274737+00:00"
+  },
+  {
+    "candidate_id": "TERM-5B68ADC60EA65AF3",
+    "entity_type": "disease",
+    "name": "射血分数保留的心力衰竭",
+    "local_code": "LOCAL-DIS-8D2C213D78",
+    "aliases": [
+      "HFpEF",
+      "heart failure with preserved ejection fraction",
+      "射血分数保留的心力衰竭"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:51.523078+00:00",
+    "updated_at": "2026-11-23T08:55:52.699496+00:00"
+  },
+  {
+    "candidate_id": "TERM-D202A15255D40E88",
+    "entity_type": "disease",
+    "name": "慢性心力衰竭伴射血分数降低",
+    "local_code": "LOCAL-DIS-C3C226A8B5",
+    "aliases": [
+      "HFrEF",
+      "慢性心力衰竭伴射血分数降低"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.908",
+        "name": "慢性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:52.854174+00:00",
+    "updated_at": "2026-11-23T08:55:52.854174+00:00"
+  },
+  {
+    "candidate_id": "TERM-6646368F8D95371E",
+    "entity_type": "disease",
+    "name": "慢性心力衰竭伴射血分数保留",
+    "local_code": "LOCAL-DIS-8D1F9292C5",
+    "aliases": [
+      "HFpEF",
+      "慢性心力衰竭伴射血分数保留"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.908",
+        "name": "慢性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:53.087917+00:00",
+    "updated_at": "2026-11-23T08:55:53.087917+00:00"
+  },
+  {
+    "candidate_id": "TERM-00A0E55765AF1252",
+    "entity_type": "disease",
+    "name": "慢性心力衰竭伴射血分数中间范围",
+    "local_code": "LOCAL-DIS-7827BA37B7",
+    "aliases": [
+      "HFmrEF",
+      "慢性心力衰竭伴射血分数中间范围"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.908",
+        "name": "慢性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:53.341631+00:00",
+    "updated_at": "2026-11-23T08:55:53.341631+00:00"
+  },
+  {
+    "candidate_id": "TERM-272552CA081AFED9",
+    "entity_type": "disease",
+    "name": "慢性射血分数降低的心力衰竭",
+    "local_code": "LOCAL-DIS-60E91EF72C",
+    "aliases": [
+      "HFrEF",
+      "慢性射血分数降低的心力衰竭"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:53.493914+00:00",
+    "updated_at": "2026-11-23T08:55:53.493914+00:00"
+  },
+  {
+    "candidate_id": "TERM-A4AB56BE5F1F80CF",
+    "entity_type": "disease",
+    "name": "慢性心力衰竭（射血分数降低型）",
+    "local_code": "LOCAL-DIS-ED09541B65",
+    "aliases": [
+      "HFrEF",
+      "慢性心力衰竭（射血分数降低型）"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.908",
+        "name": "慢性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:53.734739+00:00",
+    "updated_at": "2026-11-23T08:55:53.734739+00:00"
+  },
+  {
+    "candidate_id": "TERM-A0193348942D7B29",
+    "entity_type": "disease",
+    "name": "高血压病",
+    "local_code": "LOCAL-DIS-E3C66B2269",
+    "aliases": [
+      "高血压病"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I10.X00X024",
+        "name": "高血压病1级（极高危）",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I10.X00X028",
+        "name": "高血压病2级（极高危）",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I10.X00X032",
+        "name": "高血压病3级（极高危）",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I10.X00X021",
+        "name": "高血压病1级（低危）",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I10.X00X022",
+        "name": "高血压病1级（中危）",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:54.096737+00:00",
+    "updated_at": "2026-11-23T08:55:54.096737+00:00"
+  },
+  {
+    "candidate_id": "TERM-5A89C915FCFB4BF9",
+    "entity_type": "disease",
+    "name": "冠心病心绞痛",
+    "local_code": "LOCAL-DIS-5531964741",
+    "aliases": [
+      "冠心病心绞痛"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I20.900",
+        "name": "心绞痛",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:54.497338+00:00",
+    "updated_at": "2026-11-23T08:55:54.497338+00:00"
+  },
+  {
+    "candidate_id": "TERM-0CE1B9D4722ABBCD",
+    "entity_type": "disease",
+    "name": "心肌梗死",
+    "local_code": "I21.900X011",
+    "aliases": [
+      "心肌梗死"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I21.900X011",
+        "name": "心肌梗死",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:54.788945+00:00",
+    "updated_at": "2026-11-23T08:55:54.788945+00:00"
+  },
+  {
+    "candidate_id": "TERM-41EA901346EB3C1A",
+    "entity_type": "disease",
+    "name": "心律失常",
+    "local_code": "I49.900",
+    "aliases": [
+      "心律失常"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I49.900",
+        "name": "心律失常",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:55.171328+00:00",
+    "updated_at": "2026-11-23T08:55:55.171328+00:00"
+  },
+  {
+    "candidate_id": "TERM-34038851D955C42C",
+    "entity_type": "disease",
+    "name": "急性心衰",
+    "local_code": "LOCAL-DIS-96D80404EC",
+    "aliases": [
+      "急性心衰"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:56.646366+00:00",
+    "updated_at": "2026-11-23T08:55:57.448574+00:00"
+  },
+  {
+    "candidate_id": "TERM-1ED0897F5602CDCB",
+    "entity_type": "disease",
+    "name": "心衰",
+    "local_code": "LOCAL-DIS-AD1D4ED145",
+    "aliases": [
+      "心衰"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.000X005",
+        "name": "右心室衰竭(继发于左心衰竭)",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.103",
+        "name": "左心衰竭合并急性肺水肿",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "O99.400X023",
+        "name": "妊娠合并左心衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.000X006",
+        "name": "急性右心衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.101",
+        "name": "急性左心衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:57.614300+00:00",
+    "updated_at": "2026-11-23T08:56:00.308848+00:00"
+  },
+  {
+    "candidate_id": "TERM-E29FB533EB3D3368",
+    "entity_type": "disease",
+    "name": "阳气亏虚血瘀证",
+    "local_code": "LOCAL-DIS-9D272FCA27",
+    "aliases": [
+      "阳气亏虚血瘀证"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "ZYX120",
+        "name": "血瘀证",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:58.183311+00:00",
+    "updated_at": "2026-11-23T08:56:00.525813+00:00"
+  },
+  {
+    "candidate_id": "TERM-9B861756D57366F6",
+    "entity_type": "disease",
+    "name": "兼痰饮",
+    "local_code": "LOCAL-DIS-90A059B8F6",
+    "aliases": [
+      "兼痰饮"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:58.430582+00:00",
+    "updated_at": "2026-11-23T08:55:58.430582+00:00"
+  },
+  {
+    "candidate_id": "TERM-EE68BF4AA18D6B33",
+    "entity_type": "disease",
+    "name": "HFmrEF",
+    "local_code": "LOCAL-DIS-A02DBA3464",
+    "aliases": [
+      "HFmrEF"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:58.647792+00:00",
+    "updated_at": "2026-11-23T08:55:58.647792+00:00"
+  },
+  {
+    "candidate_id": "TERM-24851CB2A3BF6BF7",
+    "entity_type": "disease",
+    "name": "HFrEF",
+    "local_code": "LOCAL-DIS-4823A19F3E",
+    "aliases": [
+      "HFrEF"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:58.801507+00:00",
+    "updated_at": "2026-11-23T08:55:58.801507+00:00"
+  },
+  {
+    "candidate_id": "TERM-A2C3FE3D67BDC9A2",
+    "entity_type": "disease",
+    "name": "HFpEF",
+    "local_code": "LOCAL-DIS-83CCD8B0FD",
+    "aliases": [
+      "HFpEF"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:59.046575+00:00",
+    "updated_at": "2026-11-23T08:55:59.288924+00:00"
+  },
+  {
+    "candidate_id": "TERM-6E5638028CA700D4",
+    "entity_type": "disease",
+    "name": "气虚血瘀证",
+    "local_code": "ZYVXM0",
+    "aliases": [
+      "气虚血瘀证"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "ZYVXM0",
+        "name": "气虚血瘀证",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:59.445056+00:00",
+    "updated_at": "2026-11-23T08:55:59.445056+00:00"
+  },
+  {
+    "candidate_id": "TERM-75F7D141DD9EFFBC",
+    "entity_type": "disease",
+    "name": "重度心衰",
+    "local_code": "LOCAL-DIS-F677337856",
+    "aliases": [
+      "重度心衰"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:55:59.904095+00:00",
+    "updated_at": "2026-11-23T08:55:59.904095+00:00"
+  },
+  {
+    "candidate_id": "TERM-0D0153CE9E259DF0",
+    "entity_type": "disease",
+    "name": "轻中度心衰",
+    "local_code": "LOCAL-DIS-2C9C2CED44",
+    "aliases": [
+      "轻中度心衰"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:56:00.059999+00:00",
+    "updated_at": "2026-11-23T08:56:00.059999+00:00"
+  },
+  {
+    "candidate_id": "TERM-751C313398414001",
+    "entity_type": "disease",
+    "name": "慢性心力衰竭（射血分数降低型，阳气亏虚血瘀证）",
+    "local_code": "LOCAL-DIS-33EF35707A",
+    "aliases": [
+      "慢性心力衰竭（射血分数降低型，阳气亏虚血瘀证）"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.908",
+        "name": "慢性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "ZYX120",
+        "name": "血瘀证",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:56:00.681715+00:00",
+    "updated_at": "2026-11-23T08:56:00.681715+00:00"
+  },
+  {
+    "candidate_id": "TERM-8CA1ED3EDFA0902A",
+    "entity_type": "disease",
+    "name": "慢性心力衰竭中医诊疗指南（2022年）",
+    "local_code": "LOCAL-DIS-4518FA0F45",
+    "aliases": [
+      "慢性心力衰竭中医诊疗指南（2022年）"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.908",
+        "name": "慢性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 3,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:56:00.930512+00:00",
+    "updated_at": "2026-11-23T08:56:01.292396+00:00"
+  },
+  {
+    "candidate_id": "TERM-FAF782B47DED3F57",
+    "entity_type": "disease",
+    "name": "慢性心力衰竭（射血分数保留型）阳气亏虚血瘀证",
+    "local_code": "LOCAL-DIS-844C6B13E8",
+    "aliases": [
+      "慢性心力衰竭（射血分数保留型）阳气亏虚血瘀证"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.908",
+        "name": "慢性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "ZYX120",
+        "name": "血瘀证",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:56:01.542744+00:00",
+    "updated_at": "2026-11-23T08:56:01.542744+00:00"
+  },
+  {
+    "candidate_id": "TERM-97793FDF5A50FDCD",
+    "entity_type": "disease",
+    "name": "慢性心力衰竭（射血分数保留型）气虚血瘀证/气阴两虚血瘀证/阳气亏虚血瘀证",
+    "local_code": "LOCAL-DIS-EF1040C0BF",
+    "aliases": [
+      "慢性心力衰竭（射血分数保留型）气虚血瘀证/气阴两虚血瘀证/阳气亏虚血瘀证"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.908",
+        "name": "慢性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "ZYVXM0",
+        "name": "气虚血瘀证",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "ZYX120",
+        "name": "血瘀证",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:56:01.751098+00:00",
+    "updated_at": "2026-11-23T08:56:01.751098+00:00"
+  },
+  {
+    "candidate_id": "TERM-3AC25F96114A3057",
+    "entity_type": "disease",
+    "name": "重度慢性心力衰竭",
+    "local_code": "LOCAL-DIS-3FC40973D7",
+    "aliases": [
+      "重度慢性心力衰竭"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.908",
+        "name": "慢性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:56:01.905573+00:00",
+    "updated_at": "2026-11-23T08:56:01.905573+00:00"
+  },
+  {
+    "candidate_id": "TERM-CE0B6DDEBAC54BE6",
+    "entity_type": "disease",
+    "name": "轻中度慢性心力衰竭",
+    "local_code": "LOCAL-DIS-CED54261A4",
+    "aliases": [
+      "轻中度慢性心力衰竭"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.908",
+        "name": "慢性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:56:02.150794+00:00",
+    "updated_at": "2026-11-23T08:56:02.150794+00:00"
+  },
+  {
+    "candidate_id": "TERM-3C730A0DFF4E1908",
+    "entity_type": "disease",
+    "name": "慢性心力衰竭阳气亏虚血瘀证",
+    "local_code": "LOCAL-DIS-8090979EB5",
+    "aliases": [
+      "慢性心力衰竭阳气亏虚血瘀证"
+    ],
+    "source_doc_ids": [
+      "DOC-1ebe1380"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I50.908",
+        "name": "慢性心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I50.900",
+        "name": "心力衰竭",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "ZYX120",
+        "name": "血瘀证",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-23T08:56:02.353914+00:00",
+    "updated_at": "2026-11-23T08:56:02.353914+00:00"
   }
 ]

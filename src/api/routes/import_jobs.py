@@ -11,7 +11,7 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from src.api.import_job_manager import (
     FAILED, SUCCEEDED, STOPPED, ImportController, ImportJob, manager,
 )
-from src.extraction.auto_pipeline import run_auto_pipeline
+from src.extraction.auto_pipeline import AUTO_TEMPLATE_ID, run_auto_pipeline
 from src.extraction.domain_detection import detect_guideline_domain
 from src.extraction.graph_binding import resolve_upload_graph_filename
 from src.extraction.repository import ExtractionConfigRepository
@@ -80,103 +80,149 @@ async def _run_template_job(
         "entity_count": len(provider.entities),
         "relation_count": len(provider.suggested_relations),
         "rule_count": len(provider.suggested_rules),
+        "coverage": (provider.metadata or {}).get("coverage") or {},
         "warnings": all_warnings,
     }
+
+
+def _persist_auto_document(doc_id, doc_title, parsed, file_path, result,
+                           template_id: str = "", template_name: str = ""):
+    """Keep the document result consistent with the imported auto package."""
+    from .pdf import _persist_doc, _doc_store, _now
+    record = {
+        "doc_id": doc_id, "doc_title": doc_title, "parsed": parsed,
+        "file_path": str(file_path), "uploaded_at": _now(),
+        "entities": result.get("entities") or [],
+        "suggested_relations": result.get("relations") or [],
+        "suggested_rules": result.get("rules") or [],
+        "extraction": {
+            "mode": "auto", "domain": "western",
+            "template_id": template_id or AUTO_TEMPLATE_ID,
+            "template_name": template_name or "通用指南自动抽取模板",
+            "graph_filename": result.get("graph_filename") or "",
+            "metadata": result.get("metadata") or {}, "warnings": result.get("warnings") or [],
+        },
+    }
+    _persist_doc(record)
+    _doc_store[doc_id] = record
+
+
+async def _run_tcm_template_job(controller, *, parsed, file_path, doc_id, doc_title,
+                                graph_filename: str, template) -> Dict[str, Any]:
+    """中医指南作业体：中医专用模板抽取 → 知识包生成与入库。
+
+    辨病辨证结果与西医图谱分开维护；relation 门禁为 0 时中止入库但保留审核区数据。
+    """
+    template = template or extraction_templates.get("TCM_GUIDELINE_V3")
+    graph_name = resolve_upload_graph_filename(template, graph_filename or f"KG-TCM-{doc_id}.json")
+    result = await _run_template_job(
+        controller, file_path=file_path, doc_id=doc_id, doc_title=doc_title,
+        mode="template-llm", template_id=template.template_id,
+        graph_name=graph_name,
+    )
+    coverage = result.get("coverage") or {}
+    if coverage.get("complete") is False:
+        raise ValueError(
+            "中医指南解析覆盖不完整，已停止自动入库："
+            f"片段共 {coverage.get('total', 0)} 个，模型响应 {coverage.get('processed', 0)} 个，"
+            f"失败 {coverage.get('failed', 0)} 个，未安排 {coverage.get('not_scheduled', 0)} 个。"
+            "解析结果已保留，请稍后重试失败片段"
+        )
+    if not result.get("relation_count"):
+        raise ValueError(
+            "中医专用模板未生成任何关系，已停止自动入库；解析结果已保留在审核区，"
+            "可人工补全实体关系后手动生成知识包，或检查抽取告警后重试"
+        )
+    from .guide_packages import (
+        GuidePackageGenerateRequest, GuidePackageImportRequest,
+        generate_package, import_package,
+    )
+    from .kg import KG_DIR
+    graph_mode = "existing" if (KG_DIR / graph_name).exists() else "new"
+    generated = await generate_package(GuidePackageGenerateRequest(
+        doc_id=doc_id, domain="tcm", template_id=template.template_id,
+        graph_target={"mode": graph_mode, "filename": graph_name},
+    ))
+    package_id = generated["package"]["package_id"]
+    imported = await import_package(package_id, GuidePackageImportRequest())
+    result.update(
+        domain="tcm",
+        template_id=template.template_id,
+        package_id=package_id,
+        graph_result=imported["graph"],
+        domain_detection={"domain": "tcm", "source": "panel_selection"},
+    )
+    return result
+
+
+async def _run_western_statement_job(controller, *, parsed, file_path, doc_id, doc_title,
+                                     graph_filename: str, template, auto_activate: bool) -> Dict[str, Any]:
+    """西医指南作业体：两阶段临床陈述流水线（陈述 → 图谱/规则/开放术语）。
+
+    单轮模板抽取无法达到同等结构化质量——曾导致整本指南只产出个别疾病、
+    无实体无关系，因此西医导入统一走本流水线。入流水线前做 TCM 内容守卫，
+    防止把中医指南误送西医链路白耗 LLM。
+    """
+    from .pdf import _persist_doc, _now
+    detected = detect_guideline_domain(parsed["chunks"], doc_title, "auto")
+    if detected["domain"] == "tcm" and not detected["requires_confirmation"]:
+        raise ValueError(
+            "检测到中医指南，但这是西医指南导入链路；"
+            "请改用「中医指南导入」面板并选择中医模板后重试"
+        )
+    graph_name = (
+        resolve_upload_graph_filename(template, graph_filename or "")
+        if template else (graph_filename or "")
+    )
+    _persist_doc({"doc_id": doc_id, "doc_title": doc_title, "parsed": parsed,
+                  "file_path": str(file_path), "uploaded_at": _now()})
+    result = await run_auto_pipeline(
+        parsed["chunks"], doc_id, doc_title,
+        ExtractionConfigRepository().load(),
+        graph_filename=graph_name,
+        auto_activate=auto_activate,
+        controller=controller,
+        require_import_quality=True,
+    )
+    _persist_auto_document(
+        doc_id, doc_title, parsed, file_path, result,
+        template_id=template.template_id if template else "",
+        template_name=template.name if template else "",
+    )
+    result.update(
+        domain="western",
+        template_id=template.template_id if template else AUTO_TEMPLATE_ID,
+        domain_detection={"domain": "western", "source": "panel_selection"},
+    )
+    return result
 
 
 async def _run_auto_job(
     controller: ImportController, *, file_path: Path, doc_id: str, doc_title: str,
     graph_filename: str, auto_activate: bool, domain: str = "auto", template_id: str = "",
 ) -> Dict[str, Any]:
-    """一键自动作业体：镜像 auto_import.auto_import 的 pipeline 调用。"""
-    from .pdf import parse_pdf, _persist_doc, _now
+    """作业体：西医指南 → 两阶段陈述流水线；中医指南 → 中医专用模板作业体。
+
+    领域由建任务时的显式选择决定（模板领域优先，其次 domain 参数；auto 且无
+    模板时默认西医链路，由 TCM 守卫拦截中医内容），不做运行时领域自动识别。
+    """
+    from .pdf import parse_pdf
     parsed = parse_pdf(file_path, doc_id)
-    if template_id:
-        template = extraction_templates.get(template_id)
-        if template is None:
-            raise ValueError(f"解析模板不存在: {template_id}")
-        template_domain = str(template.domain or "western")
-        if domain != "auto" and domain != template_domain:
-            raise ValueError("所选指南领域与抽取模板领域不一致")
-        graph_name = resolve_upload_graph_filename(template, graph_filename or "")
-        result = await _run_template_job(
-            controller, file_path=file_path, doc_id=doc_id, doc_title=doc_title,
-            mode="template-llm", template_id=template.template_id,
-            graph_name=graph_name,
+    template = extraction_templates.get(template_id) if template_id else None
+    if domain != "auto" and template is not None and domain != str(template.domain or "western"):
+        raise ValueError("所选指南领域与抽取模板领域不一致")
+    template_domain = str(template.domain or "western") if template else (
+        domain if domain in {"western", "tcm"} else "western")
+    if template_domain == "tcm":
+        return await _run_tcm_template_job(
+            controller, parsed=parsed, file_path=file_path, doc_id=doc_id,
+            doc_title=doc_title, graph_filename=graph_filename, template=template,
         )
-        if not result.get("relation_count"):
-            raise ValueError("所选模板未生成任何关系，已停止自动入库，请检查抽取告警后重试")
-        from .guide_packages import (
-            GuidePackageGenerateRequest, GuidePackageImportRequest,
-            generate_package, import_package,
-        )
-        from .kg import KG_DIR
-        graph_mode = "existing" if (KG_DIR / graph_name).exists() else "new"
-        generated = await generate_package(GuidePackageGenerateRequest(
-            doc_id=doc_id, domain=template_domain, template_id=template.template_id,
-            graph_target={"mode": graph_mode, "filename": graph_name},
-        ))
-        package_id = generated["package"]["package_id"]
-        imported = await import_package(package_id, GuidePackageImportRequest())
-        result.update(
-            domain=template_domain,
-            template_id=template.template_id,
-            package_id=package_id,
-            graph_result=imported["graph"],
-            domain_detection={"domain": template_domain, "source": "selected_template"},
-        )
-        return result
-    detection = detect_guideline_domain(parsed["chunks"], doc_title, domain)
-    if detection["requires_confirmation"]:
-        raise ValueError(
-            "指南领域识别置信度不足，请明确选择中医或西医。识别依据："
-            + "；".join(detection["reasons"])
-        )
-    if detection["domain"] == "tcm":
-        template = extraction_templates.get("TCM_GUIDELINE_V3")
-        graph_name = resolve_upload_graph_filename(
-            template, graph_filename or f"KG-TCM-{doc_id}.json"
-        )
-        result = await _run_template_job(
-            controller, file_path=file_path, doc_id=doc_id, doc_title=doc_title,
-            mode="template-llm", template_id=template.template_id,
-            graph_name=graph_name,
-        )
-        result["domain"] = "tcm"
-        result["template_id"] = template.template_id
-        result["domain_detection"] = detection
-        result.setdefault("warnings", []).insert(0, "已识别为中医指南并使用中医专用模板")
-        if not result.get("relation_count"):
-            raise ValueError("中医专用模板未生成任何关系，已停止自动入库，请检查抽取告警后重试")
-        from .guide_packages import (
-            GuidePackageGenerateRequest, GuidePackageImportRequest,
-            generate_package, import_package,
-        )
-        generated = await generate_package(GuidePackageGenerateRequest(
-            doc_id=doc_id, domain="tcm", template_id=template.template_id,
-            graph_target={"mode": "new", "filename": graph_name},
-        ))
-        package_id = generated["package"]["package_id"]
-        imported = await import_package(package_id, GuidePackageImportRequest())
-        result["package_id"] = package_id
-        result["graph_result"] = imported["graph"]
-        return result
-    _persist_doc({"doc_id": doc_id, "doc_title": doc_title, "parsed": parsed,
-                  "file_path": str(file_path), "uploaded_at": _now()})
-    result = await run_auto_pipeline(
-        parsed["chunks"], doc_id, doc_title,
-        ExtractionConfigRepository().load(),
-        graph_filename=graph_filename, auto_activate=auto_activate,
-        controller=controller,
-        require_import_quality=True,
+    return await _run_western_statement_job(
+        controller, parsed=parsed, file_path=file_path, doc_id=doc_id,
+        doc_title=doc_title, graph_filename=graph_filename, template=template,
+        auto_activate=auto_activate,
     )
-    result["domain"] = "western"
-    result["template_id"] = "UNIVERSAL_GUIDELINE_V1"
-    result["domain_detection"] = detection
-    _persist_doc({"doc_id": doc_id, "doc_title": doc_title, "parsed": parsed,
-                  "file_path": str(file_path), "uploaded_at": _now(),
-                  "extraction": {"metadata": result.get("metadata") or {}, "warnings": result.get("warnings") or []}})
-    return result  # run_auto_pipeline 的返回 dict 即结果摘要
 
 
 @router.post("/jobs", status_code=201)
@@ -187,6 +233,7 @@ async def create_import_job(
     graph_filename: str = Form(""),
     auto_activate: str = Form("false"),
     domain: str = Form("auto"),
+    retry_doc_id: str = Form(""),
 ):
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(400, "仅支持 PDF 文件")
@@ -206,10 +253,35 @@ async def create_import_job(
         except ValueError as error:
             raise HTTPException(422, str(error)) from error
     doc_title = re.sub(r"\.pdf$", "", file.filename, flags=re.IGNORECASE)
-    doc_id = f"DOC-{uuid.uuid4().hex[:8]}"
+    # 建任务即解析领域并做一致性校验：模板领域与 domain 参数冲突直接 422，
+    # 避免任务排队消耗 LLM 后才失败；领域同时登记进留痕（_JOB_DOMAINS）。
+    resolved_domain = ""
+    if template_id:
+        selected = extraction_templates.get(template_id)
+        if selected is not None:
+            resolved_domain = str(selected.domain or "")
+            if domain != "auto" and resolved_domain and resolved_domain != domain:
+                raise HTTPException(
+                    422,
+                    f"所选领域（{'中医' if domain == 'tcm' else '西医'}）与模板「{selected.name}」（{'中医' if resolved_domain == 'tcm' else '西医'}）不一致，请在对应领域面板中选择模板",
+                )
+    elif domain in {"western", "tcm"}:
+        resolved_domain = domain
+    content = await file.read()
+    if retry_doc_id:
+        if not re.fullmatch(r"DOC-[A-Za-z0-9-]+", retry_doc_id):
+            raise HTTPException(422, "重试文档标识无效")
+        original_path = UPLOAD_DIR_PDF / f"{retry_doc_id}.pdf"
+        if not original_path.exists() or original_path.read_bytes() != content:
+            raise HTTPException(422, "重试文件与原文档不一致，请重新创建导入任务")
+        if any(_job_doc_id(job) == retry_doc_id and job.status not in {FAILED, SUCCEEDED, STOPPED}
+               for job in manager.list_jobs()):
+            raise HTTPException(409, "此文档已有正在进行的导入任务")
+    doc_id = retry_doc_id or f"DOC-{uuid.uuid4().hex[:8]}"
     UPLOAD_DIR_PDF.mkdir(parents=True, exist_ok=True)
     file_path = UPLOAD_DIR_PDF / f"{doc_id}.pdf"
-    file_path.write_bytes(await file.read())
+    if not retry_doc_id:
+        file_path.write_bytes(content)
 
     def runner(controller: ImportController):
         if mode == "auto":
@@ -226,12 +298,15 @@ async def create_import_job(
         )
 
     job = manager.submit(mode, doc_title, runner, on_finish=_log_job_finished)
-    _log_job_created(job, doc_id)
+    _log_job_created(job, doc_id, resolved_domain)
     return {"job_id": job.job_id, "status": job.status, "doc_id": doc_id}
 
 
 # job_id -> 建任务时的 doc_id：终态前 job.result 为空，pause/resume 留痕需回查
 _JOB_DOC_IDS: Dict[str, str] = {}
+# job_id -> 建任务时解析出的领域（模板领域优先，其次显式 domain 参数）。
+# 曾因留痕不带领域，中医导入在历史里与西医混排无法区分。
+_JOB_DOMAINS: Dict[str, str] = {}
 
 
 def _job_doc_id(job: ImportJob) -> str:
@@ -242,12 +317,19 @@ def _job_doc_id(job: ImportJob) -> str:
     return result.get("doc_id") or ""
 
 
+def _job_domain(job: ImportJob) -> str:
+    """留痕领域：成功任务以 result.domain 为准，否则回望建任务登记。"""
+    result = job.result if isinstance(job.result, dict) else {}
+    return str(result.get("domain") or _JOB_DOMAINS.get(job.job_id, ""))
+
+
 def _log_job_event(job: ImportJob, status: str, **extra: Any) -> None:
-    """导入日志留痕：字段沿用 _log_job_created 的惯例（doc_id/doc_title/status/mode/job_id）。"""
+    """导入日志留痕：字段沿用 _log_job_created 的惯例（doc_id/doc_title/status/mode/domain/job_id）。"""
     from .pdf import _append_import_log
     _append_import_log({
         "doc_id": _job_doc_id(job), "doc_title": job.doc_title, "status": status,
-        "mode": job.mode.replace("template-", ""), "job_id": job.job_id, **extra,
+        "mode": job.mode.replace("template-", ""), "domain": _job_domain(job),
+        "job_id": job.job_id, **extra,
     })
 
 
@@ -274,10 +356,13 @@ def _log_job_finished(job: ImportJob) -> None:
     elif job.status == STOPPED:
         _log_job_event(job, "stopped")
     _JOB_DOC_IDS.pop(job.job_id, None)  # 终态后无需回查，防 map 无界增长
+    _JOB_DOMAINS.pop(job.job_id, None)
 
 
-def _log_job_created(job: ImportJob, doc_id: str) -> None:
+def _log_job_created(job: ImportJob, doc_id: str, domain: str = "") -> None:
     _JOB_DOC_IDS[job.job_id] = doc_id
+    if domain:
+        _JOB_DOMAINS[job.job_id] = domain
     _log_job_event(job, "started")
 
 

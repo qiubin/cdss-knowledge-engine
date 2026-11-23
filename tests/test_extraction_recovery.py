@@ -59,6 +59,9 @@ def test_reparse_replaces_empty_result_and_retains_target_graph(tmp_path,monkeyp
     monkeypatch.setattr(api,'extraction_config',SimpleNamespace(load=lambda:{}))
     api._persist_doc(doc)
     async def extract(*args,**kwargs):
+        assert args[5]['llm']['recovery_mode'] is True
+        assert args[5]['llm']['max_chunks'] == 1
+        assert args[5]['llm']['max_chunk_chars'] <= 1200
         return ProviderResult(entities=[{'entity_type':'syndrome','code':'S','name':'证候','chunk_id':'c','page':1,'line_start':1,'line_end':1,'quote':'text'}],suggested_rules=[],warnings=[],metadata={'coverage':{'complete':True,'items':[{'chunk_id':'c','status':'processed'}]}})
     monkeypatch.setattr(api,'extract',extract)
     result=asyncio.run(api.reparse_document('D'))
@@ -84,14 +87,15 @@ def test_package_generation_inherits_graph_without_reentering_it(tmp_path,monkey
     assert result['package']['target_disease_code']=='S'
 
 
-def test_single_chunk_json_failure_is_split_and_coverage_tracks_children(monkeypatch):
+@pytest.mark.parametrize("failure", ["JSON output truncated", "大模型请求超时（120 秒）"])
+def test_single_chunk_json_failure_is_split_and_coverage_tracks_children(monkeypatch, failure):
     import asyncio
     from src.extraction import service
     from src.extraction.models import ExtractionTemplate
     calls=[]
     async def fake_chat(settings,messages):
         chunks=json.loads(messages[-1]['content'])['chunks'];calls.append(chunks[0]['chunk_id'])
-        if len(calls)==1: raise LLMError('JSON output truncated')
+        if len(calls)==1: raise LLMError(failure)
         return {'entities':[{'code':'S','entity_type':'syndrome'}]}
     monkeypatch.setattr(service,'chat_json',fake_chat)
     monkeypatch.setattr(service,'resolve_api_key',lambda _: 'test-key')
@@ -164,3 +168,74 @@ def test_relation_field_aliases_are_normalized_with_source_evidence():
     result=_validate_llm_payload({'entities':[], 'suggested_relations':[{'relation':'SYNDROME_HAS_SYMPTOM','source':'S','source_type':'syndrome','target':'A','target_type':'symptom','evidence':{'chunk_id':'C','quote':'气短'}}]},[chunk],template,'D','T')
     assert result[2][0]['relation_code']=='SYNDROME_HAS_SYMPTOM'
     assert result[2][0]['source_code']=='S'
+
+
+def test_western_group_timeout_retries_each_chunk(monkeypatch):
+    import asyncio
+    from src.extraction import service
+    from src.extraction.models import ExtractionTemplate
+    calls = []
+
+    async def fake_chat(settings, messages):
+        ids = [item['chunk_id'] for item in json.loads(messages[-1]['content'])['chunks']]
+        calls.append(ids)
+        if len(ids) > 1:
+            raise LLMError('大模型请求超时（120 秒）')
+        return {'entities': [{'code': ids[0], 'entity_type': 'disease'}]}
+
+    monkeypatch.setattr(service, 'chat_json', fake_chat)
+    monkeypatch.setattr(service, 'resolve_api_key', lambda _: 'test-key')
+    monkeypatch.setattr(service, 'resolve_template', lambda x: x)
+    monkeypatch.setattr(service, '_validate_llm_payload', lambda p, *a: (p['entities'], [], [], [], [], [], []))
+    chunks = [dict(chunk_id=c, section='S', text='text', page_start=1, page_end=1,
+                   line_start=1, line_end=1) for c in ['A', 'B']]
+    result = asyncio.run(service.extract_llm(chunks, ExtractionTemplate(template_id='T', name='T'),
+        'D', 'T', {'llm': {'base_url': 'http://example.test'}}))
+    assert calls == [['A', 'B'], ['A'], ['B']]
+    assert result.metadata['coverage']['complete']
+    assert {item['code'] for item in result.entities} == {'A', 'B'}
+
+
+def test_model_location_ranges_fall_back_to_source_chunk():
+    from src.extraction.service import _validate_llm_payload
+    from src.extraction.models import ExtractionTemplate, TemplateEntityType, TemplateEntityEntry
+    template = ExtractionTemplate(template_id='T', name='T', entity_types=[
+        TemplateEntityType(entity_type='symptom', label='症状', entries=[TemplateEntityEntry(code='S', name='气短')])])
+    chunk = dict(chunk_id='C', text='气短', section='S', page_start=22, page_end=23,
+                 line_start=1, line_end=8)
+    payload = {'entities': [dict(entity_type='symptom', code='S', name='气短', chunk_id='C',
+                                page='22-23', line_start='第1行', line_end='1-8')]}
+    result = _validate_llm_payload(payload, [chunk], template, 'D', 'T')
+    entity = result[0][0]
+    assert (entity['page'], entity['line_start'], entity['line_end']) == (22, 1, 1)
+    assert any('已校正实体溯源位置' in w for w in result[3])
+
+
+def test_template_extraction_retries_rate_limit_serially(monkeypatch):
+    import asyncio
+    from unittest.mock import AsyncMock
+    from src.extraction import service
+    from src.extraction.models import ExtractionTemplate
+    calls = []
+
+    async def fake_chat(settings, messages):
+        calls.append(messages)
+        if len(calls) == 1:
+            raise LLMError('Anthropic 请求失败 HTTP 429')
+        return {'entities': [{'code': 'D', 'entity_type': 'disease'}]}
+
+    sleep = AsyncMock()
+    monkeypatch.setattr(service, 'chat_json', fake_chat)
+    monkeypatch.setattr(service.asyncio, 'sleep', sleep)
+    monkeypatch.setattr(service, 'resolve_api_key', lambda _: 'test-key')
+    monkeypatch.setattr(service, 'resolve_template', lambda x: x)
+    monkeypatch.setattr(service, '_validate_llm_payload',
+                        lambda payload, *args: (payload['entities'], [], [], [], [], [], []))
+    chunk = {'chunk_id': 'C', 'section': 'S', 'page_start': 1, 'page_end': 1,
+             'line_start': 1, 'line_end': 1, 'text': 'text'}
+    result = asyncio.run(service.extract_llm([chunk], ExtractionTemplate(
+        template_id='TCM_GUIDELINE_V3', name='T', domain='tcm'), 'D', 'T',
+        {'llm': {'base_url': 'http://example.test'}}))
+    assert len(calls) == 2
+    sleep.assert_awaited_once_with(15)
+    assert result.metadata['coverage']['complete']

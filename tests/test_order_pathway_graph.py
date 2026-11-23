@@ -109,8 +109,6 @@ class OrderPathwayProfileTest(unittest.TestCase):
         for template_id in (
             "GENERIC_GUIDELINE_V1",
             "CARDIO_DIAGNOSIS_V1",
-            "LYMPHOMA_GUIDELINE_V1",
-            "UNIVERSAL_GUIDELINE_V1",
         ):
             template = repo.get(template_id, allow_retired=True)
             self.assertTrue(

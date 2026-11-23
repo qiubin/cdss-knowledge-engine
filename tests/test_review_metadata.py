@@ -14,6 +14,67 @@ from tools.migrate_review_status import migrate
 
 
 class MetadataTest(unittest.TestCase):
+    def test_exact_active_items_keep_approval_when_new_guideline_adds_provenance(self):
+        node = {
+            "id": "D", "node_type": "disease", "code": "I42.2", "name": "肥厚型心肌病",
+            "review_status": "active", "reviewed_by": "reviewer",
+            "source_refs": ["DOC-OLD_p1_l1-2"], "source_doc_ids": ["DOC-OLD"],
+        }
+        symptom = {"id": "S", "node_type": "symptom", "code": "S1", "name": "胸痛",
+                   "review_status": "active"}
+        relation = {
+            "source_node_id": "D", "relation_code": "DISEASE_HAS_SYMPTOM",
+            "target_node_id": "S", "review_status": "active", "reviewed_by": "reviewer",
+            "source_refs": ["DOC-OLD_p1_l1-2"], "source_doc_ids": ["DOC-OLD"],
+        }
+        graph = {"nodes": [node, symptom], "relations": [relation]}
+        previous = snapshot_hashes(graph)
+        node["source_refs"].append("DOC-NEW_p2_l3-4")
+        relation["source_refs"].append("DOC-NEW_p2_l3-4")
+        apply_import_review_metadata(graph, previous, "DOC-NEW")
+        self.assertEqual(node["review_status"], "active")
+        self.assertEqual(relation["review_status"], "active")
+        self.assertEqual(node["reviewed_by"], "reviewer")
+        self.assertEqual(relation["reviewed_by"], "reviewer")
+
+    def test_new_guideline_reopens_rejected_node_and_relation_as_draft(self):
+        node = {
+            "id": "D", "node_type": "disease", "code": "I42.2", "name": "肥厚型心肌病",
+            "review_status": "rejected", "reviewed_by": "reviewer",
+            "reviewed_at": "2026-01-01T00:00:00Z", "review_note": "旧指南证据不足",
+            "source_refs": ["DOC-OLD_p1_l1-2"], "source_doc_ids": ["DOC-OLD"],
+        }
+        symptom = {"id": "S", "node_type": "symptom", "code": "S1", "name": "胸痛",
+                   "review_status": "active"}
+        relation = {
+            "source_node_id": "D", "relation_code": "DISEASE_HAS_SYMPTOM",
+            "target_node_id": "S", "review_status": "rejected", "reviewed_by": "reviewer",
+            "review_note": "关系证据不足", "source_refs": ["DOC-OLD_p1_l1-2"],
+            "source_doc_ids": ["DOC-OLD"],
+        }
+        graph = {"nodes": [node, symptom], "relations": [relation]}
+        previous = snapshot_hashes(graph)
+        node["source_refs"].append("DOC-NEW_p2_l3-4")
+        relation["source_refs"].append("DOC-NEW_p2_l3-4")
+        apply_import_review_metadata(graph, previous, "DOC-NEW", now="2026-02-01T00:00:00Z")
+        self.assertEqual(node["review_status"], "draft")
+        self.assertEqual(relation["review_status"], "draft")
+        self.assertEqual(node["review_history"][-1]["note"], "旧指南证据不足")
+        self.assertEqual(relation["review_history"][-1]["note"], "关系证据不足")
+        self.assertEqual(node["reopened_from_rejection"]["source_doc_id"], "DOC-NEW")
+        self.assertEqual(relation["reopened_from_rejection"]["source_doc_id"], "DOC-NEW")
+
+    def test_same_guideline_reimport_does_not_reopen_rejection(self):
+        node = {
+            "id": "D", "node_type": "disease", "code": "I42.2", "name": "肥厚型心肌病",
+            "review_status": "rejected", "source_refs": ["DOC-SAME_p1_l1-2"],
+            "source_doc_ids": ["DOC-SAME"],
+        }
+        graph = {"nodes": [node], "relations": []}
+        previous = snapshot_hashes(graph)
+        apply_import_review_metadata(graph, previous, "DOC-SAME")
+        self.assertEqual(node["review_status"], "rejected")
+
     def test_unchanged_active_node_stays_active(self):
         node = {"id": "N1", "node_type": "symptom", "code": "S1", "name": "症状", "review_status": "active"}
         graph = {"nodes": [node], "relations": []}

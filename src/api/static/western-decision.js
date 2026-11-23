@@ -28,8 +28,8 @@
   }
   function showExplanation() {
     const dialog=document.createElement('dialog'); dialog.className='dialog';
-    dialog.innerHTML=`<div style="max-height:75vh;overflow:auto;padding:20px">${explanation()}<hr>${tcmExplanation()}<button type="button" class="btn primary" data-close>关闭说明</button></div>`;
-    document.body.append(dialog);dialog.querySelector('[data-close]').onclick=()=>dialog.close();
+    dialog.innerHTML=`<div class="dialog-topbar"><strong>诊疗决策说明</strong><button type="button" class="btn ghost" data-close aria-label="关闭说明">× 关闭</button></div><div style="max-height:min(75vh,calc(100dvh - 200px));overflow:auto;padding:20px">${explanation()}<hr>${tcmExplanation()}</div><div style="display:flex;justify-content:flex-end;padding:0 20px 20px"><button type="button" class="btn primary" data-close>关闭说明</button></div>`;
+    document.body.append(dialog);dialog.querySelectorAll('[data-close]').forEach(el=>el.onclick=()=>dialog.close());
     dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();
   }
   function editCondition(initial, onSave) {
@@ -42,7 +42,7 @@
       const key=path.join('.');return `<fieldset><label>条件类型<select data-kind="${key}">${options({...TYPES,...(!TYPES[node.type]?{[node.type]:'已带入条件（保留）'}:{})},node.type)}</select></label>${node.type==='group'?`<label>组合关系<select data-op="${key}"><option value="">请选择</option>${options({AND:'全部满足',OR:'任意满足',NOT:'不满足'},node.operator)}</select></label>${(node.children||[]).map((c,i)=>nodeHtml(c,[...path,i])).join('')}<button type="button" class="btn" data-child="${key}">增加子条件</button>`:(FIELDS[node.type]||[]).map(([field,label])=>`<label>${label}<input data-node="${key}" data-key="${field}" value="${esc(node[field])}"></label>`).join('')}<button type="button" class="btn" data-delete="${key}">删除条件</button></fieldset>`;
     }
     function render() {
-      dialog.innerHTML=`<div style="padding:16px;max-height:75vh;overflow:auto"><h3>编辑推荐动作条件</h3><p>缺少记录按未知处理。禁忌组中任一已知禁忌命中时不推荐该动作。数值检查须使用已审核的判定概念及标准。</p>${tree?nodeHtml(tree):'<button type="button" class="btn" data-root>增加条件</button>'}<button type="button" class="btn primary" data-save>保存条件</button><button type="button" class="btn" data-cancel>取消</button></div>`;
+      dialog.innerHTML=`<div class="dialog-topbar"><strong>编辑推荐动作条件</strong><button type="button" class="btn ghost" data-cancel aria-label="关闭条件编辑">× 关闭</button></div><div style="padding:16px;max-height:min(75vh,calc(100dvh - 200px));overflow:auto"><p>缺少记录按未知处理。禁忌组中任一已知禁忌命中时不推荐该动作。数值检查须使用已审核的判定概念及标准。</p>${tree?nodeHtml(tree):'<button type="button" class="btn" data-root>增加条件</button>'}<button type="button" class="btn primary" data-save>保存条件</button><button type="button" class="btn" data-cancel>取消</button></div>`;
       const path=value=>value===''?[]:value.split('.').map(Number);
       dialog.querySelector('[data-root]')?.addEventListener('click',()=>{tree={type:'group',operator:'',children:[]};render();});
       dialog.querySelectorAll('[data-op]').forEach(el=>el.onchange=()=>{at(path(el.dataset.op)).operator=el.value;});
@@ -50,7 +50,7 @@
       dialog.querySelectorAll('[data-key]').forEach(el=>el.oninput=()=>{let value=el.value.trim();if(value==='true'||value==='false')value=value==='true';else if(value!==''&&['threshold_value','age_min','age_max','attribute_value'].includes(el.dataset.key)&&!Number.isNaN(Number(value)))value=Number(value);at(path(el.dataset.node))[el.dataset.key]=value===''?null:value;});
       dialog.querySelectorAll('[data-child]').forEach(el=>el.onclick=()=>{at(path(el.dataset.child)).children.push({type:'attribute',attribute_code:'',operator:'=',attribute_value:null});render();});
       dialog.querySelectorAll('[data-delete]').forEach(el=>el.onclick=()=>{const p=path(el.dataset.delete);if(!p.length)tree=null;else{const i=p.pop();at(p).children.splice(i,1);}render();});
-      dialog.querySelector('[data-save]').onclick=()=>{onSave(tree);dialog.close();};dialog.querySelector('[data-cancel]').onclick=()=>dialog.close();
+      dialog.querySelector('[data-save]').onclick=()=>{onSave(tree);dialog.close();};dialog.querySelectorAll('[data-cancel]').forEach(el=>el.onclick=()=>dialog.close());
     }
     dialog.addEventListener('close',()=>dialog.remove(),{once:true});render();dialog.showModal();
   }

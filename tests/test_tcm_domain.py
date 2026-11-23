@@ -62,7 +62,7 @@ CHUNKS = [
 
 
 def tcm_template():
-    return ExtractionTemplateRepository().get("TCM_GUIDELINE_V2")
+    return ExtractionTemplateRepository().get("TCM_GUIDELINE_V3")
 
 
 class DomainProfileTest(unittest.TestCase):
@@ -95,9 +95,9 @@ class DiseaseDictionaryTest(unittest.TestCase):
         self.assertNotIn("TCM_DIS_XIONG_BI_XIN_TONG", codes)
 
     def test_tcm_template_uses_shared_tcm_diseases_without_icd10_leakage(self):
-        codes = self._disease_codes("TCM_GUIDELINE_V2")
+        codes = self._disease_codes("TCM_GUIDELINE_V3")
         self.assertIn("TCM_DIS_XIONG_BI_XIN_TONG", codes)
-        self.assertIn("TCM_DIS_XIN_SHUAI", self._disease_codes("TCM_GUIDELINE_V3"))
+        self.assertIn("TCM_DIS_XIN_SHUAI", codes)
         self.assertNotIn("I21.0", codes)
 
     def test_tcm_dictionary_rejects_icd10_and_keeps_stable_codes(self):
@@ -293,12 +293,12 @@ class TcmTemplateTest(unittest.TestCase):
         self.assertEqual(direct["relation_code"], "SYNDROME_RECOMMENDS_FORMULA")
         self.assertEqual(direct["review_status"], "draft")
 
-    def test_v2_is_the_only_active_tcm_template(self):
+    def test_v3_is_the_only_active_tcm_template(self):
         templates = [item for item in ExtractionTemplateRepository().list_available() if item.domain == "tcm"]
-        self.assertEqual({item.template_id for item in templates}, {"TCM_GUIDELINE_V2", "TCM_GUIDELINE_V3"})
+        self.assertEqual({item.template_id for item in templates}, {"TCM_GUIDELINE_V3"})
         self.assertEqual([item.template_id for item in templates if item.is_default], ["TCM_GUIDELINE_V3"])
 
-    def test_local_extraction_and_rule_families(self):
+    def test_local_extraction_yields_entities_and_relations_without_rules(self):
         result = extract_local(CHUNKS, tcm_template(), "DOC-TCM-T", "中医测试指南")
         counts = {}
         for entity in result.entities:
@@ -308,23 +308,12 @@ class TcmTemplateTest(unittest.TestCase):
         self.assertGreaterEqual(counts.get("pulse", 0), 3)
         self.assertGreaterEqual(counts.get("herb", 0), 10)
 
-        rule_types = {rule["rule_type"] for rule in result.suggested_rules}
-        self.assertEqual(
-            rule_types,
-            {"tcm_pattern", "tcm_treatment", "tcm_prescription"},
-        )
-        for rule in result.suggested_rules:
-            Rule(**rule)
-            self.assertEqual(rule["domain"], "tcm")
-            self.assertEqual(rule["anchor_type"], "syndrome")
-
-        prescriptions = [rule for rule in result.suggested_rules if rule["rule_type"] == "tcm_prescription"]
-        self.assertEqual(len(prescriptions), 3)
-        formula_names = {rule["conclusion"]["formula_name"] for rule in prescriptions}
-        self.assertIn("生脉散", formula_names)
-        shengmai = next(rule for rule in prescriptions if rule["conclusion"]["formula_name"] == "生脉散")
-        self.assertEqual(len(shengmai["conclusion"]["herbs"]), 3)
-        self.assertEqual(shengmai["conclusion"]["herbs"][0]["role"], "君")
+        # V3 起本地抽取不再直出规则；规则改由图谱基础生成与 V3 陈述契约派生。
+        self.assertEqual(result.suggested_rules, [])
+        relation_codes = {relation["relation_code"] for relation in result.suggested_relations}
+        self.assertIn("SYNDROME_TREATED_BY_METHOD", relation_codes)
+        self.assertIn("METHOD_HAS_FORMULA", relation_codes)
+        self.assertIn("FORMULA_CONTAINS_HERB", relation_codes)
 
     def test_syndrome_discovery_for_unknown_name(self):
         chunk = make_chunk("c9", "肝郁气滞证：胸闷、善太息，舌淡红，苔薄白，脉弦。")
@@ -358,6 +347,8 @@ class TcmGraphAndInferenceTest(unittest.TestCase):
 
         self.template = template
         self.result = extract_local(CHUNKS, template, "DOC-TCM-T", "中医测试指南")
+        # V3 之下本地抽取只产实体与关系；规则由图谱基础生成派生。
+        self.assertEqual(self.result.suggested_rules, [])
         request = kg_routes.GraphImportRequest(
             doc_id="DOC-TCM-T",
             doc_title="中医测试指南",
@@ -366,14 +357,17 @@ class TcmGraphAndInferenceTest(unittest.TestCase):
             entities=self.result.entities,
             chunks=CHUNKS,
             suggested_relations=self.result.suggested_relations,
-            template_id="TCM_GUIDELINE_V2",
+            template_id="TCM_GUIDELINE_V3",
             graph_filename="tcm_test_graph.json",
             candidate_rules=self.result.suggested_rules,
         )
         self.graph_result = asyncio.run(kg_routes.import_graph(request))
 
+        imported_graph = json.loads(
+            (self.kg_dir / "tcm_test_graph.json").read_text(encoding="utf-8")
+        )
         rules = []
-        for raw in self.result.suggested_rules:
+        for raw in generate_tcm_basis_candidates(imported_graph, "DOC-TCM-T", "tcm_test_graph.json"):
             item = Rule(**raw).model_dump()
             item["graph_filename"] = "tcm_test_graph.json"
             if item["rule_type"] == "tcm_pattern":
@@ -451,9 +445,9 @@ class TcmPackageChecksTest(unittest.TestCase):
         )
         self.assertEqual(
             guide_packages._selected_template_id(
-                {"extraction": {"template_id": "TCM_GUIDELINE_V2"}}, "", "tcm"
+                {"extraction": {"template_id": "TCM_GUIDELINE_V3"}}, "", "tcm"
             ),
-            "TCM_GUIDELINE_V2",
+            "TCM_GUIDELINE_V3",
         )
 
     def test_target_selection_prefers_most_frequent_anchor(self):
@@ -471,7 +465,7 @@ class TcmPackageChecksTest(unittest.TestCase):
     def _package(self, entities, relations):
         return {
             "domain": "tcm",
-            "template_id": "TCM_GUIDELINE_V2",
+            "template_id": "TCM_GUIDELINE_V3",
             "target_disease_code": "TCM_SYN_QI_YIN_XU",
             "entities": entities,
             "suggested_relations": relations,

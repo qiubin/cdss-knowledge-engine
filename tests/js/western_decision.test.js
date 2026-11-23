@@ -27,7 +27,7 @@ test('editor roundtrip retains source, action criteria and required patient data
 test('fixed top button opens and closes the decision explanation independently of dashboard loading',()=>{
  const vm=require('node:vm');let handler;let shown=false;let removed=false;
  const closeButton={};const events={};
- const dialog={innerHTML:'',className:'',querySelector:()=>closeButton,addEventListener:(event,callback)=>{events[event]=callback;},showModal:()=>{shown=true;},close:()=>{events.close();},remove:()=>{removed=true;}};
+ const dialog={innerHTML:'',className:'',querySelector:()=>closeButton,querySelectorAll:()=>[closeButton],addEventListener:(event,callback)=>{events[event]=callback;},showModal:()=>{shown=true;},close:()=>{events.close();},remove:()=>{removed=true;}};
  const document={getElementById:id=>id==='globalDecisionHelp'?{addEventListener:(event,callback)=>{handler=callback;}}:null,createElement:()=>dialog,body:{append(){}}};
  vm.runInNewContext(fs.readFileSync('src/api/static/western-decision.js','utf8'),{document});
  assert.equal(typeof handler,'function');handler();

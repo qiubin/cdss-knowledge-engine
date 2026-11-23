@@ -176,11 +176,52 @@ def _relation_items(graph: Dict[str, Any]):
 def snapshot_hashes(graph: Dict[str, Any]) -> Dict[str, Dict[str, str]]:
     return {
         "nodes": {str(node.get("id")): node_content_hash(node) for node in _node_items(graph)},
+        "node_source_docs": {
+            str(node.get("id")): sorted(set(
+                node.get("source_doc_ids") or derive_doc_ids(node.get("source_refs"))
+            ))
+            for node in _node_items(graph)
+        },
         "relations": {
             "|".join(str(part) for part in key): relation_content_hash(item)
             for key, item in _relation_items(graph)
         },
+        "relation_source_docs": {
+            "|".join(str(part) for part in key): sorted(set(
+                item.get("source_doc_ids") or derive_doc_ids(item.get("source_refs"))
+            ))
+            for key, item in _relation_items(graph)
+        },
     }
+
+
+def _reopen_rejected_for_new_source(
+    item: Dict[str, Any],
+    previous_source_docs: List[str],
+    doc_id: str,
+    now: str,
+) -> bool:
+    """Reopen a rejected item only when a distinct guideline supports it."""
+    if str(item.get("review_status") or "draft") != "rejected":
+        return False
+    if not doc_id or doc_id in set(previous_source_docs or []):
+        return False
+    if doc_id not in derive_doc_ids(item.get("source_refs")):
+        return False
+    item.setdefault("review_history", []).append({
+        "status": "rejected",
+        "reviewer": str(item.get("reviewed_by") or ""),
+        "reviewed_at": str(item.get("reviewed_at") or ""),
+        "note": str(item.get("review_note") or ""),
+        "reopened_at": now,
+        "reopened_by_source_doc_id": doc_id,
+    })
+    item["review_status"] = "draft"
+    item["review_note"] = ""
+    item["reviewed_by"] = ""
+    item["reviewed_at"] = ""
+    item["reopened_from_rejection"] = {"at": now, "source_doc_id": doc_id}
+    return True
 
 
 def ensure_metadata(graph: Dict[str, Any], now: Optional[str] = None) -> None:
@@ -243,6 +284,12 @@ def apply_import_review_metadata(
         node_id = str(node.get("id"))
         old = previous_hashes.get("nodes", {}).get(node_id)
         new = node_content_hash(node)
+        _reopen_rejected_for_new_source(
+            node,
+            previous_hashes.get("node_source_docs", {}).get(node_id, []),
+            doc_id,
+            now,
+        )
         current = str(node.get("review_status") or "draft")
         if old is not None and old != new and current == "active" and previous_contents:
             archived = previous_contents.get("nodes", {}).get(node_id)
@@ -282,6 +329,12 @@ def apply_import_review_metadata(
         key_text = "|".join(str(part) for part in key)
         old = previous_hashes.get("relations", {}).get(key_text)
         new = relation_content_hash(relation)
+        _reopen_rejected_for_new_source(
+            relation,
+            previous_hashes.get("relation_source_docs", {}).get(key_text, []),
+            doc_id,
+            now,
+        )
         current = str(relation.get("review_status") or "draft")
         if old is not None and old != new and current == "active" and previous_contents:
             archived = previous_contents.get("relations", {}).get(key_text)

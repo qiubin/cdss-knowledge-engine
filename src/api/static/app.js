@@ -640,20 +640,61 @@
     return pending.kind === "auto" ? "auto" : pending.mode === "llm" ? "template-llm" : "template-local";
   }
 
-  function refreshUploadGraphOptions() {
-    const sel = $("#uploadGraph");
+  function refreshUploadGraphOptions(suffix) {
+    const sel = $(`#uploadGraph${suffix}`);
     if (!sel) return;
-    const template = state.templates.find((t) => t.template_id === $("#uploadTemplate")?.value);
+    const template = state.templates.find((t) => t.template_id === $(`#uploadTemplate${suffix}`)?.value);
     const domain = template ? normalizeDomainClient(template.domain) : "";
     const graphs = (state.uploadGraphs || []).filter((g) => !domain || normalizeDomainClient(g.domain) === domain);
-    const choice = state.uploadGraphChoice || "follow";
+    const choice = state.uploadGraphChoice?.[suffix] || "follow";
     sel.innerHTML = [
       `<option value="follow">跟随模板（${esc(templateGraphFilename(template || {}))}）</option>`,
       ...graphs.map((g) => `<option value="${esc(g.graph_filename)}">${esc(g.graph_filename)}</option>`),
       `<option value="__new__">＋ 新建图谱…</option>`,
     ].join("");
     sel.value = choice === "follow" || choice === "__new__" || graphs.some((g) => g.graph_filename === choice) ? choice : "follow";
-    $("#uploadGraphNew").hidden = sel.value !== "__new__";
+    $(`#uploadGraphNew${suffix}`).hidden = sel.value !== "__new__";
+  }
+
+  // 中西医导入彻底分开：各自独立的模板、目的图谱与上传区，互不混选。
+  const IMPORT_PANELS = [
+    { key: "western", suffix: "West", title: "西医指南导入", label: "西医",
+      defaultTemplate: "GENERIC_GUIDELINE_V1",
+      hint: "统一走两阶段临床陈述流水线（实体关系产出最全，开放术语与 LOCAL 码）；不做领域自动识别，写入图谱严格跟随本面板选择" },
+    { key: "tcm", suffix: "Tcm", title: "中医指南导入", label: "中医",
+      defaultTemplate: "TCM_GUIDELINE_V3",
+      hint: "使用中医专用模板（病-证-法-方药结构）；辨病辨证结果与西医图谱分开维护，可通过中西医对照关联参考" },
+  ];
+
+  function importPanelHtml(cfg) {
+    const templates = state.templates.filter((t) => normalizeDomainClient(t.domain) === cfg.key);
+    if (!templates.length) return "";
+    return panel(cfg.title, `
+      <div class="inline-controls">
+        <div class="field"><label>抽取模板（${cfg.label}）</label><select id="uploadTemplate${cfg.suffix}">${templates.map((t) => `<option value="${esc(t.template_id)}">${esc(t.name)}${t.template_id === cfg.defaultTemplate ? "（推荐）" : ""} / ${esc(t.template_id)}</option>`).join("")}</select></div>
+        <div class="field"><label>目的图谱</label><div><select id="uploadGraph${cfg.suffix}"></select><input id="uploadGraphNew${cfg.suffix}" placeholder="新图谱文件名，如 KG-RESPIRATORY_V1.json" hidden></div></div>
+      </div>
+      <div id="dropzone${cfg.suffix}" class="dropzone"><strong>点击或拖拽 ${cfg.label}指南 PDF 到此处</strong><p class="muted">严格按本面板所选模板解析，生成实体、关系、知识包和候选规则，写入所选目的图谱</p></div>
+      <input id="pdfInput${cfg.suffix}" type="file" accept=".pdf" hidden>
+    `, "", cfg.hint);
+  }
+
+  function wireImportPanel(cfg) {
+    const drop = $(`#dropzone${cfg.suffix}`), input = $(`#pdfInput${cfg.suffix}`);
+    if (!drop) return;
+    const templateSel = $(`#uploadTemplate${cfg.suffix}`);
+    templateSel.value = state.templates.find((t) => t.template_id === cfg.defaultTemplate && normalizeDomainClient(t.domain) === cfg.key)?.template_id
+      || templateSel.querySelector("option")?.value || "";
+    templateSel.onchange = () => { state.uploadGraphChoice[cfg.suffix] = "follow"; refreshUploadGraphOptions(cfg.suffix); };
+    $(`#uploadGraph${cfg.suffix}`).onchange = (e) => {
+      state.uploadGraphChoice[cfg.suffix] = e.target.value;
+      $(`#uploadGraphNew${cfg.suffix}`).hidden = e.target.value !== "__new__";
+    };
+    drop.onclick = () => input.click();
+    drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("drag"); };
+    drop.ondragleave = () => drop.classList.remove("drag");
+    drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove("drag"); if (e.dataTransfer.files[0]) prepareAutoUpload(e.dataTransfer.files[0], cfg); };
+    input.onchange = () => input.files[0] && prepareAutoUpload(input.files[0], cfg);
   }
 
   async function renderImport() {
@@ -664,17 +705,11 @@
       if (docs.length) state.doc = await api(`/api/pdf/${docs[0].doc_id}/result`);
     }
     const doc = state.doc;
+    state.uploadGraphChoice ||= {};
     pageEl.innerHTML = `
       <div id="pendingUploadPanel"></div>
       <div id="importJobPanel"></div>
-      ${panel("指南一键自动生成", `
-        <div class="inline-controls">
-          <div class="field"><label>指南领域</label><select id="autoDomain"><option value="auto">自动识别</option><option value="tcm">中医</option><option value="western">西医</option></select></div>
-          <button id="autoUploadBtn" class="btn primary">选择指南 PDF 自动生成</button>
-          <span class="muted">自动完成并直接入库：开放术语发现 → 标准码/LOCAL 码 → 图谱与诊疗依据 → 人工审核 → 规则草稿</span>
-        </div>
-        <input id="autoPdfInput" type="file" accept=".pdf" hidden>
-      `, "", "显式选择优先；自动识别依据标题、辨证章节、证候、舌脉、治法和方药结构选择模板。")}
+      ${IMPORT_PANELS.map(importPanelHtml).join("")}
       ${state.autoResult ? `
         <div id="autoResultPanel" class="result-banner ok">
           <strong>自动生成并已入库：${esc(state.autoResult.doc_title || state.autoResult.doc_id)}</strong>
@@ -684,39 +719,9 @@
           <div class="mono">图谱：${esc(state.autoResult.graph_filename)} · 知识包：${esc(state.autoResult.package_id)}</div>
           <div class="actions"><button id="autoOpenPackage" class="btn sm primary">查看知识包</button><button id="autoOpenGraph" class="btn sm">查看图谱</button><button id="autoOpenRules" class="btn sm">审核诊疗依据</button></div>
         </div>` : ""}
-      ${panel("上传指南 PDF（模板模式）", `
-        <div class="inline-controls">
-          <div class="field"><label>解析方式</label><select id="uploadMode"><option value="local">本地模板解析</option><option value="llm">大模型解析</option></select></div>
-          <div class="field"><label>抽取模板</label><select id="uploadTemplate">${state.templates.map((t) => `<option value="${esc(t.template_id)}">[${normalizeDomainClient(t.domain) === "tcm" ? "中医" : "西医"}] ${esc(t.name)} / ${esc(t.template_id)}</option>`).join("")}</select></div>
-          <div class="field"><label>目的图谱</label><div id="uploadGraphWrap"><select id="uploadGraph"></select><input id="uploadGraphNew" placeholder="新图谱文件名，如 KG-RESPIRATORY_V1.json" hidden></div></div>
-          <div class="field"><label>API Key</label><input value="${state.extractionConfig.llm.api_key_configured ? "环境变量已配置" : "未配置"}" readonly></div>
-        </div>
-        <div id="dropzone" class="dropzone"><strong>点击或拖拽 PDF 到此处</strong><p class="muted">解析页码、行号与正文片段；自动抽取实体并生成候选规则</p></div>
-        <input id="pdfInput" type="file" accept=".pdf" hidden>
-      `, "", "选择文件后先进入「待导入」卡片，点击「开始导入」才提交服务端；解析仅进入审核区，图谱和规则需人工确认后才入库；长篇指南建议使用大模型解析，本地解析容易产生噪声规则")}
       <div id="importResult"></div>
-      ${panel("导入历史", '<div id="importHistoryBody" class="muted">加载中…</div>', "", "记录每次上传（含一键自动）的成功与失败；新文档使用新编号，不会覆盖历史记录")}
+      ${panel("导入历史", '<div id="importHistoryBody" class="muted">加载中…</div>', "", "记录每次上传（含失败留痕）的成功与失败；新文档使用新编号，不会覆盖历史记录")}
     `;
-    const drop = $("#dropzone"), input = $("#pdfInput");
-    // Keep one upload surface.  The drop zone now uses the same automatic
-    // domain detection and end-to-end pipeline as the former auto button.
-    const autoDomain = $("#autoDomain");
-    const autoPanel = autoDomain?.closest("section.panel");
-    const uploadPanel = drop?.closest("section.panel");
-    const templateControls = $("#uploadMode")?.closest(".inline-controls");
-    if (templateControls) {
-      $("#uploadMode")?.closest(".field")?.remove();
-      const fields = templateControls.querySelectorAll(".field");
-      fields[fields.length - 1]?.remove();
-      templateControls.prepend(autoDomain.closest(".field"));
-    }
-    if (uploadPanel) {
-      const heading = uploadPanel.querySelector("h3");
-      if (heading) heading.textContent = "上传指南 PDF";
-    }
-    const dropHint = drop?.querySelector("p");
-    if (dropHint) dropHint.textContent = "自动识别中西医领域，选择专用模板并生成实体、关系、知识包和候选规则";
-    autoPanel?.remove();
     $("#autoOpenPackage")?.addEventListener("click", () => {
       state.guidePackageId = state.autoResult.package_id;
       navigate("packages", { reload: true });
@@ -726,18 +731,11 @@
       navigate("graph", { reload: true });
     });
     $("#autoOpenRules")?.addEventListener("click", () => { state.reviewTab = "bases"; state.reviewFilters.graph = state.autoResult.graph_filename; navigate("review", { reload: true }); });
-    drop.onclick = () => input.click();
-    drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("drag"); };
-    drop.ondragleave = () => drop.classList.remove("drag");
-    drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove("drag"); if (e.dataTransfer.files[0]) prepareAutoUpload(e.dataTransfer.files[0]); };
-    input.onchange = () => input.files[0] && prepareAutoUpload(input.files[0]);
-    $("#uploadTemplate").value = state.extractionConfig.default_template_id || state.templates.find((t) => t.is_default)?.template_id || "";
-    $("#uploadTemplate").onchange = () => { state.uploadGraphChoice = $("#uploadGraph")?.value || "follow"; refreshUploadGraphOptions(); };
-    $("#uploadGraph").onchange = (e) => {
-      state.uploadGraphChoice = e.target.value;
-      $("#uploadGraphNew").hidden = e.target.value !== "__new__";
-    };
-    api("/api/kg/graphs").then((graphs) => { state.uploadGraphs = graphs; refreshUploadGraphOptions(); }).catch(() => { state.uploadGraphs = []; });
+    IMPORT_PANELS.forEach(wireImportPanel);
+    api("/api/kg/graphs").then((graphs) => {
+      state.uploadGraphs = graphs;
+      IMPORT_PANELS.forEach((cfg) => refreshUploadGraphOptions(cfg.suffix));
+    }).catch(() => { state.uploadGraphs = []; });
     if (activeImportJob()) setImportBusy(true); else setImportBusy(false);
     renderImportJob();
     if (doc) renderImportResult();
@@ -746,10 +744,13 @@
 
   // 一次导入会产生 started/success/failed 等多条事件，按 job_id 归并为一条历史，
   // 展示最终状态（success/failed/stopped 优先，否则取最新事件）。
+  // 早期留痕没有 job_id，但每次上传都会生成新的 doc_id，按 doc_id 归并同样对应一次尝试；
+  // 不能用 doc_id-ts 兜底——各事件的写入时间不同，会把同一次尝试拆成多行，且该组合键
+  // 无法通过后端的删除标识校验（曾导致“导入任务标识无效”）。
   function groupImportLogs(entries) {
     const byJob = new Map();
     for (const entry of entries) {
-      const key = entry.job_id || `${entry.doc_id}-${entry.ts}`;
+      const key = entry.job_id || entry.doc_id;
       if (!byJob.has(key)) byJob.set(key, []);
       byJob.get(key).push(entry);
     }
@@ -763,6 +764,7 @@
         doc_id: last.doc_id || "",
         doc_title: last.doc_title || display.doc_title || "",
         mode: last.mode || display.mode || "",
+        domain: sorted.map((e) => e.domain).find(Boolean) || "",
         display,
       };
     });
@@ -783,14 +785,15 @@
         return;
       }
       body.innerHTML = `
-        ${table(["时间", "文档", "方式", "结果", "数量", "失败原因", "操作"], attempts.map((attempt) => `<tr>
+        ${table(["时间", "文档", "领域", "方式", "结果", "数量", "失败原因", "操作"], attempts.map((attempt) => `<tr>
           <td class="nowrap mono">${esc(formatTime(attempt.display.ts))}</td>
           <td><a href="#" data-import-log-open="${esc(attempt.doc_id)}"><strong>${esc(attempt.doc_title || "-")}</strong></a><div class="mono muted">${esc(attempt.doc_id || "")}</div></td>
-          <td>${attempt.mode === "auto" ? "一键自动" : attempt.mode === "llm" ? "大模型" : attempt.mode === "local" ? "本地模板" : esc(attempt.mode || "-")}</td>
+          <td>${attempt.domain === "tcm" ? "中医" : attempt.domain === "western" ? "西医" : "-"}</td>
+          <td>${attempt.mode === "auto" ? "按模板导入" : attempt.mode === "llm" ? "大模型" : attempt.mode === "local" ? "本地模板" : esc(attempt.mode || "-")}</td>
           <td>${importLogStatusBadge(attempt.display.status)}</td>
           <td class="muted">${attempt.display.status === "success" ? `${attempt.display.entity_count ?? "-"} 实体 / ${attempt.display.relation_count ?? "-"} 关系 / ${attempt.display.rule_count ?? "-"} 规则` : "-"}</td>
           <td>${esc(attempt.display.error || "-")}</td>
-          <td><div class="actions"><button class="btn sm" data-import-log-open="${esc(attempt.doc_id)}">查看</button><button class="btn sm danger" data-import-log-delete="${esc(attempt.job_id)}">删除</button></div></td>
+          <td><div class="actions"><button class="btn sm" data-import-log-open="${esc(attempt.doc_id)}">查看</button>${attempt.job_id ? `<button class="btn sm danger" data-import-log-delete="${esc(attempt.job_id)}">删除</button>` : '<span class="muted">无法删除</span>'}</div></td>
         </tr>`))}
         <div class="inline-controls muted">
           <span>共 ${data.total} 条 · 第 ${state.importHistory.page} / ${totalPages} 页</span>
@@ -832,9 +835,8 @@
     if (!box) return;
     const pending = state.pendingUpload;
     if (!pending || activeImportJob()) { box.innerHTML = ""; return; }
-    const summary = pending.kind === "auto"
-      ? "一键自动生成：开放术语发现 → 标准码/LOCAL 码 → 图谱与诊疗依据 → 人工审核 → 规则草稿"
-      : `解析方式：${pending.mode === "llm" ? "大模型解析" : "本地模板解析"} · 抽取模板：${esc(pending.templateId || "-")} · 目的图谱：${pending.graphFilename ? esc(pending.graphFilename) : "跟随模板"}`;
+    const domainLabel = pending.domain === "tcm" ? "中医" : "西医";
+    const summary = `${domainLabel}指南导入 · 模板「${esc(pending.templateName || pending.templateId || "-")}」 · 目的图谱：${pending.graphFilename ? esc(pending.graphFilename) : "跟随模板默认"}；抽取 → 图谱与诊疗依据 → 人工审核 → 规则草稿`;
     box.innerHTML = `
       <section class="panel">
         <div class="panel-head"><div><h3>待导入</h3><p>已选择指南文件；确认配置后点击开始，任务提交到服务端异步执行，可暂停、继续或停止</p></div></div>
@@ -865,7 +867,7 @@
     const percent = job.status === "succeeded" ? 100
       : total ? Math.max(2, Math.min(99, Math.round((done / total) * 100))) : 2;
     const tone = job.status === "failed" ? "error" : job.status;
-    const clause = job.mode === "auto" ? "一键自动生成（解析 + 图谱 + 规则）"
+    const clause = job.mode === "auto" ? `${state.pendingUpload?.domain === "tcm" ? "中医" : "西医"}指南导入（解析 + 图谱 + 诊疗依据）`
       : job.mode === "template-llm" ? "模板模式解析（大模型）" : "模板模式解析（本地）";
     const nowSec = job.finished_at || Date.now() / 1000;
     const elapsed = Math.max(0, nowSec - (job.created_at || nowSec));
@@ -938,15 +940,15 @@
     const form = new FormData();
     form.append("file", pending.file);
     form.append("mode", pendingUploadMode());
-    if (pending.kind === "template") {
-      form.append("template_id", pending.templateId || "");
-      if (pending.graphFilename) form.append("graph_filename", pending.graphFilename);
-    } else {
-      form.append("auto_activate", "false");
-      form.append("domain", pending.domain || "auto");
-      form.append("template_id", pending.templateId || "");
-      if (pending.graphFilename) form.append("graph_filename", pending.graphFilename);
+    if (state.importJob?.status === "failed" && state.importRetry?.file === pending.file && state.importRetry.jobId === state.importJob.job_id) {
+      form.append("retry_doc_id", state.importRetry.docId);
     }
+    // 手动路径：template_id 与目的图谱随任务显式提交；服务端 _run_auto_job
+    // 收到 template_id 后直接按该模板执行全流程，不再做领域自动识别。
+    form.append("template_id", pending.templateId || "");
+    form.append("auto_activate", "false");
+    form.append("domain", pending.domain || "auto");
+    if (pending.graphFilename) form.append("graph_filename", pending.graphFilename);
     let created;
     try {
       created = await api("/api/import/jobs", { method: "POST", body: form });
@@ -956,6 +958,7 @@
     } finally {
       importSubmitting = false; // 请求 settle（成功/失败）即解除提交锁
     }
+    state.importRetry = {jobId: created.job_id, docId: created.doc_id, file: pending.file};
     state.importJob = {
       job_id: created.job_id,
       mode: pendingUploadMode(),
@@ -1072,25 +1075,32 @@
   }
 
   function setImportBusy(busy) {
-    ["#autoUploadBtn", "#pdfInput", "#uploadMode", "#uploadTemplate"].forEach((selector) => {
-      const el = $(selector);
-      if (!el) return;
-      el.disabled = busy;
+    IMPORT_PANELS.forEach((cfg) => {
+      [`#pdfInput${cfg.suffix}`, `#uploadTemplate${cfg.suffix}`, `#uploadGraph${cfg.suffix}`].forEach((selector) => {
+        const el = $(selector);
+        if (el) el.disabled = busy;
+      });
+      const drop = $(`#dropzone${cfg.suffix}`);
+      if (drop) {
+        drop.style.pointerEvents = busy ? "none" : "auto";
+        drop.style.opacity = busy ? ".6" : "1";
+      }
     });
-    const drop = $("#dropzone");
-    if (drop) {
-      drop.style.pointerEvents = busy ? "none" : "auto";
-      drop.style.opacity = busy ? ".6" : "1";
-    }
   }
 
-  function prepareAutoUpload(file) {
+  // 手动路径：每个领域面板独立选模板与目的图谱，选文件时严格读取本面板的选择。
+  // 模板即领域；不读任何自动识别结果。
+  // 曾因忽略模板下拉、走领域自动识别，导致指定西医模板仍生成中医图谱。
+  function prepareAutoUpload(file, cfg) {
     if (!file.name.toLowerCase().endsWith(".pdf")) return toast("仅支持 PDF 文件", true);
     if (activeImportJob()) return toast("已有导入任务正在进行，请等待完成或停止当前任务", true);
-    const graphSel = $("#uploadGraph");
+    const templateId = $(`#uploadTemplate${cfg.suffix}`)?.value || "";
+    const template = state.templates.find((t) => t.template_id === templateId);
+    if (!template) return toast(`请先在「${cfg.title}」面板选择抽取模板`, true);
+    const graphSel = $(`#uploadGraph${cfg.suffix}`);
     let graphFilename = "";
     if (graphSel?.value === "__new__") {
-      graphFilename = ($("#uploadGraphNew")?.value || "").trim();
+      graphFilename = ($(`#uploadGraphNew${cfg.suffix}`)?.value || "").trim();
       if (!/^[A-Za-z0-9][A-Za-z0-9_.-]*(\.json)?$/.test(graphFilename) || graphFilename.includes("..")) {
         return toast("新图谱文件名无效：仅限字母、数字、点、下划线、连字符", true);
       }
@@ -1099,40 +1109,13 @@
     }
     state.pendingUpload = {
       file, kind: "auto", mode: "auto",
-      // 一键自动入口不读取模板模式下拉的当前值：模板选择与 auto 入口分属
-      // 两个面板，混读会让「以为选了 V3 实际用默认 GENERIC」这类错配发生。
-      // auto 由领域决定：中医→TCM_GUIDELINE_V3，西医/自动→识别或通用管线。
-      templateId: "",
+      templateId: template.template_id,
+      templateName: template.name,
       graphFilename,
-      domain: $("#autoDomain")?.value || "auto",
+      domain: normalizeDomainClient(template.domain),
     };
     renderPendingUpload();
-    toast(`已选择 ${file.name}；确认后点击「开始导入」`);
-  }
-
-  function prepareUpload(file) {
-    if (!file.name.toLowerCase().endsWith(".pdf")) return toast("仅支持 PDF 文件", true);
-    if (activeImportJob()) return toast("已有导入任务正在进行，请等待完成或停止当前任务", true);
-    const graphSel = $("#uploadGraph");
-    let graphFilename = "";
-    if (graphSel && graphSel.value === "__new__") {
-      const name = ($("#uploadGraphNew")?.value || "").trim();
-      if (!/^[A-Za-z0-9][A-Za-z0-9_.-]*(\.json)?$/.test(name) || name.includes("..")) {
-        return toast("新图谱文件名无效：仅限字母、数字、点、下划线、连字符", true);
-      }
-      graphFilename = name;
-    } else if (graphSel && graphSel.value !== "follow") {
-      graphFilename = graphSel.value;
-    }
-    state.pendingUpload = {
-      file,
-      kind: "template",
-      mode: $("#uploadMode")?.value || "local",
-      templateId: $("#uploadTemplate")?.value || "",
-      graphFilename,
-    };
-    renderPendingUpload();
-    toast(`已选择 ${file.name}；确认配置后点击「开始导入」`);
+    toast(`已选择 ${file.name}；将按${cfg.label}模板「${template.name}」导入`);
   }
 
   function renderImportResult() {
@@ -2465,7 +2448,7 @@
         doc_id: doc.doc_id,
         domain: doc.extraction?.domain || doc.domain || "",
         target_disease_code: doc.targetDisease || $("#targetDisease")?.value || "",
-        template_id: doc.template_id || $("#uploadTemplate")?.value || "",
+        template_id: doc.template_id || doc.extraction?.template_id || "",
         status: "generated",
         ...(graphTarget ? { graph_target: graphTarget } : {}),
       } });
@@ -7587,9 +7570,9 @@
       validate.onclick = async () => {
         const dialog = document.createElement("dialog");
         dialog.className = "dialog";
-        dialog.innerHTML = '<h3>本院判定标准校验</h3><div data-validation>正在进行参数检查与AI校验…</div><button type="button" class="btn" data-close>关闭</button>';
+        dialog.innerHTML = '<div class="dialog-topbar"><strong>本院判定标准校验</strong><button type="button" class="btn ghost" data-close aria-label="关闭校验窗口">× 关闭</button></div><div style="padding:18px;max-height:min(75vh,calc(100dvh - 200px));overflow:auto"><div data-validation>正在进行参数检查与AI校验…</div><button type="button" class="btn" data-close>关闭</button></div>';
         document.body.append(dialog);
-        dialog.querySelector("[data-close]").onclick = () => dialog.close();
+        dialog.querySelectorAll("[data-close]").forEach((el) => (el.onclick = () => dialog.close()));
         dialog.addEventListener("close", () => dialog.remove(), {once: true});
         dialog.showModal();
         validate.disabled = true;

@@ -13,6 +13,7 @@ sys.path.insert(0, str(project_root))
 from src.api.routes.inference import _evaluate_expected
 from src.api.routes import guide_packages
 from src.domains import get_profile
+from src.domains.tcm.basis_generation import generate_tcm_basis_candidates
 from src.domains.tcm.checks import TcmGraphSemanticChecker
 from src.engine import InferenceEngine
 from src.extraction.repository import ExtractionTemplateRepository
@@ -119,11 +120,64 @@ class TcmV2UpgradeTest(unittest.TestCase):
                     "tcm", "TCM_GUIDELINE_V2", "DOC-TCM-2026",
                 )
 
-    def test_v2_rules_use_weighted_conditions(self):
-        template = ExtractionTemplateRepository().get("TCM_GUIDELINE_V2")
-        result = extract_local(CHUNKS, template, "DOC-TCM-V2", "中医 V2 指南")
+def weighted_pattern_graph() -> dict:
+    """气阴两虚证的最小图谱：证候挂主症/舌/脉表现边，并带治法→方药链。"""
+    def syndrome(code, name):
+        return {"id": f"ENTITY:syndrome:{code}", "node_type": "syndrome",
+                "code": code, "name": name, "review_status": "active", "attributes": {}}
+
+    def leaf(kind, code, name, **attrs):
+        return {"id": f"ENTITY:{kind}:{code}", "node_type": kind,
+                "code": code, "name": name, "review_status": "active", "attributes": attrs}
+
+    nodes = [
+        syndrome("TCM_SYN_QI_YIN_XU", "气阴两虚证"),
+        leaf("symptom", "SYM_SHORTNESS_BREATH", "气短"),
+        leaf("symptom", "SYM_FATIGUE", "乏力"),
+        leaf("tongue", "TCM_TONGUE_PALE_RED", "舌淡红"),
+        leaf("pulse", "TCM_PULSE_THREADY_WEAK", "脉细弱"),
+        leaf("treatment_method", "TCM_METHOD_YIQI_YANGYIN", "益气养阴"),
+        leaf("formula", "TCM_FORMULA_SHENGMAI_SAN", "生脉散"),
+        leaf("herb", "TCM_HERB_RENSHEN", "人参", HERB_ROLE="君", HERB_DOSE="人参9克"),
+        leaf("herb", "TCM_HERB_MAIDONG", "麦冬", HERB_ROLE="臣", HERB_DOSE="麦冬9克"),
+        leaf("herb", "TCM_HERB_WUWEIZI", "五味子", HERB_ROLE="佐使", HERB_DOSE="五味子6克"),
+    ]
+    sid = "ENTITY:syndrome:TCM_SYN_QI_YIN_XU"
+    edges = [
+        ("ENTITY:symptom:SYM_SHORTNESS_BREATH", "SYNDROME_HAS_SYMPTOM"),
+        ("ENTITY:symptom:SYM_FATIGUE", "SYNDROME_HAS_SYMPTOM"),
+        ("ENTITY:tongue:TCM_TONGUE_PALE_RED", "SYNDROME_HAS_TONGUE"),
+        ("ENTITY:pulse:TCM_PULSE_THREADY_WEAK", "SYNDROME_HAS_PULSE"),
+        ("ENTITY:treatment_method:TCM_METHOD_YIQI_YANGYIN", "SYNDROME_TREATED_BY_METHOD"),
+        ("ENTITY:formula:TCM_FORMULA_SHENGMAI_SAN", "SYNDROME_RECOMMENDS_FORMULA"),
+        ("ENTITY:formula:TCM_FORMULA_SHENGMAI_SAN", "METHOD_HAS_FORMULA"),
+        ("ENTITY:herb:TCM_HERB_RENSHEN", "FORMULA_CONTAINS_HERB"),
+        ("ENTITY:herb:TCM_HERB_MAIDONG", "FORMULA_CONTAINS_HERB"),
+        ("ENTITY:herb:TCM_HERB_WUWEIZI", "FORMULA_CONTAINS_HERB"),
+    ]
+    relations = []
+    for target, code in edges:
+        source = "ENTITY:treatment_method:TCM_METHOD_YIQI_YANGYIN" if code == "METHOD_HAS_FORMULA" else sid
+        relations.append({"source_node_id": source, "relation_code": code,
+                          "target_node_id": target, "source_refs": ["c1"],
+                          "review_status": "active"})
+    return {
+        "domain": "tcm", "schema_version": 2, "nodes": nodes, "relations": relations,
+        "syndromes": [], "diseases": [], "evidences": [],
+    }
+
+
+class WeightedPatternRulesTest(unittest.TestCase):
+    def test_graph_basis_rules_use_weighted_conditions(self):
+        template = ExtractionTemplateRepository().get("TCM_GUIDELINE_V3")
+        result = extract_local(CHUNKS, template, "DOC-TCM-V3", "中医 V3 指南")
+        # 本地抽取只产实体与关系；加权辨证规则由图谱基础生成派生。
+        self.assertEqual(result.suggested_rules, [])
+        candidates = generate_tcm_basis_candidates(
+            weighted_pattern_graph(), "DOC-TCM-V3", "KG-TCM-V3.json"
+        )
         pattern = next(
-            rule for rule in result.suggested_rules
+            rule for rule in candidates
             if rule["rule_type"] == "tcm_pattern"
             and rule["disease_code"] == "TCM_SYN_QI_YIN_XU"
         )
@@ -132,15 +186,14 @@ class TcmV2UpgradeTest(unittest.TestCase):
         self.assertEqual(conditions["type"], "weighted_group")
         self.assertEqual(conditions["scoring"], "normalized_weight_sum")
         self.assertEqual(conditions["threshold"], 0.6)
-        self.assertTrue(conditions["parameter"]["require_tongue_or_pulse"])
         weights = {
             child["code"]: child["weight"]
             for child in conditions["children"]
             if child["type"] == "observation"
         }
-        self.assertEqual(weights["SYM_SHORTNESS_BREATH"], 3.0)
-        self.assertEqual(weights["TCM_TONGUE_PALE_RED"], 2.0)
-        self.assertEqual(weights["TCM_PULSE_THREADY_WEAK"], 2.0)
+        self.assertEqual(weights["SYM_SHORTNESS_BREATH"], 1.0)
+        self.assertEqual(weights["TCM_TONGUE_PALE_RED"], 1.0)
+        self.assertEqual(weights["TCM_PULSE_THREADY_WEAK"], 1.0)
 
     def test_semantic_checker_walks_weighted_group(self):
         rule = {
@@ -166,33 +219,41 @@ class TcmV2UpgradeTest(unittest.TestCase):
         self.assertFalse(any("条件类型未接入" in issue for issue in result["issues"]))
 
     def test_weighted_engine_and_candidate_review(self):
-        template = ExtractionTemplateRepository().get("TCM_GUIDELINE_V2")
-        extraction = extract_local(CHUNKS, template, "DOC-TCM-V2", "中医 V2 指南")
-        nodes = []
-        seen = set()
-        for entity in extraction.entities:
-            key = (entity["entity_type"], entity["code"])
-            if key not in seen:
-                seen.add(key)
-                nodes.append(node(entity))
-        graph = {
-            "domain": "tcm", "schema_version": 2, "nodes": nodes,
-            "relations": [], "syndromes": [], "diseases": [], "evidences": [],
-        }
+        graph = weighted_pattern_graph()
+        # 第二个证候（痰浊闭阻）的表现项演示患者均不具备，作为未命中分支。
+        sid2 = "ENTITY:syndrome:TCM_SYN_TAN_ZHUO_BI_ZU"
+        graph["nodes"].append({"id": sid2, "node_type": "syndrome",
+                               "code": "TCM_SYN_TAN_ZHUO_BI_ZU", "name": "痰浊闭阻证",
+                               "review_status": "active", "attributes": {}})
+        for kind, code, name, rel in [
+            ("symptom", "SYM_SPUTUM", "痰多", "SYNDROME_HAS_SYMPTOM"),
+            ("tongue", "TCM_TONGUE_PALE_FAT", "舌淡胖", "SYNDROME_HAS_TONGUE"),
+            ("pulse", "TCM_PULSE_WIRY_SLIPPERY", "脉弦滑", "SYNDROME_HAS_PULSE"),
+        ]:
+            nid = f"ENTITY:{kind}:{code}"
+            graph["nodes"].append({"id": nid, "node_type": kind, "code": code,
+                                   "name": name, "review_status": "active", "attributes": {}})
+            graph["relations"].append({"source_node_id": sid2, "relation_code": rel,
+                                       "target_node_id": nid, "source_refs": ["c2"],
+                                       "review_status": "active"})
+        candidates = generate_tcm_basis_candidates(graph, "DOC-TCM-V3", "KG-TCM-V3.json")
+        rules = []
+        for raw in candidates:
+            item = Rule(**raw).model_dump()
+            item["graph_filename"] = "KG-TCM-V3.json"
+            if item["rule_type"] == "tcm_pattern":
+                item["status"] = "active" if item["disease_code"] == "TCM_SYN_QI_YIN_XU" else "draft"
+            else:
+                item["status"] = "draft"
+            rules.append(item)
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "kg").mkdir()
             (root / "rules").mkdir()
             (root / "standards").mkdir()
-            graph_path = root / "kg" / "KG-TCM-V2.json"
-            graph_path.write_text(json.dumps(graph, ensure_ascii=False), encoding="utf-8")
-            rules = [dict(rule) for rule in extraction.suggested_rules]
-            for rule in rules:
-                rule["graph_filename"] = "KG-TCM-V2.json"
-                if rule["rule_type"] == "tcm_pattern":
-                    rule["status"] = "active" if rule["disease_code"] == "TCM_SYN_QI_YIN_XU" else "draft"
-                else:
-                    rule["status"] = "draft"
+            (root / "kg" / "KG-TCM-V3.json").write_text(
+                json.dumps(graph, ensure_ascii=False), encoding="utf-8"
+            )
             (root / "rules" / "managed_rules.json").write_text(
                 json.dumps(rules, ensure_ascii=False), encoding="utf-8"
             )
@@ -200,7 +261,7 @@ class TcmV2UpgradeTest(unittest.TestCase):
             vocab.load(str(project_root / "data" / "vocab" / "concepts.json"))
             engine = InferenceEngine(
                 JsonRuleRepository(str(root / "rules")),
-                JsonGraphClient(str(graph_path)),
+                JsonGraphClient(str(root / "kg" / "KG-TCM-V3.json")),
                 JsonStandardRepository(str(root / "standards")),
                 vocab,
                 lambda filename: JsonGraphClient(str(root / "kg" / filename)),
@@ -218,12 +279,12 @@ class TcmV2UpgradeTest(unittest.TestCase):
             self.assertTrue(pattern.matched_items)
             self.assertFalse(pattern.missing_items)
 
-            candidates = engine.evaluate_tcm_pattern_candidates(patient())
+            review = engine.evaluate_tcm_pattern_candidates(patient())
             self.assertEqual(
-                [item["matched"] for item in candidates],
+                [item["matched"] for item in review],
                 [True, False],
             )
-            self.assertIn("categories", candidates[-1]["conclusion"]["score_breakdown"])
+            self.assertIn("categories", review[-1]["conclusion"]["score_breakdown"])
 
     def test_expected_assertions_report_failure_causes(self):
         candidates = [

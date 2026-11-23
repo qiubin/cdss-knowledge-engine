@@ -538,16 +538,25 @@ async def get_import_logs(page: int = 1, page_size: int = 10):
     return {"items": items, "total": total, "page": page, "page_size": page_size}
 
 
-@router.delete("/import-logs/{job_id}")
-async def delete_import_log(job_id: str):
-    """删除一次导入尝试的全部日志留痕，并联动删除对应的已上传文档。"""
-    if not re.fullmatch(r"JOB-[A-Za-z0-9-]+", job_id or ""):
-        raise HTTPException(422, "导入任务标识无效")
+@router.delete("/import-logs/{log_key}")
+async def delete_import_log(log_key: str):
+    """删除一次导入尝试的全部日志留痕，并联动删除对应的已上传文档。
+
+    标识兼容两类：JOB-xxx（走任务流的导入）与 DOC-xxx（早期无任务号的留痕，
+    按文档号整组删除；每次上传都会生成新的 DOC 号，天然对应一次尝试）。
+    """
+    key = log_key or ""
+    if not re.fullmatch(r"(JOB|DOC)-[A-Za-z0-9-]+", key):
+        raise HTTPException(422, "导入记录标识无效")
     rows = _load_import_log()
-    removed = [row for row in rows if row.get("job_id") == job_id]
+
+    def _hit(row: Dict[str, Any]) -> bool:
+        return row.get("job_id") == key or (key.startswith("DOC-") and row.get("doc_id") == key)
+
+    removed = [row for row in rows if _hit(row)]
     if not removed:
         raise HTTPException(404, "导入记录不存在")
-    _write_import_log([row for row in rows if row.get("job_id") != job_id])
+    _write_import_log([row for row in rows if not _hit(row)])
     doc_ids = sorted({row["doc_id"] for row in removed if row.get("doc_id")})
     for doc_id in doc_ids:
         _remove_doc_files(doc_id)
@@ -682,8 +691,11 @@ async def reparse_document(doc_id: str, controller=None):
             return await get_document_result(doc_id)
         old_ids = {chunk['chunk_id'] for chunk in selected}
         config = copy.deepcopy(extraction_config.load())
-        if doc.get('reparse_history') and successful:
-            config.setdefault('llm', {})['max_chunk_chars'] = min(int(config.get('llm', {}).get('max_chunk_chars', 12000)), 1200)
+        # Recover with isolated, bounded requests from the first retry.
+        recovery = config.setdefault('llm', {})
+        recovery['recovery_mode'] = True
+        recovery['max_chunks'] = 1
+        recovery['max_chunk_chars'] = min(int(recovery.get('max_chunk_chars', 12000)), 1200)
         result = await extract(extraction.get('mode','llm'), selected, template, doc_id, doc['doc_title'], config, controller=controller)
         doc['parsed']['chunks'] = [chunk for chunk in doc['parsed']['chunks'] if chunk['chunk_id'] not in old_ids] + selected
         for key, values in [('entities', result.entities), ('suggested_relations', result.suggested_relations), ('suggested_rules', result.suggested_rules)]:

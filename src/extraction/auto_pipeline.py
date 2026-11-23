@@ -6,7 +6,10 @@ treatment plans and optional automatic activation.
 """
 from __future__ import annotations
 
+import asyncio
+import hashlib
 import json
+import uuid
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -504,12 +507,62 @@ async def run_auto_pipeline(
         ),
     )
     settings = dict(config.get("llm", {}))
-    call = llm_call or chat_json
-    groups = _chunk_groups(
-        chunks,
-        int(settings.get("max_chunk_chars", 12000)),
-        int(settings.get("max_chunks", 80)),
-    )
+    upstream = llm_call or chat_json
+    checkpoint_dir = root / "extraction" / "checkpoints" / hashlib.sha256(doc_id.encode()).hexdigest()
+
+    fatal_error = None
+
+    async def call(settings, messages):
+        nonlocal fatal_error
+        if fatal_error is not None:
+            raise fatal_error
+        # Cache each completed stage, so a compiler timeout does not discard
+        # the clinical statements, and retries can resume after a restart.
+        identity = {key: settings.get(key) for key in (
+            "provider", "api_format", "base_url", "model", "temperature", "max_output_tokens")}
+        key = hashlib.sha256(json.dumps([identity, messages], ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+        path = checkpoint_dir / f"{key}.json"
+        if path.exists():
+            try:
+                cached = json.loads(path.read_text(encoding="utf-8"))
+                if isinstance(cached, dict) and (isinstance(cached.get("statements"), list) or isinstance(cached.get("entities"), list)):
+                    return cached
+            except (ValueError, OSError):
+                pass
+        for attempt in range(4):
+            try:
+                try:
+                    payload = await asyncio.wait_for(upstream(settings, messages),
+                        timeout=float(settings.get("timeout_seconds", 120)))
+                except asyncio.TimeoutError as error:
+                    raise LLMError("模型阶段请求总耗时超时，请拆分片段重试") from error
+                break
+            except LLMError as error:
+                if "HTTP 429" not in str(error):
+                    raise
+                if attempt == 3:
+                    fatal_error = LLMError("模型服务持续限流（HTTP 429），已停止发送后续片段；成功阶段已保存，请稍后重试。" + str(error))
+                    raise fatal_error from error
+                delay = min(60, 15 * 2 ** attempt)
+                if controller is not None:
+                    controller.log(f"模型服务限流，等待 {delay} 秒后重试；成功阶段已保存", "warn")
+                    await controller.checkpoint(stage="模型服务限流，等待重试")
+                await asyncio.sleep(delay)
+        if isinstance(payload, dict) and (isinstance(payload.get("statements"), list) or isinstance(payload.get("entities"), list)):
+            checkpoint_dir.mkdir(parents=True, exist_ok=True)
+            temporary = path.with_suffix(f".{uuid.uuid4().hex}.tmp")
+            temporary.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+            temporary.replace(path)
+        return payload
+
+    from .chunk_limits import bounded_chunks
+    max_chars = min(1200, int(settings.get("max_chunk_chars", 12000)))
+    # Bibliography is not a source of guideline clinical recommendations.
+    excluded = [chunk for chunk in chunks if chunk.get("section") == "参考文献"]
+    clinical = [chunk for chunk in chunks if chunk.get("section") != "参考文献"]
+    chunks[:] = bounded_chunks(clinical, max_chars) + excluded
+    excluded_chunks = {chunk["chunk_id"] for chunk in excluded}
+    groups = _chunk_groups([chunk for chunk in chunks if chunk["chunk_id"] not in excluded_chunks], max_chars, 1)
     raw_entities: List[Dict[str, Any]] = []
     raw_relations: List[Dict[str, Any]] = []
     raw_rules: List[Dict[str, Any]] = []
@@ -570,16 +623,26 @@ async def run_auto_pipeline(
             statement = dict(statement)
             statement["statement_id"] = f"{doc_id}:{chunk_group[0]['chunk_id']}:S{index + 1}"
             indexed[statement["statement_id"]] = statement
-        messages = _auto_prompt(chunk_group, doc_title)
-        payload = json.loads(messages[1]["content"])
-        payload["clinical_statements"] = list(indexed.values())
-        payload["instruction"] = "阶段二：仅从这些临床陈述生成实体、关系、规则。每条规则必须携带clinical_statement_id，条件和建议不能超出该陈述；保留限定条件，不自行猜测组合逻辑。"
-        messages[1]["content"] = json.dumps(payload, ensure_ascii=False)
-        if controller is not None:
-            await controller.checkpoint(stage="临床陈述编译为图谱与规则")
-        compiled = await call(settings, messages)
-        if not isinstance(compiled.get("entities"), list):
-            raise LLMError("阶段二 JSON 缺少 entities 数组")
+        # A small source table can yield dozens of statements. Bound the
+        # compiler output by statements as well as by source characters.
+        records = list(indexed.values())
+        compiled = {key: [] for key in ("entities", "relations", "rules", "treatment_plans", "standards")}
+        for start in range(0, len(records), 2):
+            messages = _auto_prompt(chunk_group, doc_title)
+            payload = json.loads(messages[1]["content"])
+            payload["clinical_statements"] = records[start:start + 2]
+            payload["instruction"] = "阶段二：仅从这些临床陈述生成实体、关系、规则。每条规则必须携带clinical_statement_id，条件和建议不能超出该陈述；保留限定条件，不自行猜测组合逻辑。"
+            messages[1]["content"] = json.dumps(payload, ensure_ascii=False)
+            if controller is not None:
+                await controller.checkpoint(stage=f"临床陈述编译（{min(start + 2, len(records))}/{len(records)}）")
+            batch = await call(settings, messages)
+            if not isinstance(batch.get("entities"), list):
+                raise LLMError("阶段二 JSON 缺少 entities 数组")
+            for key in compiled:
+                values = batch.get(key) or []
+                if not isinstance(values, list):
+                    raise LLMError(f"阶段二 JSON 的 {key} 必须为数组")
+                compiled[key].extend(values)
         for rule in compiled.get("rules") or []:
             statement = indexed.get(rule.get("clinical_statement_id"))
             if not statement:
@@ -608,7 +671,8 @@ async def run_auto_pipeline(
         return compiled
 
     total_groups = len(groups)
-    for index, group in enumerate(groups):
+    async def process_group(index, group):
+        nonlocal succeeded
         if controller is not None:
             await controller.checkpoint(
                 stage=f"自动抽取（第 {index + 1}/{total_groups} 组）",
@@ -618,36 +682,67 @@ async def run_auto_pipeline(
             payload = await call_group(group)
         except Exception as error:
             message = str(error)
+            if "模型服务持续限流" in message:
+                raise
             split_payloads: List[Dict[str, Any]] = []
-            if len(group) > 1 and any(
-                token in message for token in ("JSON", "截断", "Expecting")
+            if any(
+                token in message for token in ("JSON", "截断", "Expecting", "超时", "timeout", "Timeout")
             ):
                 # Long groups can exceed the model output budget and return
                 # truncated JSON.  Retry each chunk separately so one oversized
                 # segment does not discard the whole group.
-                for chunk in group:
+                retry_chunks = group
+                if len(group) == 1 and len(group[0].get("text", "")) > 600:
+                    retry_chunks = bounded_chunks(group, max(400, len(group[0]["text"]) // 2))
+                    parent = group[0]["chunk_id"]
+                    position = next(i for i, chunk in enumerate(chunks) if chunk["chunk_id"] == parent)
+                    chunks[position:position + 1] = retry_chunks
+                    scheduled_chunks.discard(parent)
+                    scheduled_chunks.update(chunk["chunk_id"] for chunk in retry_chunks)
+                for chunk in retry_chunks:
                     try:
                         split_payloads.append(await call_group([chunk]))
                         completed_chunks.add(chunk["chunk_id"])
-                    except Exception:
+                    except Exception as split_error:
+                        if "模型服务持续限流" in str(split_error):
+                            raise
+                        warnings.append(f"片段 {chunk['chunk_id']} 单独重试失败: {str(split_error)[:180]}")
                         continue
             if split_payloads:
-                failed = len(group) - len(split_payloads)
+                failed = len(retry_chunks) - len(split_payloads)
                 warnings.append(
-                    f"片段组 {group[0]['chunk_id']} 输出过大或格式错误，"
-                    f"已按单片段重试成功 {len(split_payloads)}/{len(group)} 个"
+                    f"片段组 {group[0]['chunk_id']} 请求失败或输出异常，"
+                    f"已按单片段重试成功 {len(split_payloads)}/{len(retry_chunks)} 个"
                     + (f"，仍失败 {failed} 个" if failed else "")
                 )
                 for split_payload in split_payloads:
                     merge_payload(split_payload)
                 succeeded += 1
-                continue
+                return
             warnings.append(f"片段 {group[0]['chunk_id']} LLM 失败: {message[:180]}")
-            continue
+            return
         merge_payload(payload)
         completed_chunks.update(chunk["chunk_id"] for chunk in group)
         succeeded += 1
-    coverage = coverage_report(chunks, completed_chunks, scheduled_chunks)
+
+    semaphore = asyncio.Semaphore(max(1, min(3, int(settings.get("extraction_concurrency", 1)))))
+    async def bounded(index, group):
+        async with semaphore:
+            await process_group(index, group)
+    tasks = [asyncio.create_task(bounded(index, group)) for index, group in enumerate(groups)]
+    try:
+        await asyncio.gather(*tasks)
+    except BaseException:
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        raise
+    coverage = coverage_report(chunks, completed_chunks, scheduled_chunks, excluded_chunks)
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    report = checkpoint_dir / "coverage.json"
+    temporary = report.with_suffix(f".{uuid.uuid4().hex}.tmp")
+    temporary.write_text(json.dumps({"doc_id": doc_id, "coverage": coverage, "warnings": warnings}, ensure_ascii=False), encoding="utf-8")
+    temporary.replace(report)
     coverage_summary = (
         f"片段共 {coverage['total']} 个，模型响应 {coverage['processed']} 个，"
         f"失败 {coverage['failed']} 个，未安排 {coverage['not_scheduled']} 个"
@@ -892,7 +987,8 @@ async def run_auto_pipeline(
 
     if require_import_quality and not coverage["complete"]:
         raise LLMError(
-            f"解析覆盖不完整，已停止自动入库：{coverage_summary}。请重试失败片段"
+            f"解析覆盖不完整，已停止自动入库：{coverage_summary}。请重试失败片段。"
+            + "；".join([warning for warning in warnings if "LLM 失败" in warning or "单独重试失败" in warning][-3:])
         )
     if require_import_quality and not relations:
         raise LLMError("未生成任何实体关系，已停止自动入库；请检查领域选择、模板和抽取告警")

@@ -73,6 +73,24 @@ class ImportJobsApiTest(unittest.TestCase):
         self.assertEqual(captured["mode"], "template-local")
         _cleanup_upload(body["doc_id"])
 
+    def test_retry_reuses_document_id_and_checks_file_identity(self):
+        import tempfile
+        _stub_submit()
+        with tempfile.TemporaryDirectory() as directory, mock.patch.object(routes, "UPLOAD_DIR_PDF", Path(directory)), mock.patch.object(routes.manager, "list_jobs", return_value=[]):
+            original = Path(directory) / "DOC-RETRY.pdf"
+            original.write_bytes(b"%PDF-original")
+            response = self.client.post("/api/import/jobs",
+                files={"file": ("t.pdf", b"%PDF-original", "application/pdf")},
+                data={"mode": "auto", "retry_doc_id": "DOC-RETRY"})
+            self.assertEqual(response.status_code, 201)
+            self.assertEqual(response.json()["doc_id"], "DOC-RETRY")
+            mismatch = self.client.post("/api/import/jobs",
+                files={"file": ("t.pdf", b"%PDF-different", "application/pdf")},
+                data={"mode": "auto", "retry_doc_id": "DOC-RETRY"})
+            self.assertEqual(mismatch.status_code, 422)
+            self.assertEqual(original.read_bytes(), b"%PDF-original")
+        routes.manager._jobs.pop("JOB-STUB", None)
+
     def test_create_job_rejects_bad_mode(self):
         response = self.client.post(
             "/api/import/jobs",

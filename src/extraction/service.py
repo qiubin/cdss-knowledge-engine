@@ -1,6 +1,7 @@
 """Guideline extraction providers driven by managed templates."""
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import re
@@ -488,9 +489,23 @@ def _validate_llm_payload(
             continue
         seen_entities.add(key)
 
-        page = int(raw.get("page") or chunk.get("page_start") or 1)
-        line_start = int(raw.get("line_start") or chunk.get("line_start") or 1)
-        line_end = int(raw.get("line_end") or line_start)
+        # Model locations may contain ranges ("22-23") or prose. Fall back
+        # to the known source chunk rather than discarding its extraction.
+        try:
+            page = int(raw.get("page") or chunk.get("page_start") or 1)
+        except (TypeError, ValueError):
+            page = chunk["page_start"]
+            page_corrections += 1
+        try:
+            line_start = int(raw.get("line_start") or chunk.get("line_start") or 1)
+        except (TypeError, ValueError):
+            line_start = chunk["line_start"]
+            line_corrections += 1
+        try:
+            line_end = int(raw.get("line_end") or line_start)
+        except (TypeError, ValueError):
+            line_end = line_start
+            line_corrections += 1
         if page < chunk["page_start"] or page > chunk["page_end"]:
             page_corrections += 1
             page = chunk["page_start"]
@@ -1283,7 +1298,7 @@ async def extract_llm(
     template = resolve_template(template)
     max_chunks_per_group = max(1, int(settings.get("max_chunks", 80)))
     max_chars = int(settings.get("max_chunk_chars", 12000))
-    if template.template_id == "TCM_GUIDELINE_V3":
+    if template.template_id == "TCM_GUIDELINE_V3" or settings.get("recovery_mode"):
         from .chunk_limits import bounded_chunks
         chunks[:] = bounded_chunks(chunks, min(max_chars, 2400))
         max_chunks_per_group = 1
@@ -1335,6 +1350,25 @@ async def extract_llm(
     completed_chunks = set()
     scheduled_chunks = {chunk["chunk_id"] for chunk in selected}
 
+    async def call_model(messages: List[Dict[str, str]]) -> Dict[str, Any]:
+        """Retry provider throttling without fanning out more requests."""
+        for attempt in range(4):
+            try:
+                return await chat_json(settings, messages)
+            except LLMError as error:
+                if "HTTP 429" not in str(error):
+                    raise
+                if attempt == 3:
+                    raise LLMError(
+                        "模型服务持续限流（HTTP 429）；已停止当前解析，成功片段会保留，"
+                        "请稍后重试失败片段"
+                    ) from error
+                delay = min(60, 15 * (2 ** attempt))
+                if controller is not None:
+                    controller.log(f"模型服务限流，等待 {delay} 秒后重试", "warn")
+                    await controller.checkpoint(stage="模型服务限流，等待重试")
+                await asyncio.sleep(delay)
+
     def absorb(payload: Dict[str, Any], group_chunks: List[Dict[str, Any]]) -> None:
         if not isinstance(payload.get("entities"), list):
             raise LLMError("JSON缺少entities数组，不能标记为解析成功")
@@ -1359,7 +1393,7 @@ async def extract_llm(
                 done=index, total=total_groups,
             )
         try:
-            payload = await chat_json(settings, _llm_prompt(template, group, doc_title, doc_id))
+            payload = await call_model(_llm_prompt(template, group, doc_title, doc_id))
             absorb(payload, group)
             successful_groups += 1
             completed_chunks.update(chunk["chunk_id"] for chunk in group)
@@ -1367,7 +1401,7 @@ async def extract_llm(
             message = str(error)
             split_succeeded = 0
             if any(
-                token in message for token in ("JSON", "截断", "Expecting")
+                token in message for token in ("JSON", "截断", "Expecting", "超时", "timeout", "Timeout")
             ):
                 # Retry oversized groups chunk by chunk so one truncated
                 # response does not discard the whole group.
@@ -1382,8 +1416,8 @@ async def extract_llm(
                     scheduled_chunks.update(item["chunk_id"] for item in retry_group)
                 for chunk in retry_group:
                     try:
-                        payload = await chat_json(
-                            settings, _llm_prompt(template, [chunk], doc_title, doc_id)
+                        payload = await call_model(
+                            _llm_prompt(template, [chunk], doc_title, doc_id)
                         )
                         # Validate inside the per-chunk guard. Previously raw
                         # payloads were validated afterwards, so one malformed
@@ -1401,16 +1435,15 @@ async def extract_llm(
                 successful_groups += 1
                 failed = len(retry_group) - split_succeeded
                 warnings.append(
-                    f"片段组 {group[0]['chunk_id']} 输出过大或格式错误，"
+                    f"片段组 {group[0]['chunk_id']} 请求失败或输出异常，"
                     f"已按单片段重试成功 {split_succeeded}/{len(retry_group)} 个"
                     + (f"，仍失败 {failed} 个" if failed else "")
                 )
             else:
                 warnings.append(f"片段 {group[0]['chunk_id']} 解析失败: {message[:180]}")
 
-    if template.template_id == "TCM_GUIDELINE_V3":
-        import asyncio
-        semaphore = asyncio.Semaphore(max(1, min(3, int(settings.get("extraction_concurrency", 3)))))
+    if template.template_id == "TCM_GUIDELINE_V3" or settings.get("recovery_mode"):
+        semaphore = asyncio.Semaphore(max(1, min(3, int(settings.get("extraction_concurrency", 1)))))
         async def bounded(index, group):
             async with semaphore:
                 await process_group(index, group)

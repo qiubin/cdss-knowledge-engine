@@ -6,6 +6,7 @@ import json
 import sys
 import tempfile
 import unittest
+import pytest
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
@@ -287,3 +288,90 @@ class AutoPipelineTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@pytest.mark.parametrize("error", ["大模型请求超时（120 秒）", "Anthropic 请求失败 HTTP 429"])
+def test_auto_timeout_retries_and_reuses_successful_stage(tmp_path, monkeypatch, error):
+    from unittest.mock import Mock
+    from src.extraction import auto_pipeline as pipeline
+    resolver = Mock()
+    resolver.resolve.return_value = {'entity_type': 'disease', 'name': '肺腺癌', 'code': 'LOCAL-DIS-TEST'}
+    resolver.resolved_terms = []
+    monkeypatch.setattr(pipeline, 'UniversalTermResolver', lambda **kwargs: resolver)
+    monkeypatch.setattr(kg_routes, 'import_graph', AsyncMock(return_value={}))
+    monkeypatch.setattr(pipeline.asyncio, 'sleep', AsyncMock())
+    model = AsyncMock(side_effect=[LLMError(error), {
+        'statements': [], 'disease_mentions': [{'name': '肺腺癌', 'source': {
+            'chunk_id': 'c1', 'quote': '肺腺癌', 'page_start': 1, 'line_start': 1}}]}])
+    async def run():
+        args = ([make_chunk()], 'DOC-RESUME', '肺癌', {})
+        first = await run_auto_pipeline(*args, data_root=tmp_path, llm_call=model)
+        second = await run_auto_pipeline(*args, data_root=tmp_path, llm_call=model)
+        assert first['metadata']['coverage']['complete']
+        assert second['metadata']['coverage']['complete']
+    asyncio.run(run())
+    assert model.await_count == 2  # timeout + retry; subsequent run is cached
+
+
+def test_auto_excludes_bibliography_from_model_requests(tmp_path, monkeypatch):
+    from unittest.mock import Mock
+    from src.extraction import auto_pipeline as pipeline
+    resolver = Mock()
+    resolver.resolve.return_value = {'entity_type': 'disease', 'name': '肺腺癌', 'code': 'LOCAL-DIS-TEST'}
+    resolver.resolved_terms = []
+    monkeypatch.setattr(pipeline, 'UniversalTermResolver', lambda **kwargs: resolver)
+    monkeypatch.setattr(kg_routes, 'import_graph', AsyncMock(return_value={}))
+    model = AsyncMock(return_value={'statements': [], 'disease_mentions': [{'name': '肺腺癌',
+        'source': {'chunk_id': 'c1', 'quote': '肺腺癌'}}]})
+    refs = {**make_chunk(), 'chunk_id': 'refs', 'section': '参考文献', 'text': '[1] reference'}
+    result = asyncio.run(run_auto_pipeline([make_chunk(), refs], 'DOC-REF', '肺癌', {},
+        data_root=tmp_path, llm_call=model))
+    coverage = result['metadata']['coverage']
+    assert coverage['complete'] and coverage['excluded'] == 1 and coverage['processed'] == 1
+    assert model.await_count == 1
+    assert len(json.loads(model.call_args.args[1][1]['content'])['chunks']) == 1
+
+
+def test_persistent_rate_limit_stops_queued_chunks(tmp_path, monkeypatch):
+    from src.extraction import auto_pipeline as pipeline
+    monkeypatch.setattr(pipeline.asyncio, 'sleep', AsyncMock())
+    model = AsyncMock(side_effect=LLMError('Anthropic 请求失败 HTTP 429'))
+    chunks = [{**make_chunk(), 'chunk_id': f'C{i}'} for i in range(3)]
+    with pytest.raises(LLMError, match='模型服务持续限流'):
+        asyncio.run(run_auto_pipeline(chunks, 'DOC-LIMIT', '肺癌', {}, data_root=tmp_path, llm_call=model))
+    assert model.await_count == 4
+    assert not (tmp_path / 'kg').exists()
+
+
+def test_auto_enforces_total_stage_deadline(tmp_path):
+    async def hanging_model(*args):
+        await asyncio.Event().wait()
+    with pytest.raises(LLMError, match='总耗时超时'):
+        asyncio.run(run_auto_pipeline([make_chunk()], 'DOC-DEADLINE', '肺癌',
+            {'llm': {'timeout_seconds': 0.01}}, data_root=tmp_path, llm_call=hanging_model))
+    assert not (tmp_path / 'kg').exists()
+
+
+def test_compiler_batches_dense_statements_without_dropping_any(tmp_path, monkeypatch):
+    from src.extraction import auto_pipeline as pipeline
+    from unittest.mock import Mock
+    resolver = Mock()
+    resolver.resolve.return_value = {'entity_type': 'disease', 'name': '肺腺癌', 'code': 'LOCAL-DIS-TEST'}
+    resolver.resolved_terms = []
+    monkeypatch.setattr(pipeline, 'UniversalTermResolver', lambda **kw: resolver)
+    monkeypatch.setattr(kg_routes, 'import_graph', AsyncMock(return_value={}))
+    batches = []
+    async def model(settings, messages):
+        payload = json.loads(messages[1]['content'])
+        if 'clinical_statements' not in payload:
+            return {'statements': [{'disease_name': '肺腺癌', 'scene': 'diagnosis_confirmation',
+                'source': {'chunk_id': 'c1', 'quote': '肺腺癌'}} for _ in range(5)]}
+        records = payload['clinical_statements']
+        batches.append([r['statement_id'] for r in records])
+        return {'entities': [{'entity_type': 'disease', 'name': '肺腺癌', 'chunk_id': 'c1', 'quote': '肺腺癌'}]}
+    result = asyncio.run(run_auto_pipeline([make_chunk()], 'DOC-DENSE', '肺癌', {},
+        data_root=tmp_path, llm_call=model))
+    assert [len(b) for b in batches] == [2, 2, 1]
+    assert len({i for b in batches for i in b}) == 5
+    assert result['metadata']['clinical_statement_count'] == 5
+    assert result['metadata']['coverage']['complete']

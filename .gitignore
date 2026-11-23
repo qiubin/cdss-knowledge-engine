@@ -46,6 +46,9 @@ _patch_service*.py
 # runtime import history
 data/imports/
 
+# LLM extraction resume checkpoints (per-doc chunk responses)
+data/extraction/checkpoints/
+
 # terminology governance runtime data
 data/terminology/backups/
 data/terminology/imports/
