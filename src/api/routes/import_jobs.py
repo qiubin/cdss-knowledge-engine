@@ -32,13 +32,13 @@ async def _run_template_job(
     ``graph_name`` 已在 create 路由经 ``resolve_upload_graph_filename`` 校验。
     """
     from .pdf import (  # deferred: 保持本仓库函数内导入风格
-        _doc_store, _now, _persist_doc, extraction_templates, parse_pdf,
+        _doc_store, _now, _persist_doc, extraction_templates, parse_document,
         WARN_NO_TEXT_LAYER,
     )
     from src.extraction.service import extract
 
     config = ExtractionConfigRepository().load()
-    parsed = parse_pdf(file_path, doc_id)
+    parsed = parse_document(file_path, doc_id)
     _persist_doc({"doc_id": doc_id, "doc_title": doc_title, "parsed": parsed,
                   "file_path": str(file_path), "uploaded_at": _now()})
     await controller.checkpoint(stage="模板抽取", done=0, total=1)
@@ -209,8 +209,8 @@ async def _run_auto_job(
     领域由建任务时的显式选择决定（模板领域优先，其次 domain 参数；auto 且无
     模板时默认西医链路，由 TCM 守卫拦截中医内容），不做运行时领域自动识别。
     """
-    from .pdf import parse_pdf
-    parsed = parse_pdf(file_path, doc_id)
+    from .pdf import parse_document
+    parsed = parse_document(file_path, doc_id)
     template = extraction_templates.get(template_id) if template_id else None
     if domain != "auto" and template is not None and domain != str(template.domain or "western"):
         raise ValueError("所选指南领域与抽取模板领域不一致")
@@ -239,8 +239,13 @@ async def create_import_job(
     domain: str = Form("auto"),
     retry_doc_id: str = Form(""),
 ):
-    if not file.filename or not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(400, "仅支持 PDF 文件")
+    if not file.filename:
+        raise HTTPException(400, "缺少文件名")
+    upload_suffix = Path(file.filename).suffix.lower()
+    if upload_suffix == ".doc":
+        raise HTTPException(400, "旧版 .doc 格式不支持，请在 Word 中另存为 .docx 后重新上传")
+    if upload_suffix not in {".pdf", ".docx"}:
+        raise HTTPException(400, "仅支持 PDF 或 Word (.docx) 文件")
     if mode not in _VALID_MODES:
         raise HTTPException(422, f"mode 必须是 {'/'.join(sorted(_VALID_MODES))}")
     if domain not in {"auto", "western", "tcm"}:
@@ -256,7 +261,7 @@ async def create_import_job(
             resolved_graph = resolve_upload_graph_filename(template, graph_filename or "")
         except ValueError as error:
             raise HTTPException(422, str(error)) from error
-    doc_title = re.sub(r"\.pdf$", "", file.filename, flags=re.IGNORECASE)
+    doc_title = re.sub(r"\.(pdf|docx)$", "", file.filename, flags=re.IGNORECASE)
     # 建任务即解析领域并做一致性校验：模板领域与 domain 参数冲突直接 422，
     # 避免任务排队消耗 LLM 后才失败；领域同时登记进留痕（_JOB_DOMAINS）。
     resolved_domain = ""
@@ -275,7 +280,7 @@ async def create_import_job(
     if retry_doc_id:
         if not re.fullmatch(r"DOC-[A-Za-z0-9-]+", retry_doc_id):
             raise HTTPException(422, "重试文档标识无效")
-        original_path = UPLOAD_DIR_PDF / f"{retry_doc_id}.pdf"
+        original_path = UPLOAD_DIR_PDF / f"{retry_doc_id}{upload_suffix}"
         if not original_path.exists() or original_path.read_bytes() != content:
             raise HTTPException(422, "重试文件与原文档不一致，请重新创建导入任务")
         if any(_job_doc_id(job) == retry_doc_id and job.status not in {FAILED, SUCCEEDED, STOPPED}
@@ -283,7 +288,7 @@ async def create_import_job(
             raise HTTPException(409, "此文档已有正在进行的导入任务")
     doc_id = retry_doc_id or f"DOC-{uuid.uuid4().hex[:8]}"
     UPLOAD_DIR_PDF.mkdir(parents=True, exist_ok=True)
-    file_path = UPLOAD_DIR_PDF / f"{doc_id}.pdf"
+    file_path = UPLOAD_DIR_PDF / f"{doc_id}{upload_suffix}"
     if not retry_doc_id:
         file_path.write_bytes(content)
 

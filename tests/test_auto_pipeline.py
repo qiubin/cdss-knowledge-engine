@@ -352,7 +352,12 @@ def test_auto_enforces_total_stage_deadline(tmp_path):
     assert not (tmp_path / 'kg').exists()
 
 
-def test_compiler_batches_dense_statements_without_dropping_any(tmp_path, monkeypatch):
+@pytest.mark.parametrize("batch_size, split, expected", [
+    (2, False, [2, 2, 1]),
+    (4, False, [4, 1]),
+    (4, True, [4, 2, 2, 1]),
+])
+def test_compiler_batches_dense_statements_without_dropping_any(tmp_path, monkeypatch, batch_size, split, expected):
     from src.extraction import auto_pipeline as pipeline
     from unittest.mock import Mock
     resolver = Mock()
@@ -368,10 +373,16 @@ def test_compiler_batches_dense_statements_without_dropping_any(tmp_path, monkey
                 'source': {'chunk_id': 'c1', 'quote': '肺腺癌'}} for _ in range(5)]}
         records = payload['clinical_statements']
         batches.append([r['statement_id'] for r in records])
+        if split and len(records) == 4:
+            raise LLMError("JSON 截断")
         return {'entities': [{'entity_type': 'disease', 'name': '肺腺癌', 'chunk_id': 'c1', 'quote': '肺腺癌'}]}
-    result = asyncio.run(run_auto_pipeline([make_chunk()], 'DOC-DENSE', '肺癌', {},
+    result = asyncio.run(run_auto_pipeline([make_chunk()], 'DOC-DENSE', '肺癌',
+        {'llm': {'western_compile_batch_size': batch_size}},
         data_root=tmp_path, llm_call=model))
-    assert [len(b) for b in batches] == [2, 2, 1]
+    assert [len(b) for b in batches] == expected
     assert len({i for b in batches for i in b}) == 5
     assert result['metadata']['clinical_statement_count'] == 5
     assert result['metadata']['coverage']['complete']
+    metrics = result['metadata']['performance']['model_stages']
+    assert metrics['extraction']['calls'] == 1
+    assert metrics['compilation']['calls'] == len(expected)

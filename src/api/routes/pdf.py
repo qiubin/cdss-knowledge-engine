@@ -72,7 +72,7 @@ def _remove_doc_files(doc_id: str) -> None:
     if not re.fullmatch(r"DOC-[A-Za-z0-9-]+", doc_id or ""):
         return
     _doc_store.pop(doc_id, None)
-    for suffix in (_PARSED_SUFFIX, ".pdf"):
+    for suffix in (_PARSED_SUFFIX, ".pdf", ".docx"):
         try:
             (UPLOAD_DIR / f"{doc_id}{suffix}").unlink(missing_ok=True)
         except OSError:
@@ -93,6 +93,8 @@ def _parsed_path(doc_id: str) -> Path:
 def _persist_doc(doc: Dict[str, Any]) -> None:
     """Persist parsed docs so the web workflow survives server restarts."""
     payload = {k: v for k, v in doc.items() if k != "file_path"}
+    # 原始扩展名随记录持久化，重启恢复 file_path 时不再假设 .pdf（Word 文档）。
+    payload["file_ext"] = Path(str(doc.get("file_path") or "")).suffix.lower() or ".pdf"
     _parsed_path(doc["doc_id"]).write_text(
         json.dumps(payload, ensure_ascii=False), encoding="utf-8"
     )
@@ -105,7 +107,7 @@ def _load_doc(doc_id: str) -> Optional[Dict[str, Any]]:
     if not path.exists():
         return None
     data = json.loads(path.read_text(encoding="utf-8"))
-    data["file_path"] = str(UPLOAD_DIR / f"{doc_id}.pdf")
+    data["file_path"] = str(UPLOAD_DIR / f"{doc_id}{data.get('file_ext') or '.pdf'}")
     _doc_store[doc_id] = data
     return data
 
@@ -170,13 +172,45 @@ SECTION_PATTERN = re.compile(
 )
 
 
+# Tail sections that carry no clinical recommendations.  Real-world guidelines
+# print the bibliography heading with intra-character spaces,
+# full-width spaces, or in English ("References"), so match loosely — but the
+# whole line must be the heading, not a sentence mentioning references.
+TAIL_SECTION_PATTERN = re.compile(
+    r"^[\s　]*(?:参[\s　]*考[\s　]*文[\s　]*献|引[\s　]*用[\s　]*文[\s　]*献"
+    r"|[Rr][Ee][Ff][Ee][Rr][Ee][Nn][Cc][Ee][Ss]?)[\s　]*$"
+)
+# A bibliography entry without its heading: "[1] Zhang Y, et al. Lancet 2020;18(2):33-41."
+REFERENCE_ENTRY_PATTERN = re.compile(r"^\[?(\d{1,3})[\]）、．.]\s*\S")
+
+
+def _is_tail_section_heading(text: str) -> bool:
+    return bool(TAIL_SECTION_PATTERN.match(text))
+
+
+def _is_reference_entry(text: str) -> bool:
+    """Bibliography entry line such as "[1] Zhang Y, et al. Lancet 2020;18(2):33-41.".
+
+    Distinguished from clinical numbering ("3. 评估左室射血分数"): a citation
+    cites a year or journal-style tail punctuation, clinical items read as prose.
+    """
+    if not REFERENCE_ENTRY_PATTERN.match(text):
+        return False
+    return bool(re.search(r"(19|20)\d{2}", text) or re.search(r"[;；]\s*$", text))
+
 def section_chunks(doc_id, lines):
     chunks, current, ancestors = [], [], []
     title = "前言"
     for line in lines:
         text = line['text'].strip()
-        if SECTION_PATTERN.match(text):
+        if SECTION_PATTERN.match(text) or _is_tail_section_heading(text):
             if current: chunks.append(_build_chunk(doc_id, title, current))
+            if _is_tail_section_heading(text):
+                # Normalise spaced/English variants so downstream filters
+                # (is_reference_section) match without re-implementing the regex.
+                ancestors = []; title = '参考文献'
+                current = [line]
+                continue
             number = re.match(r'^(\d+(?:\s*\.\s*\d+)*)', text)
             if number:
                 depth = len(re.split(r'\s*\.\s*', number.group(1)))
@@ -189,6 +223,49 @@ def section_chunks(doc_id, lines):
         else:
             current.append(line)
     if current: chunks.append(_build_chunk(doc_id, title, current))
+    # Heading-less bibliography: an isolated run of citation lines in the
+    # document tail (common in scanned PDFs) gets carved out of the last
+    # clinical chunk so it is never sent to the LLM as guideline prose.
+    chunks = _split_tail_reference_run(chunks, doc_id)
+    return chunks
+
+
+def _split_tail_reference_run(chunks, doc_id):
+    """Carve a trailing run of "[1] ... [2] ..." citation lines into its own chunk.
+
+    Works on the raw line list of the last chunks (before _split_long_chunks
+    rewrites them), scanning from the document tail backwards.
+    """
+    for index in range(len(chunks) - 1, -1, -1):
+        chunk = chunks[index]
+        if chunk.get("section") == "参考文献":
+            break  # already recognised by its heading
+        lines = chunk.get("_lines") or []
+        if not lines:
+            continue
+        texts = [line['text'].strip() for line in lines]
+        # only the tail run counts: find the last non-citation line
+        end = len(texts)
+        while end > 0 and _is_reference_entry(texts[end - 1]):
+            end -= 1
+        if end == len(texts) or end == 0:
+            continue  # no trailing run / entire chunk is citations with no anchor
+        if len(texts) - end < 3:
+            continue  # fewer than 3 citation lines is likely clinical numbering
+        # require sequential numbering [n], [n+1], ... for confidence
+        numbers = []
+        for text in texts[end:]:
+            match = REFERENCE_ENTRY_PATTERN.match(text)
+            numbers.append(int(match.group(1)) if match else None)
+        if any(number is None for number in numbers):
+            continue
+        if any(b - a != 1 for a, b in zip(numbers, numbers[1:])):
+            continue
+        head_lines, tail_lines = lines[:end], lines[end:]
+        head = _build_chunk(doc_id, chunk.get("section", ""), head_lines)
+        tail = _build_chunk(doc_id, "参考文献", tail_lines)
+        chunks[index:index + 1] = [head, tail]
+        break
     return chunks
 
 MAX_CHUNK_CHARS = 12000
@@ -253,6 +330,7 @@ def parse_pdf(file_path: Path, doc_id: str) -> Dict[str, Any]:
 
     chunks = _split_long_chunks(chunks)
     for chunk in chunks:
+        chunk.pop("_lines", None)  # internal helper for tail-reference carving only
         chunk["tables"] = [table for table in tables if chunk.get("page_start", 1) <= table["page"] <= chunk.get("page_end", 1)]
 
     return {
@@ -269,6 +347,116 @@ def parse_pdf(file_path: Path, doc_id: str) -> Dict[str, Any]:
                             "layout_review_required": True,
                             "layout_warnings": layout_warnings,
                             "note": "表格、流程图及脚注仍需对照PDF核对，文字提取成功不等于版面结构完整"},
+    }
+
+
+def parse_document(file_path, doc_id: str) -> Dict[str, Any]:
+    """Dispatch parsing by file extension (.pdf / .docx).
+
+    内部以模块全局名 parse_pdf(...) 调用（非 from-import），因此
+    mock.patch("src.api.routes.pdf.parse_pdf") 对本函数依然生效。
+    """
+    suffix = Path(file_path).suffix.lower()
+    if suffix == ".pdf":
+        return parse_pdf(file_path, doc_id)
+    if suffix == ".docx":
+        return parse_docx(file_path, doc_id)
+    raise ValueError(
+        f"不支持的文件类型: {suffix or '(无扩展名)'}；仅支持 PDF 或 Word (.docx)，"
+        "旧版 .doc 请在 Word 中另存为 .docx 后重新上传"
+    )
+
+
+# Word 没有固定分页：软分页无法从 XML 得知，缺分页标记时按固定行数兜底切页。
+# 该切法是确定性的，reparse 不会漂移。
+_DOCX_FALLBACK_LINES_PER_PAGE = 45
+
+
+def parse_docx(file_path, doc_id: str) -> Dict[str, Any]:
+    """Parse a Word .docx into the same lines/chunks/tables contract as parse_pdf."""
+    from docx import Document
+    from docx.table import Table
+    from docx.text.paragraph import Paragraph
+
+    doc = Document(str(file_path))
+    lines: List[Dict[str, Any]] = []
+    tables: List[Dict[str, Any]] = []
+    table_positions: List[int] = []  # 每个表格出现前已输出的行数（兜底切页时定位表格页）
+    page, line_in_page = 1, 0
+    saw_page_break = False
+
+    def new_page():
+        nonlocal page, line_in_page, saw_page_break
+        page += 1
+        line_in_page = 0
+        saw_page_break = True
+
+    for child in doc.element.body.iterchildren():
+        tag = child.tag.split('}')[-1]
+        if tag == 'p':
+            paragraph = Paragraph(child, doc)
+            text = paragraph.text.strip()
+            # lastRenderedPageBreak 标记新页的起点：本段在新页上，段前翻页
+            if paragraph._p.xpath('.//w:lastRenderedPageBreak'):
+                new_page()
+            if text:
+                # 段内软换行（python-docx 渲染为 \n）拆成多行，保持
+                # "一行一文本不含换行" 不变量：chunk 文本 split('\n') 行数
+                # 必须与 page_numbers/line_numbers 对齐，否则 bounded_chunks 越界
+                for segment in text.split('\n'):
+                    segment = segment.strip()
+                    if not segment:
+                        continue
+                    line_in_page += 1
+                    lines.append({"page": page, "line": line_in_page, "text": segment, "bbox": []})
+            # 显式分页符位于段落末尾（Ctrl+Enter）：本段留在当前页，下一段翻页。
+            # 分节符同理：该段为节末，下一节通常起新页。
+            if paragraph._p.xpath('.//w:br[@w:type="page"]') or paragraph._p.xpath('./w:pPr/w:sectPr'):
+                new_page()
+        elif tag == 'tbl':
+            table = Table(child, doc)
+            table_index = len(tables) + 1
+            table_positions.append(len(lines))
+            tables.append({
+                "table_id": f"{doc_id}:p{page}:t{table_index}",
+                "page": page,
+                "bbox": [],
+                "rows": [[cell.text.strip() for cell in row.cells] for row in table.rows],
+                "review_required": True,
+            })
+
+    if lines and not saw_page_break:
+        # 全文无分页标记（WPS/LibreOffice 导出常见）：按固定行数切伪页，
+        # 避免页码恒 1 导致所有表格挂到所有 chunk。行号同步按页重置。
+        for index, line in enumerate(lines):
+            line["page"] = index // _DOCX_FALLBACK_LINES_PER_PAGE + 1
+            line["line"] = index % _DOCX_FALLBACK_LINES_PER_PAGE + 1
+        for index, table in enumerate(tables):
+            table["page"] = table_positions[index] // _DOCX_FALLBACK_LINES_PER_PAGE + 1
+            table["table_id"] = f"{doc_id}:p{table['page']}:t{index + 1}"
+
+    total_pages = max([line["page"] for line in lines], default=1)
+    chunks = section_chunks(doc_id, lines)
+    chunks = _split_long_chunks(chunks)
+    for chunk in chunks:
+        chunk.pop("_lines", None)  # internal helper for tail-reference carving only
+        chunk["tables"] = [table for table in tables if chunk.get("page_start", 1) <= table["page"] <= chunk.get("page_end", 1)]
+
+    return {
+        "doc_id": doc_id,
+        "total_pages": total_pages,
+        "total_lines": len(lines),
+        "lines": lines,
+        "chunks": chunks,
+        "ocr_used": False,
+        "tables": tables,
+        "reading_quality": {"image_only_pages": [],
+                            "pages_with_text": sorted({line["page"] for line in lines}),
+                            "pages_without_text": sorted(set(range(1, total_pages + 1)) - {line["page"] for line in lines}),
+                            "layout_review_required": True,
+                            "pages_approximate": True,
+                            "layout_warnings": [],
+                            "note": "Word 无固定分页，页码为近似值；表格与版面请下载原文核对"},
     }
 
 
@@ -333,6 +521,7 @@ def _build_chunk(doc_id, section, lines):
         "page_numbers": [line["page"] for line in lines],
         "line_numbers": [line["line"] for line in lines],
         "text": "\n".join(l["text"] for l in lines),
+        "_lines": lines,
     }
 
 
@@ -392,12 +581,17 @@ async def upload_pdf(
     graph_filename: Optional[str] = Form(None),
 ):
     """Upload a guideline PDF, parse it, and extract clinical entities."""
-    if not file.filename or not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(400, "仅支持 PDF 文件")
-    doc_title = re.sub(r"\.pdf$", "", file.filename, flags=re.IGNORECASE)
+    if not file.filename:
+        raise HTTPException(400, "缺少文件名")
+    upload_suffix = Path(file.filename).suffix.lower()
+    if upload_suffix == ".doc":
+        raise HTTPException(400, "旧版 .doc 格式不支持，请在 Word 中另存为 .docx 后重新上传")
+    if upload_suffix not in {".pdf", ".docx"}:
+        raise HTTPException(400, "仅支持 PDF 或 Word (.docx) 文件")
+    doc_title = re.sub(r"\.(pdf|docx)$", "", file.filename, flags=re.IGNORECASE)
 
     doc_id = f"DOC-{uuid.uuid4().hex[:8]}"
-    file_path = UPLOAD_DIR / f"{doc_id}.pdf"
+    file_path = UPLOAD_DIR / f"{doc_id}{upload_suffix}"
 
     import time
     started = time.time()
@@ -417,11 +611,11 @@ async def upload_pdf(
     file_path.write_bytes(content)
 
     try:
-        parsed = parse_pdf(file_path, doc_id)
+        parsed = parse_document(file_path, doc_id)
     except Exception as e:
         file_path.unlink(missing_ok=True)
         _log_import("failed", stage="parse", error=str(e)[:300])
-        raise HTTPException(422, f"PDF解析失败: {str(e)}")
+        raise HTTPException(422, f"文档解析失败: {str(e)}")
 
     config = extraction_config.load()
     mode = (extraction_mode or config["default_mode"]).lower()
@@ -568,10 +762,20 @@ async def delete_import_log(log_key: str):
 async def get_pdf_file(doc_id: str):
     if not re.fullmatch(r"DOC-[A-Za-z0-9-]+", doc_id):
         raise HTTPException(422, "指南标识无效")
-    path = UPLOAD_DIR / f"{doc_id}.pdf"
-    if not path.is_file():
-        raise HTTPException(404, "原始PDF不可用，请恢复该指南文件")
-    return FileResponse(path, media_type="application/pdf", headers={"Content-Disposition": "inline"})
+    # PDF inline 浏览（前端以 #page= 深链定位）；Word 浏览器无法内联，给
+    # filename 触发下载，#page= 片段对下载无害。
+    for suffix, media_type in (
+        (".pdf", "application/pdf"),
+        (".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+    ):
+        path = UPLOAD_DIR / f"{doc_id}{suffix}"
+        if path.is_file():
+            if suffix == ".pdf":
+                return FileResponse(path, media_type=media_type, headers={"Content-Disposition": "inline"})
+            doc = _load_doc(doc_id)
+            download_name = re.sub(r'[\\/:*?"<>|]', "_", str(doc.get("doc_title") or doc_id)) + ".docx"
+            return FileResponse(path, media_type=media_type, filename=download_name)
+    raise HTTPException(404, "原始文件不可用，请恢复该指南文件")
 
 
 @router.get("/{doc_id}/lines")

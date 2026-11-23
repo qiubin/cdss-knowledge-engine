@@ -674,8 +674,8 @@
         <div class="field"><label>抽取模板（${cfg.label}）</label><select id="uploadTemplate${cfg.suffix}">${templates.map((t) => `<option value="${esc(t.template_id)}">${esc(t.name)}${t.template_id === cfg.defaultTemplate ? "（推荐）" : ""} / ${esc(t.template_id)}</option>`).join("")}</select></div>
         <div class="field"><label>目的图谱</label><div><select id="uploadGraph${cfg.suffix}"></select><input id="uploadGraphNew${cfg.suffix}" placeholder="新图谱文件名，如 KG-RESPIRATORY_V1.json" hidden></div></div>
       </div>
-      <div id="dropzone${cfg.suffix}" class="dropzone"><strong>点击或拖拽 ${cfg.label}指南 PDF 到此处</strong><p class="muted">严格按本面板所选模板解析，生成实体、关系、知识包和候选规则，写入所选目的图谱</p></div>
-      <input id="pdfInput${cfg.suffix}" type="file" accept=".pdf" hidden>
+      <div id="dropzone${cfg.suffix}" class="dropzone"><strong>点击或拖拽 ${cfg.label}指南 PDF / Word (.docx) 到此处</strong><p class="muted">严格按本面板所选模板解析，生成实体、关系、知识包和候选规则，写入所选目的图谱</p></div>
+      <input id="pdfInput${cfg.suffix}" type="file" accept=".pdf,.docx" hidden>
     `, "", cfg.hint);
   }
 
@@ -962,7 +962,7 @@
     state.importJob = {
       job_id: created.job_id,
       mode: pendingUploadMode(),
-      doc_title: pending.file.name.replace(/\.pdf$/i, ""),
+      doc_title: pending.file.name.replace(/\.(pdf|docx)$/i, ""),
       status: created.status || "queued",
       stage: "排队中",
       progress: { done: 0, total: 0 },
@@ -1092,7 +1092,9 @@
   // 模板即领域；不读任何自动识别结果。
   // 曾因忽略模板下拉、走领域自动识别，导致指定西医模板仍生成中医图谱。
   function prepareAutoUpload(file, cfg) {
-    if (!file.name.toLowerCase().endsWith(".pdf")) return toast("仅支持 PDF 文件", true);
+    const uploadName = file.name.toLowerCase();
+    if (uploadName.endsWith(".doc")) return toast("旧版 .doc 格式不支持，请在 Word 中另存为 .docx 后重新上传", true);
+    if (!uploadName.endsWith(".pdf") && !uploadName.endsWith(".docx")) return toast("仅支持 PDF 或 Word (.docx) 文件", true);
     if (activeImportJob()) return toast("已有导入任务正在进行，请等待完成或停止当前任务", true);
     const templateId = $(`#uploadTemplate${cfg.suffix}`)?.value || "";
     const template = state.templates.find((t) => t.template_id === templateId);

@@ -20,9 +20,12 @@ from src.api.routes import import_jobs as routes
 from src.api.routes import pdf as pdf_routes
 from src.api.routes.pdf import IMPORT_LOG_PATH, UPLOAD_DIR, _doc_store
 
+_DOCX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
 
 def _cleanup_upload(doc_id: str) -> None:
     (UPLOAD_DIR / f"{doc_id}.pdf").unlink(missing_ok=True)
+    (UPLOAD_DIR / f"{doc_id}.docx").unlink(missing_ok=True)
     (UPLOAD_DIR / f"{doc_id}.parsed.json").unlink(missing_ok=True)
 
 
@@ -99,6 +102,21 @@ class ImportJobsApiTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 422)
 
+    def test_create_job_rejects_doc_and_txt(self):
+        legacy = self.client.post(
+            "/api/import/jobs",
+            files={"file": ("旧指南.doc", io.BytesIO(b"\xd0\xcf\x11\xe0"), "application/msword")},
+            data={"mode": "template-local", "template_id": "GENERIC_GUIDELINE_V1"},
+        )
+        self.assertEqual(legacy.status_code, 400)
+        self.assertIn("另存为 .docx", legacy.json()["detail"])
+        plain = self.client.post(
+            "/api/import/jobs",
+            files={"file": ("notes.txt", io.BytesIO(b"plain"), "text/plain")},
+            data={"mode": "template-local", "template_id": "GENERIC_GUIDELINE_V1"},
+        )
+        self.assertEqual(plain.status_code, 400)
+
     def test_unknown_job_404_and_terminal_pause_409(self):
         self.assertEqual(self.client.post("/api/import/jobs/JOB-X/pause").status_code, 404)
         job = routes.ImportJob(job_id="JOB-DONE", mode="auto", doc_title="t")
@@ -145,6 +163,57 @@ class ImportJobsApiTest(unittest.TestCase):
         _doc_store.pop(doc_id, None)
         _cleanup_upload(doc_id)
 
+    def test_end_to_end_docx_template_local_succeeds(self):
+        """Word (.docx) 全链路（不 stub submit）：parse_docx→本地抽取→落库。"""
+        docx_bytes = _tiny_guide_docx()
+        with TestClient(app) as client:
+            created = client.post(
+                "/api/import/jobs",
+                files={"file": ("e2e-guide.docx", io.BytesIO(docx_bytes), _DOCX_MEDIA_TYPE)},
+                data={"mode": "template-local", "template_id": "GENERIC_GUIDELINE_V1"},
+            )
+            self.assertEqual(created.status_code, 201)
+            job_id = created.json()["job_id"]
+            doc_id = created.json()["doc_id"]
+            deadline = time.time() + 30
+            body = {}
+            while time.time() < deadline:
+                body = client.get(f"/api/import/jobs/{job_id}").json()
+                if body["status"] in {"succeeded", "failed", "stopped"}:
+                    break
+                time.sleep(0.1)
+        self.assertEqual(body["status"], "succeeded", body.get("error"))
+        self.assertEqual(body["result"]["doc_id"], doc_id)
+        # 源文件按原扩展名落盘，且 parsed.json 持久化了 file_ext
+        self.assertTrue((UPLOAD_DIR / f"{doc_id}.docx").is_file())
+        record = _doc_store.get(doc_id) or {}
+        self.assertTrue(str(record.get("file_path", "")).endswith(".docx"))
+        # /file 路由对 docx 返回 Word MIME 并以 attachment 触发下载
+        file_response = client.get(f"/api/pdf/{doc_id}/file")
+        self.assertEqual(file_response.status_code, 200)
+        self.assertEqual(file_response.headers["content-type"].split(";")[0], _DOCX_MEDIA_TYPE)
+        self.assertIn("attachment", file_response.headers.get("content-disposition", ""))
+        routes.manager._jobs.pop(job_id, None)
+        _doc_store.pop(doc_id, None)
+        _cleanup_upload(doc_id)
+
+    def test_retry_docx_checks_file_identity_by_extension(self):
+        import tempfile
+        _stub_submit()
+        with tempfile.TemporaryDirectory() as directory, mock.patch.object(routes, "UPLOAD_DIR_PDF", Path(directory)), mock.patch.object(routes.manager, "list_jobs", return_value=[]):
+            original = Path(directory) / "DOC-RETRY.docx"
+            original.write_bytes(b"PK-docx-original")
+            response = self.client.post("/api/import/jobs",
+                files={"file": ("t.docx", b"PK-docx-original", _DOCX_MEDIA_TYPE)},
+                data={"mode": "auto", "retry_doc_id": "DOC-RETRY"})
+            self.assertEqual(response.status_code, 201)
+            mismatch = self.client.post("/api/import/jobs",
+                files={"file": ("t.docx", b"PK-docx-different", _DOCX_MEDIA_TYPE)},
+                data={"mode": "auto", "retry_doc_id": "DOC-RETRY"})
+            self.assertEqual(mismatch.status_code, 422)
+            self.assertEqual(original.read_bytes(), b"PK-docx-original")
+        routes.manager._jobs.pop("JOB-STUB", None)
+
 
 def _tiny_guide_pdf() -> bytes:
     """最小可解析指南 PDF（与 upload 链路一致的 fitz 生成）。"""
@@ -158,6 +227,19 @@ def _tiny_guide_pdf() -> bytes:
     pdf_bytes = doc.tobytes()
     doc.close()
     return pdf_bytes
+
+
+def _tiny_guide_docx() -> bytes:
+    """最小可解析指南 Word（python-docx 现场构造，走 parse_docx 同链路）。"""
+    from docx import Document
+
+    doc = Document()
+    doc.add_paragraph("Hypertension Diagnosis and Treatment Guideline")
+    doc.add_paragraph("1  Diagnosis Criteria")
+    doc.add_paragraph("Blood pressure measurement is required for diagnosis.")
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    return buffer.getvalue()
 
 
 class ImportJobLogTrailTest(unittest.TestCase):

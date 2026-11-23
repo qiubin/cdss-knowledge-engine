@@ -13,6 +13,7 @@ import uuid
 import re
 from datetime import datetime, timezone
 from pathlib import Path
+from time import perf_counter
 from typing import Any, Callable, Dict, List, Optional
 
 from ..llm import LLMError, chat_json
@@ -44,6 +45,16 @@ RULE_TYPE_ALIASES = {
     "禁忌": "contraindication", "contraindication_rule": "contraindication",
     "监测": "monitoring", "monitoring_rule": "monitoring",
 }
+
+
+class _CompilerError(LLMError):
+    """The source statements were extracted, but compilation failed."""
+
+
+def _can_split(error: Exception) -> bool:
+    return isinstance(error, json.JSONDecodeError) or any(
+        token in str(error) for token in ("JSON", "截断", "Expecting", "超时", "timeout", "Timeout")
+    )
 
 
 def _clamp(value: Any, low: int, high: int, fallback: int) -> int:
@@ -507,13 +518,46 @@ async def run_auto_pipeline(
         ),
     )
     settings = dict(config.get("llm", {}))
-    upstream = llm_call or chat_json
+    started = perf_counter()
+    batch_size = _clamp(settings.get("western_compile_batch_size"), 1, 4, 2)
+    batch_chars = _clamp(settings.get("western_compile_batch_chars"), 1, 24000, 6000)
+    stages = {
+        stage: dict(calls=0, cache_hits=0, request_seconds=0.0, retry_wait_seconds=0.0,
+                    input_tokens=0, output_tokens=0, usage_responses=0)
+        for stage in ("extraction", "compilation")
+    }
+    performance = {"model_stages": stages, "compile_batch_size": batch_size,
+                   "compile_batch_chars": batch_chars}
+
+    async def request_model(settings, messages, metrics):
+        if llm_call is not None:
+            return await llm_call(settings, messages)
+        payload, meta = await chat_json(settings, messages, with_meta=True)
+        usage = meta.get("usage")
+        if isinstance(usage, dict):
+            metrics["usage_responses"] += 1
+            for name, alias in (("input_tokens", "prompt_tokens"), ("output_tokens", "completion_tokens")):
+                amount = usage.get(name, usage.get(alias))
+                if isinstance(amount, int):
+                    metrics[name] += amount
+        return payload
     checkpoint_dir = root / "extraction" / "checkpoints" / hashlib.sha256(doc_id.encode()).hexdigest()
 
     fatal_error = None
+    compiled_keys = ("entities", "relations", "rules", "treatment_plans", "standards")
 
-    async def call(settings, messages):
+    def valid_response(payload, stage):
+        if not isinstance(payload, dict):
+            return False
+        if stage == "extraction":
+            return isinstance(payload.get("statements"), list) or isinstance(payload.get("entities"), list)
+        return isinstance(payload.get("entities"), list) and all(
+            isinstance(payload.get(key) or [], list) for key in compiled_keys
+        )
+
+    async def call(settings, messages, stage):
         nonlocal fatal_error
+        metrics = stages[stage]
         if fatal_error is not None:
             raise fatal_error
         # Cache each completed stage, so a compiler timeout does not discard
@@ -525,17 +569,22 @@ async def run_auto_pipeline(
         if path.exists():
             try:
                 cached = json.loads(path.read_text(encoding="utf-8"))
-                if isinstance(cached, dict) and (isinstance(cached.get("statements"), list) or isinstance(cached.get("entities"), list)):
+                if valid_response(cached, stage):
+                    metrics["cache_hits"] += 1
                     return cached
             except (ValueError, OSError):
                 pass
         for attempt in range(4):
             try:
+                metrics["calls"] += 1
+                request_started = perf_counter()
                 try:
-                    payload = await asyncio.wait_for(upstream(settings, messages),
+                    payload = await asyncio.wait_for(request_model(settings, messages, metrics),
                         timeout=float(settings.get("timeout_seconds", 120)))
                 except asyncio.TimeoutError as error:
                     raise LLMError("模型阶段请求总耗时超时，请拆分片段重试") from error
+                finally:
+                    metrics["request_seconds"] += perf_counter() - request_started
                 break
             except LLMError as error:
                 if "HTTP 429" not in str(error):
@@ -547,19 +596,25 @@ async def run_auto_pipeline(
                 if controller is not None:
                     controller.log(f"模型服务限流，等待 {delay} 秒后重试；成功阶段已保存", "warn")
                     await controller.checkpoint(stage="模型服务限流，等待重试")
-                await asyncio.sleep(delay)
-        if isinstance(payload, dict) and (isinstance(payload.get("statements"), list) or isinstance(payload.get("entities"), list)):
+                waiting = perf_counter()
+                try:
+                    await asyncio.sleep(delay)
+                finally:
+                    metrics["retry_wait_seconds"] += perf_counter() - waiting
+        if valid_response(payload, stage):
             checkpoint_dir.mkdir(parents=True, exist_ok=True)
-            temporary = path.with_suffix(f".{uuid.uuid4().hex}.tmp")
+            temporary = checkpoint_dir / f"{uuid.uuid4().hex}.tmp"
             temporary.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
             temporary.replace(path)
+        elif stage == "compilation":
+            raise LLMError("阶段二 JSON 缺少 entities 数组或包含无效字段")
         return payload
 
     from .chunk_limits import bounded_chunks
+    from .tail_sections import split_clinical_chunks
     max_chars = min(1200, int(settings.get("max_chunk_chars", 12000)))
     # Bibliography is not a source of guideline clinical recommendations.
-    excluded = [chunk for chunk in chunks if chunk.get("section") == "参考文献"]
-    clinical = [chunk for chunk in chunks if chunk.get("section") != "参考文献"]
+    clinical, excluded = split_clinical_chunks(chunks)
     chunks[:] = bounded_chunks(clinical, max_chars) + excluded
     excluded_chunks = {chunk["chunk_id"] for chunk in excluded}
     groups = _chunk_groups([chunk for chunk in chunks if chunk["chunk_id"] not in excluded_chunks], max_chars, 1)
@@ -585,7 +640,7 @@ async def run_auto_pipeline(
         raw_standards.extend(payload.get("standards") or [])
 
     async def call_group(chunk_group: List[Dict[str, Any]]) -> Dict[str, Any]:
-        extracted = await call(settings, _statement_prompt(chunk_group, doc_title))
+        extracted = await call(settings, _statement_prompt(chunk_group, doc_title), "extraction")
         chunk_ids = {chunk["chunk_id"] for chunk in chunk_group}
         statements = extracted.get("statements")
         if not isinstance(statements, list):
@@ -626,23 +681,42 @@ async def run_auto_pipeline(
         # A small source table can yield dozens of statements. Bound the
         # compiler output by statements as well as by source characters.
         records = list(indexed.values())
-        compiled = {key: [] for key in ("entities", "relations", "rules", "treatment_plans", "standards")}
-        for start in range(0, len(records), 2):
+        compiled = {key: [] for key in compiled_keys}
+
+        async def compile_batch(start, end):
             messages = _auto_prompt(chunk_group, doc_title)
             payload = json.loads(messages[1]["content"])
-            payload["clinical_statements"] = records[start:start + 2]
+            payload["clinical_statements"] = records[start:end]
             payload["instruction"] = "阶段二：仅从这些临床陈述生成实体、关系、规则。每条规则必须携带clinical_statement_id，条件和建议不能超出该陈述；保留限定条件，不自行猜测组合逻辑。"
             messages[1]["content"] = json.dumps(payload, ensure_ascii=False)
             if controller is not None:
-                await controller.checkpoint(stage=f"临床陈述编译（{min(start + 2, len(records))}/{len(records)}）")
-            batch = await call(settings, messages)
-            if not isinstance(batch.get("entities"), list):
-                raise LLMError("阶段二 JSON 缺少 entities 数组")
+                await controller.checkpoint(stage=f"临床陈述编译（{end}/{len(records)}）")
+            try:
+                batch = await call(settings, messages, "compilation")
+            except (LLMError, ValueError) as error:
+                if error is fatal_error:
+                    raise
+                if end - start > 1 and _can_split(error):
+                    middle = (start + end) // 2
+                    await compile_batch(start, middle)
+                    await compile_batch(middle, end)
+                    return
+                raise _CompilerError(str(error)) from error
             for key in compiled:
-                values = batch.get(key) or []
-                if not isinstance(values, list):
-                    raise LLMError(f"阶段二 JSON 的 {key} 必须为数组")
-                compiled[key].extend(values)
+                compiled[key].extend(batch.get(key) or [])
+
+        start = 0
+        while start < len(records):
+            end = start + 1
+            size = len(json.dumps(records[start], ensure_ascii=False))
+            while end < min(start + batch_size, len(records)):
+                next_size = len(json.dumps(records[end], ensure_ascii=False)) + 2
+                if size + next_size > batch_chars:
+                    break
+                size += next_size
+                end += 1
+            await compile_batch(start, end)
+            start = end
         for rule in compiled.get("rules") or []:
             statement = indexed.get(rule.get("clinical_statement_id"))
             if not statement:
@@ -685,9 +759,7 @@ async def run_auto_pipeline(
             if "模型服务持续限流" in message:
                 raise
             split_payloads: List[Dict[str, Any]] = []
-            if any(
-                token in message for token in ("JSON", "截断", "Expecting", "超时", "timeout", "Timeout")
-            ):
+            if not isinstance(error, _CompilerError) and _can_split(error):
                 # Long groups can exceed the model output budget and return
                 # truncated JSON.  Retry each chunk separately so one oversized
                 # segment does not discard the whole group.
@@ -729,6 +801,7 @@ async def run_auto_pipeline(
     async def bounded(index, group):
         async with semaphore:
             await process_group(index, group)
+    model_started = perf_counter()
     tasks = [asyncio.create_task(bounded(index, group)) for index, group in enumerate(groups)]
     try:
         await asyncio.gather(*tasks)
@@ -737,11 +810,15 @@ async def run_auto_pipeline(
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
         raise
+    finally:
+        performance["model_wall_seconds"] = perf_counter() - model_started
+        if controller is not None:
+            controller.log("西医模型阶段指标 " + json.dumps(performance, ensure_ascii=False))
     coverage = coverage_report(chunks, completed_chunks, scheduled_chunks, excluded_chunks)
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     report = checkpoint_dir / "coverage.json"
     temporary = report.with_suffix(f".{uuid.uuid4().hex}.tmp")
-    temporary.write_text(json.dumps({"doc_id": doc_id, "coverage": coverage, "warnings": warnings}, ensure_ascii=False), encoding="utf-8")
+    temporary.write_text(json.dumps({"doc_id": doc_id, "coverage": coverage, "warnings": warnings, "performance": performance}, ensure_ascii=False), encoding="utf-8")
     temporary.replace(report)
     coverage_summary = (
         f"片段共 {coverage['total']} 个，模型响应 {coverage['processed']} 个，"
@@ -753,6 +830,7 @@ async def run_auto_pipeline(
 
     if controller is not None:
         await controller.checkpoint(stage="术语映射与图谱整理")
+    mapping_started = perf_counter()
 
     chunk_map = {chunk["chunk_id"]: chunk for chunk in chunks}
     entities: List[Dict[str, Any]] = []
@@ -994,6 +1072,7 @@ async def run_auto_pipeline(
         raise LLMError("未生成任何实体关系，已停止自动入库；请检查领域选择、模板和抽取告警")
 
     # Import graph and rules.
+    performance["mapping_seconds"] = perf_counter() - mapping_started
     if controller is not None:
         controller.finalizing = True
         await controller.checkpoint(stage="写入图谱与待审诊疗依据（不可中断）")
@@ -1009,6 +1088,7 @@ async def run_auto_pipeline(
             "nodes": [], "relations": [],
         }, ensure_ascii=False, indent=2), encoding="utf-8")
 
+    graph_started = perf_counter()
     graph_result = await import_graph(GraphImportRequest(
         doc_id=doc_id,
         doc_title=doc_title,
@@ -1022,6 +1102,8 @@ async def run_auto_pipeline(
         candidate_rules=rules,
         candidate_standards=raw_standards,
     ))
+
+    performance["graph_import_seconds"] = perf_counter() - graph_started
 
     # Rules are deferred until clinical-basis review; existing rules are preserved.
     created_at = datetime.now(timezone.utc).isoformat()
@@ -1053,6 +1135,7 @@ async def run_auto_pipeline(
         warnings.append(f"解析覆盖不完整：共 {coverage['total']} 个片段，已处理 {coverage['processed']}，失败 {coverage['failed']}，未安排 {coverage['not_scheduled']}；请查看覆盖报告")
     metadata = {
         "coverage": coverage,
+        "performance": performance,
         "clinical_statements": statement_records,
         "clinical_statement_count": len(statement_records),
         "mode": "auto",
@@ -1066,11 +1149,18 @@ async def run_auto_pipeline(
         "warnings": list(warnings),
         "created_at": created_at,
     }
+    package_started = perf_counter()
     package = _package_record(
         doc_id, doc_title, graph_filename, entities, relations, rules, chunks,
         target_code, metadata, package_dir=root / "guide_packages",
         import_result=import_result,
     )
+    performance["package_seconds"] = perf_counter() - package_started
+    performance["pipeline_seconds"] = perf_counter() - started
+    if controller is not None:
+        controller.log("西医解析耗时 " + json.dumps({
+            key: round(value, 3) for key, value in performance.items() if key.endswith("_seconds")
+        }))
     return {
         "doc_id": doc_id,
         "doc_title": doc_title,

@@ -1310,12 +1310,15 @@ async def extract_llm(
     current: List[Dict[str, Any]] = []
     size = 0
     excluded_chunks = set()
+    from .tail_sections import is_reference_section
     for chunk in selected:
-        if template.template_id == "TCM_GUIDELINE_V3" and (
-            chunk.get("section") == "参考文献"
-            or "发布与更新计划" in str(chunk.get("section") or "")
+        is_tcm_template = template.template_id == "TCM_GUIDELINE_V3"
+        # Bibliography (any domain/template) never carries clinical content.
+        # TCM V3 additionally skips publish-plan stubs and empty heading lines.
+        if is_reference_section(chunk.get("section")) or (is_tcm_template and (
+            "发布与更新计划" in str(chunk.get("section") or "")
             or (len(chunk.get("text", "")) < 30 and chunk.get("text", "").strip() in chunk.get("section", ""))
-        ):
+        )):
             excluded_chunks.add(chunk["chunk_id"])
             continue
         current_size = len(chunk["text"])

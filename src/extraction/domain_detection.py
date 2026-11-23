@@ -33,10 +33,11 @@ def detect_guideline_domain(
             "reasons": [f"用户明确选择{'中医' if requested == 'tcm' else '西医'}领域"],
             "requires_confirmation": False,
         }
+    from .tail_sections import is_reference_section
     body = "\n".join(
         str(chunk.get("text") or "")
         for chunk in chunks
-        if str(chunk.get("section") or "").strip() != "参考文献"
+        if not is_reference_section(chunk.get("section"))
     )
     # 采样正文前 20 万字符：长指南的辨证章节可能落在末尾，5 万字符会漏采。
     head = f"{doc_title}\n{body[:5000]}"

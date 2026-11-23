@@ -11,7 +11,7 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from src.extraction.auto_pipeline import AUTO_TEMPLATE_ID, run_auto_pipeline
 from src.extraction.repository import ExtractionConfigRepository
-from .pdf import UPLOAD_DIR, _doc_store, _now, _persist_doc, parse_pdf
+from .pdf import UPLOAD_DIR, _doc_store, _now, _persist_doc, parse_document
 
 router = APIRouter(prefix="/api/auto", tags=["auto-import"])
 
@@ -26,14 +26,19 @@ async def auto_import(
     auto_activate: Optional[str] = Form("false"),
     domain: Optional[str] = Form("western"),
 ):
-    if not file.filename or not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(400, "仅支持 PDF 文件")
-    doc_title = re.sub(r"\.pdf$", "", file.filename, flags=re.IGNORECASE)
+    if not file.filename:
+        raise HTTPException(400, "缺少文件名")
+    upload_suffix = Path(file.filename).suffix.lower()
+    if upload_suffix == ".doc":
+        raise HTTPException(400, "旧版 .doc 格式不支持，请在 Word 中另存为 .docx 后重新上传")
+    if upload_suffix not in {".pdf", ".docx"}:
+        raise HTTPException(400, "仅支持 PDF 或 Word (.docx) 文件")
+    doc_title = re.sub(r"\.(pdf|docx)$", "", file.filename, flags=re.IGNORECASE)
     doc_id = f"DOC-{uuid.uuid4().hex[:8]}"
-    file_path = UPLOAD_DIR / f"{doc_id}.pdf"
+    file_path = UPLOAD_DIR / f"{doc_id}{upload_suffix}"
     file_path.write_bytes(await file.read())
     try:
-        parsed = parse_pdf(file_path, doc_id)
+        parsed = parse_document(file_path, doc_id)
         config = config_repo.load()
         result = await run_auto_pipeline(
             parsed["chunks"],
