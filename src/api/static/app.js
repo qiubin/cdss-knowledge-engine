@@ -1279,8 +1279,10 @@
           <div class="field"><label>API Key 环境变量（可选回退）</label><input id="llmKeyEnv" value="${esc(config.llm.api_key_env)}"></div>
           <div class="field"><label>温度</label><input id="llmTemperature" type="number" step="0.1" min="0" max="2" value="${config.llm.temperature}"></div>
           <div class="field"><label>超时秒数</label><input id="llmTimeout" type="number" min="5" value="${config.llm.timeout_seconds}"></div>
-          <div class="field"><label>单次字符上限</label><input id="llmMaxChars" type="number" min="1000" value="${config.llm.max_chunk_chars}"></div>
+          <div class="field"><label>单次字符上限（自动管线上限 6000）</label><input id="llmMaxChars" type="number" min="1000" value="${config.llm.max_chunk_chars}"></div>
           <div class="field"><label>单批最大片段数（全量分批）</label><input id="llmMaxChunks" type="number" min="1" value="${config.llm.max_chunks}"></div>
+          <div class="field"><label>抽取并发数（1-8）</label><input id="llmConcurrency" type="number" min="1" max="8" value="${config.llm.extraction_concurrency || 4}"></div>
+          <div class="field"><label>阶段二编译批量（条/批）</label><input id="llmCompileBatch" type="number" min="1" max="8" value="${config.llm.western_compile_batch_size || 4}"></div>
         </div>
         <div class="actions"><button id="saveExtraction" class="btn primary">保存解析配置</button><button id="testLlm" class="btn">测试连接</button><button id="clearLlmKey" class="btn ghost">清除 API Key</button></div>
       `, "", "API Key 可保存在本地配置中，也可回退到环境变量；不会回显完整 Key")}
@@ -2423,6 +2425,8 @@
         timeout_seconds: Number($("#llmTimeout").value || 120),
         max_chunk_chars: Number($("#llmMaxChars").value || 12000),
         max_chunks: Number($("#llmMaxChunks").value || 80),
+        extraction_concurrency: Number($("#llmConcurrency").value || 4),
+        western_compile_batch_size: Number($("#llmCompileBatch").value || 4),
       },
     };
     state.extractionConfig = await api("/api/extraction/config", { method: "PUT", json: { config: payload } });
@@ -6165,7 +6169,7 @@
     const pendingRels = items.filter((item) => item.item_type === "graph_relation" && ["draft", "stale"].includes(item.status));
     return `<div class="detail-section" id="diseaseEndpointReview"><h4>第 1 步：核对关系涉及的实体</h4>
       <p>实体与关系联动审核：通过任一关系时，两端待审实体会一并通过（此处无需先手工过一遍）。第 1 步用于需要单独处理实体的场合——查看原文、修改名称、拒绝错误实体，或恢复被拒绝的端点。</p>
-      ${pending.length ? `<div class="actions"><label><input type="checkbox" data-endpoint-select-all> 全选可审核实体</label><span class="muted" data-endpoint-selection-count>已选 0 项</span></div>${table(["选择", "尚未通过的实体", "实体类型", "状态", "核对与处理"], pending.map(({item, index}) => `<tr><td><input type="checkbox" data-endpoint-select="${esc(item.node_id)}" ${["draft", "stale"].includes(item.status) ? "" : "disabled"}></td><td>${esc(item.name)}</td><td><span class="type-chip">${esc(typeName[item.node_type] || item.node_type || "类型缺失，请核对")}</span></td><td>${miniStatus(item.status)}</td><td><div class="actions">${viewButton(index)}<button class="btn sm" data-endpoint-edit="${index}">修改</button><button class="btn sm" data-endpoint-ai="${index}">AI 修正</button>${["draft", "stale"].includes(item.status) ? `<button class="btn sm danger" data-endpoint-reject="${index}">拒绝</button>` : ""}</div></td></tr>`))}<div class="actions"><button class="btn sm primary" data-endpoint-approve>通过勾选的实体</button><button class="btn sm danger" data-endpoint-reject-selected>拒绝勾选的实体</button></div>` : '<div class="result-banner ok">相关实体均已通过，可直接审核下方关系。</div>'}
+      ${pending.length ? `<div class="actions"><label><input type="checkbox" data-endpoint-select-all> 全选可审核实体</label><span class="muted" data-endpoint-selection-count>已选 0 项</span></div>${table(["选择", "尚未通过的实体", "实体类型", "状态", "核对与处理"], pending.map(({item, index}) => `<tr><td><input type="checkbox" data-endpoint-select="${esc(item.node_id)}" ${["draft", "stale"].includes(item.status) ? "" : "disabled"}></td><td>${esc(item.name)}</td><td><span class="type-chip">${esc(typeName[item.node_type] || item.node_type || "类型缺失，请核对")}</span></td><td>${miniStatus(item.status)}</td><td><div class="actions">${viewButton(index)}<button class="btn sm" data-endpoint-edit="${index}">修改</button><button class="btn sm" data-endpoint-ai="${index}">AI 修正</button>${["draft", "stale"].includes(item.status) ? `<button class="btn sm danger" data-endpoint-reject="${index}">拒绝</button>` : ""}${["rejected", "retired"].includes(item.status) ? `<button class="btn sm" data-endpoint-restore="${index}" title="变回待审核：实体会回到待审核，相关关系也会重新变为待审核">恢复</button>` : ""}</div></td></tr>`))}<div class="actions"><button class="btn sm primary" data-endpoint-approve>通过勾选的实体</button><button class="btn sm danger" data-endpoint-reject-selected>拒绝勾选的实体</button></div>` : '<div class="result-banner ok">相关实体均已通过，可直接审核下方关系。</div>'}
       ${approved.length ? `<details><summary>已通过的实体（${approved.length} 个）</summary>${table(
         ["实体名称", "实体类型", "状态", "操作"],
         approved.map(({item, index}) => `<tr><td>${esc(item.name)}</td><td>${esc(typeName[item.node_type] || item.node_type || "-")}</td><td>${miniStatus(item.status)}</td><td>${viewButton(index)}</td></tr>`),
@@ -6404,6 +6408,18 @@
       if (endpointReject) {
         const item = [...(state.byDiseaseEndpoints?.values() || [])][Number(endpointReject.dataset.endpointReject)];
         if (item) openReasonDialog(item, "reject");
+        return;
+      }
+      const endpointRestore = event.target.closest("[data-endpoint-restore]");
+      if (endpointRestore) {
+        const item = [...(state.byDiseaseEndpoints?.values() || [])][Number(endpointRestore.dataset.endpointRestore)];
+        if (!item) return;
+        try {
+          // 拒绝/失效实体的反悔入口：恢复到待审核（draft），受影响关系随之重置。
+          await submitReviewAction(item, "restore", "");
+          toast(`${ACTION_DONE_LABELS.restore || "已恢复"}：${reviewItemTitle(item)}`);
+          await refresh();
+        } catch (error) { toast(error.message, true); }
         return;
       }
       const rejectSelected = event.target.closest("[data-endpoint-reject-selected]");

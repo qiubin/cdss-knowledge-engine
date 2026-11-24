@@ -519,8 +519,10 @@ async def run_auto_pipeline(
     )
     settings = dict(config.get("llm", {}))
     started = perf_counter()
-    batch_size = _clamp(settings.get("western_compile_batch_size"), 1, 4, 2)
-    batch_chars = _clamp(settings.get("western_compile_batch_chars"), 1, 24000, 6000)
+    # 编译批默认 4 条/批（曾为 2）：S2 调用数与陈述总数成正比，批越小调用越多，
+    # 6MB 指南 270+ 次串行 S2 调用是解析耗时数小时的主因之一。
+    batch_size = _clamp(settings.get("western_compile_batch_size"), 1, 8, 4)
+    batch_chars = _clamp(settings.get("western_compile_batch_chars"), 1, 24000, 8000)
     stages = {
         stage: dict(calls=0, cache_hits=0, request_seconds=0.0, retry_wait_seconds=0.0,
                     input_tokens=0, output_tokens=0, usage_responses=0)
@@ -612,7 +614,11 @@ async def run_auto_pipeline(
 
     from .chunk_limits import bounded_chunks
     from .tail_sections import split_clinical_chunks
-    max_chars = min(1200, int(settings.get("max_chunk_chars", 12000)))
+    # 片段大小硬顶 6000（曾为 1200）：1200 字会把 10 万字指南切成上百个片段组，
+    # 组数 × 每组 1 次阶段一调用是调用数爆炸的根源；阶段二按陈述数分批与片段
+    # 大小无关，且超长输出由 _can_split 拆分重试兜底。
+    max_chars = _clamp(settings.get("max_chunk_chars"), 800, 6000, 6000)
+    performance["chunk_chars"] = max_chars
     # Bibliography is not a source of guideline clinical recommendations.
     clinical, excluded = split_clinical_chunks(chunks)
     chunks[:] = bounded_chunks(clinical, max_chars) + excluded
@@ -797,7 +803,11 @@ async def run_auto_pipeline(
         completed_chunks.update(chunk["chunk_id"] for chunk in group)
         succeeded += 1
 
-    semaphore = asyncio.Semaphore(max(1, min(3, int(settings.get("extraction_concurrency", 1)))))
+    # 并发默认 4（曾为 1）：片段组之间无依赖，串行时每次调用 40-60 秒的
+    # 供应商时延直接累加，6MB 指南需 400+ 次调用即 4 小时以上。
+    concurrency = max(1, min(8, int(settings.get("extraction_concurrency", 4))))
+    performance["concurrency"] = concurrency
+    semaphore = asyncio.Semaphore(concurrency)
     async def bounded(index, group):
         async with semaphore:
             await process_group(index, group)

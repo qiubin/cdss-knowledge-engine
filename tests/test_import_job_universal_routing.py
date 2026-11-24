@@ -140,6 +140,9 @@ class TcmImportRoutingTest(unittest.TestCase):
 
         template_job.assert_called_once()
         pipeline.assert_not_called()
+        # 跟随模板：中医与西医一致解析到模板绑定图，不再按 doc_id 新建
+        self.assertEqual(template_job.call_args.kwargs.get("graph_name"),
+                         "KG-TCM_GUIDELINE_V3.json")
         self.assertEqual(result["domain"], "tcm")
         self.assertEqual(result["template_id"], "TCM_GUIDELINE_V3")
         self.assertEqual(result["package_id"], "PKG-TCM")
@@ -167,6 +170,8 @@ class TcmImportRoutingTest(unittest.TestCase):
         template_job.assert_called_once()
         pipeline.assert_not_called()
         self.assertEqual(template_job.call_args.kwargs.get("template_id"), "TCM_GUIDELINE_V3")
+        self.assertEqual(template_job.call_args.kwargs.get("graph_name"),
+                         "KG-TCM_GUIDELINE_V3.json")
         self.assertEqual(result["domain"], "tcm")
 
     def test_tcm_zero_relations_stops_import_with_review_hint(self):

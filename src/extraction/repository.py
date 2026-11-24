@@ -32,6 +32,8 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "timeout_seconds": 120,
         "max_chunk_chars": 12000,
         "max_chunks": 80,
+        "extraction_concurrency": 4,
+        "western_compile_batch_size": 4,
     },
 }
 

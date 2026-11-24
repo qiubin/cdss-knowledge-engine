@@ -61,7 +61,8 @@ def test_reparse_replaces_empty_result_and_retains_target_graph(tmp_path,monkeyp
     async def extract(*args,**kwargs):
         assert args[5]['llm']['recovery_mode'] is True
         assert args[5]['llm']['max_chunks'] == 1
-        assert args[5]['llm']['max_chunk_chars'] <= 1200
+        # 性能调优后片段硬顶 6000（1200 会把长指南切成上百个片段组）。
+        assert args[5]['llm']['max_chunk_chars'] <= 6000
         return ProviderResult(entities=[{'entity_type':'syndrome','code':'S','name':'证候','chunk_id':'c','page':1,'line_start':1,'line_end':1,'quote':'text'}],suggested_rules=[],warnings=[],metadata={'coverage':{'complete':True,'items':[{'chunk_id':'c','status':'processed'}]}})
     monkeypatch.setattr(api,'extract',extract)
     result=asyncio.run(api.reparse_document('D'))

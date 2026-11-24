@@ -114,7 +114,9 @@ async def _run_tcm_template_job(controller, *, parsed, file_path, doc_id, doc_ti
     辨病辨证结果与西医图谱分开维护；relation 门禁为 0 时中止入库但保留审核区数据。
     """
     template = template or extraction_templates.get("TCM_GUIDELINE_V3")
-    graph_name = resolve_upload_graph_filename(template, graph_filename or f"KG-TCM-{doc_id}.json")
+    # 与西医一致：跟随模板时解析到模板绑定图（KG-TCM_GUIDELINE_V3.json），
+    # 多份中医指南合并进同一份图谱；不再按 doc_id 每次新建独立图谱。
+    graph_name = resolve_upload_graph_filename(template, graph_filename or "")
     result = await _run_template_job(
         controller, file_path=file_path, doc_id=doc_id, doc_title=doc_title,
         mode="template-llm", template_id=template.template_id,

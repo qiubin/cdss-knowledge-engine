@@ -41,14 +41,66 @@ test("disease endpoint review deduplicates pending nodes and does not auto-selec
   const item = { status: "draft", source_node_id: "D", source_name: "疾病", source_status: "active",
     target_node_id: "T", target_name: "症状", target_node_type: "symptom", target_status: "draft" };
   const html = ctx.diseaseEndpointReviewHtml([item, item, { ...item, target_node_id: "R", target_status: "rejected" }], "G");
-  assert.equal(ctx.state.byDiseaseEndpoints.size, 2);
+  // 端点 map 收录全部端点（含已通过，折叠展示）：疾病 D + 待审症状 T（重复项去重）+ 被拒 R。
+  assert.equal(ctx.state.byDiseaseEndpoints.size, 3);
   assert.equal(ctx.state.byDiseaseEndpoints.get("T").node_type, "symptom");
+  assert.equal(ctx.state.byDiseaseEndpoints.get("D").status, "active");
+  assert.equal(ctx.state.byDiseaseEndpoints.get("R").status, "rejected");
   assert.match(html, /type-chip/);
   assert.match(html, /第 1 步/);
   assert.match(html, /第 2 步/);
   assert.doesNotMatch(html, /checked/);
   assert.match(html, /data-endpoint-select="R" disabled/);
   assert.equal(ctx.state.byDiseaseEndpoints.get("T").graph_filename, "G");
+});
+
+test("disease endpoint review offers restore for rejected and retired entities", () => {
+  const ctx = vm.createContext({ state: {}, esc: String, miniStatus: String, typeName: { symptom: "症状" },
+    table: (_, rows) => rows.join("") });
+  vm.runInContext(source.slice(source.indexOf("  function diseaseEndpointReviewHtml"), source.indexOf("  function diseaseSectionHtml")), ctx);
+  const item = { status: "draft", source_node_id: "D", source_name: "疾病", source_status: "active",
+    target_node_id: "T", target_name: "症状", target_node_type: "symptom", target_status: "draft" };
+  const html = ctx.diseaseEndpointReviewHtml([
+    item,
+    { ...item, target_node_id: "R", target_status: "rejected" },
+    { ...item, target_node_id: "X", target_status: "retired" },
+  ], "G");
+  // 被拒/失效端点（索引 2/3）提供恢复入口；待审端点（索引 1）仍是拒绝；
+  // 恢复不做批量勾选（非 draft/stale 复选框保持禁用）。
+  assert.match(html, /data-endpoint-restore="2"/);
+  assert.match(html, /data-endpoint-restore="3"/);
+  assert.match(html, /data-endpoint-reject="1"/);
+  assert.doesNotMatch(html, /data-endpoint-reject="2"/);
+  assert.doesNotMatch(html, /data-endpoint-reject="3"/);
+});
+
+test("disease endpoint restore submits the restore action and refreshes the workbench", async () => {
+  const item = { item_type: "graph_node", node_id: "R", graph_filename: "G", name: "症状R", status: "rejected" };
+  const calls = [];
+  const refreshed = [];
+  const button = {
+    dataset: { endpointRestore: "0" },
+    closest: (selector) => (selector === "[data-endpoint-restore]" ? button : null),
+  };
+  const mount = { onchange: null, onclick: null, querySelectorAll: () => [], querySelector: () => null };
+  const ctx = vm.createContext({
+    state: { byDiseaseEndpoints: new Map([["R", item]]), byDiseaseItems: new Map(), byDisease: { subject: "D" } },
+    $: () => null, mount,
+    toast: () => {}, markStale: () => {}, api: async () => ({}),
+    submitReviewAction: async (target, action, note) => { calls.push({ target, action, note }); },
+    ACTION_DONE_LABELS: { restore: "已恢复" }, reviewItemTitle: (target) => target.name,
+    renderByDisease: async () => { refreshed.push(true); },
+    openReasonDialog: () => {}, openEndpointSource: async () => {}, openNodeNameEditor: async () => {},
+    openRelationAiReview: () => {}, openBatchRelationAiReview: () => {},
+    collectSectionDirectItems: () => [], collectSectionItems: () => [], relationLabel: () => "",
+    relationEndpointBlocked: () => false, itemPayload: (target) => target, reviewReviewer: () => "测试",
+    renderReviewCenter: async () => {}, loadReviewDetail: async () => {}, renderClinicalBases: async () => {},
+  });
+  vm.runInContext(source.slice(source.indexOf("  function bindByDiseaseCardActions"), source.indexOf("  async function renderRules")), ctx);
+  ctx.bindByDiseaseCardActions(mount);
+  await mount.onclick({ target: button });
+  assert.deepEqual(calls, [{ target: item, action: "restore", note: "" }]);
+  assert.equal(refreshed.length, 1);
 });
 
 test("disease relation rows expose AI review alongside manual decisions", () => {
@@ -71,8 +123,8 @@ test("relation AI review prompt covers exam, lab, diagnostic evidence and sympto
   assert.match(backendSource, /DISEASE_HAS_LAB表示需开展该检验/);
   assert.match(backendSource, /DISEASE_HAS_DIAGNOSTIC_EVIDENCE表示目标结果构成诊断依据/);
   assert.match(backendSource, /DISEASE_HAS_SYMPTOM表示该症状是疾病表现/);
-  assert.match(backendSource, /标准ICD疾病实体是受保护主数据/);
-  assert.match(backendSource, /拒绝或重新绑定该关系，不要修改标准疾病主数据/);
+  assert.match(backendSource, /规范疾病实体是受保护主数据/);
+  assert.match(backendSource, /拒绝或重新绑定关系，绝不能建议修改该疾病名称/);
 });
 
 test("relation groups provide batch AI review and use a non-conflicting POST route", () => {

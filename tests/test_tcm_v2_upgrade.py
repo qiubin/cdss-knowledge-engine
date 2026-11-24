@@ -81,9 +81,10 @@ class TcmV2UpgradeTest(unittest.TestCase):
             default = guide_packages._resolve_graph_target(
                 None, "tcm", "TCM_GUIDELINE_V2", "DOC-TCM-2026"
             )
+            # 与西医一致：空 mode 跟随模板绑定图，不再按 doc_id 每次新建。
             self.assertEqual(default, {
-                "mode": "new",
-                "filename": "KG-TCM-DOC-TCM-2026.json",
+                "mode": "legacy",
+                "filename": "KG-TCM_GUIDELINE_V2.json",
                 "domain": "tcm",
             })
 

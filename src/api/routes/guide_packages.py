@@ -310,12 +310,10 @@ def _resolve_graph_target(
     requested = str(raw.get("filename") or "").strip()
 
     if not mode:
-        if normalize_domain(domain) == TCM:
-            mode = "new"
-            requested = f"KG-TCM-{_safe_graph_filename(doc_id)[:-5]}.json"
-        else:
-            mode = "legacy"
-            requested = _resolve_graph_filename(template_id)
+        # 空 mode 时中西医一致：跟随模板绑定图（多份指南合并进同一份图谱），
+        # 不再为中医按 doc_id 每次新建独立图谱。
+        mode = "legacy"
+        requested = _resolve_graph_filename(template_id)
         requested = _safe_graph_filename(requested)
     elif mode == "new":
         requested = requested or f"KG-TCM-{_safe_graph_filename(doc_id)[:-5]}.json"

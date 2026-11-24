@@ -12,7 +12,8 @@
       "DOC-1ebe1380",
       "DOC-98550d90",
       "DOC-a1fd4731",
-      "DOC-d6ecc534"
+      "DOC-d6ecc534",
+      "DOC-ef318045"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -23,11 +24,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 8,
+    "occurrences": 10,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:28.821958+00:00",
-    "updated_at": "2026-11-23T16:21:04.989909+00:00"
+    "updated_at": "2026-11-24T08:10:54.084376+00:00"
   },
   {
     "candidate_id": "TERM-0C9C13D20C18A183",
@@ -552,7 +553,8 @@
     "source_doc_ids": [
       "DOC-98550d90",
       "DOC-a1fd4731",
-      "DOC-d6ecc534"
+      "DOC-d6ecc534",
+      "DOC-ef318045"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -563,11 +565,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 10,
+    "occurrences": 11,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:35.737044+00:00",
-    "updated_at": "2026-11-23T16:21:06.519677+00:00"
+    "updated_at": "2026-11-24T08:10:34.609278+00:00"
   },
   {
     "candidate_id": "TERM-193075F69988F5E8",
@@ -729,7 +731,8 @@
       "冠心病"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-ef318045"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -758,11 +761,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 2,
+    "occurrences": 4,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:38.402000+00:00",
-    "updated_at": "2026-11-21T04:28:42.064741+00:00"
+    "updated_at": "2026-11-24T08:10:58.444627+00:00"
   },
   {
     "candidate_id": "TERM-B3C6EB9D152FE2E6",
@@ -800,7 +803,8 @@
       "慢性肾功能不全"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-ef318045"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -811,11 +815,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:39.590692+00:00",
-    "updated_at": "2026-11-21T04:28:39.590692+00:00"
+    "updated_at": "2026-11-24T08:11:25.967249+00:00"
   },
   {
     "candidate_id": "TERM-3F0D895008554935",
@@ -940,7 +944,8 @@
     ],
     "source_doc_ids": [
       "DOC-98550d90",
-      "DOC-d6ecc534"
+      "DOC-d6ecc534",
+      "DOC-ef318045"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -951,11 +956,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 2,
+    "occurrences": 3,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:42.813720+00:00",
-    "updated_at": "2026-11-23T16:20:59.679973+00:00"
+    "updated_at": "2026-11-24T08:11:17.923480+00:00"
   },
   {
     "candidate_id": "TERM-B639F09864D2B87A",
@@ -966,7 +971,8 @@
       "心功能不全"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-ef318045"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -977,11 +983,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:43.277734+00:00",
-    "updated_at": "2026-11-21T04:28:43.277734+00:00"
+    "updated_at": "2026-11-24T08:10:51.129356+00:00"
   },
   {
     "candidate_id": "TERM-7A889520F1546CF0",
@@ -1064,7 +1070,8 @@
       "糖尿病"
     ],
     "source_doc_ids": [
-      "DOC-98550d90"
+      "DOC-98550d90",
+      "DOC-ef318045"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -1075,11 +1082,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 5,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:44.882325+00:00",
-    "updated_at": "2026-11-21T04:28:44.882325+00:00"
+    "updated_at": "2026-11-24T08:11:19.205138+00:00"
   },
   {
     "candidate_id": "TERM-8A7A74B70BB5DA82",
@@ -1091,7 +1098,8 @@
     ],
     "source_doc_ids": [
       "DOC-98550d90",
-      "DOC-d6ecc534"
+      "DOC-d6ecc534",
+      "DOC-ef318045"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -1102,11 +1110,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 2,
+    "occurrences": 5,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-21T04:28:45.243101+00:00",
-    "updated_at": "2026-11-23T16:20:57.980842+00:00"
+    "updated_at": "2026-11-24T08:11:19.386359+00:00"
   },
   {
     "candidate_id": "TERM-680D5E84B6FDC28D",
@@ -1215,7 +1223,8 @@
       "肥厚型心肌病"
     ],
     "source_doc_ids": [
-      "DOC-482cabea"
+      "DOC-482cabea",
+      "DOC-ef318045"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -1250,11 +1259,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 3,
+    "occurrences": 4,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-23T06:57:37.347339+00:00",
-    "updated_at": "2026-11-23T07:21:00.078207+00:00"
+    "updated_at": "2026-11-24T08:10:28.451647+00:00"
   },
   {
     "candidate_id": "TERM-4255ED582BA8ABF9",
@@ -2061,7 +2070,8 @@
       "窦性心动过缓"
     ],
     "source_doc_ids": [
-      "DOC-a1fd4731"
+      "DOC-a1fd4731",
+      "DOC-ef318045"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -2072,11 +2082,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-23T07:08:39.132664+00:00",
-    "updated_at": "2026-11-23T07:08:39.132664+00:00"
+    "updated_at": "2026-11-24T08:11:10.604403+00:00"
   },
   {
     "candidate_id": "TERM-A20AA0EAEC1009D3",
@@ -2236,7 +2246,8 @@
       "心衰"
     ],
     "source_doc_ids": [
-      "DOC-1ebe1380"
+      "DOC-1ebe1380",
+      "DOC-ef318045"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -2277,11 +2288,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 2,
+    "occurrences": 8,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-23T08:55:51.194877+00:00",
-    "updated_at": "2026-11-23T08:55:52.274737+00:00"
+    "updated_at": "2026-11-24T08:10:48.948412+00:00"
   },
   {
     "candidate_id": "TERM-5B68ADC60EA65AF3",
@@ -2294,7 +2305,8 @@
       "射血分数保留的心力衰竭"
     ],
     "source_doc_ids": [
-      "DOC-1ebe1380"
+      "DOC-1ebe1380",
+      "DOC-ef318045"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -2305,11 +2317,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 2,
+    "occurrences": 4,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-23T08:55:51.523078+00:00",
-    "updated_at": "2026-11-23T08:55:52.699496+00:00"
+    "updated_at": "2026-11-24T08:10:41.020094+00:00"
   },
   {
     "candidate_id": "TERM-D202A15255D40E88",
@@ -2555,7 +2567,8 @@
       "心肌梗死"
     ],
     "source_doc_ids": [
-      "DOC-1ebe1380"
+      "DOC-1ebe1380",
+      "DOC-ef318045"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -2566,11 +2579,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 5,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-23T08:55:54.788945+00:00",
-    "updated_at": "2026-11-23T08:55:54.788945+00:00"
+    "updated_at": "2026-11-24T08:11:26.729622+00:00"
   },
   {
     "candidate_id": "TERM-41EA901346EB3C1A",
@@ -2628,7 +2641,8 @@
     ],
     "source_doc_ids": [
       "DOC-1ebe1380",
-      "DOC-d6ecc534"
+      "DOC-d6ecc534",
+      "DOC-ef318045"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -2663,11 +2677,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 3,
+    "occurrences": 10,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-23T08:55:57.614300+00:00",
-    "updated_at": "2026-11-23T16:21:07.103412+00:00"
+    "updated_at": "2026-11-24T08:11:26.543228+00:00"
   },
   {
     "candidate_id": "TERM-E29FB533EB3D3368",
@@ -2742,15 +2756,16 @@
       "HFrEF"
     ],
     "source_doc_ids": [
-      "DOC-1ebe1380"
+      "DOC-1ebe1380",
+      "DOC-ef318045"
     ],
     "match_type": "unmatched",
     "suggested_mappings": [],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-23T08:55:58.801507+00:00",
-    "updated_at": "2026-11-23T08:55:58.801507+00:00"
+    "updated_at": "2026-11-24T08:11:16.799747+00:00"
   },
   {
     "candidate_id": "TERM-A2C3FE3D67BDC9A2",
@@ -3124,7 +3139,8 @@
       "先天性心脏病"
     ],
     "source_doc_ids": [
-      "DOC-d6ecc534"
+      "DOC-d6ecc534",
+      "DOC-ef318045"
     ],
     "match_type": "ambiguous",
     "suggested_mappings": [
@@ -3159,11 +3175,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-23T16:20:58.782294+00:00",
-    "updated_at": "2026-11-23T16:20:58.782294+00:00"
+    "updated_at": "2026-11-24T08:10:56.414610+00:00"
   },
   {
     "candidate_id": "TERM-DDF6FBE28D7B3927",
@@ -3491,7 +3507,8 @@
       "心动过速性心肌病"
     ],
     "source_doc_ids": [
-      "DOC-d6ecc534"
+      "DOC-d6ecc534",
+      "DOC-ef318045"
     ],
     "match_type": "exact_reference",
     "suggested_mappings": [
@@ -3502,11 +3519,11 @@
         "relation": "related"
       }
     ],
-    "occurrences": 1,
+    "occurrences": 2,
     "status": "pending",
     "review_note": "",
     "created_at": "2026-11-23T16:21:10.394204+00:00",
-    "updated_at": "2026-11-23T16:21:10.394204+00:00"
+    "updated_at": "2026-11-24T08:11:00.637599+00:00"
   },
   {
     "candidate_id": "TERM-DEDD6E46C1287685",
@@ -3647,5 +3664,4293 @@
     "review_note": "",
     "created_at": "2026-11-23T16:21:12.398326+00:00",
     "updated_at": "2026-11-23T16:21:12.398326+00:00"
+  },
+  {
+    "candidate_id": "TERM-07BB08EB40BF453B",
+    "entity_type": "disease",
+    "name": "心房颤动",
+    "local_code": "I48.X01",
+    "aliases": [
+      "AF",
+      "初诊房颤",
+      "心房颤动",
+      "急性房颤",
+      "急诊房颤",
+      "房颤",
+      "持续性房颤",
+      "无症状房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I48.X01",
+        "name": "心房颤动",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 40,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:19.435853+00:00",
+    "updated_at": "2026-11-24T08:10:53.712237+00:00"
+  },
+  {
+    "candidate_id": "TERM-340DC93AB8896BC9",
+    "entity_type": "disease",
+    "name": "脑卒中",
+    "local_code": "I64.X00",
+    "aliases": [
+      "卒中",
+      "脑卒中"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I64.X00",
+        "name": "脑卒中",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:21.120385+00:00",
+    "updated_at": "2026-11-24T08:10:21.120385+00:00"
+  },
+  {
+    "candidate_id": "TERM-C50AAFD54B584884",
+    "entity_type": "disease",
+    "name": "心房扑动",
+    "local_code": "I48.X03",
+    "aliases": [
+      "心房扑动",
+      "房扑"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I48.X03",
+        "name": "心房扑动",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 4,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:21.468700+00:00",
+    "updated_at": "2026-11-24T08:11:27.485196+00:00"
+  },
+  {
+    "candidate_id": "TERM-7746AB6AC455B33A",
+    "entity_type": "disease",
+    "name": "卒中",
+    "local_code": "LOCAL-DIS-FC430B458E",
+    "aliases": [
+      "卒中"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "G71.300X001",
+        "name": "线粒体脑肌病伴高乳酸血症和卒中样发作",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G46.3*",
+        "name": "脑干卒中发作综合征",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G46.4*",
+        "name": "小脑卒中发作综合征",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "F06.810",
+        "name": "卒中后精神病态",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I69.400",
+        "name": "脑卒中后遗症",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 11,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:21.813311+00:00",
+    "updated_at": "2026-11-24T08:11:20.448678+00:00"
+  },
+  {
+    "candidate_id": "TERM-B08D05A201EDF255",
+    "entity_type": "disease",
+    "name": "短暂性脑缺血发作",
+    "local_code": "G45.900X001",
+    "aliases": [
+      "TIA",
+      "短暂性脑缺血发作"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "G45.900X001",
+        "name": "短暂性脑缺血发作",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 4,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:22.504241+00:00",
+    "updated_at": "2026-11-24T08:10:58.049827+00:00"
+  },
+  {
+    "candidate_id": "TERM-25C828A02C94FEAF",
+    "entity_type": "disease",
+    "name": "急性缺血性卒中",
+    "local_code": "LOCAL-DIS-57FDFC1789",
+    "aliases": [
+      "卒中",
+      "急性缺血性卒中",
+      "缺血性卒中"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "G71.300X001",
+        "name": "线粒体脑肌病伴高乳酸血症和卒中样发作",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G46.3*",
+        "name": "脑干卒中发作综合征",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G46.4*",
+        "name": "小脑卒中发作综合征",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "F06.810",
+        "name": "卒中后精神病态",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I69.400",
+        "name": "脑卒中后遗症",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 4,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:22.887875+00:00",
+    "updated_at": "2026-11-24T08:10:31.505571+00:00"
+  },
+  {
+    "candidate_id": "TERM-8FC280E607EB3465",
+    "entity_type": "disease",
+    "name": "急性冠脉综合征",
+    "local_code": "I24.901",
+    "aliases": [
+      "ACS",
+      "急性冠脉综合征"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I24.901",
+        "name": "急性冠脉综合征",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:23.713280+00:00",
+    "updated_at": "2026-11-24T08:10:23.713280+00:00"
+  },
+  {
+    "candidate_id": "TERM-668C0304F9B81877",
+    "entity_type": "disease",
+    "name": "慢性冠脉综合征",
+    "local_code": "LOCAL-DIS-232F490FDC",
+    "aliases": [
+      "CCS",
+      "慢性冠脉综合征"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 3,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:23.911441+00:00",
+    "updated_at": "2026-11-24T08:10:24.322515+00:00"
+  },
+  {
+    "candidate_id": "TERM-EAFF2A690052F384",
+    "entity_type": "disease",
+    "name": "上消化道出血",
+    "local_code": "K92.208",
+    "aliases": [
+      "上消化道出血"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "K92.208",
+        "name": "上消化道出血",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:24.962436+00:00",
+    "updated_at": "2026-11-24T08:10:24.962436+00:00"
+  },
+  {
+    "candidate_id": "TERM-C1994B8C456360F9",
+    "entity_type": "disease",
+    "name": "重度或致命性出血",
+    "local_code": "LOCAL-DIS-98633B9A48",
+    "aliases": [
+      "严重或致命性出血",
+      "重度或致命性出血"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "R58.X00X006",
+        "name": "出血",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:25.166714+00:00",
+    "updated_at": "2026-11-24T08:10:25.166714+00:00"
+  },
+  {
+    "candidate_id": "TERM-D21B8754EE2E6F2D",
+    "entity_type": "disease",
+    "name": "房颤相关卒中",
+    "local_code": "LOCAL-DIS-5ECD7652E4",
+    "aliases": [
+      "房颤相关卒中"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:25.667102+00:00",
+    "updated_at": "2026-11-24T08:10:25.667102+00:00"
+  },
+  {
+    "candidate_id": "TERM-DFE5A4E4D2ECB298",
+    "entity_type": "disease",
+    "name": "缺血性卒中",
+    "local_code": "LOCAL-DIS-75C2C29162",
+    "aliases": [
+      "卒中",
+      "缺血性卒中"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "G71.300X001",
+        "name": "线粒体脑肌病伴高乳酸血症和卒中样发作",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G46.3*",
+        "name": "脑干卒中发作综合征",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G46.4*",
+        "name": "小脑卒中发作综合征",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "F06.810",
+        "name": "卒中后精神病态",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I69.400",
+        "name": "脑卒中后遗症",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 6,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:26.337543+00:00",
+    "updated_at": "2026-11-24T08:11:07.352192+00:00"
+  },
+  {
+    "candidate_id": "TERM-28461191C4903D17",
+    "entity_type": "disease",
+    "name": "脑梗死",
+    "local_code": "I63.900",
+    "aliases": [
+      "急性缺血性卒中",
+      "缺血性卒中",
+      "脑梗死"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I63.900",
+        "name": "脑梗死",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:27.352955+00:00",
+    "updated_at": "2026-11-24T08:10:27.352955+00:00"
+  },
+  {
+    "candidate_id": "TERM-AAD0AC24C655ADFF",
+    "entity_type": "disease",
+    "name": "颅内出血",
+    "local_code": "LOCAL-DIS-A693CB0FC5",
+    "aliases": [
+      "脑出血",
+      "非创伤性颅内出血",
+      "颅内出血"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I69.200",
+        "name": "非创伤性颅内出血后遗症，其他的",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I61.900X008",
+        "name": "凝血功能障碍性脑出血",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I62.900",
+        "name": "颅内出血(非创伤性)",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "P10.901",
+        "name": "产伤致新生儿颅内出血",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "Z50.100X011",
+        "name": "脑出血后物理康复训练",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G91.000X002",
+        "name": "颅内出血后脑积水",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I69.200X001",
+        "name": "颅内出血后遗症",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 7,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:30.257459+00:00",
+    "updated_at": "2026-11-24T08:11:03.718082+00:00"
+  },
+  {
+    "candidate_id": "TERM-B71D0C5AEA34CDDB",
+    "entity_type": "disease",
+    "name": "大血管闭塞卒中",
+    "local_code": "LOCAL-DIS-7476C26317",
+    "aliases": [
+      "大血管闭塞卒中"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:32.005487+00:00",
+    "updated_at": "2026-11-24T08:10:32.005487+00:00"
+  },
+  {
+    "candidate_id": "TERM-BB8321F94AA4BD0D",
+    "entity_type": "disease",
+    "name": "阵发性心房颤动",
+    "local_code": "I48.X02",
+    "aliases": [
+      "阵发性心房颤动",
+      "阵发性房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I48.X02",
+        "name": "阵发性心房颤动",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:32.702554+00:00",
+    "updated_at": "2026-11-24T08:10:39.589005+00:00"
+  },
+  {
+    "candidate_id": "TERM-BB9C9DAC9C7D1F44",
+    "entity_type": "disease",
+    "name": "持续性心房颤动",
+    "local_code": "I48.X00X007",
+    "aliases": [
+      "持续性心房颤动",
+      "持续性房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I48.X00X007",
+        "name": "持续性心房颤动",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:33.019145+00:00",
+    "updated_at": "2026-11-24T08:10:33.019145+00:00"
+  },
+  {
+    "candidate_id": "TERM-793AB26A551801E1",
+    "entity_type": "disease",
+    "name": "心房颤动合并射血分数降低的心衰",
+    "local_code": "LOCAL-DIS-F2DFA4D93D",
+    "aliases": [
+      "心房颤动合并射血分数降低的心衰",
+      "房颤合并HFrEF"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I48.X01",
+        "name": "心房颤动",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:33.989014+00:00",
+    "updated_at": "2026-11-24T08:10:33.989014+00:00"
+  },
+  {
+    "candidate_id": "TERM-AE92B081EF7B41EC",
+    "entity_type": "disease",
+    "name": "完全性左束支传导阻滞",
+    "local_code": "I44.602",
+    "aliases": [
+      "完全性左束支传导阻滞"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I44.602",
+        "name": "完全性左束支传导阻滞",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:34.275749+00:00",
+    "updated_at": "2026-11-24T08:10:34.275749+00:00"
+  },
+  {
+    "candidate_id": "TERM-BD06477FBB6D938D",
+    "entity_type": "disease",
+    "name": "甲状腺功能减退",
+    "local_code": "LOCAL-DIS-A049EA33C9",
+    "aliases": [
+      "甲状腺功能减退"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "E02.X00",
+        "name": "临床症状不明显［亚临床］的碘缺乏性甲状腺功能减退症",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "E02.X00X001",
+        "name": "临床症状不明显[亚临床]的碘缺乏性甲状腺功能减退症",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "E03.200",
+        "name": "药物和其他外源性物质引起的甲状腺功能减退症",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "E03.000",
+        "name": "先天性甲状腺功能减退症伴有弥漫性甲状腺肿",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "E03.000X003",
+        "name": "先天性甲状腺功能减退症伴弥漫性甲状腺肿",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:35.626614+00:00",
+    "updated_at": "2026-11-24T08:10:35.626614+00:00"
+  },
+  {
+    "candidate_id": "TERM-D89C26A33DE40305",
+    "entity_type": "disease",
+    "name": "左心房食管瘘",
+    "local_code": "LOCAL-DIS-77631A2389",
+    "aliases": [
+      "左心房食管瘘"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "K22.811",
+        "name": "食管瘘",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:36.811064+00:00",
+    "updated_at": "2026-11-24T08:10:36.811064+00:00"
+  },
+  {
+    "candidate_id": "TERM-F7068A7C2F61E6C2",
+    "entity_type": "disease",
+    "name": "房性心动过速",
+    "local_code": "I47.101",
+    "aliases": [
+      "房性心动过速",
+      "房速"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I47.101",
+        "name": "房性心动过速",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:37.509888+00:00",
+    "updated_at": "2026-11-24T08:11:00.998364+00:00"
+  },
+  {
+    "candidate_id": "TERM-7EAE783C84761514",
+    "entity_type": "disease",
+    "name": "永久性心房颤动",
+    "local_code": "I48.X00X013",
+    "aliases": [
+      "永久性心房颤动",
+      "永久性房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I48.X00X013",
+        "name": "永久性心房颤动",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 3,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:37.807313+00:00",
+    "updated_at": "2026-11-24T08:10:49.299634+00:00"
+  },
+  {
+    "candidate_id": "TERM-6F1F83A30F2D8E8A",
+    "entity_type": "disease",
+    "name": "甲状腺功能亢进症",
+    "local_code": "E05.900X001",
+    "aliases": [
+      "甲状腺功能亢进",
+      "甲状腺功能亢进症"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "E05.900X001",
+        "name": "甲状腺功能亢进症",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:40.270023+00:00",
+    "updated_at": "2026-11-24T08:10:40.270023+00:00"
+  },
+  {
+    "candidate_id": "TERM-1116591F2EFF0B02",
+    "entity_type": "disease",
+    "name": "房颤合并中重度功能性二尖瓣和（或）三尖瓣反流",
+    "local_code": "LOCAL-DIS-9DF493000B",
+    "aliases": [
+      "房颤合并中重度功能性二尖瓣和（或）三尖瓣反流"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:41.176584+00:00",
+    "updated_at": "2026-11-24T08:10:41.176584+00:00"
+  },
+  {
+    "candidate_id": "TERM-1E0FC4224C50EB1F",
+    "entity_type": "disease",
+    "name": "肺静脉狭窄",
+    "local_code": "I28.802",
+    "aliases": [
+      "肺静脉狭窄"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I28.802",
+        "name": "肺静脉狭窄",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:41.355810+00:00",
+    "updated_at": "2026-11-24T08:11:13.464218+00:00"
+  },
+  {
+    "candidate_id": "TERM-F31E8C7A251EE34F",
+    "entity_type": "disease",
+    "name": "心房食管瘘",
+    "local_code": "LOCAL-DIS-41DF14DD39",
+    "aliases": [
+      "左心房食管瘘",
+      "心房食管瘘"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "K22.811",
+        "name": "食管瘘",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:41.927347+00:00",
+    "updated_at": "2026-11-24T08:11:13.290699+00:00"
+  },
+  {
+    "candidate_id": "TERM-55648EC464E32427",
+    "entity_type": "disease",
+    "name": "心肌缺血",
+    "local_code": "LOCAL-DIS-D34D9263F1",
+    "aliases": [
+      "心肌缺血"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "P29.400",
+        "name": "新生儿短暂性心肌缺血",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I25.600",
+        "name": "无症状心肌缺血",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I24.900X001",
+        "name": "急性心肌缺血",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:42.959804+00:00",
+    "updated_at": "2026-11-24T08:11:27.110309+00:00"
+  },
+  {
+    "candidate_id": "TERM-A05854A7F0E3A857",
+    "entity_type": "disease",
+    "name": "感染",
+    "local_code": "B99.X00X001",
+    "aliases": [
+      "感染"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "B99.X00X001",
+        "name": "感染",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:43.129060+00:00",
+    "updated_at": "2026-11-24T08:10:43.129060+00:00"
+  },
+  {
+    "candidate_id": "TERM-F4CA58AEE2D4E0D4",
+    "entity_type": "disease",
+    "name": "肺栓塞",
+    "local_code": "I26.900X001",
+    "aliases": [
+      "肺栓塞"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I26.900X001",
+        "name": "肺栓塞",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 3,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:43.473540+00:00",
+    "updated_at": "2026-11-24T08:11:00.817491+00:00"
+  },
+  {
+    "candidate_id": "TERM-7E1C0E9E85D3D767",
+    "entity_type": "disease",
+    "name": "心房血栓",
+    "local_code": "I51.302",
+    "aliases": [
+      "左心房/左心耳血栓",
+      "左心房血栓",
+      "左心耳血栓",
+      "心房血栓"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I51.302",
+        "name": "心房血栓",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:44.680603+00:00",
+    "updated_at": "2026-11-24T08:10:44.811174+00:00"
+  },
+  {
+    "candidate_id": "TERM-8CD303F0D029365E",
+    "entity_type": "disease",
+    "name": "病态窦房结综合征",
+    "local_code": "I49.500",
+    "aliases": [
+      "病态窦房结综合征"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I49.500",
+        "name": "病态窦房结综合征",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 3,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:46.195910+00:00",
+    "updated_at": "2026-11-24T08:10:52.859796+00:00"
+  },
+  {
+    "candidate_id": "TERM-2EA0F740A6BE0867",
+    "entity_type": "disease",
+    "name": "二度Ⅱ型及以上房室传导阻滞",
+    "local_code": "LOCAL-DIS-F2FAEF0A81",
+    "aliases": [
+      "二度Ⅱ型及以上房室传导阻滞"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I44.303",
+        "name": "房室传导阻滞",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:46.344874+00:00",
+    "updated_at": "2026-11-24T08:10:53.233448+00:00"
+  },
+  {
+    "candidate_id": "TERM-7A67A59A54F0D3FA",
+    "entity_type": "disease",
+    "name": "外科术后心房颤动",
+    "local_code": "LOCAL-DIS-300EA1A382",
+    "aliases": [
+      "外科术后心房颤动",
+      "外科术后房颤",
+      "心脏外科术后房颤",
+      "术后房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I48.X01",
+        "name": "心房颤动",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:46.882246+00:00",
+    "updated_at": "2026-11-24T08:10:46.882246+00:00"
+  },
+  {
+    "candidate_id": "TERM-A1621382CC7EDDEE",
+    "entity_type": "disease",
+    "name": "冠状动脉旁路移植术后新发心房颤动",
+    "local_code": "LOCAL-DIS-C94A0CE37D",
+    "aliases": [
+      "冠状动脉旁路移植术后新发心房颤动",
+      "冠状动脉旁路移植术后新发房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I48.X01",
+        "name": "心房颤动",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:47.091285+00:00",
+    "updated_at": "2026-11-24T08:10:47.091285+00:00"
+  },
+  {
+    "candidate_id": "TERM-5DEFB26ADCA16D4A",
+    "entity_type": "disease",
+    "name": "血栓栓塞",
+    "local_code": "LOCAL-DIS-387B69D7E7",
+    "aliases": [
+      "血栓栓塞"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I24.000X009",
+        "name": "冠状动脉支架后并发冠状动脉血栓栓塞",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I27.202",
+        "name": "慢性血栓栓塞性肺动脉高压症",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I26.900X016",
+        "name": "慢性肺血栓栓塞急性再发",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I26.900X015",
+        "name": "急性肺血栓栓塞症",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I26.902",
+        "name": "慢性肺血栓栓塞症",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:47.296223+00:00",
+    "updated_at": "2026-11-24T08:10:47.296223+00:00"
+  },
+  {
+    "candidate_id": "TERM-C2CAD3502EEE4A10",
+    "entity_type": "disease",
+    "name": "急性冠状动脉综合征",
+    "local_code": "LOCAL-DIS-A78BFC1980",
+    "aliases": [
+      "ACS",
+      "急性冠状动脉综合征"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:49.990036+00:00",
+    "updated_at": "2026-11-24T08:10:49.990036+00:00"
+  },
+  {
+    "candidate_id": "TERM-751DD661AF81DC25",
+    "entity_type": "disease",
+    "name": "甲状腺功能亢进",
+    "local_code": "LOCAL-DIS-1B79DA167F",
+    "aliases": [
+      "甲状腺功能亢进"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "E05.000X001",
+        "name": "弥漫性甲状腺肿伴甲状腺功能亢进症[Graves病]",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "E05.203",
+        "name": "自主性高功能性甲状腺腺瘤伴甲状腺功能亢进症",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "E05.001",
+        "name": "弥漫性甲状腺肿伴甲状腺功能亢进症",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "E05.202",
+        "name": "结节性甲状腺肿伴甲状腺功能亢进症",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "E05.200X002",
+        "name": "结节性甲状腺肿伴甲状腺功能亢进",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:50.725918+00:00",
+    "updated_at": "2026-11-24T08:10:56.755049+00:00"
+  },
+  {
+    "candidate_id": "TERM-A2DE354A36A0929F",
+    "entity_type": "disease",
+    "name": "三度房室传导阻滞",
+    "local_code": "LOCAL-DIS-BE9C70483A",
+    "aliases": [
+      "三度房室传导阻滞"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I44.303",
+        "name": "房室传导阻滞",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:50.938468+00:00",
+    "updated_at": "2026-11-24T08:10:50.938468+00:00"
+  },
+  {
+    "candidate_id": "TERM-3E33E03E021914FC",
+    "entity_type": "disease",
+    "name": "心原性休克",
+    "local_code": "LOCAL-DIS-F7BCFE2894",
+    "aliases": [
+      "心原性休克"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "R57.900",
+        "name": "休克",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:51.348975+00:00",
+    "updated_at": "2026-11-24T08:10:51.348975+00:00"
+  },
+  {
+    "candidate_id": "TERM-19AC66324369813C",
+    "entity_type": "disease",
+    "name": "痴呆",
+    "local_code": "F03.X00",
+    "aliases": [
+      "痴呆"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "F03.X00",
+        "name": "痴呆",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:54.260678+00:00",
+    "updated_at": "2026-11-24T08:10:55.385617+00:00"
+  },
+  {
+    "candidate_id": "TERM-AF7F9D114C4FECBF",
+    "entity_type": "disease",
+    "name": "认知功能障碍",
+    "local_code": "LOCAL-DIS-A3A812792E",
+    "aliases": [
+      "认知功能障碍"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "F06.800X026",
+        "name": "血管性认知功能障碍",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:54.474199+00:00",
+    "updated_at": "2026-11-24T08:10:54.474199+00:00"
+  },
+  {
+    "candidate_id": "TERM-CDDE1A72683353E9",
+    "entity_type": "disease",
+    "name": "体循环栓塞",
+    "local_code": "LOCAL-DIS-F9237E0557",
+    "aliases": [
+      "体循环栓塞"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 3,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:54.825467+00:00",
+    "updated_at": "2026-11-24T08:11:06.959347+00:00"
+  },
+  {
+    "candidate_id": "TERM-B67ECD2C4F10D6C7",
+    "entity_type": "disease",
+    "name": "房颤相关心肌病",
+    "local_code": "LOCAL-DIS-B454EE2B1B",
+    "aliases": [
+      "房颤相关心肌病"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I42.900",
+        "name": "心肌病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G72.900",
+        "name": "肌病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:55.217546+00:00",
+    "updated_at": "2026-11-24T08:10:55.217546+00:00"
+  },
+  {
+    "candidate_id": "TERM-3C70C66FC24A0017",
+    "entity_type": "disease",
+    "name": "瓣膜性心脏病",
+    "local_code": "LOCAL-DIS-EA3CB6B042",
+    "aliases": [
+      "瓣膜性心脏病"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I51.900",
+        "name": "心脏病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:55.981519+00:00",
+    "updated_at": "2026-11-24T08:11:06.029258+00:00"
+  },
+  {
+    "candidate_id": "TERM-EF87E739168E8ED4",
+    "entity_type": "disease",
+    "name": "心肌病",
+    "local_code": "I42.900",
+    "aliases": [
+      "心肌病"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I42.900",
+        "name": "心肌病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:56.540659+00:00",
+    "updated_at": "2026-11-24T08:10:56.540659+00:00"
+  },
+  {
+    "candidate_id": "TERM-24009417EB6AA529",
+    "entity_type": "disease",
+    "name": "睡眠呼吸暂停综合征",
+    "local_code": "LOCAL-DIS-CEB50EF474",
+    "aliases": [
+      "睡眠呼吸暂停综合征"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "G47.301",
+        "name": "阻塞性睡眠呼吸暂停综合征",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G47.302",
+        "name": "中枢性睡眠呼吸暂停综合征",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G47.303",
+        "name": "混合性睡眠呼吸暂停综合征",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "G47.300",
+        "name": "睡眠呼吸暂停",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "R06.805",
+        "name": "呼吸暂停",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:56.950150+00:00",
+    "updated_at": "2026-11-24T08:10:56.950150+00:00"
+  },
+  {
+    "candidate_id": "TERM-7859F97A460E3E36",
+    "entity_type": "disease",
+    "name": "慢性阻塞性肺疾病",
+    "local_code": "LOCAL-DIS-E3BA3BEB7E",
+    "aliases": [
+      "慢性阻塞性肺疾病"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "J44.900X004",
+        "name": "慢性阻塞性肺疾病III级",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "J44.900X003",
+        "name": "慢性阻塞性肺疾病II级",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "J44.900X005",
+        "name": "慢性阻塞性肺疾病IV级",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "J44.900X002",
+        "name": "慢性阻塞性肺疾病I级",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:57.146242+00:00",
+    "updated_at": "2026-11-24T08:10:57.146242+00:00"
+  },
+  {
+    "candidate_id": "TERM-18C730FB4CF8E9F9",
+    "entity_type": "disease",
+    "name": "房颤",
+    "local_code": "LOCAL-DIS-72402FD6C2",
+    "aliases": [
+      "房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "O99.400X027",
+        "name": "妊娠合并心房颤动(心房纤颤)",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I48.X00X022",
+        "name": "心房颤动[心房纤颤]",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I48.X00X011",
+        "name": "长期持续性心房颤动",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I48.X00X014",
+        "name": "长程持续性心房颤动",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I48.X00",
+        "name": "心房颤动和扑动",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 6,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:57.347540+00:00",
+    "updated_at": "2026-11-24T08:11:21.066102+00:00"
+  },
+  {
+    "candidate_id": "TERM-66CB6873B764E79B",
+    "entity_type": "disease",
+    "name": "充血性心衰",
+    "local_code": "LOCAL-DIS-7BFEFBB7C1",
+    "aliases": [
+      "充血性心衰"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:57.705064+00:00",
+    "updated_at": "2026-11-24T08:10:59.589824+00:00"
+  },
+  {
+    "candidate_id": "TERM-84839D9407CA28D9",
+    "entity_type": "disease",
+    "name": "外周动脉疾病",
+    "local_code": "LOCAL-DIS-BD9D31B2B7",
+    "aliases": [
+      "外周动脉疾病"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:10:58.831758+00:00",
+    "updated_at": "2026-11-24T08:11:01.785611+00:00"
+  },
+  {
+    "candidate_id": "TERM-4F20212A68674C9A",
+    "entity_type": "disease",
+    "name": "心房扑动（房扑）",
+    "local_code": "LOCAL-DIS-C41C34BE3E",
+    "aliases": [
+      "心房扑动（房扑）"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I48.X03",
+        "name": "心房扑动",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:00.107774+00:00",
+    "updated_at": "2026-11-24T08:11:00.107774+00:00"
+  },
+  {
+    "candidate_id": "TERM-D994F490B9EA5585",
+    "entity_type": "disease",
+    "name": "预激综合征",
+    "local_code": "I45.600",
+    "aliases": [
+      "预激综合征"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I45.600",
+        "name": "预激综合征",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:00.284805+00:00",
+    "updated_at": "2026-11-24T08:11:26.341524+00:00"
+  },
+  {
+    "candidate_id": "TERM-D0811A17E9039C5C",
+    "entity_type": "disease",
+    "name": "主动脉瓣狭窄",
+    "local_code": "I35.000",
+    "aliases": [
+      "主动脉瓣狭窄"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I35.000",
+        "name": "主动脉瓣狭窄",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:00.460432+00:00",
+    "updated_at": "2026-11-24T08:11:00.460432+00:00"
+  },
+  {
+    "candidate_id": "TERM-2EE96F2D5540713D",
+    "entity_type": "disease",
+    "name": "慢性肾脏病",
+    "local_code": "LOCAL-DIS-92DDAD4244",
+    "aliases": [
+      "慢性肾脏病"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "N18.002+",
+        "name": "慢性肾脏病5期贫血",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "N18.001",
+        "name": "慢性肾脏病5期",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "N18.801",
+        "name": "慢性肾脏病1期",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "N18.802",
+        "name": "慢性肾脏病2期",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "N18.803",
+        "name": "慢性肾脏病3期",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:01.940298+00:00",
+    "updated_at": "2026-11-24T08:11:06.559179+00:00"
+  },
+  {
+    "candidate_id": "TERM-D0B4DBF44FC1E713",
+    "entity_type": "disease",
+    "name": "不稳定心绞痛",
+    "local_code": "LOCAL-DIS-B3FC687365",
+    "aliases": [
+      "不稳定心绞痛"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I20.900",
+        "name": "心绞痛",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:02.142187+00:00",
+    "updated_at": "2026-11-24T08:11:02.142187+00:00"
+  },
+  {
+    "candidate_id": "TERM-E9A82FA295C05D25",
+    "entity_type": "disease",
+    "name": "肾功能不全",
+    "local_code": "N19.X00X002",
+    "aliases": [
+      "肾功能不全"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "N19.X00X002",
+        "name": "肾功能不全",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:02.328033+00:00",
+    "updated_at": "2026-11-24T08:11:02.328033+00:00"
+  },
+  {
+    "candidate_id": "TERM-0BC9D2BEB8AF60B1",
+    "entity_type": "disease",
+    "name": "肝脏疾病",
+    "local_code": "LOCAL-DIS-0A0BEFFA1C",
+    "aliases": [
+      "肝脏疾病"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "K75.800",
+        "name": "炎性肝脏疾病，其他特指的",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "K75.900",
+        "name": "炎性肝脏疾病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:02.535890+00:00",
+    "updated_at": "2026-11-24T08:11:02.535890+00:00"
+  },
+  {
+    "candidate_id": "TERM-EF4AD8EAD4C592EA",
+    "entity_type": "disease",
+    "name": "出血",
+    "local_code": "R58.X00X006",
+    "aliases": [
+      "出血"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "R58.X00X006",
+        "name": "出血",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:03.144389+00:00",
+    "updated_at": "2026-11-24T08:11:03.144389+00:00"
+  },
+  {
+    "candidate_id": "TERM-0CD5E0FF8D9E4B04",
+    "entity_type": "disease",
+    "name": "卒中/体循环栓塞",
+    "local_code": "LOCAL-DIS-544E16ACF0",
+    "aliases": [
+      "卒中/体循环栓塞"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:03.353887+00:00",
+    "updated_at": "2026-11-24T08:11:03.353887+00:00"
+  },
+  {
+    "candidate_id": "TERM-2486E5E1B2514D72",
+    "entity_type": "disease",
+    "name": "大出血",
+    "local_code": "LOCAL-DIS-8AD2C8AE7B",
+    "aliases": [
+      "大出血"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "O72.100X003",
+        "name": "产后大出血",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "R58.X00X006",
+        "name": "出血",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:03.570949+00:00",
+    "updated_at": "2026-11-24T08:11:03.570949+00:00"
+  },
+  {
+    "candidate_id": "TERM-0E011DFBFE662ED7",
+    "entity_type": "disease",
+    "name": "骨筋膜室综合征",
+    "local_code": "M62.200X001",
+    "aliases": [
+      "骨筋膜室综合征"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "M62.200X001",
+        "name": "骨筋膜室综合征",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:03.897716+00:00",
+    "updated_at": "2026-11-24T08:11:03.897716+00:00"
+  },
+  {
+    "candidate_id": "TERM-BFB5AD4C96418340",
+    "entity_type": "disease",
+    "name": "非瓣膜性房颤",
+    "local_code": "LOCAL-DIS-CF7E2DE1E8",
+    "aliases": [
+      "非瓣膜性房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:04.093896+00:00",
+    "updated_at": "2026-11-24T08:11:18.862934+00:00"
+  },
+  {
+    "candidate_id": "TERM-0F97F6D2204D619E",
+    "entity_type": "disease",
+    "name": "轻中度急性缺血性卒中",
+    "local_code": "LOCAL-DIS-36E2A5D638",
+    "aliases": [
+      "轻中度急性缺血性卒中"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:04.292952+00:00",
+    "updated_at": "2026-11-24T08:11:04.292952+00:00"
+  },
+  {
+    "candidate_id": "TERM-2016D463715B2D0A",
+    "entity_type": "disease",
+    "name": "淀粉样脑血管病",
+    "local_code": "E85.400X027",
+    "aliases": [
+      "淀粉样脑血管病"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "E85.400X027",
+        "name": "淀粉样脑血管病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:04.466594+00:00",
+    "updated_at": "2026-11-24T08:11:04.466594+00:00"
+  },
+  {
+    "candidate_id": "TERM-8589F67B90E93727",
+    "entity_type": "disease",
+    "name": "遗传性出血性毛细血管扩张症",
+    "local_code": "I78.000X001",
+    "aliases": [
+      "遗传性出血性毛细血管扩张症"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I78.000X001",
+        "name": "遗传性出血性毛细血管扩张症",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:04.652146+00:00",
+    "updated_at": "2026-11-24T08:11:04.652146+00:00"
+  },
+  {
+    "candidate_id": "TERM-0D3DA684F7205008",
+    "entity_type": "disease",
+    "name": "慢性细菌性心内膜炎",
+    "local_code": "LOCAL-DIS-4DAD7A7138",
+    "aliases": [
+      "慢性细菌性心内膜炎"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I33.005",
+        "name": "细菌性心内膜炎",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I38.X00X006",
+        "name": "心内膜炎",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:04.799646+00:00",
+    "updated_at": "2026-11-24T08:11:04.799646+00:00"
+  },
+  {
+    "candidate_id": "TERM-547E853D9E5AE9A7",
+    "entity_type": "disease",
+    "name": "TIA",
+    "local_code": "LOCAL-DIS-20211F9B6A",
+    "aliases": [
+      "TIA"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 3,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:05.386845+00:00",
+    "updated_at": "2026-11-24T08:11:10.073490+00:00"
+  },
+  {
+    "candidate_id": "TERM-3D84B562F727AFB5",
+    "entity_type": "disease",
+    "name": "二尖瓣狭窄",
+    "local_code": "I05.000",
+    "aliases": [
+      "二尖瓣狭窄"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I05.000",
+        "name": "二尖瓣狭窄",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:06.217534+00:00",
+    "updated_at": "2026-11-24T08:11:06.217534+00:00"
+  },
+  {
+    "candidate_id": "TERM-365C1E4175BC685A",
+    "entity_type": "disease",
+    "name": "风湿性心脏病",
+    "local_code": "I09.900",
+    "aliases": [
+      "风湿性心脏病"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I09.900",
+        "name": "风湿性心脏病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:06.406719+00:00",
+    "updated_at": "2026-11-24T08:11:06.406719+00:00"
+  },
+  {
+    "candidate_id": "TERM-4257582A9C51C2CF",
+    "entity_type": "disease",
+    "name": "肝功能不全失代偿",
+    "local_code": "LOCAL-DIS-ABDBF9B0FE",
+    "aliases": [
+      "肝功能不全失代偿"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "K72.905",
+        "name": "肝功能不全",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:07.156228+00:00",
+    "updated_at": "2026-11-24T08:11:07.156228+00:00"
+  },
+  {
+    "candidate_id": "TERM-7F11A256E576D9C0",
+    "entity_type": "disease",
+    "name": "脑出血",
+    "local_code": "LOCAL-DIS-2C37FA687B",
+    "aliases": [
+      "脑出血"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I61.900X008",
+        "name": "凝血功能障碍性脑出血",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "Z50.100X011",
+        "name": "脑出血后物理康复训练",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "Z50.500X001",
+        "name": "脑出血后语言康复训练",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "P10.100",
+        "name": "产伤引起的大脑出血",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I61.100X011",
+        "name": "额颞顶枕叶脑出血",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:07.540944+00:00",
+    "updated_at": "2026-11-24T08:11:07.540944+00:00"
+  },
+  {
+    "candidate_id": "TERM-9A8666A815B4DB0F",
+    "entity_type": "disease",
+    "name": "有症状颅内出血",
+    "local_code": "LOCAL-DIS-8DF718807D",
+    "aliases": [
+      "有症状颅内出血"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "R58.X00X006",
+        "name": "出血",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:07.733239+00:00",
+    "updated_at": "2026-11-24T08:11:07.733239+00:00"
+  },
+  {
+    "candidate_id": "TERM-2E2A3EB282E75697",
+    "entity_type": "disease",
+    "name": "急性心原性缺血性卒中",
+    "local_code": "LOCAL-DIS-ACF5134424",
+    "aliases": [
+      "急性心原性缺血性卒中"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:07.933594+00:00",
+    "updated_at": "2026-11-24T08:11:07.933594+00:00"
+  },
+  {
+    "candidate_id": "TERM-58B8A3F732AE5CBA",
+    "entity_type": "disease",
+    "name": "轻型卒中",
+    "local_code": "LOCAL-DIS-D29246494A",
+    "aliases": [
+      "轻型卒中"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:08.340468+00:00",
+    "updated_at": "2026-11-24T08:11:08.340468+00:00"
+  },
+  {
+    "candidate_id": "TERM-8055956F2883902B",
+    "entity_type": "disease",
+    "name": "中型卒中",
+    "local_code": "LOCAL-DIS-696AF2E104",
+    "aliases": [
+      "中型卒中"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:08.547440+00:00",
+    "updated_at": "2026-11-24T08:11:08.547440+00:00"
+  },
+  {
+    "candidate_id": "TERM-F7E95573C4A5A19C",
+    "entity_type": "disease",
+    "name": "严重卒中",
+    "local_code": "LOCAL-DIS-CD6DB902EB",
+    "aliases": [
+      "严重卒中"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:08.693840+00:00",
+    "updated_at": "2026-11-24T08:11:08.693840+00:00"
+  },
+  {
+    "candidate_id": "TERM-F90A43DE76722FCA",
+    "entity_type": "disease",
+    "name": "重度卒中",
+    "local_code": "LOCAL-DIS-A9C9BDA95D",
+    "aliases": [
+      "重度卒中"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:08.887363+00:00",
+    "updated_at": "2026-11-24T08:11:08.887363+00:00"
+  },
+  {
+    "candidate_id": "TERM-DBD1FAFC18D05594",
+    "entity_type": "disease",
+    "name": "出血性卒中",
+    "local_code": "LOCAL-DIS-7523DB9901",
+    "aliases": [
+      "出血性卒中"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "R58.X00X006",
+        "name": "出血",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:09.080101+00:00",
+    "updated_at": "2026-11-24T08:11:09.080101+00:00"
+  },
+  {
+    "candidate_id": "TERM-5DED800CACB92BDA",
+    "entity_type": "disease",
+    "name": "非创伤性颅内出血",
+    "local_code": "LOCAL-DIS-C5BB765690",
+    "aliases": [
+      "非创伤性颅内出血"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I69.200",
+        "name": "非创伤性颅内出血后遗症，其他的",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "S06.804",
+        "name": "创伤性颅内出血",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "R58.X00X006",
+        "name": "出血",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:09.274603+00:00",
+    "updated_at": "2026-11-24T08:11:09.274603+00:00"
+  },
+  {
+    "candidate_id": "TERM-3E7D68A473AB0084",
+    "entity_type": "disease",
+    "name": "房颤合并轻中度缺血性卒中",
+    "local_code": "LOCAL-DIS-BE01351491",
+    "aliases": [
+      "房颤合并轻中度缺血性卒中"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:09.470378+00:00",
+    "updated_at": "2026-11-24T08:11:09.470378+00:00"
+  },
+  {
+    "candidate_id": "TERM-BF1F0015F8453A95",
+    "entity_type": "disease",
+    "name": "阵发性房颤",
+    "local_code": "LOCAL-DIS-A7EA477419",
+    "aliases": [
+      "阵发性房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 5,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:10.221793+00:00",
+    "updated_at": "2026-11-24T08:11:26.165617+00:00"
+  },
+  {
+    "candidate_id": "TERM-61B911537F050CEA",
+    "entity_type": "disease",
+    "name": "持续性房颤",
+    "local_code": "LOCAL-DIS-9E18A7A56B",
+    "aliases": [
+      "持续性房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 5,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:10.420265+00:00",
+    "updated_at": "2026-11-24T08:11:24.870061+00:00"
+  },
+  {
+    "candidate_id": "TERM-4D6B33800CFDD304",
+    "entity_type": "disease",
+    "name": "尖端扭转室速",
+    "local_code": "LOCAL-DIS-D8740897A7",
+    "aliases": [
+      "尖端扭转室速"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:10.806218+00:00",
+    "updated_at": "2026-11-24T08:11:10.806218+00:00"
+  },
+  {
+    "candidate_id": "TERM-9EC8190FEF488233",
+    "entity_type": "disease",
+    "name": "间质性肺炎",
+    "local_code": "J84.900X002",
+    "aliases": [
+      "间质性肺炎"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "J84.900X002",
+        "name": "间质性肺炎",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:10.990653+00:00",
+    "updated_at": "2026-11-24T08:11:10.990653+00:00"
+  },
+  {
+    "candidate_id": "TERM-AA38F411C9C13DDB",
+    "entity_type": "disease",
+    "name": "嗜酸性粒细胞性肺炎",
+    "local_code": "LOCAL-DIS-C4EE5D935E",
+    "aliases": [
+      "嗜酸性粒细胞性肺炎"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "J18.900",
+        "name": "肺炎",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:11.197054+00:00",
+    "updated_at": "2026-11-24T08:11:11.197054+00:00"
+  },
+  {
+    "candidate_id": "TERM-A6C8CE3F11A98FB3",
+    "entity_type": "disease",
+    "name": "机化性肺炎",
+    "local_code": "J84.108",
+    "aliases": [
+      "机化性肺炎"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "J84.108",
+        "name": "机化性肺炎",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:11.383561+00:00",
+    "updated_at": "2026-11-24T08:11:11.383561+00:00"
+  },
+  {
+    "candidate_id": "TERM-E548D606911BF0A8",
+    "entity_type": "disease",
+    "name": "急性呼吸窘迫综合征",
+    "local_code": "J80.X00X002",
+    "aliases": [
+      "急性呼吸窘迫综合征"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "J80.X00X002",
+        "name": "急性呼吸窘迫综合征",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:11.577791+00:00",
+    "updated_at": "2026-11-24T08:11:11.577791+00:00"
+  },
+  {
+    "candidate_id": "TERM-4FD28150EEC41049",
+    "entity_type": "disease",
+    "name": "弥漫性肺泡出血",
+    "local_code": "R04.800X004",
+    "aliases": [
+      "弥漫性肺泡出血"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "R04.800X004",
+        "name": "弥漫性肺泡出血",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:11.786437+00:00",
+    "updated_at": "2026-11-24T08:11:11.786437+00:00"
+  },
+  {
+    "candidate_id": "TERM-7B99835D66DA0E72",
+    "entity_type": "disease",
+    "name": "胸腔积液",
+    "local_code": "J94.804",
+    "aliases": [
+      "胸腔积液"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "J94.804",
+        "name": "胸腔积液",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:11.917405+00:00",
+    "updated_at": "2026-11-24T08:11:11.917405+00:00"
+  },
+  {
+    "candidate_id": "TERM-B51577C1BC9699CB",
+    "entity_type": "disease",
+    "name": "持久性房颤",
+    "local_code": "LOCAL-DIS-54FEEB7698",
+    "aliases": [
+      "持久性房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 3,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:12.743073+00:00",
+    "updated_at": "2026-11-24T08:11:17.215549+00:00"
+  },
+  {
+    "candidate_id": "TERM-ACF388D74A65DC05",
+    "entity_type": "disease",
+    "name": "房间隔缺损",
+    "local_code": "Q21.100",
+    "aliases": [
+      "房间隔缺损"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "Q21.100",
+        "name": "房间隔缺损",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:12.947102+00:00",
+    "updated_at": "2026-11-24T08:11:12.947102+00:00"
+  },
+  {
+    "candidate_id": "TERM-731C4DAE0046798E",
+    "entity_type": "disease",
+    "name": "迟发性心脏压塞",
+    "local_code": "LOCAL-DIS-6FC6E79811",
+    "aliases": [
+      "迟发性心脏压塞"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I31.901",
+        "name": "心脏压塞",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:13.097545+00:00",
+    "updated_at": "2026-11-24T08:11:13.097545+00:00"
+  },
+  {
+    "candidate_id": "TERM-4D45E31890A37BC4",
+    "entity_type": "disease",
+    "name": "心脏穿孔/心脏压塞",
+    "local_code": "LOCAL-DIS-79CB779EFA",
+    "aliases": [
+      "心脏穿孔/心脏压塞"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I31.901",
+        "name": "心脏压塞",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:13.665617+00:00",
+    "updated_at": "2026-11-24T08:11:13.665617+00:00"
+  },
+  {
+    "candidate_id": "TERM-E659B5E72EBFBBFA",
+    "entity_type": "disease",
+    "name": "冠状动脉狭窄/闭塞",
+    "local_code": "LOCAL-DIS-925307F49F",
+    "aliases": [
+      "冠状动脉狭窄/闭塞"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I25.101",
+        "name": "冠状动脉狭窄",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I77.100",
+        "name": "动脉狭窄",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:13.870037+00:00",
+    "updated_at": "2026-11-24T08:11:13.870037+00:00"
+  },
+  {
+    "candidate_id": "TERM-609EF30810C967AE",
+    "entity_type": "disease",
+    "name": "心包炎",
+    "local_code": "I31.902",
+    "aliases": [
+      "心包炎"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I31.902",
+        "name": "心包炎",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:14.052402+00:00",
+    "updated_at": "2026-11-24T08:11:14.052402+00:00"
+  },
+  {
+    "candidate_id": "TERM-DD4F162061D42085",
+    "entity_type": "disease",
+    "name": "心房僵硬综合征",
+    "local_code": "LOCAL-DIS-546571414E",
+    "aliases": [
+      "心房僵硬综合征"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:14.257652+00:00",
+    "updated_at": "2026-11-24T08:11:14.257652+00:00"
+  },
+  {
+    "candidate_id": "TERM-A857130865A041C2",
+    "entity_type": "disease",
+    "name": "冠状动脉空气栓塞",
+    "local_code": "LOCAL-DIS-E2FBBEDDF1",
+    "aliases": [
+      "冠状动脉空气栓塞"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:14.468159+00:00",
+    "updated_at": "2026-11-24T08:11:14.468159+00:00"
+  },
+  {
+    "candidate_id": "TERM-3F26328D8DB065D5",
+    "entity_type": "disease",
+    "name": "无症状脑栓塞",
+    "local_code": "LOCAL-DIS-862352476C",
+    "aliases": [
+      "无症状脑栓塞"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I63.402",
+        "name": "脑栓塞",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:14.672610+00:00",
+    "updated_at": "2026-11-24T08:11:14.672610+00:00"
+  },
+  {
+    "candidate_id": "TERM-35AF38B932EE1441",
+    "entity_type": "disease",
+    "name": "围术期卒中",
+    "local_code": "LOCAL-DIS-FAB51C8F5A",
+    "aliases": [
+      "围术期卒中"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:14.905751+00:00",
+    "updated_at": "2026-11-24T08:11:14.905751+00:00"
+  },
+  {
+    "candidate_id": "TERM-CFBDA0A116174A90",
+    "entity_type": "disease",
+    "name": "永久性膈神经损伤",
+    "local_code": "LOCAL-DIS-DB730B6624",
+    "aliases": [
+      "永久性膈神经损伤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "S24.500X001",
+        "name": "膈神经损伤",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "T14.400",
+        "name": "神经损伤",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "T14.900",
+        "name": "损伤",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:15.056300+00:00",
+    "updated_at": "2026-11-24T08:11:15.056300+00:00"
+  },
+  {
+    "candidate_id": "TERM-0CB312D5851A34CA",
+    "entity_type": "disease",
+    "name": "胃动力减低",
+    "local_code": "LOCAL-DIS-FA152CE60B",
+    "aliases": [
+      "胃动力减低"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:15.250067+00:00",
+    "updated_at": "2026-11-24T08:11:15.250067+00:00"
+  },
+  {
+    "candidate_id": "TERM-3DB13046E460D8FF",
+    "entity_type": "disease",
+    "name": "动静脉瘘",
+    "local_code": "I77.000X010",
+    "aliases": [
+      "动静脉瘘"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I77.000X010",
+        "name": "动静脉瘘",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:15.425596+00:00",
+    "updated_at": "2026-11-24T08:11:15.425596+00:00"
+  },
+  {
+    "candidate_id": "TERM-DF58EA5FC95FE69F",
+    "entity_type": "disease",
+    "name": "假性动脉瘤",
+    "local_code": "I72.901",
+    "aliases": [
+      "假性动脉瘤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I72.901",
+        "name": "假性动脉瘤",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:15.603456+00:00",
+    "updated_at": "2026-11-24T08:11:15.603456+00:00"
+  },
+  {
+    "candidate_id": "TERM-6FC0809E70258329",
+    "entity_type": "disease",
+    "name": "严重肺静脉狭窄",
+    "local_code": "LOCAL-DIS-42F4C625FC",
+    "aliases": [
+      "严重肺静脉狭窄"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I28.802",
+        "name": "肺静脉狭窄",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:15.814613+00:00",
+    "updated_at": "2026-11-24T08:11:15.814613+00:00"
+  },
+  {
+    "candidate_id": "TERM-DFC08BCEA7C79176",
+    "entity_type": "disease",
+    "name": "永久性房颤",
+    "local_code": "LOCAL-DIS-E17AD7F246",
+    "aliases": [
+      "永久性房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:16.034089+00:00",
+    "updated_at": "2026-11-24T08:11:24.301786+00:00"
+  },
+  {
+    "candidate_id": "TERM-881CD8A60B1BDC70",
+    "entity_type": "disease",
+    "name": "快慢综合征",
+    "local_code": "I49.501",
+    "aliases": [
+      "快慢综合征"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I49.501",
+        "name": "快慢综合征",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:17.551002+00:00",
+    "updated_at": "2026-11-24T08:11:17.551002+00:00"
+  },
+  {
+    "candidate_id": "TERM-D194113ABCD7D52E",
+    "entity_type": "disease",
+    "name": "二尖瓣和（或）三尖瓣反流",
+    "local_code": "LOCAL-DIS-3408E77923",
+    "aliases": [
+      "二尖瓣和（或）三尖瓣反流"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:17.750134+00:00",
+    "updated_at": "2026-11-24T08:11:17.750134+00:00"
+  },
+  {
+    "candidate_id": "TERM-9D099F4829DE0B29",
+    "entity_type": "disease",
+    "name": "贫血",
+    "local_code": "D64.900",
+    "aliases": [
+      "贫血"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "D64.900",
+        "name": "贫血",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:18.521256+00:00",
+    "updated_at": "2026-11-24T08:11:18.521256+00:00"
+  },
+  {
+    "candidate_id": "TERM-A0F22150FD1124E0",
+    "entity_type": "disease",
+    "name": "急性失代偿性心衰",
+    "local_code": "LOCAL-DIS-5DC557D55D",
+    "aliases": [
+      "急性失代偿性心衰"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:18.668370+00:00",
+    "updated_at": "2026-11-24T08:11:18.668370+00:00"
+  },
+  {
+    "candidate_id": "TERM-C77FD96BD4FE82A7",
+    "entity_type": "disease",
+    "name": "肥胖",
+    "local_code": "E66.900X002",
+    "aliases": [
+      "肥胖"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "E66.900X002",
+        "name": "肥胖",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:19.029952+00:00",
+    "updated_at": "2026-11-24T08:11:19.029952+00:00"
+  },
+  {
+    "candidate_id": "TERM-272ECCD048A1B22C",
+    "entity_type": "disease",
+    "name": "阻塞性睡眠呼吸暂停综合征",
+    "local_code": "G47.301",
+    "aliases": [
+      "阻塞性睡眠呼吸暂停综合征"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "G47.301",
+        "name": "阻塞性睡眠呼吸暂停综合征",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:19.565608+00:00",
+    "updated_at": "2026-11-24T08:11:19.565608+00:00"
+  },
+  {
+    "candidate_id": "TERM-AB8D6966BF5B8112",
+    "entity_type": "disease",
+    "name": "低血压",
+    "local_code": "I95.900",
+    "aliases": [
+      "低血压"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I95.900",
+        "name": "低血压",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:19.690239+00:00",
+    "updated_at": "2026-11-24T08:11:25.049475+00:00"
+  },
+  {
+    "candidate_id": "TERM-4DC45251F245A7A1",
+    "entity_type": "disease",
+    "name": "肺水肿",
+    "local_code": "J81.X00",
+    "aliases": [
+      "肺水肿"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "J81.X00",
+        "name": "肺水肿",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:19.860890+00:00",
+    "updated_at": "2026-11-24T08:11:19.860890+00:00"
+  },
+  {
+    "candidate_id": "TERM-F90B9BA25D747B1D",
+    "entity_type": "disease",
+    "name": "心脏或非心脏外科术后房颤",
+    "local_code": "LOCAL-DIS-FC4CF8FE7B",
+    "aliases": [
+      "心脏或非心脏外科术后房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:20.055183+00:00",
+    "updated_at": "2026-11-24T08:11:20.055183+00:00"
+  },
+  {
+    "candidate_id": "TERM-F12C3FDA0A9513E2",
+    "entity_type": "disease",
+    "name": "瓣膜病",
+    "local_code": "LOCAL-DIS-0F4A66FA90",
+    "aliases": [
+      "瓣膜病"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I08.300X001",
+        "name": "风湿性二尖瓣主动脉瓣三尖瓣联合瓣膜病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I08.000X001",
+        "name": "风湿性二尖瓣主动脉瓣联合瓣膜病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I08.200X001",
+        "name": "风湿性主动脉瓣三尖瓣联合瓣膜病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I08.300X002",
+        "name": "二尖瓣主动脉瓣三尖瓣联合瓣膜病",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I08.100X001",
+        "name": "风湿性二尖瓣三尖瓣联合瓣膜病",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:20.645665+00:00",
+    "updated_at": "2026-11-24T08:11:20.645665+00:00"
+  },
+  {
+    "candidate_id": "TERM-87F840DBB478D68F",
+    "entity_type": "disease",
+    "name": "心脏骤停",
+    "local_code": "LOCAL-DIS-93B4F69990",
+    "aliases": [
+      "心脏骤停"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:20.850376+00:00",
+    "updated_at": "2026-11-24T08:11:20.850376+00:00"
+  },
+  {
+    "candidate_id": "TERM-B7150060C8ED62F1",
+    "entity_type": "disease",
+    "name": "外科术后房颤",
+    "local_code": "LOCAL-DIS-2F1176FA6E",
+    "aliases": [
+      "外科术后房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:21.288640+00:00",
+    "updated_at": "2026-11-24T08:11:21.288640+00:00"
+  },
+  {
+    "candidate_id": "TERM-D355B2FC14F7D9D7",
+    "entity_type": "disease",
+    "name": "心脏外科术后房颤",
+    "local_code": "LOCAL-DIS-6D14E76748",
+    "aliases": [
+      "心脏外科术后房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:21.447149+00:00",
+    "updated_at": "2026-11-24T08:11:21.447149+00:00"
+  },
+  {
+    "candidate_id": "TERM-A1B7B3A833ABC0C8",
+    "entity_type": "disease",
+    "name": "术后房颤",
+    "local_code": "LOCAL-DIS-30023D34DE",
+    "aliases": [
+      "术后房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:21.653684+00:00",
+    "updated_at": "2026-11-24T08:11:21.653684+00:00"
+  },
+  {
+    "candidate_id": "TERM-FF53EF911C7A28B8",
+    "entity_type": "disease",
+    "name": "非心脏外科术后房颤",
+    "local_code": "LOCAL-DIS-81FFEF330D",
+    "aliases": [
+      "非心脏外科术后房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:21.862100+00:00",
+    "updated_at": "2026-11-24T08:11:21.862100+00:00"
+  },
+  {
+    "candidate_id": "TERM-CD9FC0FAC31F93D5",
+    "entity_type": "disease",
+    "name": "术后新发房颤",
+    "local_code": "LOCAL-DIS-82B4BEB2A7",
+    "aliases": [
+      "术后新发房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:22.075909+00:00",
+    "updated_at": "2026-11-24T08:11:22.075909+00:00"
+  },
+  {
+    "candidate_id": "TERM-5C144CE74BFF7F58",
+    "entity_type": "disease",
+    "name": "恶性肿瘤/癌症",
+    "local_code": "LOCAL-DIS-77735B9C39",
+    "aliases": [
+      "恶性肿瘤/癌症"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "C80.X00",
+        "name": "恶性肿瘤",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "M80000/3",
+        "name": "恶性肿瘤",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:22.291277+00:00",
+    "updated_at": "2026-11-24T08:11:22.291277+00:00"
+  },
+  {
+    "candidate_id": "TERM-0B6EA270C52A2131",
+    "entity_type": "disease",
+    "name": "血液系统肿瘤",
+    "local_code": "LOCAL-DIS-2C2E84074F",
+    "aliases": [
+      "血液系统肿瘤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:22.516461+00:00",
+    "updated_at": "2026-11-24T08:11:22.516461+00:00"
+  },
+  {
+    "candidate_id": "TERM-61B0DDE4192D5AC1",
+    "entity_type": "disease",
+    "name": "胸部恶性肿瘤（肺癌、食管癌）",
+    "local_code": "LOCAL-DIS-550070BC9F",
+    "aliases": [
+      "胸部恶性肿瘤（肺癌、食管癌）"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "C76.100",
+        "name": "胸部恶性肿瘤",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "C80.X00",
+        "name": "恶性肿瘤",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "M80000/3",
+        "name": "恶性肿瘤",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:22.671078+00:00",
+    "updated_at": "2026-11-24T08:11:22.671078+00:00"
+  },
+  {
+    "candidate_id": "TERM-263FAE64A71DC2F7",
+    "entity_type": "disease",
+    "name": "中枢神经系统肿瘤",
+    "local_code": "D43.901",
+    "aliases": [
+      "中枢神经系统肿瘤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "D43.901",
+        "name": "中枢神经系统肿瘤",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:22.842957+00:00",
+    "updated_at": "2026-11-24T08:11:22.842957+00:00"
+  },
+  {
+    "candidate_id": "TERM-5FEFA0685EA3E033",
+    "entity_type": "disease",
+    "name": "副瘤综合征",
+    "local_code": "LOCAL-DIS-0654AC4E10",
+    "aliases": [
+      "副瘤综合征"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:23.042948+00:00",
+    "updated_at": "2026-11-24T08:11:23.042948+00:00"
+  },
+  {
+    "candidate_id": "TERM-34D2EFB89F8CAECF",
+    "entity_type": "disease",
+    "name": "atrial fibrillation",
+    "local_code": "LOCAL-DIS-DFF8583754",
+    "aliases": [
+      "atrial fibrillation"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:23.245084+00:00",
+    "updated_at": "2026-11-24T08:11:23.245084+00:00"
+  },
+  {
+    "candidate_id": "TERM-22AD071FDDE0D91E",
+    "entity_type": "disease",
+    "name": "persistent and long‑standing persistent atrial fibrillation",
+    "local_code": "LOCAL-DIS-80F61B9BD8",
+    "aliases": [
+      "persistent and long‑standing persistent atrial fibrillation"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:23.446879+00:00",
+    "updated_at": "2026-11-24T08:11:23.446879+00:00"
+  },
+  {
+    "candidate_id": "TERM-24189B8159FE72C8",
+    "entity_type": "disease",
+    "name": "atrial tachyarrhythmias",
+    "local_code": "LOCAL-DIS-0945C825B6",
+    "aliases": [
+      "atrial tachyarrhythmias"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:23.652678+00:00",
+    "updated_at": "2026-11-24T08:11:23.652678+00:00"
+  },
+  {
+    "candidate_id": "TERM-822C8561C018A987",
+    "entity_type": "disease",
+    "name": "heart failure",
+    "local_code": "LOCAL-DIS-EC682AA409",
+    "aliases": [
+      "heart failure"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:23.875235+00:00",
+    "updated_at": "2026-11-24T08:11:23.875235+00:00"
+  },
+  {
+    "candidate_id": "TERM-7D91EBD1043B74B9",
+    "entity_type": "disease",
+    "name": "supraventricular tachycardia",
+    "local_code": "LOCAL-DIS-D8A5D1B5D5",
+    "aliases": [
+      "supraventricular tachycardia"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:24.085340+00:00",
+    "updated_at": "2026-11-24T08:11:24.085340+00:00"
+  },
+  {
+    "candidate_id": "TERM-0AC5ED83B0EE9D29",
+    "entity_type": "disease",
+    "name": "新发房颤",
+    "local_code": "LOCAL-DIS-3E5D6315B7",
+    "aliases": [
+      "新发房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:24.518478+00:00",
+    "updated_at": "2026-11-24T08:11:24.518478+00:00"
+  },
+  {
+    "candidate_id": "TERM-6235D55C09FC4AED",
+    "entity_type": "disease",
+    "name": "晕厥",
+    "local_code": "R55.X00X001",
+    "aliases": [
+      "晕厥"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "R55.X00X001",
+        "name": "晕厥",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:25.248628+00:00",
+    "updated_at": "2026-11-24T08:11:25.248628+00:00"
+  },
+  {
+    "candidate_id": "TERM-8405F62F774F05C1",
+    "entity_type": "disease",
+    "name": "二或三度房室传导阻滞",
+    "local_code": "LOCAL-DIS-02A9B298E7",
+    "aliases": [
+      "二或三度房室传导阻滞"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I44.303",
+        "name": "房室传导阻滞",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:25.462166+00:00",
+    "updated_at": "2026-11-24T08:11:25.462166+00:00"
+  },
+  {
+    "candidate_id": "TERM-F314DE3E623544E4",
+    "entity_type": "disease",
+    "name": "心动过缓",
+    "local_code": "R00.100",
+    "aliases": [
+      "心动过缓"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "R00.100",
+        "name": "心动过缓",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:25.661449+00:00",
+    "updated_at": "2026-11-24T08:11:27.887300+00:00"
+  },
+  {
+    "candidate_id": "TERM-83ADEAE8DF3CB7C1",
+    "entity_type": "disease",
+    "name": "支气管痉挛",
+    "local_code": "J98.000X011",
+    "aliases": [
+      "支气管痉挛"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "exact_reference",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "J98.000X011",
+        "name": "支气管痉挛",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:25.788873+00:00",
+    "updated_at": "2026-11-24T08:11:25.788873+00:00"
+  },
+  {
+    "candidate_id": "TERM-C0A1265FB64DDC83",
+    "entity_type": "disease",
+    "name": "冠状动脉疾病",
+    "local_code": "LOCAL-DIS-EC61521747",
+    "aliases": [
+      "冠状动脉疾病"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:26.952138+00:00",
+    "updated_at": "2026-11-24T08:11:26.952138+00:00"
+  },
+  {
+    "candidate_id": "TERM-75122729F975ED53",
+    "entity_type": "disease",
+    "name": "左心室肥厚",
+    "local_code": "LOCAL-DIS-6D8ACAEE73",
+    "aliases": [
+      "左心室肥厚"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I51.700X006",
+        "name": "心室肥厚",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:27.310448+00:00",
+    "updated_at": "2026-11-24T08:11:27.310448+00:00"
+  },
+  {
+    "candidate_id": "TERM-DC6C00961C259E14",
+    "entity_type": "disease",
+    "name": "尖端扭转性室速",
+    "local_code": "LOCAL-DIS-F7667BFC6D",
+    "aliases": [
+      "尖端扭转性室速"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:27.687888+00:00",
+    "updated_at": "2026-11-24T08:11:27.687888+00:00"
+  },
+  {
+    "candidate_id": "TERM-02A634BEE1211220",
+    "entity_type": "disease",
+    "name": "中国 心房颤动诊断和治疗中国指南 2025",
+    "local_code": "LOCAL-DIS-7F1BF8B6DF",
+    "aliases": [
+      "中国 心房颤动诊断和治疗中国指南 2025"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I48.X01",
+        "name": "心房颤动",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 2,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:28.101116+00:00",
+    "updated_at": "2026-11-24T08:11:28.247513+00:00"
+  },
+  {
+    "candidate_id": "TERM-3D053967C209D921",
+    "entity_type": "disease",
+    "name": "心房颤动合并冠心病",
+    "local_code": "LOCAL-DIS-09F6D948DE",
+    "aliases": [
+      "心房颤动合并冠心病"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I48.X01",
+        "name": "心房颤动",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:28.439210+00:00",
+    "updated_at": "2026-11-24T08:11:28.439210+00:00"
+  },
+  {
+    "candidate_id": "TERM-5B83275CE9548C67",
+    "entity_type": "disease",
+    "name": "心房颤动合并慢性肾脏病（CKD）",
+    "local_code": "LOCAL-DIS-B49C3D7129",
+    "aliases": [
+      "心房颤动合并慢性肾脏病（CKD）"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I48.X01",
+        "name": "心房颤动",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:28.628485+00:00",
+    "updated_at": "2026-11-24T08:11:28.628485+00:00"
+  },
+  {
+    "candidate_id": "TERM-78EFA16C6C32B582",
+    "entity_type": "disease",
+    "name": "心房颤动合并肝脏疾病",
+    "local_code": "LOCAL-DIS-E4035C9E51",
+    "aliases": [
+      "心房颤动合并肝脏疾病"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I48.X01",
+        "name": "心房颤动",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:28.821145+00:00",
+    "updated_at": "2026-11-24T08:11:28.821145+00:00"
+  },
+  {
+    "candidate_id": "TERM-ACEBF172C1F7242A",
+    "entity_type": "disease",
+    "name": "心房颤动抗凝合并出血",
+    "local_code": "LOCAL-DIS-3D26BC6AE4",
+    "aliases": [
+      "心房颤动抗凝合并出血"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I48.X01",
+        "name": "心房颤动",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "R58.X00X006",
+        "name": "出血",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:29.012313+00:00",
+    "updated_at": "2026-11-24T08:11:29.012313+00:00"
+  },
+  {
+    "candidate_id": "TERM-F37C8B956E733D92",
+    "entity_type": "disease",
+    "name": "心房颤动口服抗凝治疗合并出血",
+    "local_code": "LOCAL-DIS-738BF3150F",
+    "aliases": [
+      "心房颤动口服抗凝治疗合并出血"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I48.X01",
+        "name": "心房颤动",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "R58.X00X006",
+        "name": "出血",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:29.218017+00:00",
+    "updated_at": "2026-11-24T08:11:29.218017+00:00"
+  },
+  {
+    "candidate_id": "TERM-FDBE4A4FCF4D1CC1",
+    "entity_type": "disease",
+    "name": "房颤抗凝合并出血",
+    "local_code": "LOCAL-DIS-277FBB399D",
+    "aliases": [
+      "房颤抗凝合并出血"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "R58.X00X006",
+        "name": "出血",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:29.419780+00:00",
+    "updated_at": "2026-11-24T08:11:29.419780+00:00"
+  },
+  {
+    "candidate_id": "TERM-B90666825C74895C",
+    "entity_type": "disease",
+    "name": "抗凝治疗合并出血",
+    "local_code": "LOCAL-DIS-46D4CC2D49",
+    "aliases": [
+      "抗凝治疗合并出血"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "R58.X00X006",
+        "name": "出血",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:29.626194+00:00",
+    "updated_at": "2026-11-24T08:11:29.626194+00:00"
+  },
+  {
+    "candidate_id": "TERM-D283900A867C8E6C",
+    "entity_type": "disease",
+    "name": "缺血性卒中/TIA合并房颤（按卒中严重程度分层早期重启NOAC）",
+    "local_code": "LOCAL-DIS-C1EACE4810",
+    "aliases": [
+      "缺血性卒中/TIA合并房颤（按卒中严重程度分层早期重启NOAC）"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:29.839876+00:00",
+    "updated_at": "2026-11-24T08:11:29.839876+00:00"
+  },
+  {
+    "candidate_id": "TERM-FA43F890686FFB65",
+    "entity_type": "disease",
+    "name": "重度卒中合并房颤",
+    "local_code": "LOCAL-DIS-DD77B70868",
+    "aliases": [
+      "重度卒中合并房颤"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:29.986583+00:00",
+    "updated_at": "2026-11-24T08:11:29.986583+00:00"
+  },
+  {
+    "candidate_id": "TERM-F1DBAE1131188F54",
+    "entity_type": "disease",
+    "name": "房颤患者缺血性卒中二级预防",
+    "local_code": "LOCAL-DIS-BEC44AB42E",
+    "aliases": [
+      "房颤患者缺血性卒中二级预防"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:30.184454+00:00",
+    "updated_at": "2026-11-24T08:11:30.184454+00:00"
+  },
+  {
+    "candidate_id": "TERM-AC02F36168F17E39",
+    "entity_type": "disease",
+    "name": "颅内出血（房颤患者）",
+    "local_code": "LOCAL-DIS-07C154F619",
+    "aliases": [
+      "颅内出血（房颤患者）"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "R58.X00X006",
+        "name": "出血",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:30.381218+00:00",
+    "updated_at": "2026-11-24T08:11:30.381218+00:00"
+  },
+  {
+    "candidate_id": "TERM-E7E30B071BC2A10E",
+    "entity_type": "disease",
+    "name": "非创伤性颅内出血合并心房颤动",
+    "local_code": "LOCAL-DIS-BDA00B9375",
+    "aliases": [
+      "非创伤性颅内出血合并心房颤动"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "S06.804",
+        "name": "创伤性颅内出血",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I48.X01",
+        "name": "心房颤动",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "R58.X00X006",
+        "name": "出血",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:30.579357+00:00",
+    "updated_at": "2026-11-24T08:11:30.579357+00:00"
+  },
+  {
+    "candidate_id": "TERM-760B5976AB517E17",
+    "entity_type": "disease",
+    "name": "颅内出血合并心房颤动",
+    "local_code": "LOCAL-DIS-6C49223053",
+    "aliases": [
+      "颅内出血合并心房颤动"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I48.X01",
+        "name": "心房颤动",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "R58.X00X006",
+        "name": "出血",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:30.780608+00:00",
+    "updated_at": "2026-11-24T08:11:30.780608+00:00"
+  },
+  {
+    "candidate_id": "TERM-02ABDDBD6D4040B9",
+    "entity_type": "disease",
+    "name": "颅内出血复发风险高的心房颤动",
+    "local_code": "LOCAL-DIS-72091F969E",
+    "aliases": [
+      "颅内出血复发风险高的心房颤动"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I48.X01",
+        "name": "心房颤动",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "R58.X00X006",
+        "name": "出血",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:30.984723+00:00",
+    "updated_at": "2026-11-24T08:11:30.984723+00:00"
+  },
+  {
+    "candidate_id": "TERM-191DE774CB662E72",
+    "entity_type": "disease",
+    "name": "胺碘酮肺毒性",
+    "local_code": "LOCAL-DIS-42C39A44F8",
+    "aliases": [
+      "胺碘酮肺毒性"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:31.133159+00:00",
+    "updated_at": "2026-11-24T08:11:31.133159+00:00"
+  },
+  {
+    "candidate_id": "TERM-203506D43918DB0B",
+    "entity_type": "disease",
+    "name": "快慢综合征（房颤转复后出现有症状的心脏停搏）",
+    "local_code": "LOCAL-DIS-538FB68F40",
+    "aliases": [
+      "快慢综合征（房颤转复后出现有症状的心脏停搏）"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I49.501",
+        "name": "快慢综合征",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I46.900",
+        "name": "心脏停搏",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:31.324035+00:00",
+    "updated_at": "2026-11-24T08:11:31.324035+00:00"
+  },
+  {
+    "candidate_id": "TERM-40381AA7243FE4A7",
+    "entity_type": "disease",
+    "name": "非心脏外科术后心房颤动",
+    "local_code": "LOCAL-DIS-B53AB98D67",
+    "aliases": [
+      "非心脏外科术后心房颤动"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I48.X01",
+        "name": "心房颤动",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:31.523245+00:00",
+    "updated_at": "2026-11-24T08:11:31.523245+00:00"
+  },
+  {
+    "candidate_id": "TERM-D7F2A7CE3E53E0D5",
+    "entity_type": "disease",
+    "name": "血栓栓塞风险增加",
+    "local_code": "LOCAL-DIS-2D58574134",
+    "aliases": [
+      "血栓栓塞风险增加"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "unmatched",
+    "suggested_mappings": [],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:31.712867+00:00",
+    "updated_at": "2026-11-24T08:11:31.712867+00:00"
+  },
+  {
+    "candidate_id": "TERM-8263536FF9CD5DA2",
+    "entity_type": "disease",
+    "name": "心房颤动合并预激综合征（房颤经旁路前传）",
+    "local_code": "LOCAL-DIS-C55603C21B",
+    "aliases": [
+      "心房颤动合并预激综合征（房颤经旁路前传）"
+    ],
+    "source_doc_ids": [
+      "DOC-ef318045"
+    ],
+    "match_type": "ambiguous",
+    "suggested_mappings": [
+      {
+        "system": "ICD-10",
+        "code": "I45.600",
+        "name": "预激综合征",
+        "relation": "related"
+      },
+      {
+        "system": "ICD-10",
+        "code": "I48.X01",
+        "name": "心房颤动",
+        "relation": "related"
+      }
+    ],
+    "occurrences": 1,
+    "status": "pending",
+    "review_note": "",
+    "created_at": "2026-11-24T08:11:31.910041+00:00",
+    "updated_at": "2026-11-24T08:11:31.910041+00:00"
   }
 ]

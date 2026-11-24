@@ -339,7 +339,8 @@ def test_persistent_rate_limit_stops_queued_chunks(tmp_path, monkeypatch):
     chunks = [{**make_chunk(), 'chunk_id': f'C{i}'} for i in range(3)]
     with pytest.raises(LLMError, match='模型服务持续限流'):
         asyncio.run(run_auto_pipeline(chunks, 'DOC-LIMIT', '肺癌', {}, data_root=tmp_path, llm_call=model))
-    assert model.await_count == 4
+    # 默认并发 4：3 个片段同时开跑，各自重试 4 次后触发持续限流（3×4）。
+    assert model.await_count == 12
     assert not (tmp_path / 'kg').exists()
 
 
@@ -386,3 +387,66 @@ def test_compiler_batches_dense_statements_without_dropping_any(tmp_path, monkey
     metrics = result['metadata']['performance']['model_stages']
     assert metrics['extraction']['calls'] == 1
     assert metrics['compilation']['calls'] == len(expected)
+
+
+def test_pipeline_performance_defaults_parallel_and_large_chunks(tmp_path, monkeypatch):
+    """默认参数必须并行 + 大片段。
+
+    串行 + 1200 字硬顶曾让 6MB 指南（11 万字正文）切成上百个片段组，
+    400+ 次串行 LLM 调用跑了 4 小时以上；这里把三个提速默认值钉死。
+    """
+    from src.extraction import auto_pipeline as pipeline
+    from unittest.mock import Mock
+    resolver = Mock()
+    resolver.resolve.return_value = {'entity_type': 'disease', 'name': '肺腺癌', 'code': 'LOCAL-DIS-TEST'}
+    resolver.resolved_terms = []
+    monkeypatch.setattr(pipeline, 'UniversalTermResolver', lambda **kw: resolver)
+    monkeypatch.setattr(kg_routes, 'import_graph', AsyncMock(return_value={}))
+
+    quote = "肺腺癌患者可表现为咳嗽，胸部CT见肺部肿块。"
+    filler = "本段为诊疗背景描述，不包含新的推荐意见。"
+
+    def big_chunk(index):
+        text = (quote + filler * 200)[:2500]
+        return {"chunk_id": f"c{index}", "section": "肺癌诊断与治疗",
+                "page_start": 1, "page_end": 1, "line_start": 1, "line_end": 10,
+                "text": text, "page_numbers": [1], "line_numbers": [1]}
+
+    state = {"s1": 0, "inflight": 0, "max_inflight": 0}
+
+    async def respond(settings, messages):
+        await asyncio.sleep(0.01)  # 让出事件循环，暴露并发重叠
+        payload = json.loads(messages[1]['content'])
+        if 'clinical_statements' not in payload:
+            chunk_id = payload['chunks'][0]['chunk_id']
+            state['s1'] += 1
+            return {'statements': [{'disease_name': '肺腺癌', 'scene': 'diagnosis_confirmation',
+                'source': {'chunk_id': chunk_id, 'quote': quote}}], 'disease_mentions': []}
+        sid = payload['clinical_statements'][0]['statement_id']
+        chunk_id = sid.split(':')[1]
+        return {'entities': [{'entity_type': 'disease', 'name': '肺腺癌', 'chunk_id': chunk_id,
+                 'page': 1, 'line_start': 1, 'line_end': 2, 'quote': quote}],
+                'relations': [], 'rules': [], 'treatment_plans': [], 'standards': []}
+
+    async def model(settings, messages):
+        state['inflight'] += 1
+        state['max_inflight'] = max(state['max_inflight'], state['inflight'])
+        try:
+            return await respond(settings, messages)
+        finally:
+            state['inflight'] -= 1
+
+    result = asyncio.run(run_auto_pipeline(
+        [big_chunk(1), big_chunk(2), big_chunk(3)], 'DOC-PERF', '肺癌',
+        {'llm': {'max_chunks': 10, 'max_chunk_chars': 12000}},
+        data_root=tmp_path, llm_call=model))
+
+    performance = result['metadata']['performance']
+    # 配置 12000 会被自动管线收敛到 6000 上限
+    assert performance['chunk_chars'] == 6000
+    assert performance['concurrency'] == 4
+    assert performance['compile_batch_size'] == 4
+    # 3 个 2500 字片段在 6000 字上限下各成一组（旧 1200 字上限会切成 9 组）
+    assert state['s1'] == 3
+    assert state['max_inflight'] >= 2
+    assert result['metadata']['coverage']['complete']

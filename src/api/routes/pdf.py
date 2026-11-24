@@ -900,7 +900,7 @@ async def reparse_document(doc_id: str, controller=None):
         recovery = config.setdefault('llm', {})
         recovery['recovery_mode'] = True
         recovery['max_chunks'] = 1
-        recovery['max_chunk_chars'] = min(int(recovery.get('max_chunk_chars', 12000)), 1200)
+        recovery['max_chunk_chars'] = min(int(recovery.get('max_chunk_chars', 12000)), 6000)
         result = await extract(extraction.get('mode','llm'), selected, template, doc_id, doc['doc_title'], config, controller=controller)
         doc['parsed']['chunks'] = [chunk for chunk in doc['parsed']['chunks'] if chunk['chunk_id'] not in old_ids] + selected
         for key, values in [('entities', result.entities), ('suggested_relations', result.suggested_relations), ('suggested_rules', result.suggested_rules)]:
