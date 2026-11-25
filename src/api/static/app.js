@@ -6058,6 +6058,9 @@
       s.created_at ? `首次生成 ${formatTime(s.created_at)}` : "历史导入",
       s.last_import_at && s.last_import_at !== s.created_at ? `最近导入 ${formatTime(s.last_import_at)}` : "",
     ].filter(Boolean).join(" · ");
+    // 卡片可见时间显示最近导入（再次命中的时间）；只有首次导入过则显示首次生成。
+    const latestAt = (s.last_import_at && s.last_import_at !== s.created_at) ? s.last_import_at : s.created_at;
+    const timeHtml = latestAt ? `<span class="muted" title="${esc(timeTitle)}">${esc(shortTime(latestAt))}</span>` : "";
     if (options.groupHead) {
       return `<div class="subject-card subject-group-head ${state.byDisease?.subject === s.node_id ? "selected" : ""}" data-subject="${esc(s.node_id)}">
         <button class="group-toggle" data-group-toggle="${esc(s.node_id)}" title="${options.collapsed ? "展开名下证候" : "收起名下证候"}">${options.collapsed ? "▸" : "▾"}</button>
@@ -6068,6 +6071,7 @@
         <span class="muted">证候 ${options.memberCount ?? 0}</span>
         ${(options.pendingTotal ?? s.pending_count) ? `<span class="pending-chip">待审 ${options.pendingTotal ?? s.pending_count}</span>` : '<span class="muted">已清</span>'}
         ${s.suspect_count ? `<span class="pending-chip warn">⚠ ${s.suspect_count}</span>` : ""}
+        ${timeHtml}
         ${(options.pendingTotal ?? s.pending_count) ? `<button class="btn sm primary" data-group-approve-all="${esc(s.node_id)}" title="一键通过该疾病名下全部待审关系（含名下证候卡片的出边）；待审端点实体会随关系一并通过，端点被拒绝/失效的会跳过">通过全部</button>` : ""}
       </div>`;
     }
@@ -6080,7 +6084,7 @@
         <span>出边 ${s.out_relation_count}</span>
         ${s.pending_count ? `<span class="pending-chip">待审 ${s.pending_count}</span>` : '<span class="muted">已清</span>'}
         ${s.suspect_count ? `<span class="pending-chip warn">⚠ ${s.suspect_count}</span>` : ""}
-        ${s.created_at ? `<span class="muted" title="${esc(timeTitle)}">${esc(shortTime(s.created_at))}</span>` : ""}
+        ${timeHtml}
       </div>
     </div>`;
   }

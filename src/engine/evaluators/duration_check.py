@@ -21,10 +21,12 @@ class DurationCheckEvaluator(BaseEvaluator):
         min_minutes = (parameter or {}).get("min_minutes", 0)
 
         if not symptom_code:
-            return EvaluationResult(matched=False, evidence_description="缺少symptom_code参数")
+            return EvaluationResult(matched=False, evidence_description="缺少symptom_code参数", detail={"evaluation_status": "unknown"})
 
         symptom = patient.get_symptom(symptom_code)
-        if symptom is None or not symptom.present:
+        if symptom is None:
+            return EvaluationResult(False, evidence_description=f"{symptom_code} 未记录", detail={"evaluation_status": "unknown"})
+        if not symptom.present:
             return EvaluationResult(matched=False, evidence_description=f"{symptom_code} 症状不存在")
 
         # Check duration: either explicit duration_minutes or calculated from onset/resolved
@@ -40,8 +42,10 @@ class DurationCheckEvaluator(BaseEvaluator):
             actual_minutes = (end - onset).total_seconds() / 60.0
 
         if actual_minutes is None:
-            return EvaluationResult(matched=False, evidence_description=f"{symptom_code} 无法确定持续时间")
+            return EvaluationResult(matched=False, evidence_description=f"{symptom_code} 无法确定持续时间", detail={"evaluation_status": "unknown"})
 
+        if actual_minutes < 0:
+            return EvaluationResult(False, evidence_description="症状持续时间无效", detail={"evaluation_status": "unknown"})
         matched = actual_minutes >= min_minutes
         return EvaluationResult(
             matched=matched,

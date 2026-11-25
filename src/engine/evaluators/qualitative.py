@@ -18,11 +18,11 @@ class QualitativeEvaluator(BaseEvaluator):
         parameter: Optional[Dict[str, Any]] = None,
     ) -> EvaluationResult:
         if standard is None:
-            return EvaluationResult(matched=False, evidence_description="标准未配置")
+            return EvaluationResult(matched=False, evidence_description="标准未配置", detail={"evaluation_status": "unknown"})
 
         lab = patient.get_lab(standard.lab_code)
         if lab is None or lab.qualitative is None:
-            return EvaluationResult(matched=False, evidence_description=f"{standard.lab_code} 无定性结果")
+            return EvaluationResult(matched=False, evidence_description=f"{standard.lab_code} 无定性结果", detail={"evaluation_status": "unknown"})
 
         expected = standard.concept_code  # POSITIVE or NEGATIVE
         actual = lab.qualitative.upper()   # "POSITIVE" or "NEGATIVE"

@@ -169,7 +169,8 @@ def _inference_result(
     all_conclusions = [c.model_dump() for c in conclusions]
     diagnosis_conclusions = [
         c for c in all_conclusions
-        if c.get("rule_type") not in {"treatment", "tcm_treatment", "tcm_prescription"}
+        if (c.get("rule_type") == "diagnosis" and c.get("clinical_intent") in {"suspected_diagnosis", "diagnosis_confirmation"})
+        or c.get("rule_type") == "tcm_pattern"
     ]
     treatment_conclusions = [
         c for c in all_conclusions
@@ -205,6 +206,7 @@ def _inference_result(
         "conclusions": all_conclusions,
         "diagnosis_conclusions": diagnosis_conclusions,
         "treatment_conclusions": treatment_conclusions,
+        "assessment_conclusions": [c for c in all_conclusions if c not in diagnosis_conclusions and c not in treatment_conclusions],
         "recommendation_assessments": getattr(native_engine, "recommendation_assessments", []),
         "graph_files": sorted(graph_clients),
         "diagnostics": diagnostics,

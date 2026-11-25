@@ -23,11 +23,11 @@ class UlnMultiplierEvaluator(BaseEvaluator):
         parameter: Optional[Dict[str, Any]] = None,
     ) -> EvaluationResult:
         if standard is None:
-            return EvaluationResult(matched=False, evidence_description="标准未配置")
+            return EvaluationResult(matched=False, evidence_description="标准未配置", detail={"evaluation_status": "unknown"})
 
         lab = patient.get_lab(standard.lab_code)
         if lab is None or lab.value is None:
-            return EvaluationResult(matched=False, evidence_description=f"{standard.lab_code} 无检验数据")
+            return EvaluationResult(matched=False, evidence_description=f"{standard.lab_code} 无检验数据", detail={"evaluation_status": "unknown"})
 
         multiplier = standard.uln_multiplier or 1.0
 
@@ -39,7 +39,7 @@ class UlnMultiplierEvaluator(BaseEvaluator):
             uln = lab.reference_high
             uln_source = "LIS 参考范围"
         else:
-            return EvaluationResult(matched=False, evidence_description=f"{standard.lab_code} 无参考上限，无法判断超ULN")
+            return EvaluationResult(matched=False, evidence_description=f"{standard.lab_code} 无参考上限，无法判断超ULN", detail={"evaluation_status": "unknown"})
 
         threshold = uln * multiplier
         matched = lab.value > threshold

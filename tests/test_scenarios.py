@@ -249,3 +249,50 @@ def test_treatment_requires_selected_diagnosis_state(intent, status, test_mode, 
     engine.rule_repo = SimpleNamespace(list_all=lambda: [diagnosis, treatment])
     result = engine._run_stages(make_patient(), include_draft_rules=test_mode, matcher=lambda rules, patient: {rule.rule_id: ([], {}) for rule in rules})
     assert ("TX" in [item.rule_id for item in result]) == expected
+
+
+@pytest.mark.parametrize('scene,rule_type', [
+    ('differential_diagnosis', 'diagnosis'), ('diagnosis_exclusion', 'diagnosis'),
+    ('risk_stratification', 'diagnosis'), ('contraindication_check', 'contraindication'),
+    ('monitoring_plan', 'monitoring'), ('follow_up_plan', 'monitoring'),
+])
+def test_extended_scenes_preserve_clinical_purpose(scenario_env, scene, rule_type):
+    result = scenarios.prepare(request(scene=scene), 'SCENARIO.json')
+    spec = result['basis']['specification']
+    assert spec['clinical_intent'] == scene
+    assert spec['rule_type'] == rule_type
+    assert spec['status'] == 'draft'
+
+
+def test_scenario_contract_saved_and_coverage_not_assumed_validated(scenario_env):
+    result = scenarios.prepare(request(scenario_contract=dict(trigger_events=['result_ready'],
+        required_attributes=['phenotype'], actions=['review'])), 'SCENARIO.json')
+    assert result['basis']['specification']['clinical_context']['scenario_contract']['required_attributes'] == ['phenotype']
+    report = scenarios.coverage('SCENARIO.json', 'I21.0')
+    row = next(r for r in report['scenes'] if r['intent'] == 'suspected_diagnosis')
+    assert row['has_source'] == 1
+    assert row['executable'] == row['validated'] == 0
+
+
+def test_case_validation_matches_current_rule_and_basis_version(scenario_env, monkeypatch, tmp_path):
+    from src.api.routes import cardiomyopathy, inference
+    import src.review.service as review_module
+    from src.cardiomyopathy.service import WorkflowStore
+    basis = scenarios.prepare(request(), 'SCENARIO.json')['basis']
+    graph = scenarios.service._load_graph('SCENARIO.json')
+    row = next(b for b in graph['clinical_bases'] if b['basis_id'] == basis['basis_id'])
+    row['generated_rule_id'] = 'GENERATED'
+    rule = {**row['specification'], 'rule_id': 'GENERATED', 'graph_filename': 'SCENARIO.json'}
+    monkeypatch.setattr(scenarios.service, '_load_graph', lambda _: graph)
+    monkeypatch.setattr(scenarios.service, '_load_rules', lambda: [rule])
+    monkeypatch.setattr(review_module, 'ReviewService', lambda: scenarios.service)
+    monkeypatch.setattr(cardiomyopathy, 'store', WorkflowStore(tmp_path / 'validation.sqlite3'))
+    monkeypatch.setattr(inference, '_inference_result', lambda *a, **k: {'conclusions':[{'rule_id':'GENERATED'}]})
+    result = cardiomyopathy.validate_case(cardiomyopathy.ValidationRequest(case_id='C', graph_filename='SCENARIO.json',
+        basis_id=basis['basis_id'], patient={'patient_id':'P','hospital_id':'H'},expected_rule_ids=['GENERATED']), actor='tester')
+    assert result['passed']
+    report = scenarios.coverage('SCENARIO.json', 'I21.0')
+    assert next(r for r in report['scenes'] if r['intent'] == 'suspected_diagnosis')['validated'] == 1
+    rule['version'] = 2
+    report = scenarios.coverage('SCENARIO.json', 'I21.0')
+    assert next(r for r in report['scenes'] if r['intent'] == 'suspected_diagnosis')['validated'] == 0

@@ -218,6 +218,23 @@ class InferenceEngine:
                          and conclusion.clinical_intent == "suspected_diagnosis"))
                 for conclusion in conclusions))]
 
+            contract_rules = []
+            from src.cardiomyopathy.models import ScenarioContract
+            from src.cardiomyopathy.service import assess_contract
+            for rule in stage_rules:
+                raw_contract = rule.clinical_context.get("scenario_contract")
+                if raw_contract:
+                    try:
+                        assessment = assess_contract(ScenarioContract(**raw_contract), patient,
+                            str(patient.clinical_attributes.get("trigger_event") or ""))
+                    except ValueError:
+                        assessment = {"state": "unknown", "missing_items": ["valid_scenario_contract"]}
+                    if assessment["state"] != "ready":
+                        self.evaluation_issues.append({"rule_id": rule.rule_id, "status": assessment["state"],
+                            "reason": "场景触发、适用范围或必需数据未满足", **assessment})
+                        continue
+                contract_rules.append(rule)
+            stage_rules = contract_rules
             self._current_facts = facts
             matched_map = matcher(stage_rules, patient)
             stage_conclusions: List[Conclusion] = []
@@ -362,6 +379,9 @@ class InferenceEngine:
         conclusions: List[Conclusion],
     ) -> None:
         for conclusion in conclusions:
+            if conclusion.rule_type in {"diagnosis", "monitoring", "contraindication", "treatment"} and (
+                    conclusion.rule_type != "diagnosis" or conclusion.clinical_intent not in {"suspected_diagnosis", "diagnosis_confirmation"}):
+                continue
             if conclusion.rule_type == "tcm_pattern" and conclusion.suspected_disease_code:
                 continue
             code = conclusion.anchor_code or conclusion.disease_code
@@ -725,7 +745,8 @@ class InferenceEngine:
 
     def _exam_result(self, patient, exam_code, finding_code, concept_code, parameter=None):
         params = {**(parameter or {}), "exam_code": exam_code, "finding_code": finding_code, "concept_code": concept_code or "PRESENT"}
-        finding = patient.get_finding(exam_code or "", finding_code or "")
+        finding = (patient.get_latest_finding(exam_code or "", finding_code or "") if params.get("selection_policy") == "latest"
+                   else patient.get_finding(exam_code or "", finding_code or ""))
         lookup = getattr(self.standard_repo, "get_exam_active", None)
         standard = lookup(patient.hospital_id, exam_code, finding_code, params["concept_code"],
             patient.gender.value if patient.gender else None, patient.age, finding.method if finding else "") if lookup else None
@@ -1023,6 +1044,7 @@ class InferenceEngine:
             "observation_type": observation_type,
             "code": code,
             "concept_code": condition.concept_code or "PRESENT",
+            "missing_policy": (condition.parameter or {}).get("missing_policy", "legacy"),
         })
         kind = observation_type if observation_type in {
             "symptom", "tongue", "pulse", "sign", "pathogenesis"
@@ -1035,7 +1057,7 @@ class InferenceEngine:
             patient_value_display=result.patient_value_display,
             standard_used=self._localized_concept(result.standard_used, condition.concept_code or ""),
         )
-        return result.matched, ([trace] if result.matched else [])
+        return self._interpretation_state(result, item_type="observation", code=code), ([trace] if result.matched else [])
 
     def _evaluate_fact(
         self,

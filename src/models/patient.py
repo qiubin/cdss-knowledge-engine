@@ -129,6 +129,24 @@ class PatientSnapshot(BaseModel):
                 return f
         return None
 
+    def get_latest_finding(self, exam_code: str, finding_code: str) -> Optional[ExamFinding]:
+        """Select at encounter time; ambiguous or undated series require review."""
+        from datetime import timezone
+        normalize = lambda t: t.replace(tzinfo=timezone.utc) if t.tzinfo is None else t.astimezone(timezone.utc)
+        rows = [f for f in self.exam_findings if f.exam_code == exam_code and f.finding_code == finding_code]
+        if len(rows) == 1 and rows[0].performed_at is None:
+            return rows[0]
+        if not rows or any(f.performed_at is None for f in rows):
+            return None
+        at = normalize(self.encounter_time or datetime.now(timezone.utc))
+        rows = [f for f in rows if normalize(f.performed_at) <= at]
+        if not rows:
+            return None
+        rows.sort(key=lambda f: normalize(f.performed_at), reverse=True)
+        latest = [f for f in rows if normalize(f.performed_at) == normalize(rows[0].performed_at)]
+        values = {(f.value, f.unit, f.present, f.category, f.method) for f in latest}
+        return latest[0] if len(values) == 1 else None
+
     def get_symptom(self, symptom_code: str) -> Optional[SymptomObservation]:
         for s in self.symptoms:
             if s.symptom_code == symptom_code:

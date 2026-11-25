@@ -9,7 +9,8 @@ def unknown(message):
 
 
 def compare_numeric(value, operator, lower, upper=None):
-    if lower is None: return None
+    import math
+    if lower is None or not math.isfinite(value) or not math.isfinite(lower) or (upper is not None and not math.isfinite(upper)): return None
     operations = {">": lambda: value > lower, ">=": lambda: value >= lower,
                   "<": lambda: value < lower, "<=": lambda: value <= lower, "=": lambda: abs(value - lower) < 1e-9}
     if operator in operations: return operations[operator]()
@@ -28,7 +29,8 @@ def interpret_exam(patient, standard, parameter):
     exam = parameter.get("exam_code")
     finding_code = parameter.get("finding_code")
     concept = parameter.get("concept_code") or "PRESENT"
-    finding = patient.get_finding(exam, finding_code)
+    finding = (patient.get_latest_finding(exam, finding_code) if parameter.get("selection_policy") == "latest"
+               else patient.get_finding(exam, finding_code))
     if not finding: return unknown("缺少检查结果，无法判断")
     inline = parameter.get("interpretation")
     if isinstance(inline, dict):
@@ -45,6 +47,23 @@ def interpret_exam(patient, standard, parameter):
         matched = finding.present if concept == "PRESENT" else not finding.present
         return EvaluationResult(matched, evidence_description="使用已结构化的存在/不存在结果", patient_value_display="存在" if finding.present else "不存在",
             standard_used="上游结构化结果 · " + concept, detail={"evaluation_status": "matched" if matched else "not_matched"})
+    if standard.context_age_min is not None or standard.context_age_max is not None:
+        if patient.age is None: return unknown("缺少年龄，无法核对检查标准适用人群")
+        if ((standard.context_age_min is not None and patient.age < standard.context_age_min)
+                or (standard.context_age_max is not None and patient.age > standard.context_age_max)):
+            return unknown("检查标准年龄范围不适用")
+    if standard.method and standard.method != finding.method:
+        return unknown("检查方法与标准不一致或未记录")
+    max_age = parameter.get("max_age_hours")
+    if max_age is not None:
+        from datetime import datetime, timezone
+        from src.cardiomyopathy.service import utc
+        import math
+        if isinstance(max_age, bool) or not isinstance(max_age, (int, float)) or not math.isfinite(max_age) or max_age < 0:
+            return unknown("检查有效时间窗无效")
+        if finding.performed_at is None: return unknown("缺少检查时间，无法核对有效期")
+        elapsed = (utc(patient.encounter_time or datetime.now(timezone.utc)) - utc(finding.performed_at)).total_seconds() / 3600
+        if elapsed < 0 or elapsed > max_age: return unknown("检查结果不在有效时间窗内")
     issues = standard_issues(standard)
     if issues: return unknown("检查标准参数不完整：" + "；".join(issues))
     mode = standard.interpretation_type

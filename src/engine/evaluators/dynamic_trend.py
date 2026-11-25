@@ -21,7 +21,7 @@ class DynamicTrendEvaluator(BaseEvaluator):
         parameter: Optional[Dict[str, Any]] = None,
     ) -> EvaluationResult:
         if standard is None:
-            return EvaluationResult(matched=False, evidence_description="标准未配置")
+            return EvaluationResult(matched=False, evidence_description="标准未配置", detail={"evaluation_status": "unknown"})
 
         lab_code = standard.lab_code
         series = patient.get_lab_series(lab_code)
@@ -30,6 +30,7 @@ class DynamicTrendEvaluator(BaseEvaluator):
             return EvaluationResult(
                 matched=False,
                 evidence_description=f"{lab_code} 需要至少2次测量值评估动态变化（当前{len(series)}次）",
+                detail={"evaluation_status": "unknown"},
             )
 
         values = [r.value for r in series]
@@ -60,7 +61,7 @@ class DynamicTrendEvaluator(BaseEvaluator):
             threshold_hours = (parameter or {}).get("threshold_hours", 14)
             peak_result = self._find_peak(series)
             if peak_result is None:
-                return EvaluationResult(matched=False, evidence_description=f"{lab_code} 无法确定峰值")
+                return EvaluationResult(matched=False, evidence_description=f"{lab_code} 无法确定峰值", detail={"evaluation_status": "unknown"})
             peak_lab, peak_hours = peak_result
             matched = peak_hours < threshold_hours
             return EvaluationResult(
@@ -71,7 +72,7 @@ class DynamicTrendEvaluator(BaseEvaluator):
                 detail={"peak_value": peak_lab.value, "peak_hours": peak_hours, "threshold_hours": threshold_hours},
             )
 
-        return EvaluationResult(matched=False, evidence_description=f"未知动态概念: {standard.concept_code}")
+        return EvaluationResult(matched=False, evidence_description=f"未知动态概念: {standard.concept_code}", detail={"evaluation_status": "unknown"})
 
     def _find_peak(self, series: List[LabResult]):
         """Find the peak value and its time offset from first measurement."""

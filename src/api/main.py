@@ -37,6 +37,8 @@ app.include_router(auto_import.router)
 from src.api.routes import import_jobs, clinical_basis
 from src.api.routes import scenarios
 app.include_router(scenarios.router)
+from src.api.routes import cardiomyopathy
+app.include_router(cardiomyopathy.router)
 app.include_router(import_jobs.router)
 app.include_router(clinical_basis.router)
 app.include_router(kg_review.router)

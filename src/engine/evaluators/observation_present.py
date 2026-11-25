@@ -30,10 +30,12 @@ class ObservationPresentEvaluator(BaseEvaluator):
             return EvaluationResult(matched=False, evidence_description="观察项编码为空")
 
         observed = False
+        recorded = False
         display = ""
         if observation_type == "symptom":
             symptom = patient.get_symptom(code)
             if symptom is not None:
+                recorded = True
                 observed = bool(symptom.present)
                 display = symptom.symptom_name or symptom.symptom_code
                 if symptom.severity:
@@ -41,11 +43,14 @@ class ObservationPresentEvaluator(BaseEvaluator):
 
         observation = patient.get_observation(observation_type, code)
         if observation is not None:
+            recorded = True
             observed = bool(observation.present)
             display = observation.name or observation.code
             if observation.severity:
                 display += f"（{observation.severity}）"
 
+        if not recorded and params.get("missing_policy") == "unknown":
+            return EvaluationResult(False, evidence_description="观察项未记录", detail={"evaluation_status": "unknown"})
         matched = observed if expected != "ABSENT" else not observed
         label = f"{observation_type}:{code}"
         return EvaluationResult(

@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from src.api.routes.kg import normalize_graph_filename
 from src.api.routes.clinical_basis import batch_sync_results
 from src.models.rule import Rule
+from src.cardiomyopathy.models import ScenarioContract
 from src.domains.tcm.basis_generation import OBSERVATION_RELATIONS
 from src.review.service import ReviewService, SYNDROME_MEMBERSHIP_ROLES
 from src.review.clinical_basis import digest, stage_bases, now, check_basis
@@ -14,7 +15,11 @@ from src.review.metadata import node_content_hash, relation_content_hash
 router = APIRouter(prefix="/api/review/scenarios", tags=["scenario-review"])
 service = ReviewService()
 SCENES = {"suspected_diagnosis": "疑似诊断", "diagnosis_confirmation": "确诊／分型",
-          "treatment_recommendation": "治疗方案", "treatment_selection": "用药决策"}
+          "treatment_recommendation": "治疗方案", "treatment_selection": "用药决策",
+          "differential_diagnosis": "病因与鉴别", "diagnosis_exclusion": "排除诊断",
+          "risk_stratification": "风险分层", "severity_assessment": "严重程度",
+          "contraindication_check": "禁忌核对", "monitoring_plan": "监测计划",
+          "follow_up_plan": "随访复查"}
 ROLES = {"condition", "recommendation", "contraindication", "monitoring"}
 DISEASE_OBSERVATIONS = {"DISEASE_HAS_SYMPTOM": "symptom", "DISEASE_HAS_SIGN": "sign"}
 SYNDROME_SCENE_EVIDENCE = {**OBSERVATION_RELATIONS, "SYNDROME_HAS_PATHOGENESIS": "pathogenesis"}
@@ -77,6 +82,9 @@ def inventory(graph, disease_code):
         items[-1]["suggested_scenes"] = (["suspected_diagnosis", "diagnosis_confirmation"] if clinical_condition else
             ["treatment_recommendation", "treatment_selection"] if target.get("node_type") in {"medication", "intervention", "treatment_plan"} else
             ["suspected_diagnosis", "diagnosis_confirmation", "treatment_recommendation", "treatment_selection"])
+        if not tcm:
+            items[-1]["suggested_scenes"] += (["differential_diagnosis", "diagnosis_exclusion", "risk_stratification",
+                "severity_assessment", "contraindication_check", "monitoring_plan", "follow_up_plan"] if clinical_condition else [])
         if tcm:
             membership = paths.get(key[0], {}).get("membership")
             kind = (SYNDROME_SCENE_EVIDENCE.get(key[1]) if membership else
@@ -151,6 +159,7 @@ def overview(graph_filename: str, disease_code: str = "", syndrome_code: str = "
                  and item["source_node"].get("code") == syndrome_code]
     scenes = dict(SCENES)
     if tcm:
+        scenes = {key: scenes[key] for key in ("suspected_diagnosis", "diagnosis_confirmation", "treatment_recommendation", "treatment_selection")}
         scenes["syndrome_identification"] = "辨证判断"
         scenes["treatment_recommendation"] = "治法与方药"
     return {"items": items, "domain": graph.get("domain"), "disease_code": disease_code,
@@ -182,6 +191,7 @@ class Prepare(BaseModel):
     diagnosis_prerequisite: Literal["confirmed", "suspected"] = "confirmed"
     clinical_context: dict = Field(default_factory=dict)
     western_recommendation: Optional[dict] = None
+    scenario_contract: Optional[ScenarioContract] = None
 
 
 def condition_for(item):
@@ -192,7 +202,7 @@ def condition_for(item):
     if kind == "diagnostic_evidence":
         if source.get("node_type") == "lab" and code and code.startswith(str(source.get("code")) + ":"):
             return {"type": "lab_concept", "lab_code": source["code"], "concept_code": code.split(":", 1)[1]}
-        return {"type": "exam_finding", "finding_code": code,
+        return {"type": "exam_finding", "finding_code": code, "parameter": {"selection_policy": "latest"},
                 **({"exam_code": source["code"]} if source.get("node_type") == "exam" else {})}
     raise HTTPException(422, f"{item['target']} 仅表示项目，缺少结果或判定值，不能直接作为条件；请选择对应诊断发现")
 
@@ -249,7 +259,7 @@ def prepare(request: Prepare, graph_filename: str):
                 candidate["weight"] = choice.weight
             if candidate not in conditions:
                 conditions.append(candidate)
-        elif choice.role == "recommendation":
+        elif choice.role == "recommendation" or (choice.role == "contraindication" and request.scene == "contraindication_check") or (choice.role == "monitoring" and request.scene in {"monitoring_plan", "follow_up_plan"}):
             recommendations.append({**(item["target_node"].get("attributes") or {}), "code": item["code"], "name": item["target"], "entity_type": item["node_type"]})
         else:
             raise HTTPException(422, "禁忌／监测关联需分别建立禁忌或监测规则，本场景暂不能把它们直接编入可执行条件")
@@ -260,7 +270,7 @@ def prepare(request: Prepare, graph_filename: str):
         raise HTTPException(422, "治疗／用药场景请选择至少一项建议项目")
     if treatment and not conditions and request.operator != "AND":
         raise HTTPException(422, "仅使用诊断前提时请选择全部满足；或条件组不能为空")
-    if not treatment and recommendations:
+    if not treatment and request.scene not in {"contraindication_check", "monitoring_plan", "follow_up_plan"} and recommendations:
         raise HTTPException(422, "诊断场景请选择判断条件；建议项目请在治疗方案场景中整理")
     condition_tree = {"type": "group", "operator": None if request.operator == "CUSTOM" else request.operator,
                       "children": conditions}
@@ -275,6 +285,8 @@ def prepare(request: Prepare, graph_filename: str):
                           "threshold": request.threshold, "children": conditions}
     name = request.name.strip() or f"{request.disease_code} · {SCENES[request.scene]}"
     clinical_context = dict(request.clinical_context)
+    if request.scenario_contract:
+        clinical_context["scenario_contract"] = request.scenario_contract.model_dump()
     if tcm_suspected:
         disease = graph["nodes"][membership[0]] if membership else anchor
         clinical_context["suspected_tcm_diagnosis"] = {
@@ -293,12 +305,16 @@ def prepare(request: Prepare, graph_filename: str):
                 disease_name=anchor["name"] if tcm_suspected else "",
                 domain="tcm" if tcm_suspected else "western",
                 anchor_type=anchor["node_type"] if tcm_suspected else "disease",
-                rule_type="tcm_pattern" if tcm_suspected else "treatment" if treatment else "diagnosis",
+                rule_type="tcm_pattern" if tcm_suspected else "treatment" if treatment else
+                "contraindication" if request.scene == "contraindication_check" else
+                "monitoring" if request.scene in {"monitoring_plan", "follow_up_plan"} else "diagnosis",
                 clinical_intent=request.scene,
                 graph_filename=filename, status="draft",
                 conditions=condition_tree,
                 conclusion={"diagnosis": anchor_code, "message": name,
-                            "treatment_items": recommendations}, source=source,
+                            "treatment_items": recommendations if treatment else [],
+                            "blocked_targets": [r["code"] for r in recommendations] if request.scene == "contraindication_check" else [],
+                            "monitoring": recommendations if request.scene in {"monitoring_plan", "follow_up_plan"} else []}, source=source,
                 diagnosis_prerequisite=request.diagnosis_prerequisite if treatment else None,
                 clinical_context=clinical_context).model_dump()
     if request.western_recommendation:
@@ -322,3 +338,36 @@ def prepare(request: Prepare, graph_filename: str):
     service._persist(filename, previous, graph, rules, rules, [{"entity_type": "clinical_basis", "entity_id": basis["basis_id"],
                      "graph_filename": filename, "action": "prepare_scenario", "reviewer": request.reviewer}])
     return {"basis": {**basis, "validation": check_basis(service, filename, graph, basis)}}
+
+
+@router.get('/coverage')
+def coverage(graph_filename: str, disease_code: str):
+    """Report provenance, review and runtime coverage separately."""
+    filename = normalize_graph_filename(graph_filename)
+    graph = service._load_graph(filename)
+    rules = service._load_rules()
+    bases = [b for b in graph.get('clinical_bases', []) if b.get('disposition') != 'discarded'
+             and (b.get('specification') or {}).get('disease_code') == disease_code]
+    from .cardiomyopathy import store
+    validations = store.list('case_validation')
+    rows = []
+    for intent, label in SCENES.items():
+        selected = [b for b in bases if b.get('specification', {}).get('clinical_intent') == intent]
+        details = []
+        for basis in selected:
+            validation = check_basis(service, filename, graph, basis)
+            bound = next((r for r in rules if r.get('rule_id') == basis.get('generated_rule_id')
+                          and r.get('graph_filename') == filename), None)
+            details.append({'basis_id': basis['basis_id'],
+                'has_source': bool((basis.get('specification', {}).get('source') or {}).get('quote')),
+                'structured': bool(basis.get('specification', {}).get('conditions')),
+                'approved': validation['status'] == 'active',
+                'executable': bool(bound and bound.get('status') == 'active' and validation['status'] == 'active'),
+                'validated': bool(bound and any(v.get('passed') and v.get('graph_filename') == filename
+                    and v.get('basis_id') == basis['basis_id']
+                    and v.get('basis_fingerprint') == digest(basis['specification'])
+                    and v.get('rule_fingerprint') == digest(bound) for v in validations))})
+        rows.append({'intent': intent, 'name': label, 'details': details,
+                     **{key: sum(bool(d[key]) for d in details) for key in ('has_source', 'structured', 'approved', 'executable', 'validated')}})
+    return {'graph_filename': filename, 'disease_code': disease_code, 'scenes': rows,
+            'validation_note': '已验证指当前依据与规则版本有通过的病例测试；不代表临床上线认证'}

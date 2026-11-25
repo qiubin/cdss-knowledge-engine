@@ -58,7 +58,12 @@
       <div class="field half" data-treatment-gate><label>治疗／用药需要的诊断状态</label><select data-scene-gate><option value="confirmed">同疾病确诊判断已命中</option><option value="suspected">疑似或确诊判断已命中（须有原文依据）</option></select></div>
       <div class="field half"><label>核对人</label><input data-scene-reviewer value="${esc(localStorage.getItem("cdssReviewer") || "")}"></div>
       <div class="field wide"><label>适用范围、分型及限制核对说明</label><textarea data-scene-scope rows="3" placeholder="说明适用人群、分型、阶段及禁忌；实际限制仍须写入条件"></textarea></div>
-      </div><div class="actions"><button type="button" class="btn primary" data-scene-prepare>整理为待审场景依据</button><span data-scene-feedback role="status"></span></div></details>`;
+      <details class="field wide"><summary>场景触发与复评契约（可选，填写后参与执行）</summary>
+      <label>触发事件（逗号分隔）<input data-contract-events placeholder="diagnosis_updated,result_ready"></label>
+      <label>必需病历属性（逗号分隔）<input data-contract-required></label>
+      <label>建议动作（逗号分隔）<input data-contract-actions></label>
+      <label>复评事件（逗号分隔）<input data-contract-reassess></label>
+      </details></div><div class="actions"><button type="button" class="btn primary" data-scene-prepare>整理为待审场景依据</button><span data-scene-feedback role="status"></span></div></details>`;
     const $ = (selector) => mount.querySelector(selector);
     const ownerSelect = $("[data-scene-owner]");
     if (ownerSelect) ownerSelect.onchange = async () => {
@@ -267,6 +272,12 @@
           }),
           operator, ...(operator === "COUNT" ? {min_count: minCount} : {}),
           ...(operator === "WEIGHTED" ? {threshold: thresholdPercent / 100} : {}),
+          ...($("[data-contract-events]").value.trim() ? {scenario_contract: {
+            trigger_events: $("[data-contract-events]").value.split(",").map(x => x.trim()).filter(Boolean),
+            required_attributes: $("[data-contract-required]").value.split(",").map(x => x.trim()).filter(Boolean),
+            actions: $("[data-contract-actions]").value.split(",").map(x => x.trim()).filter(Boolean),
+            reassessment_events: $("[data-contract-reassess]").value.split(",").map(x => x.trim()).filter(Boolean),
+          }} : {}),
           source: {...source, quote: $("[data-scene-quote]").value},
           scope_summary: $("[data-scene-scope]").value, reviewer: $("[data-scene-reviewer]").value,
           name: $("[data-scene-name]").value, diagnosis_prerequisite: $("[data-scene-gate]").value,
